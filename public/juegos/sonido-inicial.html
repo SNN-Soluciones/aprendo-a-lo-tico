@@ -43,13 +43,13 @@
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
-<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><div class="txt" id="instr"></div></div>
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
 <div class="wrap opciones" id="opciones"></div>
 <div class="wrap feedback" id="feedback" aria-live="polite"></div>
 <div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
 
 <script type="module">
-import { hablar, elogio } from "../js/voz.js";
+import { hablar, elogio, LENTO } from "../js/voz.js";
 import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
 
 const $ = id => document.getElementById(id);
@@ -99,22 +99,24 @@ function nuevo() {
     `<button data-i="${i}" aria-label="${o[1]}"><span aria-hidden="true">${o[0]}</span><span class="pal">${o[1]}</span></button>`).join("");
   feedback("");
   $("nextBtn").classList.remove("pulse");
-  presentar();
+  presentar(false);
 }
 
 // Dice el modelo y después cada opción, resaltándola, para que el niño escuche todas.
-async function presentar() {
+async function presentar(lento = false) {
   const t = ++turno;
+  const op = lento ? { rate: LENTO } : undefined;
   $("instr").innerHTML = "";
   await instruccion(
     `<div class="modelo"><span>¿Cuál empieza como</span><span><span class="big">${modelo[0]}</span><span class="pal">${modelo[1]}</span></span><span>?</span></div>`,
-    `¿Cuál empieza como ${modelo[1]}? ... ${modelo[1]}.`
+    `¿Cuál empieza como ${modelo[1]}? ... ${modelo[1]}.`,
+    lento
   );
   const btns = $("opciones").querySelectorAll("button");
   for (let i = 0; i < opciones.length; i++) {
     if (t !== turno) break;
     btns[i].classList.add("dicho");
-    await hablar(opciones[i][1]);
+    await hablar(opciones[i][1], op);
     btns[i].classList.remove("dicho");
   }
   if (t === turno) btns.forEach(x => x.classList.remove("dicho"));

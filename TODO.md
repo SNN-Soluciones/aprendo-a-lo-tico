@@ -44,8 +44,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 ## 🧒 Fase 2 · Para los más chiquitos (Prepa, 4–5 años)
 
 - [x] **Voz en todo:** instrucciones leídas con Web Speech API (`speechSynthesis`, voz `es-*`) → `js/voz.js`
-- [x] Voz más despacio en todos los juegos (`VELOCIDAD = 0.5`)
-- [ ] Botón de velocidad de voz para que cada familia la ajuste
+- [x] Botón 🐢 en todos los juegos con voz: normal a 1, tortuga a 0.5
 - [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
 - [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
 - [ ] Trazos: flechas y puntito de inicio con el orden correcto de cada trazo

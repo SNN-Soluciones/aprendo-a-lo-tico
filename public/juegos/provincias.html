@@ -64,12 +64,13 @@
 
   .prompt {
     margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
-    padding: 6px 56px 6px 14px; text-align: center; font-size: clamp(1.25rem, 5.5vw, 1.8rem); font-weight: 800; line-height: 1.2;
+    padding: 6px 112px 6px 14px; text-align: center; font-size: clamp(1.25rem, 5.5vw, 1.8rem); font-weight: 800; line-height: 1.2;
     position: relative; min-height: 3.4rem; display: flex; align-items: center; justify-content: center;
   }
   .prompt b { color: var(--materia); }
   .speak { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); font-size: 1.3rem; padding: 0 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
   .speak:active { transform: translateY(calc(-50% + 3px)); }
+  .speak.lento { right: 66px; font-size: 1.1rem; }
 
   .map { margin-top: 10px; background: var(--sea); border: 4px solid var(--rim); border-radius: 22px; overflow: hidden; }
   .map svg { display: block; width: 100%; height: auto; }
@@ -145,7 +146,7 @@
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
-<div class="wrap prompt"><span id="prompt"></span><button class="speak" id="speak" aria-label="Escuchar" hidden>🔊</button></div>
+<div class="wrap prompt"><span id="prompt"></span><button class="speak" id="speak" aria-label="Escuchar" hidden>🔊</button><button class="speak lento" id="lento" aria-label="Escuchar despacio" hidden>🐢</button></div>
 
 <div class="wrap map" id="map">
   <svg viewBox="0 0 1000 953" role="group" aria-label="Mapa de Costa Rica por provincias">
@@ -209,7 +210,7 @@
 
   // ---------- Voz ----------
   const puedeHablar = "speechSynthesis" in window;
-  function hablar(texto) {
+  function hablar(texto, lento = false) {
     if (!puedeHablar) return;
     try {
       speechSynthesis.cancel();
@@ -218,11 +219,11 @@
       const voz = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang));
       if (voz) u.voice = voz;
       u.lang = voz ? voz.lang : "es-MX";
-      u.rate = 0.5; // igual que VELOCIDAD en js/voz.js
+      u.rate = lento ? 0.5 : 1; // normal y 🐢, igual que VELOCIDAD y LENTO en js/voz.js
       speechSynthesis.speak(u);
     } catch (_) {}
   }
-  if (puedeHablar) $("speak").hidden = false;
+  if (puedeHablar) $("speak").hidden = $("lento").hidden = false;
 
   // ---------- Etiquetas ----------
   const svgNS = "http://www.w3.org/2000/svg";
@@ -376,6 +377,7 @@
   });
 
   $("speak").addEventListener("click", () => hablar(textoPrompt()));
+  $("lento").addEventListener("click", () => hablar(textoPrompt(), true));
   $("nextBtn").addEventListener("click", siguiente);
   document.querySelectorAll(".levels button").forEach(btn => {
     btn.addEventListener("click", () => {

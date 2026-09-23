@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+.env
+# Capacitor (cuando se agregue)
+android/app/build/
+android/.gradle/
+ios/App/Pods/

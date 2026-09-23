@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Apoyar · Aprendo a lo Tico</title>
+<meta name="theme-color" content="#CFEFE3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Volver a los juegos</a>
+
+  <header class="hero">
+    <h1>¡Gracias! 💚</h1>
+    <p>Aprendo a lo Tico es gratis para todos. Con tu aporte pagamos el servidor y hacemos juegos nuevos.</p>
+  </header>
+
+  <section class="card sinpe" id="sinpe" aria-live="polite"></section>
+
+  <section class="card">
+    <h2>Cómo donar con SINPE Móvil</h2>
+    <ol>
+      <li>Abrí la app de tu banco y entrá a <b>SINPE Móvil</b>.</li>
+      <li>Poné el número de arriba y el monto que quieras. Cualquier monto ayuda.</li>
+      <li>En el detalle escribí <b id="detalle">Aprendo a lo Tico</b>.</li>
+    </ol>
+  </section>
+
+  <section class="card">
+    <h2>Nuestro compromiso</h2>
+    <ul>
+      <li>Siempre gratis, sin anuncios.</li>
+      <li>No pedimos cuentas ni datos de los niños. El progreso queda solo en tu dispositivo.</li>
+      <li>Contenido pensado para el programa del MEP y la realidad tica.</li>
+    </ul>
+  </section>
+</main>
+<script type="module">
+  import { CONFIG } from "./js/config.js";
+  const s = CONFIG.sinpe;
+  const box = document.getElementById("sinpe");
+  document.getElementById("detalle").textContent = s.detalle;
+  if (!s.numero || s.numero === "PENDIENTE") {
+    box.innerHTML = `<p class="pending">Muy pronto vas a ver aquí el número de SINPE Móvil 🙌</p>`;
+  } else {
+    box.innerHTML = `
+      <div>SINPE Móvil</div>
+      <div class="sinpe-num">📱 ${s.numero}</div>
+      <div class="sinpe-name">${s.nombre}</div>
+      <p><button class="btn" id="copy">Copiar número</button></p>
+      <div class="copied" id="copied"></div>`;
+    document.getElementById("copy").addEventListener("click", async () => {
+      const out = document.getElementById("copied");
+      try {
+        await navigator.clipboard.writeText(s.numero.replace(/\D/g, ""));
+        out.textContent = "¡Copiado! ✓";
+      } catch (_) {
+        out.textContent = "Copialo a mano: " + s.numero;
+      }
+    });
+  }
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

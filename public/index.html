@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aprendo a lo Tico · Juegos para aprender</title>
+<meta name="description" content="Juegos educativos gratis hechos en Costa Rica: la hora, restas con bloques, colones y más.">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+</head>
+<body>
+<main class="page">
+  <header class="hero">
+    <h1>Aprendo a lo <span class="flag">Tico</span></h1>
+    <p>Juegos gratis para aprender jugando, con colones, pulpería y la hora como la decimos aquí.</p>
+  </header>
+
+  <section class="filters" aria-label="Filtros">
+    <div>
+      <h2>Materia</h2>
+      <div class="chips" id="materias"></div>
+    </div>
+    <div>
+      <h2>Grado</h2>
+      <div class="chips" id="grados"></div>
+    </div>
+  </section>
+
+  <section class="games" id="juegos" aria-live="polite"></section>
+
+  <section class="support">
+    <p>Es gratis, sin anuncios y no guardamos datos de los chicos. Si te sirve, podés ayudarnos a seguir.</p>
+    <a class="btn" href="apoyar.html">💚 Apoyar con SINPE</a>
+  </section>
+
+  <p class="foot">Hecho con cariño en Costa Rica 🇨🇷</p>
+</main>
+<script type="module" src="js/home.js"></script>
+</body>
+</html>

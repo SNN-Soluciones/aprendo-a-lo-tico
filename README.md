@@ -22,6 +22,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🔺 Colores y figuras | Matemáticas | Prepa | `public/juegos/colores-figuras.html` |
 | 👂 ¿Con qué empieza? | Español | Prepa y 1° | `public/juegos/sonido-inicial.html` |
 | ✍️ Trazá letras y números | Español | Prepa y 1° | `public/juegos/trazos.html` |
+| 🦥 Llevá al perezoso | Programación | Prepa a 2° | `public/juegos/perezoso.html` |
 
 ## Estructura
 
@@ -41,6 +42,7 @@ aprendo-a-lo-tico/
 │   ├── js/home.js          # Lógica del inicio
 │   ├── js/voz.js           # 🔊 Voz (speechSynthesis) y sonidos compartidos
 │   ├── js/prepa.js         # Piezas comunes de los juegos de Prepa
+│   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido
 ├── README.md
@@ -157,6 +159,10 @@ Usan `css/prepa.css`, `js/voz.js` y `js/prepa.js` (ver `juegos/contar.html` como
 - **Nada depende de leer:** íconos, dibujos y números. El texto chiquito es para el papá o la maestra.
 - **Sonidos cortos** de acierto y error con `sonido("ok" | "casi" | "mal")`, sin archivos de audio.
 - **Velocidad de la voz:** normal a `VELOCIDAD = 1` y el botón 🐢 repite despacio a `LENTO` (en `js/voz.js`, lo usan todos los juegos). `LENTO` es `0.5`, salvo en iPhone, iPad y Safari, donde las voces de Apple necesitan `0.25` para sonar de verdad a la mitad. Para medirlo en un equipo: abrí `prueba-voz.html` y tocá **⏱️ Medir esta voz**.
+
+### Agregar niveles al perezoso
+
+Los niveles están en `public/js/perezoso.js` como mapas de texto: `S` perezoso, `H` hoja, `#` árbol, `~` río y `.` camino. Las 3 estrellas se ganan con el camino más corto, que el juego calcula solo.
 
 ### Guía de estilo de los juegos
 

@@ -110,6 +110,14 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
 - [ ] Frases simples
 
+## 💻 Programación (sin servidor: todo corre en el navegador)
+
+- [x] 🦥 Llevá al perezoso: secuencias con flechas, 10 niveles, sin leer (Prepa a 2°)
+- [ ] 🦥 Más niveles del perezoso y un editor para que los niños armen los suyos
+- [ ] 🔁 Repetí y decidí: bloques «repetir» y «si hay río, saltá» con el mismo tablero (2° a 4°)
+- [ ] 🦜 La lapa que dibuja: Blockly (descargado dentro del sitio) con avanzar, girar, repetir y colores (4° a 6°)
+- [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
+
 ## 👨‍👩‍👧 Perfiles y progreso (local)
 
 - [ ] Perfiles por niño (nombre + avatar) en `localStorage`

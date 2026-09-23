@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Con qué empieza?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; }
+  .modelo { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .modelo .big { font-size: clamp(3.4rem, 17vw, 4.6rem); }
+  .modelo .pal { font-size: 1.1rem; color: var(--materia); display: block; line-height: 1; }
+  .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  .opciones button {
+    border-radius: 24px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    font-size: clamp(3.2rem, 17vw, 4.6rem); line-height: 1.05;
+  }
+  .opciones button .pal { font-size: 1rem; font-weight: 700; opacity: .75; }
+  .opciones button.dicho { outline: 4px solid var(--btn); outline-offset: 2px; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">👂🐒✋</div>
+  <h1>¿Con qué empieza?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Escuchá la palabra y buscá el dibujo que empieza con el mismo sonido.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button data-nivel="vocales" aria-pressed="true">A E I O U</button>
+    <button data-nivel="consonantes">M S P L…</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><div class="txt" id="instr"></div></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
+
+const $ = id => document.getElementById(id);
+
+// Palabras agrupadas por SONIDO inicial (no por letra): por eso no hay palabras con
+// v, z, ce/ci, qu, h ni ll, que suenan igual a otras y confundirían.
+const GRUPOS = {
+  vocales: {
+    a: [["✈️", "avión"], ["🐝", "abeja"], ["🌳", "árbol"], ["🌈", "arcoíris"], ["🐿️", "ardilla"], ["🕷️", "araña"]],
+    e: [["🐘", "elefante"], ["⭐", "estrella"], ["🧹", "escoba"], ["🦔", "erizo"]],
+    i: [["🦎", "iguana"], ["🏝️", "isla"], ["⛪", "iglesia"], ["🧲", "imán"]],
+    o: [["🐻", "oso"], ["👁️", "ojo"], ["🐑", "oveja"], ["👂", "oreja"]],
+    u: [["🍇", "uvas"], ["1️⃣", "uno"], ["💅", "uña"], ["🦄", "unicornio"]],
+  },
+  consonantes: {
+    m: [["✋", "mano"], ["🐒", "mono"], ["🍎", "manzana"], ["🦋", "mariposa"], ["🏍️", "moto"], ["🥭", "mango"]],
+    s: [["☀️", "sol"], ["🍉", "sandía"], ["🪑", "silla"], ["🐍", "serpiente"], ["👒", "sombrero"]],
+    p: [["🦆", "pato"], ["🍐", "pera"], ["🐶", "perro"], ["🐟", "pez"], ["🍍", "piña"], ["🐥", "pollito"]],
+    l: [["🌙", "luna"], ["🦁", "león"], ["🍋", "limón"], ["📖", "libro"], ["✏️", "lápiz"], ["🐺", "lobo"]],
+    t: [["🐢", "tortuga"], ["🍅", "tomate"], ["🚂", "tren"], ["🐯", "tigre"], ["☕", "taza"], ["🥁", "tambor"]],
+    r: [["🐭", "ratón"], ["🎁", "regalo"], ["⏰", "reloj"], ["🌹", "rosa"], ["🐸", "rana"]],
+    g: [["🐱", "gato"], ["🐔", "gallina"], ["🎈", "globo"], ["🦍", "gorila"], ["🐛", "gusano"]],
+    b: [["🐋", "ballena"], ["🍌", "banano"], ["⛵", "barco"], ["👶", "bebé"], ["👢", "bota"], ["🚌", "bus"]],
+    c: [["🏠", "casa"], ["🐴", "caballo"], ["🚗", "carro"], ["🐰", "conejo"], ["🛏️", "cama"], ["🥄", "cuchara"]],
+    f: [["💡", "foco"], ["🍓", "fresa"], ["🌸", "flor"], ["🔥", "fuego"], ["🦭", "foca"]],
+    d: [["🎲", "dado"], ["👆", "dedo"], ["🐬", "delfín"], ["🦷", "diente"], ["🦖", "dinosaurio"], ["🐉", "dragón"]],
+    n: [["☁️", "nube"], ["👃", "nariz"], ["🍊", "naranja"]],
+  },
+};
+
+let turno = 0; // cambia cuando el niño toca, para dejar de leer las opciones
+let nivel = "vocales", modelo = null, meta = null, opciones = [], fallos = 0, listo = false, ultimoSonido = "";
+const stars = estrellas("sonidos-stars");
+
+function nuevo() {
+  const grupos = GRUPOS[nivel];
+  let sonido;
+  do sonido = azar(Object.keys(grupos)); while (sonido === ultimoSonido);
+  ultimoSonido = sonido;
+  const [m, c] = barajar(grupos[sonido]);
+  modelo = m; meta = c;
+  const otros = barajar(Object.keys(grupos).filter(k => k !== sonido)).slice(0, 2).map(k => azar(grupos[k]));
+  opciones = barajar([meta, ...otros]);
+  fallos = 0; listo = false;
+
+  $("opciones").innerHTML = opciones.map((o, i) =>
+    `<button data-i="${i}" aria-label="${o[1]}"><span aria-hidden="true">${o[0]}</span><span class="pal">${o[1]}</span></button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  presentar();
+}
+
+// Dice el modelo y después cada opción, resaltándola, para que el niño escuche todas.
+async function presentar() {
+  const t = ++turno;
+  $("instr").innerHTML = "";
+  await instruccion(
+    `<div class="modelo"><span>¿Cuál empieza como</span><span><span class="big">${modelo[0]}</span><span class="pal">${modelo[1]}</span></span><span>?</span></div>`,
+    `¿Cuál empieza como ${modelo[1]}? ... ${modelo[1]}.`
+  );
+  const btns = $("opciones").querySelectorAll("button");
+  for (let i = 0; i < opciones.length; i++) {
+    if (t !== turno) break;
+    btns[i].classList.add("dicho");
+    await hablar(opciones[i][1], { rate: 0.85 });
+    btns[i].classList.remove("dicho");
+  }
+  if (t === turno) btns.forEach(x => x.classList.remove("dicho"));
+}
+
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled) return;
+  const o = opciones[Number(b.dataset.i)];
+  turno++;
+  $("opciones").querySelectorAll(".dicho").forEach(x => x.classList.remove("dicho"));
+  if (o === meta) {
+    listo = true;
+    b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    const frase = `${modelo[1]}, ${meta[1]}. ¡Empiezan igual!`;
+    if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+    else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+    $("nextBtn").classList.add("pulse");
+  } else {
+    fallos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    feedback("bad", "🙈", "No es");
+    decir(`${o[1]}... ${modelo[1]}. No empiezan igual. Probá otra vez.`);
+  }
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => { nivel = v; ultimoSonido = ""; nuevo(); });
+alEmpezar(nuevo, presentar);
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

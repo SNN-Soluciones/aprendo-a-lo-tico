@@ -19,6 +19,14 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Juego: Mapa de provincias (explorar, dónde queda, cabeceras)
 - [x] Juego: Listen and tap (colores, animales, números, familia, frutas; con voz)
 
+## ✅ Fase 0.7 · Para los que no leen (hecho)
+
+- [x] `js/voz.js` + `js/prepa.js` + `css/prepa.css`: voz, sonidos, inicio con ▶️ y piezas comunes
+- [x] Juego: ¡A contar! (tocar para contar en voz alta, "contemos juntos" si se equivoca)
+- [x] Juego: Colores y figuras (colores, figuras y los dos juntos)
+- [x] Juego: ¿Con qué empieza? (sonido inicial: vocales y consonantes)
+- [x] Juego: Trazá letras y números (vocales, números y m p s l t n d)
+
 ## 🚀 Fase 1 · Publicar bien
 
 - [ ] Poner el número real de SINPE en `js/config.js`
@@ -33,14 +41,24 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 ## 🧒 Fase 2 · Para los más chiquitos (Prepa, 4–5 años)
 
-- [ ] **Voz en todo:** instrucciones leídas con Web Speech API (`speechSynthesis`, voz `es-*`)
-- [ ] **Trazos de letras:** canvas + pointer events, letra punteada, flechas de orden del trazo, validación por tolerancia
+- [x] **Voz en todo:** instrucciones leídas con Web Speech API (`speechSynthesis`, voz `es-*`) → `js/voz.js`
+- [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
+- [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
+- [ ] Trazos: flechas y puntito de inicio con el orden correcto de cada trazo
+- [ ] Trazos: el resto del abecedario y mayúsculas de consonantes
 - [ ] Trazar su nombre (lo escribe el papá)
 - [ ] Palabras comunes: mamá, papá, casa, sol, perro…
 - [ ] Método silábico: ma me mi mo mu, pa pe pi po pu…
 - [ ] Armar palabras con sílabas (arrastrar)
-- [ ] Contar objetos del 1 al 20
-- [ ] Colores y figuras
+- [x] Sonido inicial: ¿cuál empieza como…?
+- [ ] 🧠 Memoria de parejas (animales, frutas) con voz al voltear
+- [ ] 🔍 ¿Cuál es diferente? / ¿Qué falta? (atención visual)
+- [ ] 📏 Grande, mediano y pequeño; ordenar por tamaño
+- [ ] 🧩 Secuencias y patrones (🔴🔵🔴🔵…)
+- [ ] 🐮 ¿Quién hace este sonido? (sonidos de animales)
+- [ ] 🧺 Clasificar: frutas, animales, ropa (arrastrar a la canasta)
+- [x] Contar objetos del 1 al 20
+- [x] Colores y figuras
 
 ## 🔢 Matemáticas por grado
 
@@ -108,7 +126,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 ## 🛠️ Técnico
 
 - [ ] Extraer estilos comunes de los juegos a `css/juego.css`
-- [ ] Extraer la voz (`speechSynthesis`) a un `js/voz.js` compartido (ya la usan animales, provincias y listen-tap)
+- [x] Crear `js/voz.js` compartido (lo usan los juegos de Prepa)
+- [ ] Pasar animales, provincias y listen-tap a `js/voz.js` (hoy tienen su propia copia)
 - [ ] Componentes reutilizables: teclado numérico, retroalimentación, estrellas
 - [ ] Tests de los generadores de problemas (que siempre sean válidos)
 - [ ] APK con Capacitor + ícono y splash

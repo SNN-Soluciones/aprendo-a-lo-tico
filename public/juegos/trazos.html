@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Trazá letras y números</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; }
+  .pizarra {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    position: relative; aspect-ratio: 1; width: min(96vw, 460px); overflow: hidden;
+  }
+  .pizarra canvas { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; }
+  .ayuda { position: absolute; top: 8px; left: 10px; font-size: 2.6rem; line-height: 1; pointer-events: none; }
+  .ayuda small { display: block; font-size: 1rem; font-weight: 800; color: var(--materia); text-align: center; }
+  .herr { display: flex; justify-content: center; gap: 14px; margin-top: 12px; }
+  .herr button { font-size: 2rem; padding: 2px 22px; }
+  .herr #listoBtn { background: #C9F2D6; }
+  .pizarra.gano { animation: pulse .6s ease-in-out 2; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">✍️</div>
+  <h1>Trazá letras y números</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Pasá el dedo por encima de la letra punteada, sin salirte.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button data-nivel="vocales" aria-pressed="true">A e i</button>
+    <button data-nivel="numeros">1 2 3</button>
+    <button data-nivel="letras">m p s</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><div class="txt" id="instr"></div></div>
+<div class="pizarra" id="pizarra">
+  <canvas id="guia" aria-hidden="true"></canvas>
+  <canvas id="tinta" aria-label="Pizarra para trazar con el dedo"></canvas>
+  <div class="ayuda" id="ayuda" aria-hidden="true"></div>
+</div>
+<div class="herr">
+  <button id="borrarBtn" aria-label="Borrar">🧽</button>
+  <button id="listoBtn" aria-label="¡Ya terminé!">✅</button>
+  <button id="nextBtn" aria-label="Otra">➡️</button>
+</div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+
+<script type="module">
+import { elogio } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar } from "../js/prepa.js";
+
+const $ = id => document.getElementById(id);
+
+// ✏️ Qué se traza. d = cómo se dice, e/pal = dibujo y palabra de ejemplo
+const SETS = {
+  vocales: [
+    { ch: "A", d: "la a", e: "✈️", pal: "avión" }, { ch: "a", d: "la a", e: "✈️", pal: "avión" },
+    { ch: "E", d: "la e", e: "🐘", pal: "elefante" }, { ch: "e", d: "la e", e: "🐘", pal: "elefante" },
+    { ch: "I", d: "la i", e: "🦎", pal: "iguana" }, { ch: "i", d: "la i", e: "🦎", pal: "iguana" },
+    { ch: "O", d: "la o", e: "🐻", pal: "oso" }, { ch: "o", d: "la o", e: "🐻", pal: "oso" },
+    { ch: "U", d: "la u", e: "🍇", pal: "uvas" }, { ch: "u", d: "la u", e: "🍇", pal: "uvas" },
+  ],
+  numeros: ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"]
+    .map((d, i) => ({ ch: String(i), d: `el ${d}`, n: i }))
+    .slice(1).concat([{ ch: "0", d: "el cero", n: 0 }]),
+  letras: [
+    { ch: "m", d: "la eme", e: "✋", pal: "mano" },
+    { ch: "p", d: "la pe", e: "🦆", pal: "pato" },
+    { ch: "s", d: "la ese", e: "☀️", pal: "sol" },
+    { ch: "l", d: "la ele", e: "🌙", pal: "luna" },
+    { ch: "t", d: "la te", e: "🍅", pal: "tomate" },
+    { ch: "n", d: "la ene", e: "☁️", pal: "nube" },
+    { ch: "d", d: "la de", e: "🎲", pal: "dado" },
+  ],
+};
+
+const S = 600;            // tamaño interno de la pizarra
+const Q = 0.2;            // escala de las máscaras para evaluar (120×120)
+const FONT = '"Baloo 2", "Trebuchet MS", system-ui, sans-serif';
+const TINTA = 34;         // grosor del trazo del niño
+const COLOR_TINTA = "#E8574A";
+
+let nivel = "vocales", idx = 0, item = null, trazos = [], actual = null, listo = false, fallos = 0;
+let geo = null;           // posición y tamaño de la letra
+const stars = estrellas("trazos-stars");
+
+const guia = $("guia"), tinta = $("tinta");
+[guia, tinta].forEach(c => { c.width = S; c.height = S; });
+const gctx = guia.getContext("2d"), tctx = tinta.getContext("2d");
+
+// ---------- Letra ----------
+function medir(ch) {
+  const c = document.createElement("canvas").getContext("2d");
+  c.font = `800 400px ${FONT}`;
+  const m = c.measureText(ch);
+  const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
+  const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
+  const size = 400 * Math.min((S * 0.62) / h, (S * 0.72) / w);
+  const k = size / 400;
+  return {
+    size,
+    x: S / 2 + (m.actualBoundingBoxLeft - m.actualBoundingBoxRight) * k / 2,
+    y: S / 2 + 20 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) * k / 2,
+    grosor: size * 0.14, // grosor aproximado del trazo de la letra
+  };
+}
+
+function letra(ctx, modo, extra = 0) {
+  ctx.font = `800 ${geo.size}px ${FONT}`;
+  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
+  const x = geo.x - 0, y = geo.y;
+  if (modo === "fill") ctx.fillText(item.ch, x, y);
+  if (modo === "stroke") { ctx.lineWidth = extra; ctx.lineJoin = "round"; ctx.strokeText(item.ch, x, y); }
+}
+
+function pintarGuia(faltantes) {
+  gctx.clearRect(0, 0, S, S);
+  // renglón
+  gctx.strokeStyle = "#DCE6EF"; gctx.lineWidth = 3; gctx.setLineDash([]);
+  gctx.beginPath(); gctx.moveTo(30, geo.y); gctx.lineTo(S - 30, geo.y); gctx.stroke();
+  // relleno suave + borde punteado
+  gctx.fillStyle = "#EAF1F8"; letra(gctx, "fill");
+  gctx.strokeStyle = "#8FA7BF"; gctx.setLineDash([10, 10]); letra(gctx, "stroke", 4);
+  gctx.setLineDash([]);
+  if (faltantes) {
+    gctx.fillStyle = "rgba(255, 200, 61, .85)";
+    faltantes.forEach(([x, y]) => gctx.fillRect(x / Q - 2.5, y / Q - 2.5, 1 / Q + 5, 1 / Q + 5));
+  }
+}
+
+function pintarTinta() {
+  tctx.clearRect(0, 0, S, S);
+  tctx.strokeStyle = COLOR_TINTA; tctx.lineWidth = TINTA; tctx.lineCap = "round"; tctx.lineJoin = "round";
+  trazos.forEach(t => {
+    tctx.beginPath();
+    t.forEach(([x, y], i) => i ? tctx.lineTo(x, y) : tctx.moveTo(x, y));
+    if (t.length === 1) tctx.lineTo(t[0][0] + .1, t[0][1]);
+    tctx.stroke();
+  });
+}
+
+// ---------- Evaluación ----------
+function mascara(dibujar) {
+  const n = Math.round(S * Q);
+  const c = document.createElement("canvas"); c.width = n; c.height = n;
+  const x = c.getContext("2d"); x.scale(Q, Q); x.fillStyle = x.strokeStyle = "#000";
+  dibujar(x);
+  const d = x.getImageData(0, 0, n, n).data;
+  const m = new Uint8Array(n * n);
+  for (let i = 0; i < n * n; i++) m[i] = d[i * 4 + 3] > 100 ? 1 : 0;
+  return { m, n };
+}
+
+function evaluar(ts = trazos) {
+  const letraM = mascara(x => letra(x, "fill"));
+  const tolM = mascara(x => { letra(x, "fill"); letra(x, "stroke", geo.grosor * 0.9); });
+  const tintaM = mascara(x => {
+    x.lineWidth = geo.grosor * 1.3; x.lineCap = "round"; x.lineJoin = "round";
+    ts.forEach(t => { x.beginPath(); t.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); if (t.length === 1) x.lineTo(t[0][0] + .1, t[0][1]); x.stroke(); });
+  });
+  const { n } = letraM;
+  let total = 0, cubiertos = 0; const faltantes = [];
+  for (let i = 0; i < n * n; i++) if (letraM.m[i]) {
+    total++;
+    if (tintaM.m[i]) cubiertos++; else faltantes.push([i % n, Math.floor(i / n)]);
+  }
+  let puntos = 0, dentro = 0;
+  ts.forEach(t => t.forEach(([a, b]) => {
+    puntos++;
+    const i = Math.min(n - 1, Math.floor(b * Q)) * n + Math.min(n - 1, Math.floor(a * Q));
+    if (tolM.m[i]) dentro++;
+  }));
+  return { cobertura: total ? cubiertos / total : 0, precision: puntos ? dentro / puntos : 0, faltantes };
+}
+
+// ---------- Dedo ----------
+function punto(e) {
+  const r = tinta.getBoundingClientRect();
+  return [(e.clientX - r.left) * S / r.width, (e.clientY - r.top) * S / r.height];
+}
+tinta.addEventListener("pointerdown", e => {
+  if (listo) return;
+  tinta.setPointerCapture(e.pointerId);
+  actual = [punto(e)]; trazos.push(actual);
+  pintarTinta();
+});
+tinta.addEventListener("pointermove", e => {
+  if (!actual) return;
+  const p = punto(e), u = actual[actual.length - 1];
+  if (Math.hypot(p[0] - u[0], p[1] - u[1]) < 4) return;
+  actual.push(p); pintarTinta();
+});
+const soltar = () => {
+  if (!actual) return;
+  actual = null;
+  // Si ya quedó bien, se celebra solo (sin tener que tocar ✅)
+  const r = evaluar();
+  if (r.cobertura >= 0.72 && r.precision >= 0.85) ganar();
+};
+tinta.addEventListener("pointerup", soltar);
+tinta.addEventListener("pointercancel", soltar);
+
+function ganar() {
+  listo = true;
+  pintarGuia();
+  $("pizarra").classList.remove("gano"); void $("pizarra").offsetWidth; $("pizarra").classList.add("gano");
+  const frase = `¡Trazaste ${item.d}!`;
+  if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+  $("nextBtn").classList.add("pulse");
+}
+
+$("listoBtn").addEventListener("click", () => {
+  if (listo) return;
+  if (!trazos.length) { decir(`Pasá el dedo por encima de ${item.d}.`); return; }
+  const r = evaluar();
+  if (r.cobertura >= 0.72 && r.precision >= 0.85) return ganar();
+  fallos++;
+  if (r.precision < 0.7) {
+    feedback("bad", "🙈", "Te saliste");
+    decir("Uy, te saliste mucho de la letra. Borrá y probá otra vez, despacito.");
+  } else if (r.cobertura >= 0.45) {
+    pintarGuia(r.faltantes);
+    feedback("almost", "🤏", "¡Casi!");
+    decir("¡Casi! Te faltó el pedacito amarillo.");
+  } else {
+    pintarGuia(r.faltantes);
+    feedback("bad", "🙈", "Falta");
+    decir("Todavía falta. Seguí por la parte amarilla.");
+  }
+});
+
+$("borrarBtn").addEventListener("click", () => {
+  if (listo) return;
+  trazos = []; pintarTinta(); pintarGuia(); feedback("");
+});
+
+// ---------- Rondas ----------
+function nuevo() {
+  const lista = SETS[nivel];
+  item = lista[idx % lista.length]; idx++;
+  geo = medir(item.ch);
+  trazos = []; actual = null; listo = false; fallos = 0;
+  pintarGuia(); pintarTinta();
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  if (item.e) {
+    $("ayuda").innerHTML = `${item.e}<small>${item.pal}</small>`;
+    instruccion(`Trazá <b>${item.ch}</b>`, `Trazá ${item.d}, de ${item.pal}.`);
+  } else {
+    $("ayuda").innerHTML = item.n ? `<small style="font-size:1.4rem;letter-spacing:-2px">${"🍎".repeat(item.n)}</small>` : "";
+    instruccion(`Trazá <b>${item.ch}</b>`, `Trazá ${item.d}.`);
+  }
+}
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => { nivel = v; idx = 0; nuevo(); });
+
+// Esperar la fuente (si hay internet) para que la letra tenga la forma redondita de Baloo
+const fuente = document.fonts ? Promise.race([document.fonts.load(`800 100px "Baloo 2"`), new Promise(r => setTimeout(r, 1500))]).catch(() => {}) : Promise.resolve();
+alEmpezar(() => fuente.then(nuevo));
+
+if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, get geo() { return geo; }, get item() { return item; }, S, Q };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

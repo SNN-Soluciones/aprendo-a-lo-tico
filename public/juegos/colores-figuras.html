@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Colores y figuras</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .opciones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 14px; }
+  .opciones button { border-radius: 26px; padding: 10px; aspect-ratio: 1 / .82; display: flex; align-items: center; justify-content: center; }
+  .opciones svg { width: 78%; height: 100%; display: block; overflow: visible; }
+  .opciones svg * { stroke: #1F3A5F; stroke-width: 4; stroke-linejoin: round; }
+  .opciones button.nope svg { animation: nope .35s; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🔴🔷⭐</div>
+  <h1>Colores y figuras</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Escuchá y tocá el color o la figura que te piden.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button data-nivel="color" aria-pressed="true" aria-label="Colores">🎨</button>
+    <button data-nivel="figura" aria-label="Figuras">🔺</button>
+    <button data-nivel="ambos" aria-label="Colores y figuras">🎨🔺</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><div class="txt" id="instr"></div></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { elogio } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
+
+const $ = id => document.getElementById(id);
+
+// f = femenino (para decir "la estrella amarilla")
+const FIGURAS = [
+  { id: "circulo", n: "círculo", f: false, svg: c => `<circle cx="50" cy="50" r="42" fill="${c}"/>` },
+  { id: "cuadrado", n: "cuadrado", f: false, svg: c => `<rect x="10" y="10" width="80" height="80" rx="4" fill="${c}"/>` },
+  { id: "triangulo", n: "triángulo", f: false, svg: c => `<polygon points="50,6 95,90 5,90" fill="${c}"/>` },
+  { id: "rectangulo", n: "rectángulo", f: false, svg: c => `<rect x="2" y="26" width="96" height="50" rx="4" fill="${c}"/>` },
+  { id: "estrella", n: "estrella", f: true, svg: c => `<polygon points="50,4 62,37 97,38 69,59 79,93 50,73 21,93 31,59 3,38 38,37" fill="${c}"/>` },
+  { id: "corazon", n: "corazón", f: false, svg: c => `<path d="M50 90 C 18 66 3 48 3 30 C 3 14 15 5 28 5 C 38 5 46 11 50 20 C 54 11 62 5 72 5 C 85 5 97 14 97 30 C 97 48 82 66 50 90 Z" fill="${c}"/>` },
+];
+// m/f = cómo se dice en masculino y femenino
+const COLORES = [
+  { id: "rojo", m: "rojo", f: "roja", c: "#E53935" },
+  { id: "azul", m: "azul", f: "azul", c: "#1E6FD9" },
+  { id: "amarillo", m: "amarillo", f: "amarilla", c: "#FFD600" },
+  { id: "verde", m: "verde", f: "verde", c: "#2FA85A" },
+  { id: "anaranjado", m: "anaranjado", f: "anaranjada", c: "#F57C00" },
+  { id: "morado", m: "morado", f: "morada", c: "#8E5BD9" },
+  { id: "rosado", m: "rosado", f: "rosada", c: "#F48FB1" },
+  { id: "cafe", m: "café", f: "café", c: "#795548" },
+];
+
+let modo = "color", meta = null, opciones = [], fallos = 0, listo = false, ultimo = "";
+const stars = estrellas("figuras-stars");
+
+const art = (fig, def = true) => def ? (fig.f ? "la" : "el") : (fig.f ? "una" : "un");
+const nombre = (o, def = true) => `${art(o.fig, def)} ${o.fig.n} ${o.fig.f ? o.col.f : o.col.m}`;
+const ese = fig => fig.f ? "Esa es" : "Ese es";
+const dibujo = o => `<svg viewBox="0 0 100 100" aria-hidden="true">${o.fig.svg(o.col.c)}</svg>`;
+
+function nuevo() {
+  fallos = 0; listo = false;
+  let ops;
+  if (modo === "color") {
+    const fig = azar(FIGURAS);
+    const cols = barajar(COLORES).slice(0, 4);
+    ops = cols.map(col => ({ fig, col }));
+  } else if (modo === "figura") {
+    const figs = barajar(FIGURAS).slice(0, 4);
+    const cols = barajar(COLORES);
+    ops = figs.map((fig, i) => ({ fig, col: cols[i] }));
+  } else {
+    // Una correcta, una con la misma figura, una con el mismo color y una distinta
+    const fig = azar(FIGURAS), col = azar(COLORES);
+    const otraFig = () => azar(FIGURAS.filter(x => x !== fig));
+    const otroCol = () => azar(COLORES.filter(x => x !== col));
+    ops = [{ fig, col }, { fig, col: otroCol() }, { fig: otraFig(), col }];
+    let d;
+    do d = { fig: otraFig(), col: otroCol() };
+    while (ops.some(o => o.fig === d.fig && o.col === d.col));
+    ops.push(d);
+  }
+  meta = ops[0];
+  // que no se repita la misma pregunta seguida
+  const clave = modo === "color" ? meta.col.id : modo === "figura" ? meta.fig.id : meta.fig.id + meta.col.id;
+  if (clave === ultimo) return nuevo();
+  ultimo = clave;
+
+  opciones = barajar(ops);
+  $("opciones").innerHTML = opciones.map((o, i) => `<button data-i="${i}" aria-label="${nombre(o, false)}">${dibujo(o)}</button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+
+  if (modo === "color") {
+    instruccion(`<span class="big" style="color:${meta.col.c}">●</span> ${meta.col.m}`, `Tocá el color ${meta.col.m}.`);
+  } else if (modo === "figura") {
+    instruccion(`${meta.fig.n}`, `Tocá ${art(meta.fig)} ${meta.fig.n}.`);
+  } else {
+    instruccion(`${meta.fig.n} ${meta.fig.f ? meta.col.f : meta.col.m}`, `Tocá ${nombre(meta)}.`);
+  }
+}
+
+function queEs(o) {
+  if (modo === "color") return `Ese es el ${o.col.m}`;
+  if (modo === "figura") return `${ese(o.fig)} ${art(o.fig, false)} ${o.fig.n}`;
+  return `${ese(o.fig)} ${nombre(o, false)}`;
+}
+
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled) return;
+  const o = opciones[Number(b.dataset.i)];
+  if (o === meta) {
+    listo = true;
+    b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    const dicho = modo === "color" ? `Ese es el ${meta.col.m}` : modo === "figura" ? `${ese(meta.fig)} ${art(meta.fig)} ${meta.fig.n}` : `${ese(meta.fig)} ${nombre(meta)}`;
+    if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${dicho}.`); }
+    else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${dicho}.`); }
+    $("nextBtn").classList.add("pulse");
+  } else {
+    fallos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    // ¡Casi! = acertó la figura o el color (solo en el modo de los dos)
+    const medio = modo === "ambos" && (o.fig === meta.fig || o.col === meta.col);
+    if (medio) {
+      feedback("almost", "🤏", "¡Casi!");
+      decir(`¡Casi! ${queEs(o)}. ${o.fig === meta.fig ? "Buscá otro color" : "Buscá otra figura"}.`);
+    } else {
+      feedback("bad", "🙈", "No es");
+      decir(`${queEs(o)}. Probá otra vez.`);
+    }
+  }
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => { modo = v; ultimo = ""; nuevo(); });
+alEmpezar(nuevo);
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¡A contar!</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .escena {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 12px 8px; min-height: 180px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+  }
+  .fila { display: flex; gap: 6px; justify-content: center; }
+  .cosa {
+    font-size: clamp(2.2rem, 11vw, 3.2rem); line-height: 1; padding: 4px; border: none; box-shadow: none;
+    background: none; border-radius: 16px; position: relative;
+  }
+  .cosa:active { transform: scale(.9); box-shadow: none; }
+  .cosa.contada { background: #FFF1C2; }
+  .cosa .n {
+    position: absolute; top: -6px; right: -6px; min-width: 26px; height: 26px; border-radius: 13px;
+    background: var(--materia); color: #fff; font-size: 1rem; line-height: 26px; text-align: center; padding: 0 4px;
+  }
+  .escena.n20 .cosa { font-size: clamp(1.6rem, 8vw, 2.4rem); }
+  .cosa.luz { animation: luz .5s; }
+  @keyframes luz { 50% { transform: scale(1.35); } }
+
+  .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  .opciones button { font-size: clamp(3rem, 16vw, 4.4rem); line-height: 1.1; border-radius: 24px; padding: 6px 0; color: var(--materia); }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🥭🐥🍌</div>
+  <h1>¡A contar!</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Tocá cada dibujo para contarlo y después escogé el número.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button data-nivel="5" aria-pressed="true">1–5</button>
+    <button data-nivel="10">1–10</button>
+    <button data-nivel="20">1–20</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><div class="txt" id="instr"></div></div>
+<div class="wrap escena" id="escena"></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido, numeroEnPalabras as enPalabras } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
+
+const $ = id => document.getElementById(id);
+const COSAS = [
+  { e: "🥭", s: "mango", p: "mangos", f: false },
+  { e: "🐥", s: "pollito", p: "pollitos", f: false },
+  { e: "🍌", s: "banano", p: "bananos", f: false },
+  { e: "⭐", s: "estrella", p: "estrellas", f: true },
+  { e: "🐢", s: "tortuguita", p: "tortuguitas", f: true },
+  { e: "🍓", s: "fresa", p: "fresas", f: true },
+  { e: "⚽", s: "bola", p: "bolas", f: true },
+  { e: "🦋", s: "mariposa", p: "mariposas", f: true },
+  { e: "🐟", s: "pececito", p: "pececitos", f: false },
+  { e: "🌺", s: "flor", p: "flores", f: true },
+];
+
+let max = 5, n = 0, cosa = null, contadas = 0, fallos = 0, listo = false, ocupado = false, anterior = 0;
+const stars = estrellas("contar-stars");
+
+function nuevo() {
+  do n = 1 + Math.floor(Math.random() * max); while (n === anterior && max > 1);
+  anterior = n;
+  cosa = azar(COSAS);
+  contadas = 0; fallos = 0; listo = false; ocupado = false;
+
+  // En filas de 5 (como los dedos de la mano) para que sea más fácil contar.
+  const filas = [];
+  for (let i = 0; i < n; i += 5) filas.push(Math.min(5, n - i));
+  let k = 0;
+  $("escena").className = "wrap escena" + (max > 10 ? " n20" : "");
+  $("escena").innerHTML = filas.map(c => `<div class="fila">${
+    Array.from({ length: c }, () => `<button class="cosa" data-k="${k++}" aria-label="${cosa.s}">${cosa.e}</button>`).join("")
+  }</div>`).join("");
+
+  // Tres opciones: la correcta y dos cercanas
+  const ops = new Set([n]);
+  const cerca = [n - 1, n + 1, n - 2, n + 2].filter(x => x >= 1 && x <= max);
+  barajar(cerca).forEach(x => ops.size < 3 && ops.add(x));
+  while (ops.size < 3) ops.add(1 + Math.floor(Math.random() * Math.max(max, 3)));
+  $("opciones").innerHTML = barajar([...ops]).map(x => `<button data-v="${x}" aria-label="${enPalabras(x)}">${x}</button>`).join("");
+
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  instruccion(`<span class="big">${cosa.e}</span> ¿Cuántos hay?`, `¿Cuánt${cosa.f ? "as" : "os"} ${cosa.p} hay? Tocal${cosa.f ? "as" : "os"} para contarl${cosa.f ? "as" : "os"}.`);
+}
+
+// Tocar un dibujo lo cuenta en voz alta
+$("escena").addEventListener("click", e => {
+  const b = e.target.closest(".cosa");
+  if (!b || ocupado || b.classList.contains("contada")) return;
+  contadas++;
+  b.classList.add("contada");
+  b.insertAdjacentHTML("beforeend", `<span class="n">${contadas}</span>`);
+  sonido("tap");
+  hablar(enPalabras(contadas));
+});
+
+const noSon = v => v === 1 ? "No es uno" : `No son ${enPalabras(v)}`;
+
+// Contar juntos: resalta cada dibujo y dice el número
+async function contarJuntos() {
+  ocupado = true;
+  const els = Array.from($("escena").querySelectorAll(".cosa"));
+  els.forEach(el => { el.classList.remove("contada"); el.querySelector(".n")?.remove(); });
+  contadas = 0;
+  for (const el of els) {
+    contadas++;
+    el.classList.add("contada", "luz");
+    el.insertAdjacentHTML("beforeend", `<span class="n">${contadas}</span>`);
+    await Promise.all([hablar(enPalabras(contadas), { rate: 1 }), new Promise(r => setTimeout(r, 450))]);
+  }
+  ocupado = false;
+}
+
+$("opciones").addEventListener("click", async e => {
+  const b = e.target.closest("[data-v]");
+  if (!b || listo || ocupado || b.disabled) return;
+  const v = Number(b.dataset.v);
+  if (v === n) {
+    listo = true;
+    b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    const frase = n === 1 ? `Hay ${cosa.f ? "una" : "un"} ${cosa.s}.` : `Hay ${enPalabras(n)} ${cosa.p}.`;
+    if (fallos === 0) { stars.sumar(); feedback("ok", "🎉", frase); decir(`${elogio()} ${frase}`); }
+    else { feedback("almost", "🤏", frase); decir(`¡Ahora sí! ${frase}`); }
+    $("nextBtn").classList.add("pulse");
+  } else {
+    fallos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    if (Math.abs(v - n) === 1) {
+      feedback("almost", "🤏", "¡Casi!");
+      await decir(`¡Casi! ${noSon(v)}. Contemos juntos.`);
+    } else {
+      feedback("bad", "🙈", "No es");
+      await decir(`${noSon(v)}. Contemos juntos.`);
+    }
+    await contarJuntos();
+  }
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => { max = Number(v); anterior = 0; nuevo(); });
+alEmpezar(nuevo);
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

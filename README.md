@@ -18,6 +18,10 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🦥 Animales de Costa Rica | Ciencias | 1° a 4° | `public/juegos/animales-cr.html` |
 | 🗺️ Mapa de provincias | Estudios Sociales | 2° a 4° | `public/juegos/provincias.html` |
 | 👂 Listen and tap | Inglés | 1° a 4° | `public/juegos/listen-tap.html` |
+| 🐥 ¡A contar! | Matemáticas | Prepa y 1° | `public/juegos/contar.html` |
+| 🔺 Colores y figuras | Matemáticas | Prepa | `public/juegos/colores-figuras.html` |
+| 👂 ¿Con qué empieza? | Español | Prepa y 1° | `public/juegos/sonido-inicial.html` |
+| ✍️ Trazá letras y números | Español | Prepa y 1° | `public/juegos/trazos.html` |
 
 ## Estructura
 
@@ -31,9 +35,12 @@ aprendo-a-lo-tico/
 │   ├── manifest.webmanifest
 │   ├── sw.js               # Service worker (modo sin internet)
 │   ├── css/base.css        # Estilos del inicio y páginas generales
+│   ├── css/prepa.css       # Estilos compartidos de los juegos de Prepa
 │   ├── js/config.js        # ⚙️ Número SINPE y datos generales
 │   ├── js/catalog.js       # 📚 Materias, grados y lista de juegos
 │   ├── js/home.js          # Lógica del inicio
+│   ├── js/voz.js           # 🔊 Voz (speechSynthesis) y sonidos compartidos
+│   ├── js/prepa.js         # Piezas comunes de los juegos de Prepa
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido
 ├── README.md
@@ -126,6 +133,15 @@ Si agregás archivos nuevos, sumalos también a la lista `SHELL` para que funcio
 ```
 
 3. Sumalo a `SHELL` en `sw.js` y subí `VERSION`.
+
+### Juegos para los que todavía no leen (Prepa)
+
+Usan `css/prepa.css`, `js/voz.js` y `js/prepa.js` (ver `juegos/contar.html` como ejemplo):
+
+- **Arrancan con un ▶️ gigante.** Los celulares no dejan sonar audio hasta que el usuario toca algo.
+- **Todo se dice en voz alta:** la instrucción, lo que se tocó y la retroalimentación. El botón 🔊 repite.
+- **Nada depende de leer:** íconos, dibujos y números. El texto chiquito es para el papá o la maestra.
+- **Sonidos cortos** de acierto y error con `sonido("ok" | "casi" | "mal")`, sin archivos de audio.
 
 ### Guía de estilo de los juegos
 

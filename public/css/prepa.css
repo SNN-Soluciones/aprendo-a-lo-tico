@@ -1,0 +1,112 @@
+/* 🧒 Estilos compartidos de los juegos para Prepa (niños que todavía no leen).
+   Todo se entiende con dibujos y voz: botones grandes, íconos y poco texto. */
+:root {
+  --bg: #CFEFE3;
+  --face: #FFFFFF;
+  --rim: #1F3A5F;
+  --ink: #1F3A5F;
+  --soft: #9DB3C9;
+  --btn: #FFC83D;
+  --ok: #2FA85A;
+  --almost: #D98A00;
+  --bad: #D9443A;
+  --page-ink: #1F3A5F;
+  --materia: #2F7FD1;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+}
+:root[data-theme="dark"] { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+*, *::before, *::after { box-sizing: inherit; }
+body {
+  margin: 0; min-height: 100vh;
+  background: var(--bg);
+  font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+  color: var(--ink);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 12px 10px calc(84px + env(safe-area-inset-bottom, 0px));
+  -webkit-tap-highlight-color: transparent;
+  user-select: none; -webkit-user-select: none;
+}
+.wrap { width: min(96vw, 620px); }
+
+button {
+  font: inherit; font-weight: 800; color: var(--ink);
+  border: 4px solid var(--rim); border-radius: 999px;
+  background: var(--face); padding: 6px 16px; cursor: pointer;
+  box-shadow: 0 4px 0 var(--rim); transition: transform .08s;
+  touch-action: manipulation;
+}
+button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rim); }
+button:focus-visible { outline: 3px dashed var(--materia); outline-offset: 3px; }
+button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 0 4px 0 var(--rim); }
+
+/* Barra de arriba: niveles (para el papá o la maestra) y estrellas */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.levels { display: flex; gap: 6px; flex-wrap: wrap; }
+.levels button { font-size: 1.05rem; padding: 3px 12px; }
+.levels button[aria-pressed="true"] { background: var(--btn); }
+.stars { font-size: 1.4rem; font-weight: 800; color: var(--page-ink); white-space: nowrap; }
+
+/* Instrucción: un botón grande de 🔊 para volver a escuchar */
+.instr {
+  margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+  padding: 8px 10px; display: flex; align-items: center; gap: 12px; min-height: 84px;
+}
+.instr .oir { font-size: 2.2rem; padding: 4px 16px; background: var(--btn); flex: none; }
+.instr .oir.hablando { animation: pulse .8s ease-in-out infinite; }
+.instr .txt { flex: 1; text-align: center; font-size: clamp(1.1rem, 5vw, 1.5rem); font-weight: 800; line-height: 1.15; }
+.instr .txt .big { font-size: clamp(2.4rem, 12vw, 3.4rem); line-height: 1; display: inline-block; vertical-align: middle; }
+
+/* Retroalimentación: emoji grande + frase corta (la voz dice lo mismo) */
+.feedback {
+  min-height: 5rem; margin-top: 10px; text-align: center; font-size: 1.4rem; font-weight: 800;
+  color: var(--page-ink); line-height: 1.15; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.feedback .emo { font-size: 3rem; line-height: 1; }
+.feedback.ok { color: var(--ok); }
+.feedback.almost { color: var(--almost); }
+.feedback.bad { color: var(--bad); }
+.feedback.pop .emo { animation: pop .45s ease-out; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .feedback.ok { color: #7BE3A0; }
+  :root:not([data-theme="light"]) .feedback.almost { color: #FFC83D; }
+  :root:not([data-theme="light"]) .feedback.bad { color: #FF8A80; }
+}
+
+.bottom { display: flex; justify-content: center; margin-top: 8px; gap: 12px; }
+.bottom button { background: var(--btn); font-size: 2rem; padding: 4px 30px; }
+.bottom button.pulse { animation: pulse 1s ease-in-out infinite; }
+
+/* Pantalla de inicio: solo un ▶️ gigante (el audio necesita un toque antes de sonar) */
+.start {
+  position: fixed; inset: 0; z-index: 40; background: var(--bg);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 20px; text-align: center;
+}
+.start[hidden] { display: none; }
+.start .big { font-size: 5.5rem; line-height: 1; }
+.start h1 { margin: 0; font-size: clamp(2rem, 9vw, 2.8rem); color: var(--page-ink); line-height: 1.1; }
+.start button { background: var(--btn); font-size: 3.4rem; width: 132px; height: 132px; padding: 0; border-radius: 50%; animation: pulse 1.4s ease-in-out infinite; }
+.start p { margin: 0; font-size: 1rem; font-weight: 700; color: var(--page-ink); opacity: .8; max-width: 24rem; }
+
+/* Opciones y animaciones comunes */
+.right { background: #C9F2D6 !important; border-color: var(--ok) !important; box-shadow: 0 4px 0 var(--ok) !important; opacity: 1 !important; }
+.wrong { background: #FBD5D1 !important; }
+.nope { animation: nope .35s; }
+@keyframes nope { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+@keyframes pulse { 50% { transform: scale(1.08); } }
+@keyframes pop { 0% { transform: scale(.3) rotate(-15deg); } 70% { transform: scale(1.2); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+}
+
+.home-link {
+  position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  z-index: 50; width: 52px; height: 52px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; text-decoration: none;
+  font-size: 1.6rem; background: #FFFFFF; border: 4px solid #1F3A5F; box-shadow: 0 4px 0 #1F3A5F;
+}
+.home-link:active { transform: translateY(3px); box-shadow: 0 1px 0 #1F3A5F; }

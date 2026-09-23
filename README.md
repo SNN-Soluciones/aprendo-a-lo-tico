@@ -14,6 +14,10 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🕒 Aprendo la hora | Matemáticas | 1° a 3° | `public/juegos/reloj.html` |
 | 🧱 Restas con bloques | Matemáticas | 2° a 4° | `public/juegos/restas-bloques.html` |
 | 🪙 La pulpería | Matemáticas | 1° a 4° | `public/juegos/pulperia.html` |
+| ➕ Sumas con bloques | Matemáticas | 1° a 4° | `public/juegos/sumas-bloques.html` |
+| 🦥 Animales de Costa Rica | Ciencias | 1° a 4° | `public/juegos/animales-cr.html` |
+| 🗺️ Mapa de provincias | Estudios Sociales | 2° a 4° | `public/juegos/provincias.html` |
+| 👂 Listen and tap | Inglés | 1° a 4° | `public/juegos/listen-tap.html` |
 
 ## Estructura
 
@@ -145,6 +149,10 @@ npx cap open android   # compilar desde Android Studio
 ```
 
 Para que funcione 100% offline dentro del APK, conviene descargar la fuente Baloo 2 (`.woff2`) a `public/fonts/` y cambiar el `<link>` de Google Fonts por un `@font-face` local.
+
+## Créditos
+
+- Mapa de provincias: © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright), licencia ODbL, obtenido de [geoBoundaries](https://www.geoboundaries.org/) y simplificado.
 
 ## Licencia
 

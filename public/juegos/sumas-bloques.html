@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sumas con bloques</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #CFEFE3;
+    --face: #FFFFFF;
+    --rim: #1F3A5F;
+    --ink: #1F3A5F;
+    --soft: #9DB3C9;
+    --btn: #FFC83D;
+    --ok: #2FA85A;
+    --bad: #D9443A;
+    --page-ink: #1F3A5F;
+    /* colores por posición */
+    --u: #F29A1F; --ud: #B96A05;   /* unidades */
+    --d: #2F7FD1; --dd: #1C5796;   /* decenas */
+    --c: #2FA85A; --cd: #1D7340;   /* centenas */
+    --m: #8E5BD9; --md: #5E36A0;   /* miles */
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  }
+  :root[data-theme="dark"] { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  *, *::before, *::after { box-sizing: inherit; }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--bg);
+    font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 10px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .wrap { width: min(96vw, 720px); }
+
+  button {
+    font: inherit; font-weight: 800; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 999px;
+    background: var(--face); padding: 6px 16px; cursor: pointer;
+    box-shadow: 0 4px 0 var(--rim); transition: transform .08s;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rim); }
+  button:focus-visible { outline: 3px dashed var(--d); outline-offset: 3px; }
+  button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 0 4px 0 var(--rim); }
+
+  /* Barra superior */
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .levels { display: flex; gap: 6px; }
+  .levels button { font-size: 1rem; padding: 4px 12px; }
+  .levels button[aria-pressed="true"] { background: var(--btn); }
+  .stars { font-size: 1.3rem; font-weight: 800; color: var(--page-ink); white-space: nowrap; }
+
+  /* Ecuación */
+  .equation {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 6px 12px; text-align: center; font-size: clamp(1.8rem, 8vw, 2.8rem); font-weight: 800; line-height: 1.2;
+  }
+  .equation .op { color: var(--ink); padding: 0 .15em; }
+  .equation .q { color: var(--soft); }
+  .p0 { color: var(--u); } .p1 { color: var(--d); } .p2 { color: var(--c); } .p3 { color: var(--m); }
+
+  .msg {
+    min-height: 2.8rem; margin: 8px 0; display: flex; align-items: center; justify-content: center;
+    text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--page-ink); line-height: 1.15;
+  }
+  .msg.win { color: var(--ok); font-size: 1.5rem; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .msg.win { color: #7BE3A0; } }
+
+  /* Tapete de columnas */
+  .mat {
+    display: grid; gap: 0;
+    background: var(--face); border: 4px solid var(--rim); border-radius: 22px; overflow: hidden;
+  }
+  .cell { padding: 4px; text-align: center; border-left: 3px dashed #DCE6EF; }
+  .cell.first { border-left: none; }
+  .lab { font-weight: 800; font-size: clamp(.8rem, 3.2vw, 1.05rem); color: #fff; border-left-style: solid; border-left-color: rgba(255,255,255,.4); }
+  .lab.p0 { background: var(--u); } .lab.p1 { background: var(--d); } .lab.p2 { background: var(--c); } .lab.p3 { background: var(--m); }
+  .lab small { display: block; font-size: .75em; opacity: .9; font-weight: 700; margin-top: -4px; }
+
+  .num { font-size: clamp(2rem, 9vw, 2.8rem); font-weight: 800; line-height: 1; padding-top: 8px; position: relative; }
+  .num .orig { display: block; font-size: .45em; color: var(--bad); text-decoration: line-through; text-decoration-thickness: 3px; height: 1.1em; }
+  .num .orig:empty::after { content: "\00a0"; }
+  .num .orig:empty { visibility: hidden; }
+  .num .cur.changed { color: var(--bad); }
+
+  .take { font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 800; line-height: 1.1; border-bottom: 4px solid var(--rim); padding-bottom: 6px; }
+  .dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin-top: 2px; min-height: 12px; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--soft); }
+  .dot.done { background: var(--ok); border-color: var(--ok); }
+  .warn { display: block; font-size: .8rem; color: var(--bad); margin-top: 2px; line-height: 1.1; }
+  .check { color: var(--ok); font-size: 1.1rem; }
+
+  .res { font-size: clamp(2rem, 9vw, 2.8rem); font-weight: 800; line-height: 1; padding: 6px 0 4px; min-height: 3rem; }
+  .res .q { color: var(--soft); }
+
+  .tools { display: flex; flex-direction: column; gap: 6px; align-items: center; padding: 6px 4px; border-top: 3px dashed #DCE6EF; }
+  .tools button { font-size: .85rem; padding: 2px 8px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); white-space: nowrap; }
+  .tools button.pulse { background: var(--btn); animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.1); } }
+
+  .blocks {
+    display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-content: flex-start;
+    min-height: 150px; padding: 8px 4px 12px; background: #F6F9FC;
+  }
+
+  /* Bloques */
+  .blk { padding: 0; border: none; box-shadow: none; border-radius: 0; background: none; cursor: pointer; display: block; }
+  .blk:active { transform: scale(.92); box-shadow: none; }
+  .uni { width: 24px; height: 24px; background: var(--u); border: 2px solid var(--ud); border-radius: 5px; }
+  .dec {
+    width: 18px; height: 124px; border: 2px solid var(--dd); border-radius: 4px;
+    background-color: var(--d);
+    background-image: linear-gradient(to bottom, transparent 82%, var(--dd) 82%);
+    background-size: 100% 10%;
+  }
+  .cen {
+    width: 52px; height: 52px; border: 2px solid var(--cd); border-radius: 4px;
+    background-color: var(--c);
+    background-image:
+      linear-gradient(to bottom, transparent 85%, var(--cd) 85%),
+      linear-gradient(to right, transparent 85%, var(--cd) 85%);
+    background-size: 10% 10%;
+  }
+  .mil { width: 54px; height: 54px; }
+  .mil svg { width: 100%; height: 100%; display: block; }
+
+  .mat.n4 .uni { width: 20px; height: 20px; }
+  .mat.n4 .dec { width: 15px; height: 104px; }
+  .mat.n4 .cen { width: 34px; height: 34px; }
+  .mat.n4 .mil { width: 44px; height: 44px; }
+
+  .blk.new { animation: popin .4s ease-out both; }
+  @keyframes popin { 0% { transform: scale(0) rotate(-20deg); opacity: 0; } 70% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(1); } }
+  .blk.out { animation: out .3s ease-in forwards; }
+  @keyframes out { to { transform: translateY(-40px) scale(.2) rotate(25deg); opacity: 0; } }
+  .blk.breaking { animation: breaking .45s ease-in forwards; }
+  @keyframes breaking {
+    0%, 40% { transform: translateX(0); }
+    10%, 30% { transform: translateX(-4px) rotate(-6deg); }
+    20% { transform: translateX(4px) rotate(6deg); }
+    100% { transform: scale(1.6); opacity: 0; filter: brightness(1.6); }
+  }
+  .blk.gather { animation: gather .4s ease-in forwards; }
+  @keyframes gather { to { transform: scale(.3); opacity: 0; } }
+  .blk.nope { animation: nope .35s; }
+  @keyframes nope { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+
+  /* Bandeja: bloques que faltan por agregar */
+  .add { font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 800; line-height: 1.1; padding-bottom: 2px; background: #FFF6DA; }
+  .tray {
+    display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; align-content: flex-start;
+    min-height: 40px; padding: 6px 4px 10px; background: #FFF6DA; border-bottom: 4px solid var(--rim);
+  }
+  .tray .blk.fly { animation: fly .3s ease-in forwards; }
+  @keyframes fly { to { transform: translateY(40px) scale(.4); opacity: 0; } }
+  .mat.n4 .tray .dec { height: 84px; }
+  .tray .dec { height: 94px; }
+
+  .bottom { display: flex; justify-content: center; margin-top: 14px; }
+  .bottom button { background: var(--btn); font-size: 1.3rem; padding: 8px 28px; }
+  .bottom button.pulse { animation: pulse 1s ease-in-out infinite; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .blk.new, .blk.out, .blk.breaking, .blk.gather, .blk.nope, .tray .blk.fly, .tools button.pulse, .bottom button.pulse { animation-duration: .01s; animation-iteration-count: 1; }
+  }
+
+  .home-link {
+    position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 50; width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-decoration: none;
+    font-size: 1.6rem; background: #FFFFFF; border: 4px solid #1F3A5F; box-shadow: 0 4px 0 #1F3A5F;
+  }
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+  .home-link:active { transform: translateY(3px); box-shadow: 0 1px 0 #1F3A5F; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button data-n="2" aria-pressed="true">Decenas</button>
+    <button data-n="3">Centenas</button>
+    <button data-n="4">Miles</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap equation" id="equation"></div>
+<div class="wrap msg" id="msg" aria-live="polite"></div>
+<div class="wrap mat" id="mat"></div>
+<div class="wrap bottom"><button id="nextBtn">Otro problema</button></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const mat = $("mat"), msg = $("msg"), eqEl = $("equation"), nextBtn = $("nextBtn"), starsEl = $("stars");
+
+  const NAME = ["Unidades", "Decenas", "Centenas", "Miles"];
+  const SHORT = ["U", "D", "C", "UM"];
+  const SING = ["unidad", "decena", "centena", "mil"];
+  const PL = ["unidades", "decenas", "centenas", "miles"];
+  const CLS = ["uni", "dec", "cen", "mil"];
+
+  let n = 2;                 // cantidad de columnas
+  let a = 0, b = 0;          // a + b
+  let counts = [], orig = [], toAdd = [];
+  let newIn = [0, 0, 0, 0];
+  let busy = false, won = false;
+  let stars = 0;
+  try { stars = Number(localStorage.getItem("sumas-stars")) || 0; } catch (_) {}
+
+  const digits = (x, len) => Array.from({ length: len }, (_, p) => Math.floor(x / 10 ** p) % 10);
+  const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+  // ---------- Problemas (siempre "llevando" al menos una vez y sin pasarse de columnas) ----------
+  function generate() {
+    const lo = 10 ** (n - 1);
+    for (let t = 0; t < 1000; t++) {
+      const A = rand(lo, 10 ** n - 1 - lo);
+      const B = rand(n === 2 ? 3 : 10 ** (n - 2), 10 ** n - 1 - A);
+      if (B < 1) continue;
+      const da = digits(A, n), db = digits(B, n);
+      if (da.some((d, p) => d + db[p] > 9)) return [A, B];
+    }
+    return [n === 2 ? 38 : n === 3 ? 457 : 2768, n === 2 ? 25 : n === 3 ? 186 : 1459];
+  }
+
+  function newProblem() {
+    [a, b] = generate();
+    counts = digits(a, n);
+    orig = counts.slice();
+    toAdd = digits(b, n);
+    newIn = [0, 0, 0, 0];
+    newIn.forEach((_, p) => newIn[p] = p < n ? counts[p] : 0);
+    won = false; busy = false;
+    nextBtn.classList.remove("pulse");
+    say("Tocá los bloques amarillos de arriba para agregarlos 👇");
+    render();
+  }
+
+  function say(text, cls = "") { msg.className = "wrap msg " + cls; msg.innerHTML = text; }
+
+  // ---------- Dibujo ----------
+  const MIL_SVG = (c, d) => `<svg viewBox="0 0 40 40" aria-hidden="true">
+    <polygon points="20,2 38,11 20,20 2,11" fill="${c}" stroke="${d}" stroke-width="1.5" style="filter:brightness(1.25)"/>
+    <polygon points="2,11 20,20 20,38 2,29" fill="${c}" stroke="${d}" stroke-width="1.5"/>
+    <polygon points="38,11 20,20 20,38 38,29" fill="${d}" stroke="${d}" stroke-width="1.5"/>
+    <path d="M11,6.5 L29,15.5 M29,6.5 L11,15.5 M2,20 L20,29 M11,15.5 L11,33.5 M38,20 L20,29 M29,15.5 L29,33.5" stroke="${d}" stroke-width="1" fill="none" opacity=".7"/>
+  </svg>`;
+
+  const una = p => p === 3 ? "un mil" : "una " + SING[p];
+
+  function blockHTML(p, isNew, delay, label) {
+    const inner = p === 3 ? MIL_SVG("var(--m)", "var(--md)") : "";
+    return `<button class="blk ${CLS[p]}${isNew ? " new" : ""}" data-p="${p}" style="${isNew ? `animation-delay:${delay}ms` : ""}" aria-label="${label}">${inner}</button>`;
+  }
+
+  function allDone() { return toAdd.slice(0, n).every(x => x === 0) && counts.slice(0, n).every(x => x <= 9); }
+  function result() { return counts.slice(0, n).reduce((s, c, p) => s + c * 10 ** p, 0); }
+
+  function colored(x) {
+    const ds = String(x).split("");
+    return ds.map((d, i) => `<span class="p${ds.length - 1 - i}">${d}</span>`).join("");
+  }
+
+  function render() {
+    const places = [];
+    for (let p = n - 1; p >= 0; p--) places.push(p);
+    mat.className = "wrap mat n" + n;
+    mat.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+    const joiners = new Set(places.filter(p => counts[p] >= 10 && p < n - 1));
+    const f = i => i === 0 ? " first" : "";
+
+    let html = "";
+    places.forEach((p, i) => html += `<div class="cell lab p${p}${f(i)}">${NAME[p]}<small>${SHORT[p]}</small></div>`);
+    places.forEach((p, i) => {
+      html += `<div class="cell add${f(i)}"><span class="op">+</span><span class="p${p}">${digits(b, n)[p]}</span>${toAdd[p] === 0 && digits(b, n)[p] > 0 ? ` <span class="check">✓</span>` : ""}</div>`;
+    });
+    places.forEach((p, i) => {
+      let blocks = "";
+      for (let k = 0; k < toAdd[p]; k++) blocks += blockHTML(p, false, 0, `Agregar ${una(p)}`);
+      html += `<div class="cell tray${f(i)}" data-tray="${p}">${blocks}</div>`;
+    });
+    places.forEach((p, i) => {
+      const changed = counts[p] !== orig[p];
+      const warn = counts[p] > 9 ? `<span class="warn">¡Más de 9!</span>` : "";
+      html += `<div class="cell num${f(i)}"><span class="orig">${changed ? orig[p] : ""}</span><span class="cur p${p}${counts[p] > 9 ? " changed" : ""}">${counts[p]}</span>${warn}</div>`;
+    });
+    places.forEach((p, i) => {
+      const show = toAdd[p] === 0 && counts[p] <= 9 && (p === 0 || toAdd.slice(0, p).every(x => x === 0) && counts.slice(0, p).every(x => x <= 9));
+      html += `<div class="cell res${f(i)}">${show ? `<span class="p${p}">${counts[p]}</span>` : `<span class="q">?</span>`}</div>`;
+    });
+    places.forEach((p, i) => {
+      const tools = p < n - 1
+        ? `<button data-join="${p}" ${counts[p] < 10 || won ? "disabled" : ""} class="${joiners.has(p) && !won ? "pulse" : ""}" aria-label="Juntar 10 ${PL[p]} en ${una(p + 1)}">🧲 10 → 1</button>`
+        : "";
+      html += `<div class="cell tools${f(i)}">${tools}</div>`;
+    });
+    places.forEach((p, i) => {
+      let blocks = "";
+      const start = counts[p] - newIn[p];
+      for (let k = 0; k < counts[p]; k++) {
+        const isNew = k >= start;
+        blocks += blockHTML(p, isNew, (k - start) * 45, `${SING[p] === "mil" ? "Un mil" : "Una " + SING[p]}`);
+      }
+      html += `<div class="cell blocks${f(i)}" data-col="${p}">${blocks}</div>`;
+    });
+    mat.innerHTML = html;
+    newIn = [0, 0, 0, 0];
+
+    const done = allDone();
+    eqEl.innerHTML = `${colored(a)}<span class="op">+</span>${colored(b)}<span class="op">=</span>${done ? colored(result()) : `<span class="q">?</span>`}`;
+    if (done && !won) win();
+  }
+
+  function win() {
+    won = true;
+    stars++;
+    try { localStorage.setItem("sumas-stars", stars); } catch (_) {}
+    starsEl.textContent = "⭐ " + stars;
+    say(`¡Acertado! 🎉 ${a} + ${b} = ${result()}`, "win");
+    nextBtn.classList.add("pulse");
+    render();
+  }
+
+  // ---------- Acciones ----------
+  mat.addEventListener("click", e => {
+    if (busy || won) return;
+    const jn = e.target.closest("[data-join]");
+    const blk = e.target.closest(".blk");
+    if (jn) return joinTen(Number(jn.dataset.join));
+    if (blk && blk.closest(".tray")) return addOne(Number(blk.dataset.p), blk);
+    if (blk) {
+      const p = Number(blk.dataset.p);
+      blk.classList.remove("nope"); void blk.offsetWidth; blk.classList.add("nope");
+      say(counts[p] > 9 && p < n - 1
+        ? `Tenés ${counts[p]} ${PL[p]}. ¡Juntá 10 con el imán 🧲!`
+        : "Estos ya están en el tapete. Agregá los de la bandeja amarilla 👆");
+    }
+  });
+
+  function addOne(p, el) {
+    busy = true;
+    el.classList.add("fly");
+    setTimeout(() => {
+      toAdd[p]--; counts[p]++; newIn[p] = 1;
+      busy = false;
+      if (counts[p] > 9 && p < n - 1) say(`¡Ya tenés ${counts[p]} ${PL[p]}! Juntá 10 para hacer ${una(p + 1)} 🧲`);
+      else if (toAdd[p] === 0) say(`¡Listo las ${PL[p]}! Hay ${counts[p]}.`);
+      else say(`Faltan ${toAdd[p]} ${toAdd[p] === 1 ? SING[p] : PL[p]} por agregar`);
+      render();
+    }, 300);
+  }
+
+  function joinTen(p) {
+    if (counts[p] < 10) return;
+    const col = mat.querySelector(`.blocks[data-col="${p}"]`);
+    busy = true;
+    if (col) Array.from(col.children).slice(-10).forEach(el => el.classList.add("gather"));
+    setTimeout(() => {
+      counts[p] -= 10; counts[p + 1]++; newIn[p + 1] = 1;
+      busy = false;
+      say(`¡10 ${PL[p]} = 1 ${SING[p + 1]}! Se lleva 1 a las ${PL[p + 1]} ➡️`);
+      render();
+    }, 400);
+  }
+
+  document.querySelectorAll(".levels button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      n = Number(btn.dataset.n);
+      document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
+      newProblem();
+    });
+  });
+  nextBtn.addEventListener("click", newProblem);
+
+  starsEl.textContent = "⭐ " + stars;
+  newProblem();
+})();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

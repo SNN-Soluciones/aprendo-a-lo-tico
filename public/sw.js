@@ -1,12 +1,13 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "404.html",
   "css/base.css", "js/home.js", "js/catalog.js", "js/config.js",
   "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
   "juegos/reloj.html", "juegos/restas-bloques.html", "juegos/pulperia.html",
+  "juegos/sumas-bloques.html", "juegos/animales-cr.html", "juegos/provincias.html", "juegos/listen-tap.html",
 ];
 
 self.addEventListener("install", (e) => {

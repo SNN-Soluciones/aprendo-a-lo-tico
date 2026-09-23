@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Animales de Costa Rica</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #CFEFE3;
+    --face: #FFFFFF;
+    --rim: #1F3A5F;
+    --ink: #1F3A5F;
+    --soft: #9DB3C9;
+    --btn: #FFC83D;
+    --ok: #2FA85A;
+    --almost: #D98A00;
+    --bad: #D9443A;
+    --page-ink: #1F3A5F;
+    --materia: #2FA85A;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  }
+  :root[data-theme="dark"] { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--bg);
+    font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 10px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .wrap { width: min(96vw, 620px); }
+
+  button {
+    font: inherit; font-weight: 800; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 999px;
+    background: var(--face); padding: 6px 16px; cursor: pointer;
+    box-shadow: 0 4px 0 var(--rim); transition: transform .08s;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rim); }
+  button:focus-visible { outline: 3px dashed var(--materia); outline-offset: 3px; }
+  button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 0 4px 0 var(--rim); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .levels { display: flex; gap: 6px; flex-wrap: wrap; }
+  .levels button { font-size: 1rem; padding: 4px 12px; }
+  .levels button[aria-pressed="true"] { background: var(--btn); }
+  .stars { font-size: 1.3rem; font-weight: 800; color: var(--page-ink); white-space: nowrap; }
+
+  .card {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 10px 14px 14px; text-align: center; position: relative;
+  }
+  .animal { font-size: clamp(5rem, 26vw, 7.5rem); line-height: 1.1; }
+  .animal.pop { animation: pop .45s ease-out; }
+  @keyframes pop { 0% { transform: scale(.4) rotate(-12deg); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .nombre { font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 800; line-height: 1.1; }
+  .pregunta { font-size: clamp(1.2rem, 5vw, 1.5rem); font-weight: 700; margin-top: 6px; color: var(--materia); }
+  .speak { position: absolute; top: 10px; right: 10px; font-size: 1.4rem; padding: 2px 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+
+  .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
+  .options button {
+    border-radius: 20px; padding: 10px 4px; font-size: clamp(.95rem, 4vw, 1.2rem); line-height: 1.1;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .options button .e { font-size: clamp(2rem, 10vw, 2.8rem); line-height: 1; }
+  .options button.right { background: #C9F2D6; border-color: var(--ok); box-shadow: 0 4px 0 var(--ok); opacity: 1; }
+  .options button.wrong { background: #FBD5D1; }
+  .options button.nope { animation: nope .35s; }
+  @keyframes nope { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .feedback {
+    min-height: 4.6rem; margin-top: 12px; text-align: center; font-size: 1.5rem; font-weight: 800;
+    color: var(--page-ink); line-height: 1.15; display: flex; align-items: center; justify-content: center;
+  }
+  .feedback.ok { color: var(--ok); }
+  .feedback.almost { color: var(--almost); }
+  .feedback.bad { color: var(--bad); }
+  .feedback small { display: block; font-size: 1.05rem; font-weight: 700; color: var(--page-ink); opacity: .9; margin-top: 2px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .feedback.ok { color: #7BE3A0; }
+    :root:not([data-theme="light"]) .feedback.almost { color: #FFC83D; }
+    :root:not([data-theme="light"]) .feedback.bad { color: #FF8A80; }
+  }
+
+  .bottom { display: flex; justify-content: center; margin-top: 10px; }
+  .bottom button { background: var(--btn); font-size: 1.3rem; padding: 8px 28px; }
+  .bottom button.pulse { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.08); } }
+  @media (prefers-reduced-motion: reduce) {
+    .animal.pop, .options button.nope, .bottom button.pulse { animation-duration: .01s; animation-iteration-count: 1; }
+  }
+
+  .home-link {
+    position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 50; width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-decoration: none;
+    font-size: 1.6rem; background: #FFFFFF; border: 4px solid #1F3A5F; box-shadow: 0 4px 0 #1F3A5F;
+  }
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+  .home-link:active { transform: translateY(3px); box-shadow: 0 1px 0 #1F3A5F; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Modo">
+    <button data-modo="vive" aria-pressed="true">¿Dónde vive?</button>
+    <button data-modo="come">¿Qué come?</button>
+    <button data-modo="mezcla">Mezcla</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap card">
+  <button class="speak" id="speak" aria-label="Escuchar la pregunta" hidden>🔊</button>
+  <div class="animal" id="animal" aria-hidden="true"></div>
+  <div class="nombre" id="nombre"></div>
+  <div class="pregunta" id="pregunta"></div>
+</div>
+<div class="wrap options" id="options"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn">Otro animal</button></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  // 🐾 Datos. vive/come en null = no se pregunta en ese modo (la respuesta no es tan clara).
+  const ANIMALES = [
+    { e: "🦥", n: "Perezoso de tres dedos", art: "el", vive: "bosque", come: "plantas", dato: "Baja del árbol más o menos una vez por semana… ¡solo para hacer popó!" },
+    { e: "🐸", n: "Rana calzonuda", art: "la", vive: "bosque", come: "animales", dato: "Tiene ojos rojos. De día duerme pegada debajo de las hojas y de noche caza insectos." },
+    { e: "🐒", n: "Mono congo", art: "el", vive: "bosque", come: "plantas", dato: "Come hojas y frutas. Su grito se oye a más de un kilómetro." },
+    { e: "🐆", n: "Jaguar", art: "el", vive: "bosque", come: "animales", dato: "Es el felino más grande de América." },
+    { e: "🦜", n: "Lapa roja", art: "la", vive: "bosque", come: "plantas", dato: "Le encantan las semillas del almendro de montaña." },
+    { e: "🐦", n: "Quetzal", art: "el", vive: "bosque", come: null, dato: "Vive en el bosque nuboso y le encanta el aguacatillo." },
+    { e: "🦋", n: "Mariposa morfo", art: "la", vive: "bosque", come: "plantas", dato: "Sus alas son azules por arriba y cafés por debajo, para esconderse." },
+    { e: "🦌", n: "Venado cola blanca", art: "el", vive: "bosque", come: "plantas", dato: "Es el símbolo nacional de la fauna silvestre de Costa Rica." },
+    { e: "🐍", n: "Terciopelo", art: "la", vive: "bosque", come: "animales", dato: "Es una serpiente venenosa. Si ves una, alejate y avisale a un adulto." },
+    { e: "🐜", n: "Zompopa", art: "la", vive: "bosque", come: null, dato: "Corta hojas pero no se las come: las usa para cultivar un hongo que sí se come." },
+    { e: "🐢", n: "Tortuga baula", art: "la", vive: "mar", come: "animales", dato: "Es la tortuga más grande del mundo y come medusas." },
+    { e: "🐋", n: "Ballena jorobada", art: "la", vive: "mar", come: "animales", dato: "Viene a Costa Rica a tener sus crías. Come pececitos y animalitos diminutos." },
+    { e: "🦈", n: "Tiburón martillo", art: "el", vive: "mar", come: "animales", dato: "Nada en grupos grandes cerca de la Isla del Coco." },
+    { e: "🐬", n: "Delfín", art: "el", vive: "mar", come: "animales", dato: "Respira aire por un huequito que tiene arriba de la cabeza." },
+    { e: "🐙", n: "Pulpo", art: "el", vive: "mar", come: "animales", dato: "Tiene ocho brazos y puede cambiar de color para esconderse." },
+    { e: "🐊", n: "Cocodrilo", art: "el", vive: "rio", come: "animales", dato: "En el río Tárcoles hay muchos, y se ven desde el puente." },
+    { e: "🦦", n: "Nutria", art: "la", vive: "rio", come: "animales", dato: "Nada rapidísimo y come peces y cangrejos." },
+    { e: "🦀", n: "Cangrejo de manglar", art: "el", vive: "rio", come: null, dato: "Vive entre las raíces del manglar, donde el río se junta con el mar." },
+    { e: "🦎", n: "Iguana verde", art: "la", vive: null, come: "plantas", dato: "Come hojas, flores y frutas, y le encanta asolearse en las ramas." },
+    { e: "🦝", n: "Mapache", art: "el", vive: null, come: "todo", dato: "Come frutas, cangrejos, huevos… ¡y hasta se mete en la basura!" },
+    { e: "🐦", n: "Yigüirro", art: "el", vive: null, come: "todo", dato: "Es el ave nacional. Come lombrices, insectos y frutas, y su canto anuncia las lluvias." },
+  ];
+
+  const PREG = {
+    vive: {
+      q: a => `¿Dónde vive ${a.art} ${a.n.toLowerCase()}?`,
+      ops: [
+        { id: "bosque", e: "🌳", t: "Bosque" },
+        { id: "mar", e: "🌊", t: "Mar" },
+        { id: "rio", e: "🏞️", t: "Ríos y manglares" },
+      ],
+    },
+    come: {
+      q: a => `¿Qué come ${a.art} ${a.n.toLowerCase()}?`,
+      ops: [
+        { id: "plantas", e: "🌿", t: "Plantas" },
+        { id: "animales", e: "🐟", t: "Otros animales" },
+        { id: "todo", e: "🍽️", t: "De todo" },
+      ],
+    },
+  };
+
+  let modo = "vive", mazo = [], actual = null, tipo = "vive", fallos = 0, listo = false;
+  let stars = 0;
+  try { stars = Number(localStorage.getItem("animales-stars")) || 0; } catch (_) {}
+
+  // ---------- Voz (Web Speech API) ----------
+  const puedeHablar = "speechSynthesis" in window;
+  function hablar(texto) {
+    if (!puedeHablar) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(texto);
+      const voces = speechSynthesis.getVoices();
+      const voz = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang));
+      if (voz) u.voice = voz;
+      u.lang = voz ? voz.lang : "es-MX";
+      u.rate = 0.95;
+      speechSynthesis.speak(u);
+    } catch (_) {}
+  }
+  if (puedeHablar) $("speak").hidden = false;
+
+  const barajar = arr => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+
+  function nuevoMazo() {
+    const items = [];
+    ANIMALES.forEach(a => {
+      if ((modo === "vive" || modo === "mezcla") && a.vive) items.push({ a, tipo: "vive" });
+      if ((modo === "come" || modo === "mezcla") && a.come) items.push({ a, tipo: "come" });
+    });
+    mazo = barajar(items);
+    // que no se repita el mismo animal seguido al barajar de nuevo
+    if (actual && mazo.length > 1 && mazo[mazo.length - 1].a === actual) mazo.unshift(mazo.pop());
+  }
+
+  function setFeedback(kind, main, sub) {
+    const fb = $("feedback");
+    fb.className = "wrap feedback " + (kind || "");
+    fb.innerHTML = main ? `<div>${main}${sub ? `<small>${sub}</small>` : ""}</div>` : "";
+  }
+
+  function siguiente() {
+    if (!mazo.length) nuevoMazo();
+    const item = mazo.pop();
+    actual = item.a; tipo = item.tipo; fallos = 0; listo = false;
+    const el = $("animal");
+    el.textContent = actual.e;
+    el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+    $("nombre").textContent = actual.n;
+    $("pregunta").textContent = PREG[tipo].q(actual);
+    $("options").innerHTML = PREG[tipo].ops.map(o =>
+      `<button data-op="${o.id}"><span class="e" aria-hidden="true">${o.e}</span>${o.t}</button>`).join("");
+    setFeedback("", "");
+    $("nextBtn").classList.remove("pulse");
+  }
+
+  $("options").addEventListener("click", e => {
+    const btn = e.target.closest("[data-op]");
+    if (!btn || listo || btn.disabled) return;
+    const correcta = actual[tipo];
+    if (btn.dataset.op === correcta) {
+      listo = true;
+      btn.classList.add("right");
+      $("options").querySelectorAll("button").forEach(b => { if (b !== btn) b.disabled = true; });
+      if (fallos === 0) {
+        stars++;
+        try { localStorage.setItem("animales-stars", stars); } catch (_) {}
+        $("stars").textContent = "⭐ " + stars;
+        setFeedback("ok", "¡Acertado! 🎉", actual.dato);
+        hablar("¡Acertado! " + actual.dato);
+      } else {
+        setFeedback("almost", "¡Casi! 🤏 A la segunda", actual.dato);
+        hablar(actual.dato);
+      }
+      $("nextBtn").classList.add("pulse");
+    } else {
+      fallos++;
+      btn.classList.add("wrong", "nope");
+      btn.disabled = true;
+      setFeedback("bad", "Uy, no es 🙈", tipo === "vive"
+        ? "Pensá dónde lo has visto: ¿entre árboles, en el agua salada del mar o en un río?"
+        : "Pensá: ¿caza otros animales, come solo hojas y frutas, o come de todo?");
+    }
+  });
+
+  $("speak").addEventListener("click", () => hablar(`${actual.n}. ${PREG[tipo].q(actual)}`));
+  $("nextBtn").addEventListener("click", siguiente);
+
+  document.querySelectorAll(".levels button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      modo = btn.dataset.modo;
+      document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
+      nuevoMazo();
+      siguiente();
+    });
+  });
+
+  $("stars").textContent = "⭐ " + stars;
+  nuevoMazo();
+  siguiente();
+})();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

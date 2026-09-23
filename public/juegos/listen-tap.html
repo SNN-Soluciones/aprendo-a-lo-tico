@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Listen and tap</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #CFEFE3;
+    --face: #FFFFFF;
+    --rim: #1F3A5F;
+    --ink: #1F3A5F;
+    --soft: #9DB3C9;
+    --btn: #FFC83D;
+    --ok: #2FA85A;
+    --almost: #D98A00;
+    --bad: #D9443A;
+    --page-ink: #1F3A5F;
+    --materia: #8E5BD9;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  }
+  :root[data-theme="dark"] { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--bg);
+    font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 10px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .wrap { width: min(96vw, 620px); }
+
+  button {
+    font: inherit; font-weight: 800; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 999px;
+    background: var(--face); padding: 6px 16px; cursor: pointer;
+    box-shadow: 0 4px 0 var(--rim); transition: transform .08s;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rim); }
+  button:focus-visible { outline: 3px dashed var(--materia); outline-offset: 3px; }
+  button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 0 4px 0 var(--rim); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .levels { display: flex; gap: 6px; flex-wrap: wrap; }
+  .levels button { font-size: .95rem; padding: 3px 10px; }
+  .levels button[aria-pressed="true"] { background: var(--btn); }
+  .stars { font-size: 1.3rem; font-weight: 800; color: var(--page-ink); white-space: nowrap; }
+
+  .prompt {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 10px 14px; text-align: center;
+    display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+  }
+  .prompt .t { font-size: clamp(1.3rem, 6vw, 1.8rem); font-weight: 800; color: var(--materia); line-height: 1.1; }
+  .prompt .word { display: block; font-size: clamp(1.8rem, 9vw, 2.6rem); color: var(--ink); }
+  .prompt .play { font-size: 2rem; padding: 4px 18px; background: var(--btn); }
+  .prompt .slow { font-size: 1.4rem; padding: 2px 12px; }
+  .prompt .play.pulse { animation: pulse 1s ease-in-out 3; }
+
+  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+  .cards button {
+    border-radius: 22px; aspect-ratio: 4 / 3; padding: 6px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: clamp(3.4rem, 17vw, 5rem); line-height: 1;
+  }
+  .cards button .num { font-size: .95em; font-weight: 800; color: var(--materia); }
+  .cards button .sw { width: 55%; aspect-ratio: 1; border-radius: 50%; border: 4px solid var(--rim); }
+  .cards button .en { font-size: 1.1rem; font-weight: 800; min-height: 1.3rem; color: var(--ink); }
+  .cards button.right { background: #C9F2D6; border-color: var(--ok); box-shadow: 0 4px 0 var(--ok); opacity: 1; }
+  .cards button.wrong { background: #FBD5D1; }
+  .cards button.nope { animation: nope .35s; }
+  @keyframes nope { 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+  .feedback {
+    min-height: 4.2rem; margin-top: 12px; text-align: center; font-size: 1.5rem; font-weight: 800;
+    color: var(--page-ink); line-height: 1.15; display: flex; align-items: center; justify-content: center;
+  }
+  .feedback.ok { color: var(--ok); }
+  .feedback.almost { color: var(--almost); }
+  .feedback.bad { color: var(--bad); }
+  .feedback small { display: block; font-size: 1.05rem; font-weight: 700; color: var(--page-ink); opacity: .9; margin-top: 2px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .feedback.ok { color: #7BE3A0; }
+    :root:not([data-theme="light"]) .feedback.almost { color: #FFC83D; }
+    :root:not([data-theme="light"]) .feedback.bad { color: #FF8A80; }
+  }
+
+  .bottom { display: flex; justify-content: center; margin-top: 6px; }
+  .bottom button { background: var(--btn); font-size: 1.3rem; padding: 8px 28px; }
+  .bottom button.pulse { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.08); } }
+
+  .start {
+    position: fixed; inset: 0; z-index: 40; background: var(--bg);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 20px; text-align: center;
+  }
+  .start[hidden] { display: none; }
+  .start .big { font-size: 5rem; line-height: 1; }
+  .start h1 { margin: 0; font-size: clamp(2rem, 9vw, 2.8rem); color: var(--page-ink); line-height: 1.1; }
+  .start p { margin: 0; font-size: 1.2rem; font-weight: 700; color: var(--page-ink); max-width: 26rem; }
+  .start button { background: var(--btn); font-size: 1.6rem; padding: 10px 34px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cards button.nope, .bottom button.pulse, .prompt .play.pulse { animation-duration: .01s; animation-iteration-count: 1; }
+  }
+
+  .home-link {
+    position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 50; width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-decoration: none;
+    font-size: 1.6rem; background: #FFFFFF; border: 4px solid #1F3A5F; box-shadow: 0 4px 0 #1F3A5F;
+  }
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+  .home-link:active { transform: translateY(3px); box-shadow: 0 1px 0 #1F3A5F; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">👂</div>
+  <h1>Listen and tap!</h1>
+  <p id="startMsg">Escuchá la palabra en inglés y tocá el dibujo correcto. Subile el volumen 🔊</p>
+  <button id="startBtn">▶️ ¡Empezar!</button>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Tema">
+    <button data-tema="colors" aria-pressed="true">🎨 Colors</button>
+    <button data-tema="animals">🐶 Animals</button>
+    <button data-tema="numbers">🔢 Numbers</button>
+    <button data-tema="family">👪 Family</button>
+    <button data-tema="fruits">🍎 Fruits</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap prompt" id="prompt"></div>
+<div class="wrap cards" id="cards"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn">Otra palabra</button></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  // 💬 Vocabulario: en = inglés, es = español (a lo tico), e = emoji, c = color, d = número
+  const TEMAS = {
+    colors: [
+      { en: "red", es: "rojo", c: "#E53935" },
+      { en: "blue", es: "azul", c: "#1E6FD9" },
+      { en: "yellow", es: "amarillo", c: "#FFD600" },
+      { en: "green", es: "verde", c: "#2FA85A" },
+      { en: "orange", es: "anaranjado", c: "#F57C00" },
+      { en: "purple", es: "morado", c: "#8E5BD9" },
+      { en: "pink", es: "rosado", c: "#F48FB1" },
+      { en: "black", es: "negro", c: "#1B1B1B" },
+      { en: "white", es: "blanco", c: "#FFFFFF" },
+      { en: "brown", es: "café", c: "#795548" },
+    ],
+    animals: [
+      { en: "dog", es: "perro", e: "🐶" },
+      { en: "cat", es: "gato", e: "🐱" },
+      { en: "bird", es: "pájaro", e: "🐦" },
+      { en: "fish", es: "pez", e: "🐟" },
+      { en: "cow", es: "vaca", e: "🐮" },
+      { en: "horse", es: "caballo", e: "🐴" },
+      { en: "pig", es: "chancho", e: "🐷" },
+      { en: "chicken", es: "gallina", e: "🐔" },
+      { en: "duck", es: "pato", e: "🦆" },
+      { en: "monkey", es: "mono", e: "🐒" },
+      { en: "frog", es: "rana", e: "🐸" },
+      { en: "turtle", es: "tortuga", e: "🐢" },
+    ],
+    numbers: [
+      "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve",
+    ].map((en, i) => ({ en, es: String(i + 1), d: i + 1 })),
+    family: [
+      { en: "mother", es: "mamá", e: "👩" },
+      { en: "father", es: "papá", e: "👨" },
+      { en: "sister", es: "hermana", e: "👧" },
+      { en: "brother", es: "hermano", e: "👦" },
+      { en: "grandmother", es: "abuela", e: "👵" },
+      { en: "grandfather", es: "abuelo", e: "👴" },
+      { en: "baby", es: "bebé", e: "👶" },
+    ],
+    fruits: [
+      { en: "apple", es: "manzana", e: "🍎" },
+      { en: "banana", es: "banano", e: "🍌" },
+      { en: "orange", es: "naranja", e: "🍊" },
+      { en: "grapes", es: "uvas", e: "🍇" },
+      { en: "watermelon", es: "sandía", e: "🍉" },
+      { en: "pineapple", es: "piña", e: "🍍" },
+      { en: "strawberry", es: "fresa", e: "🍓" },
+      { en: "mango", es: "mango", e: "🥭" },
+      { en: "lemon", es: "limón", e: "🍋" },
+      { en: "coconut", es: "pipa", e: "🥥" },
+    ],
+  };
+
+  let tema = "colors", mazo = [], meta = null, opciones = [], fallos = 0, listo = false;
+  let stars = 0;
+  try { stars = Number(localStorage.getItem("listen-stars")) || 0; } catch (_) {}
+
+  // ---------- Voz (Web Speech API) ----------
+  const puedeHablar = "speechSynthesis" in window;
+  let vozEn = null, vozEs = null;
+  function cargarVoces() {
+    if (!puedeHablar) return;
+    const voces = speechSynthesis.getVoices();
+    vozEn = voces.find(v => /^en[-_]US/i.test(v.lang)) || voces.find(v => /^en/i.test(v.lang)) || null;
+    vozEs = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null;
+  }
+  if (puedeHablar) {
+    cargarVoces();
+    speechSynthesis.addEventListener?.("voiceschanged", cargarVoces);
+  }
+  // Si el dispositivo no tiene voz en inglés, se muestra la palabra escrita.
+  const hayIngles = () => puedeHablar && (vozEn || speechSynthesis.getVoices().length === 0);
+
+  function hablar(texto, lang = "en", lento = false) {
+    if (!puedeHablar) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(texto);
+      const voz = lang === "en" ? vozEn : vozEs;
+      if (voz) u.voice = voz;
+      u.lang = voz ? voz.lang : (lang === "en" ? "en-US" : "es-MX");
+      u.rate = lento ? 0.55 : 0.85;
+      speechSynthesis.speak(u);
+    } catch (_) {}
+  }
+
+  const barajar = arr => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+
+  function dibujo(item) {
+    if (item.c) return `<span class="sw" style="background:${item.c}"></span>`;
+    if (item.d) return `<span class="num">${item.d}</span>`;
+    return `<span aria-hidden="true">${item.e}</span>`;
+  }
+
+  function pintarPrompt(mostrarPalabra) {
+    const conVoz = hayIngles();
+    $("prompt").innerHTML = conVoz
+      ? `<span class="t">Listen and tap! 👂${mostrarPalabra ? `<span class="word">${meta.en}</span>` : ""}</span>
+         <button class="play pulse" id="play" aria-label="Escuchar otra vez">🔊</button>
+         <button class="slow" id="slow" aria-label="Escuchar despacio">🐢</button>`
+      : `<span class="t">Read and tap! 👀<span class="word">${meta.en}</span></span>`;
+    if (conVoz) {
+      $("play").addEventListener("click", () => hablar(meta.en));
+      $("slow").addEventListener("click", () => hablar(meta.en, "en", true));
+    }
+  }
+
+  function siguiente() {
+    const lista = TEMAS[tema];
+    if (!mazo.length) {
+      mazo = barajar(lista);
+      if (meta && mazo[mazo.length - 1] === meta) mazo.unshift(mazo.pop());
+    }
+    meta = mazo.pop();
+    fallos = 0; listo = false;
+    opciones = barajar([meta, ...barajar(lista.filter(x => x !== meta)).slice(0, 3)]);
+    $("cards").innerHTML = opciones.map((x, i) =>
+      `<button data-i="${i}" aria-label="Opción ${i + 1}">${dibujo(x)}<span class="en"></span></button>`).join("");
+    $("feedback").className = "wrap feedback"; $("feedback").innerHTML = "";
+    $("nextBtn").classList.remove("pulse");
+    pintarPrompt(false);
+    hablar(meta.en);
+  }
+
+  function setFeedback(kind, main, sub) {
+    const fb = $("feedback");
+    fb.className = "wrap feedback " + (kind || "");
+    fb.innerHTML = main ? `<div>${main}${sub ? `<small>${sub}</small>` : ""}</div>` : "";
+  }
+
+  $("cards").addEventListener("click", e => {
+    const btn = e.target.closest("[data-i]");
+    if (!btn || listo || btn.disabled) return;
+    const item = opciones[Number(btn.dataset.i)];
+    btn.querySelector(".en").textContent = item.en;
+    if (item === meta) {
+      listo = true;
+      btn.classList.add("right");
+      $("cards").querySelectorAll("button").forEach(b => { if (b !== btn) b.disabled = true; });
+      const sub = `<b>${meta.en}</b> = ${meta.es}`;
+      if (fallos === 0) {
+        stars++;
+        try { localStorage.setItem("listen-stars", stars); } catch (_) {}
+        $("stars").textContent = "⭐ " + stars;
+        setFeedback("ok", "¡Acertado! 🎉", sub);
+      } else {
+        setFeedback("almost", "¡Casi! 🤏 A la segunda", sub);
+      }
+      pintarPrompt(true);
+      hablar(meta.en);
+      $("nextBtn").classList.add("pulse");
+    } else {
+      fallos++;
+      btn.classList.add("wrong", "nope");
+      btn.disabled = true;
+      setFeedback("bad", "Uy, no es 🙈", `Ese es <b>${item.en}</b> (${item.es}). Escuchá otra vez 👂`);
+      hablar(item.en);
+      if (fallos >= 2) pintarPrompt(true); // ayudita: después de dos fallos se ve la palabra
+    }
+  });
+
+  $("nextBtn").addEventListener("click", siguiente);
+  document.querySelectorAll(".levels button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      tema = btn.dataset.tema;
+      document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
+      mazo = []; meta = null;
+      siguiente();
+    });
+  });
+
+  // El audio en celulares necesita un toque del usuario antes de sonar.
+  if (!puedeHablar) $("startMsg").textContent = "Este dispositivo no puede leer en voz alta, así que vas a leer la palabra y tocar el dibujo 👀";
+  $("startBtn").addEventListener("click", () => {
+    cargarVoces();
+    $("start").hidden = true;
+    siguiente();
+  });
+
+  $("stars").textContent = "⭐ " + stars;
+})();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

@@ -59,7 +59,15 @@
   .flecha.derecha svg { transform: rotate(90deg); } .flecha.abajo svg { transform: rotate(180deg); } .flecha.izquierda svg { transform: rotate(-90deg); }
   .programa .flecha { width: 38px; height: 38px; border: 3px solid var(--rim); box-shadow: 0 2px 0 var(--rim); }
   .programa .flecha.activa { outline: 4px solid var(--btn); outline-offset: 2px; transform: scale(1.12); }
-  .programa .flecha.mala { outline: 4px solid var(--bad); outline-offset: 2px; }
+  .programa .flecha.mala {
+    background: var(--bad); border-color: #8E1E17; box-shadow: 0 2px 0 #8E1E17; position: relative;
+    outline: 4px solid #FFB3AC; outline-offset: 2px; animation: sacude .5s ease-in-out 3;
+  }
+  .programa .flecha.mala::after {
+    content: "✖"; position: absolute; top: -9px; right: -9px; width: 20px; height: 20px; border-radius: 50%;
+    background: #fff; color: var(--bad); border: 2px solid var(--bad); font-size: 11px; line-height: 16px; font-weight: 800;
+  }
+  @keyframes sacude { 25% { transform: rotate(-12deg); } 75% { transform: rotate(12deg); } }
   .programa .flecha.hecha { opacity: .55; }
   .contador { font-weight: 800; font-size: .9rem; opacity: .6; margin-left: auto; }
 
@@ -119,6 +127,7 @@ const MAX = 20;
 const PALABRA = { arriba: "arriba", derecha: "derecha", abajo: "abajo", izquierda: "izquierda" };
 
 let n = 0, juego = null, programa = [], corriendo = false, ganado = false, intentos = 0;
+let mala = -1; // flecha que hizo chocar al perezoso (se queda roja hasta cambiar el programa)
 let progreso = {};
 try { progreso = JSON.parse(localStorage.getItem("perezoso-progreso")) || {}; } catch (_) {}
 const guardar = () => { try { localStorage.setItem("perezoso-progreso", JSON.stringify(progreso)); } catch (_) {} };
@@ -153,10 +162,10 @@ function ponerPerezoso(x, y, izq) {
   if (izq !== undefined) p.classList.toggle("izq", izq);
 }
 
-function pintarPrograma(activa = -1, mala = -1) {
+function pintarPrograma(activa = -1, roja = mala) {
   const el = $("programa");
   el.innerHTML = programa.length
-    ? programa.map((d, i) => `<button class="flecha ${d}${i === activa ? " activa" : ""}${i === mala ? " mala" : ""}${activa >= 0 && i < activa ? " hecha" : ""}" data-i="${i}" aria-label="${PALABRA[d]}, tocá para quitar">${FLECHA}</button>`).join("")
+    ? programa.map((d, i) => `<button class="flecha ${d}${i === activa ? " activa" : ""}${i === roja ? " mala" : ""}${activa >= 0 && i < activa ? " hecha" : ""}" data-i="${i}" aria-label="${PALABRA[d]}, tocá para quitar">${FLECHA}</button>`).join("")
       + `<span class="contador">${programa.length}</span>`
     : `<span class="vacio">👇 Tocá las flechas para armar el camino</span>`;
   $("playBtn").classList.toggle("pulse", programa.length > 0 && !corriendo && !ganado);
@@ -164,7 +173,7 @@ function pintarPrograma(activa = -1, mala = -1) {
 
 // ---------- Niveles ----------
 function cargar(i) {
-  n = i; juego = leer(NIVELES[n]); programa = []; ganado = false; corriendo = false; intentos = 0;
+  n = i; juego = leer(NIVELES[n]); programa = []; ganado = false; corriendo = false; intentos = 0; mala = -1;
   pintarNiveles(); pintarTablero(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
   const varias = juego.hojas.length > 1;
@@ -185,6 +194,7 @@ $("niveles").addEventListener("click", e => {
 function reiniciarSiHaceFalta() {
   // Si ya corrió, al cambiar el programa el perezoso vuelve a la salida.
   if (ganado) return false;
+  mala = -1;
   pintarTablero(); feedback("");
   return true;
 }
@@ -226,7 +236,7 @@ const MENSAJE_CHOQUE = {
 $("playBtn").addEventListener("click", async () => {
   if (corriendo || ganado) return;
   if (!programa.length) { decir("Primero armá el camino con las flechas."); return; }
-  corriendo = true; intentos++;
+  corriendo = true; intentos++; mala = -1;
   pintarTablero(); feedback(""); pintarPrograma(0);
   const r = ejecutar(juego, programa);
   await esperar(250);
@@ -269,8 +279,9 @@ function terminar(r) {
   const cerca = juego.hojas.some(h => Math.abs(h.x - r.x) + Math.abs(h.y - r.y) === 1);
   const algo = r.faltan < juego.hojas.length;
   if (r.resultado === "choco") {
+    mala = r.i;
     feedback(algo ? "almost" : "bad", algo ? "🤏" : "🙈", algo ? "¡Casi!" : "Chocó");
-    decir(`${MENSAJE_CHOQUE[r.choque]} Cambiá la flecha roja.`);
+    decir(`${MENSAJE_CHOQUE[r.choque]} Tocá la flecha roja para quitarla, y poné otra.`);
   } else if (cerca || algo) {
     feedback("almost", "🤏", "¡Casi!");
     decir(algo && r.faltan ? `¡Casi! Todavía ${r.faltan === 1 ? "falta una hoja" : `faltan ${r.faltan} hojas`}.` : "¡Casi! Le faltó un pasito.");

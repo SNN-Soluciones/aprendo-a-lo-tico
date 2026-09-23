@@ -23,6 +23,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 👂 ¿Con qué empieza? | Español | Prepa y 1° | `public/juegos/sonido-inicial.html` |
 | ✍️ Trazá letras y números | Español | Prepa y 1° | `public/juegos/trazos.html` |
 | 🦥 Llevá al perezoso | Programación | Prepa a 2° | `public/juegos/perezoso.html` |
+| 🔁 Repetí y decidí | Programación | 2° a 4° | `public/juegos/repeti-decidi.html` |
 
 ## Estructura
 
@@ -43,6 +44,7 @@ aprendo-a-lo-tico/
 │   ├── js/voz.js           # 🔊 Voz (speechSynthesis) y sonidos compartidos
 │   ├── js/prepa.js         # Piezas comunes de los juegos de Prepa
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
+│   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido
 ├── README.md
@@ -163,6 +165,15 @@ Usan `css/prepa.css`, `js/voz.js` y `js/prepa.js` (ver `juegos/contar.html` como
 ### Agregar niveles al perezoso
 
 Los niveles están en `public/js/perezoso.js` como mapas de texto: `S` perezoso, `H` hoja, `#` árbol, `~` río y `.` camino. Las 3 estrellas se ganan con el camino más corto, que el juego calcula solo.
+
+### Agregar niveles a «Repetí y decidí»
+
+En `public/js/decidi.js`: el mapa usa `> < ^ v` para el perezoso (hacia dónde mira), `H` hoja, `#` árbol, `~` río y `.` camino. Cada nivel dice qué bloques se pueden usar y trae una `solucion` de ejemplo: las 3 estrellas se dan con esa cantidad de bloques (o menos). Para comprobar que las soluciones funcionan:
+
+```bash
+cd public
+node --input-type=module -e 'import { NIVELES, leer, ejecutar } from "./js/decidi.js"; NIVELES.forEach((n, i) => console.log(i + 1, ejecutar(leer(n), n.solucion).resultado))'
+```
 
 ### Guía de estilo de los juegos
 

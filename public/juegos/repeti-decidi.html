@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repetí y decidí</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root {
+    --materia: #14A3A3;
+    --b-mover: #2F7FD1; --b-girar: #8E5BD9; --b-saltar: #1BA3C6; --b-repetir: #F29A1F; --b-hasta: #D9731F; --b-si: #2FA85A;
+  }
+  .ancho { width: min(96vw, 520px); }
+
+  /* Niveles */
+  .niveles { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; flex: 1; }
+  .niveles::-webkit-scrollbar { display: none; }
+  .niveles button { flex: none; min-width: 44px; padding: 0 8px; font-size: 1.1rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .niveles button small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
+  .niveles button[aria-pressed="true"] { background: var(--btn); }
+  .instr .titulo { display: block; font-size: 1.05rem; color: var(--materia); }
+
+  /* Tablero */
+  .tablero { margin-top: 10px; position: relative; border: 4px solid var(--rim); border-radius: 18px; overflow: hidden; display: grid; background: #9ED97B; }
+  .celda { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: var(--emoji, 2.2rem); line-height: 1;
+    border-right: 2px solid rgba(31, 58, 95, .12); border-bottom: 2px solid rgba(31, 58, 95, .12); }
+  .celda:nth-child(odd) { background: rgba(255, 255, 255, .12); }
+  .celda.rio { background: #7FC8F0; } .celda.arbol { background: #7CC45A; } .celda.salida { background: rgba(255, 255, 255, .45); }
+  .hoja.comida { opacity: 0; transform: scale(1.8); transition: all .35s; }
+  .perezoso { position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center; font-size: calc(var(--emoji, 2.2rem) * 1.1);
+    line-height: 1; transition: transform .38s ease-in-out; z-index: 2; pointer-events: none; }
+  .perezoso .cara { display: inline-block; transition: transform .2s; }
+  .perezoso.hacia-izq .cara { transform: scaleX(-1); }
+  .perezoso .mira { position: absolute; width: 36%; height: 36%; right: 2%; bottom: 2%; border-radius: 50%; background: var(--btn);
+    border: 2px solid var(--rim); display: flex; align-items: center; justify-content: center; transition: transform .3s; }
+  .perezoso .mira svg { width: 70%; height: 70%; fill: var(--rim); }
+  .perezoso.salto .cara { animation: salto .42s ease-in-out; }
+  @keyframes salto { 50% { transform: translateY(-40%) scale(1.15); } }
+  .perezoso.choque .cara { animation: choque .45s; }
+  @keyframes choque { 20%, 60% { transform: translateX(-8px) rotate(-12deg); } 40%, 80% { transform: translateX(8px) rotate(12deg); } }
+  .perezoso.feliz .cara { animation: feliz .6s ease-in-out 2; }
+  @keyframes feliz { 50% { transform: translateY(-14px) scale(1.2); } }
+
+  /* Programa (bloques) */
+  .programa { margin-top: 10px; background: var(--face); border: 4px dashed var(--rim); border-radius: 18px; padding: 8px; }
+  .programa h3 { margin: 0 0 4px; font-size: 1rem; display: flex; justify-content: space-between; }
+  .lista { display: flex; flex-direction: column; gap: 5px; }
+  .bloque { border-radius: 12px; color: #fff; font-weight: 800; font-size: 1rem; line-height: 1.1; border: 3px solid var(--rim); box-shadow: 0 2px 0 var(--rim); position: relative; }
+  .bloque > .cab { display: flex; align-items: center; gap: 6px; padding: 5px 34px 5px 8px; min-height: 38px; flex-wrap: wrap; }
+  .bloque .quitar { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 2px solid var(--rim);
+    background: #fff; color: var(--rim); font-size: .8rem; line-height: 1; box-shadow: none; }
+  .bloque .num, .bloque .cond { padding: 0 10px; font-size: 1rem; border-width: 2px; box-shadow: 0 2px 0 var(--rim); background: #fff; }
+  .bloque .cuerpo { margin: 0 6px 6px 16px; padding: 6px; background: rgba(255, 255, 255, .88); border-radius: 10px; border: 2px solid rgba(31, 58, 95, .25); }
+  .bloque .etq { padding: 0 8px 4px; font-size: .95rem; }
+  .avanzar { background: var(--b-mover); } .izq, .der { background: var(--b-girar); } .saltar { background: var(--b-saltar); }
+  .repetir { background: var(--b-repetir); } .hasta { background: var(--b-hasta); } .si { background: var(--b-si); }
+  .bloque.activa { outline: 4px solid var(--btn); outline-offset: 2px; }
+  .bloque.mala { outline: 4px solid #FFB3AC; outline-offset: 2px; animation: sacude .5s ease-in-out 3; }
+  .bloque.mala > .cab { background: var(--bad); border-radius: 9px; }
+  @keyframes sacude { 25% { transform: rotate(-2deg); } 75% { transform: rotate(2deg); } }
+  .slot { border: 2px dashed var(--soft); background: transparent; box-shadow: none; border-radius: 10px; padding: 2px 8px; font-size: .95rem; color: var(--soft); text-align: left; }
+  .slot.activo { border: 3px solid var(--btn); background: #FFF6DA; color: var(--ink); }
+
+  /* Paleta */
+  .paleta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
+  .paleta button { color: #fff; border-radius: 12px; font-size: 1rem; padding: 6px 10px; }
+  .acciones { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.8rem; padding: 4px 0; border-radius: 18px; }
+  #playBtn { background: var(--ok); color: #fff; }
+  #playBtn.pulse, #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
+  #nextBtn { background: var(--btn); }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🔁🦥❓</div>
+  <h1>Repetí y decidí</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Programá al perezoso con bloques: avanzar, girar, repetir y decidir.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="niveles" id="niveles" role="group" aria-label="Nivel"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tablero ancho" id="tablero"></div>
+
+<div class="paleta ancho" id="paleta" aria-label="Bloques disponibles"></div>
+<div class="programa ancho" id="programa" aria-live="polite"></div>
+<div class="acciones ancho">
+  <button id="limpiarBtn" aria-label="Borrar todo">🗑️</button>
+  <button id="playBtn" aria-label="Correr el programa">▶️</button>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Siguiente nivel" hidden>➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { NIVELES, leer, ejecutar, contar } from "../js/decidi.js";
+
+const $ = id => document.getElementById(id);
+const FLECHA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.5 12H15v9.5H9V12H3.5z"/></svg>`;
+
+// 🧱 Cómo se ve y se dice cada bloque
+const INFO = {
+  avanzar: { txt: "⬆️ Avanzar", voz: "avanzar" },
+  izq: { txt: "↶ Girar a la izquierda", voz: "girar a la izquierda" },
+  der: { txt: "↷ Girar a la derecha", voz: "girar a la derecha" },
+  saltar: { txt: "🤸 Saltar el río", voz: "saltar el río" },
+  repetir: { txt: "🔁 Repetir", voz: "repetir" },
+  hasta: { txt: "🔁 Repetir hasta la 🍃", voz: "repetir hasta comerse todas las hojas" },
+  si: { txt: "❓ Si…", voz: "si" },
+};
+const COND = { rio: "🌊 hay río", cerrado: "🌳 está cerrado" };
+const nuevoBloque = t => t === "repetir" ? { t, n: 3, cuerpo: [] } : t === "hasta" ? { t, cuerpo: [] } : t === "si" ? { t, cond: "rio", si: [], sino: [] } : { t };
+
+let n = 0, nivel = null, juego = null, programa = [], activo = [], mala = null, corriendo = false, ganado = false;
+let progreso = {};
+try { progreso = JSON.parse(localStorage.getItem("decidi-progreso")) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("decidi-progreso", JSON.stringify(progreso)); } catch (_) {} };
+
+// ---------- Rutas dentro del programa: [i, "cuerpo", j, "si", k …] ----------
+function lista(ruta) {
+  let l = programa;
+  for (let i = 0; i < ruta.length; i += 2) l = l[ruta[i]][ruta[i + 1]];
+  return l;
+}
+const id = r => r.join(".");
+const mismaRuta = (a, b) => id(a) === id(b);
+const empiezaCon = (r, pre) => pre.length <= r.length && id(r.slice(0, pre.length)) === id(pre);
+
+// ---------- Pintar ----------
+function pintarNiveles() {
+  $("niveles").innerHTML = NIVELES.map((_, i) =>
+    `<button data-n="${i}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}">${i + 1}<small>${"⭐".repeat(progreso[i] || 0)}</small></button>`).join("");
+  $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
+  $("niveles").querySelector(`[data-n="${n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+function pintarTablero() {
+  const t = $("tablero");
+  t.style.gridTemplateColumns = `repeat(${juego.ancho}, 1fr)`;
+  t.style.setProperty("--emoji", `min(${(96 / juego.ancho) * 0.55}vw, ${(520 / juego.ancho) * 0.55}px)`);
+  t.innerHTML = juego.celdas.map(c => {
+    const hoja = juego.hojas.some(h => h.x === c.x && h.y === c.y);
+    const salida = juego.salida.x === c.x && juego.salida.y === c.y;
+    const dentro = c.tipo === "arbol" ? "🌳" : c.tipo === "rio" ? "🌊" : hoja ? `<span class="hoja" data-k="${c.x},${c.y}">🍃</span>` : "";
+    return `<div class="celda ${c.tipo}${salida ? " salida" : ""}">${dentro}</div>`;
+  }).join("") + `<div class="perezoso" id="perezoso"><span class="cara">🦥</span><span class="mira">${FLECHA}</span></div>`;
+  ponerPerezoso(juego.salida.x, juego.salida.y, juego.salida.d);
+}
+
+function ponerPerezoso(x, y, d) {
+  const p = $("perezoso");
+  p.style.width = `${100 / juego.ancho}%`; p.style.height = `${100 / juego.alto}%`;
+  p.style.transform = `translate(${x * 100}%, ${y * 100}%)`;
+  p.classList.toggle("hacia-izq", d === 3);
+  p.querySelector(".mira").style.transform = `rotate(${d * 90}deg)`;
+}
+
+function htmlLista(l, ruta) {
+  const bloques = l.map((b, i) => htmlBloque(b, [...ruta, i])).join("");
+  const act = mismaRuta(activo, ruta);
+  return `<div class="lista">${bloques}<button class="slot${act ? " activo" : ""}" data-slot='${JSON.stringify(ruta)}'>${act ? "👉 Los bloques nuevos van aquí" : "＋ poner aquí"}</button></div>`;
+}
+
+function htmlBloque(b, r) {
+  const clase = `bloque ${b.t}${mala && mismaRuta(mala, r) ? " mala" : ""}`;
+  const quitar = `<button class="quitar" data-quitar='${JSON.stringify(r)}' aria-label="Quitar bloque">✖</button>`;
+  if (b.t === "repetir") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">🔁 Repetir <button class="num" data-num='${JSON.stringify(r)}' aria-label="Cambiar cuántas veces">${b.n}</button> veces</div>${quitar}<div class="cuerpo">${htmlLista(b.cuerpo, [...r, "cuerpo"])}</div></div>`;
+  if (b.t === "hasta") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">🔁 Repetir hasta comerse todas las 🍃</div>${quitar}<div class="cuerpo">${htmlLista(b.cuerpo, [...r, "cuerpo"])}</div></div>`;
+  if (b.t === "si") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">❓ Si adelante <button class="cond" data-cond='${JSON.stringify(r)}' aria-label="Cambiar condición">${COND[b.cond]}</button></div>${quitar}
+    <div class="cuerpo">${htmlLista(b.si, [...r, "si"])}</div><div class="etq">si no:</div><div class="cuerpo">${htmlLista(b.sino, [...r, "sino"])}</div></div>`;
+  return `<div class="${clase}" data-id="${id(r)}"><div class="cab">${INFO[b.t].txt}</div>${quitar}</div>`;
+}
+
+function pintarPrograma() {
+  const total = contar(programa);
+  $("programa").innerHTML = `<h3><span>Tu programa</span><span>${total} ${total === 1 ? "bloque" : "bloques"} · ⭐⭐⭐ con ${nivel.objetivo}</span></h3>${htmlLista(programa, [])}`;
+  $("playBtn").classList.toggle("pulse", total > 0 && !corriendo && !ganado);
+}
+
+function pintarPaleta() {
+  $("paleta").innerHTML = nivel.bloques.map(t => `<button class="${t}" data-b="${t}">${INFO[t].txt}</button>`).join("");
+}
+
+// ---------- Niveles ----------
+function cargar(i) {
+  n = i; nivel = NIVELES[n]; juego = leer(nivel);
+  programa = []; activo = []; mala = null; ganado = false; corriendo = false;
+  pintarNiveles(); pintarTablero(); pintarPaleta(); pintarPrograma(); feedback("");
+  $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
+  instruccion(`<span class="titulo">Nivel ${n + 1}: ${nivel.titulo}</span>🦥 ➜ 🍃${juego.hojas.length > 1 ? ` ×${juego.hojas.length}` : ""}`, nivel.voz);
+}
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-n]");
+  if (b && !corriendo) { sonido("tap"); cargar(Number(b.dataset.n)); }
+});
+
+// ---------- Editar ----------
+function editado() { mala = null; if (!ganado) { pintarTablero(); feedback(""); } }
+
+$("paleta").addEventListener("click", e => {
+  const b = e.target.closest("[data-b]");
+  if (!b || corriendo || ganado) return;
+  if (contar(programa) >= 30) { decir("¡Ya son muchos bloques! Probá usar Repetir."); return; }
+  editado();
+  const nuevo = nuevoBloque(b.dataset.b);
+  const l = lista(activo);
+  l.push(nuevo);
+  // Si es un bloque que lleva cosas adentro, lo que sigue va adentro
+  if (nuevo.t === "repetir" || nuevo.t === "hasta") activo = [...activo, l.length - 1, "cuerpo"];
+  if (nuevo.t === "si") activo = [...activo, l.length - 1, "si"];
+  sonido("tap"); decir(INFO[nuevo.t].voz);
+  pintarPrograma();
+});
+
+$("programa").addEventListener("click", e => {
+  if (corriendo || ganado) return;
+  const slot = e.target.closest("[data-slot]"), q = e.target.closest("[data-quitar]");
+  const num = e.target.closest("[data-num]"), cond = e.target.closest("[data-cond]");
+  if (slot) { activo = JSON.parse(slot.dataset.slot); sonido("tap"); }
+  else if (q) {
+    const r = JSON.parse(q.dataset.quitar);
+    lista(r.slice(0, -1)).splice(r[r.length - 1], 1);
+    if (empiezaCon(activo, r)) activo = r.slice(0, -1);
+    else if (id(activo.slice(0, r.length - 1)) === id(r.slice(0, -1)) && activo[r.length - 1] > r[r.length - 1]) activo[r.length - 1]--;
+    editado(); sonido("tap");
+  } else if (num) {
+    const r = JSON.parse(num.dataset.num), b = lista(r.slice(0, -1))[r[r.length - 1]];
+    b.n = b.n >= 10 ? 2 : b.n + 1;
+    editado(); sonido("tap"); decir(`${b.n} veces`);
+  } else if (cond) {
+    const r = JSON.parse(cond.dataset.cond), b = lista(r.slice(0, -1))[r[r.length - 1]];
+    b.cond = b.cond === "rio" ? "cerrado" : "rio";
+    editado(); sonido("tap"); decir(b.cond === "rio" ? "si hay río adelante" : "si el camino está cerrado");
+  } else return;
+  pintarPrograma();
+});
+
+$("limpiarBtn").addEventListener("click", () => {
+  if (corriendo || ganado) return;
+  programa = []; activo = []; editado(); sonido("tap"); pintarPrograma();
+});
+
+// ---------- Correr ----------
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const MOTIVO = {
+  arbol: "¡Uy! Ahí hay un árbol.",
+  borde: "¡Uy! Por ahí se sale del camino.",
+  rio: "¡Uy! Hay un río. Para pasarlo tiene que saltar.",
+  sinrio: "¡Uy! Saltó, pero no había río adelante. Saltar es solo para los ríos.",
+  aterrizaje: "¡Uy! Del otro lado del río no hay dónde caer.",
+  vacio: "El Repetir hasta está vacío. Poné bloques adentro.",
+};
+
+function iluminar(ruta) {
+  $("programa").querySelectorAll(".bloque.activa").forEach(x => x.classList.remove("activa"));
+  if (ruta) $("programa").querySelector(`[data-id="${id(ruta)}"]`)?.classList.add("activa");
+}
+
+$("playBtn").addEventListener("click", async () => {
+  if (corriendo || ganado) return;
+  if (!programa.length) { decir("Primero poné bloques en tu programa."); return; }
+  corriendo = true; mala = null;
+  pintarTablero(); feedback(""); pintarPrograma();
+  const r = ejecutar(juego, programa);
+  // En los niveles largos se anima más rápido
+  const vel = r.eventos.length > 40 ? 0.55 : 1;
+  await esperar(200);
+  const p = $("perezoso");
+  for (const ev of r.eventos) {
+    if (ev.ruta) iluminar(ev.ruta);
+    if (ev.t === "mover" || ev.t === "girar") { ponerPerezoso(ev.x, ev.y, ev.d); sonido("tap"); await esperar((ev.t === "mover" ? 400 : 280) * vel); }
+    else if (ev.t === "saltar") { p.classList.remove("salto"); void p.offsetWidth; p.classList.add("salto"); ponerPerezoso(ev.x, ev.y, ev.d); sonido("casi"); await esperar(460 * vel); }
+    else if (ev.t === "decidir") await esperar(180 * vel);
+    else if (ev.t === "comer") $("tablero").querySelector(`[data-k="${ev.k}"]`)?.classList.add("comida");
+    else if (ev.t === "choque") { p.classList.add("choque"); sonido("mal"); }
+  }
+  iluminar(null);
+  await esperar(250);
+  corriendo = false;
+  terminar(r);
+});
+
+function terminar(r) {
+  const total = contar(programa);
+  if (r.resultado === "gano") {
+    ganado = true;
+    const estrellas = total <= nivel.objetivo ? 3 : 2;
+    progreso[n] = Math.max(progreso[n] || 0, estrellas);
+    guardar(); pintarNiveles(); pintarPrograma();
+    $("perezoso").classList.add("feliz");
+    feedback("ok", "🎉", "⭐".repeat(estrellas));
+    const extra = estrellas === 3 ? "¡Y con muy pocos bloques!" : `Usaste ${total} bloques. ¿Podés hacerlo con ${nivel.objetivo}?`;
+    decir(`${elogio()} ${juego.hojas.length > 1 ? "Se comió todas las hojas" : "Llegó a la hoja"}. ${extra}`);
+    if (n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+    else decir("¡Terminaste todos los niveles! Ya sabés repetir y decidir, como los programadores de verdad.", { cola: true });
+    return;
+  }
+  const comio = r.faltan < juego.hojas.length;
+  const cerca = juego.hojas.some(h => Math.abs(h.x - r.x) + Math.abs(h.y - r.y) === 1);
+  if (r.resultado === "choco") {
+    mala = r.ruta; pintarPrograma();
+    feedback(comio ? "almost" : "bad", comio ? "🤏" : "🙈", comio ? "¡Casi!" : "Chocó");
+    decir(`${MOTIVO[r.motivo]} El bloque rojo es el que falló.`);
+  } else if (r.resultado === "cansado") {
+    feedback("bad", "😴", "Se cansó");
+    decir("El perezoso se cansó: dio demasiados pasos sin comerse todas las hojas. Revisá tus bloques de repetir.");
+  } else if (comio || cerca) {
+    feedback("almost", "🤏", "¡Casi!");
+    decir(r.faltan && comio ? `¡Casi! Todavía ${r.faltan === 1 ? "falta una hoja" : `faltan ${r.faltan} hojas`}.` : "¡Casi! Le faltó un poquito.");
+  } else {
+    feedback("bad", "🙈", "No llegó");
+    decir("El perezoso no llegó. Revisá tu programa.");
+  }
+}
+
+$("nextBtn").addEventListener("click", () => cargar(Math.min(n + 1, NIVELES.length - 1)));
+
+const primero = NIVELES.findIndex((_, i) => !progreso[i]);
+n = primero === -1 ? 0 : primero;
+alEmpezar(() => cargar(n));
+pintarNiveles();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__decidi = { poner: p => { programa = JSON.parse(JSON.stringify(p)); pintarPrograma(); } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

@@ -24,6 +24,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | ✍️ Trazá letras y números | Español | Prepa y 1° | `public/juegos/trazos.html` |
 | 🦥 Llevá al perezoso | Programación | Prepa a 2° | `public/juegos/perezoso.html` |
 | 🔁 Repetí y decidí | Programación | 2° a 4° | `public/juegos/repeti-decidi.html` |
+| 🦜 La lapa que dibuja | Programación | 4° a 6° | `public/juegos/lapa.html` |
 
 ## Estructura
 
@@ -45,6 +46,8 @@ aprendo-a-lo-tico/
 │   ├── js/prepa.js         # Piezas comunes de los juegos de Prepa
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
+│   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"
+│   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido
 ├── README.md
@@ -174,6 +177,10 @@ En `public/js/decidi.js`: el mapa usa `> < ^ v` para el perezoso (hacia dónde m
 cd public
 node --input-type=module -e 'import { NIVELES, leer, ejecutar } from "./js/decidi.js"; NIVELES.forEach((n, i) => console.log(i + 1, ejecutar(leer(n), n.solucion).resultado))'
 ```
+
+### La lapa que dibuja (Blockly)
+
+Usa [Blockly](https://github.com/google/blockly), la librería de bloques de Google (licencia Apache 2.0). Está copiada en `public/vendor/blockly/` (núcleo, español y `media/`), sin descargar nada de internet. Los bloques propios (`avanzar`, `girar`, `repetir`, `color`, `lápiz`, `grosor`) se definen en `juegos/lapa.html`. La lógica está en `js/lapa.js`: cada reto trae una `solucion` que dibuja la meta y fija las 3 estrellas. El dibujo del niño se compara con la meta sin importar el orden ni los colores.
 
 ### Guía de estilo de los juegos
 

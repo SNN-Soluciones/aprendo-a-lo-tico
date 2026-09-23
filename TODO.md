@@ -116,7 +116,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🦥 Más niveles del perezoso y un editor para que los niños armen los suyos
 - [x] 🔁 Repetí y decidí: avanzar/girar, repetir N, repetir hasta, «si hay río / si está cerrado» y saltar; 10 niveles (2° a 4°)
 - [ ] 🔁 Repetí y decidí: arrastrar bloques en computadora y mover bloques ya puestos
-- [ ] 🦜 La lapa que dibuja: Blockly (descargado dentro del sitio) con avanzar, girar, repetir y colores (4° a 6°)
+- [x] 🦜 La lapa que dibuja: Blockly (dentro del sitio) con avanzar, girar, repetir, color, lápiz y grosor; 10 retos + dibujo libre (4° a 6°)
+- [ ] 🦜 Lapa: variables y «para cada» (espirales), y compartir el dibujo por WhatsApp
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 
 ## 👨‍👩‍👧 Perfiles y progreso (local)

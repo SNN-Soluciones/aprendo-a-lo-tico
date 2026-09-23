@@ -137,4 +137,13 @@ export const JUEGOS = [
     grados: [2, 3, 4],
     url: "juegos/repeti-decidi.html",
   },
+  {
+    id: "lapa",
+    titulo: "La lapa que dibuja",
+    descripcion: "Programá con bloques estilo Scratch: la lapa dibuja cuadrados, estrellas, casitas y flores.",
+    emoji: "🦜",
+    materia: "prog",
+    grados: [4, 5, 6],
+    url: "juegos/lapa.html",
+  },
 ];

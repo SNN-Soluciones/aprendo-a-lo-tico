@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mapa de provincias</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #CFEFE3;
+    --face: #FFFFFF;
+    --rim: #1F3A5F;
+    --ink: #1F3A5F;
+    --soft: #9DB3C9;
+    --btn: #FFC83D;
+    --ok: #2FA85A;
+    --almost: #D98A00;
+    --bad: #D9443A;
+    --page-ink: #1F3A5F;
+    --materia: #F29A1F;
+    --sea: #BFE3F5;
+    --land: #FFF3D6;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  }
+  :root[data-theme="dark"] { --bg: #16303A; --face: #F7FBFF; --rim: #0E1E2E; --page-ink: #E6F3FF; }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0; min-height: 100vh;
+    background: var(--bg);
+    font-family: "Baloo 2", "Comic Sans MS", "Trebuchet MS", system-ui, sans-serif;
+    color: var(--ink);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 10px 32px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none; -webkit-user-select: none;
+  }
+  .wrap { width: min(96vw, 720px); }
+
+  button {
+    font: inherit; font-weight: 800; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 999px;
+    background: var(--face); padding: 6px 16px; cursor: pointer;
+    box-shadow: 0 4px 0 var(--rim); transition: transform .08s;
+  }
+  button:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--rim); }
+  button:focus-visible { outline: 3px dashed var(--materia); outline-offset: 3px; }
+  button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 0 4px 0 var(--rim); }
+
+  .top { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+  .levels { display: flex; gap: 6px; flex-wrap: wrap; }
+  .levels button { font-size: 1rem; padding: 4px 12px; }
+  .levels button[aria-pressed="true"] { background: var(--btn); }
+  .stars { font-size: 1.3rem; font-weight: 800; color: var(--page-ink); white-space: nowrap; }
+
+  .prompt {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 6px 56px 6px 14px; text-align: center; font-size: clamp(1.25rem, 5.5vw, 1.8rem); font-weight: 800; line-height: 1.2;
+    position: relative; min-height: 3.4rem; display: flex; align-items: center; justify-content: center;
+  }
+  .prompt b { color: var(--materia); }
+  .speak { position: absolute; top: 50%; right: 8px; transform: translateY(-50%); font-size: 1.3rem; padding: 0 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .speak:active { transform: translateY(calc(-50% + 3px)); }
+
+  .map { margin-top: 10px; background: var(--sea); border: 4px solid var(--rim); border-radius: 22px; overflow: hidden; }
+  .map svg { display: block; width: 100%; height: auto; }
+  .prov { fill: var(--land); stroke: var(--rim); stroke-width: 2.5; stroke-linejoin: round; cursor: pointer; transition: fill .15s; }
+  .prov:hover { fill: #FFE3A3; }
+  .prov.sel { fill: var(--btn); }
+  .prov.ok { fill: #8FDBA8; }
+  .prov.bad { fill: #F4A69E; }
+  .prov.flash { animation: flash .5s; }
+  @keyframes flash { 50% { fill: #F4A69E; } }
+  .prov:focus { outline: none; }
+  .prov:focus-visible { stroke: var(--materia); stroke-width: 6; }
+  .etq { font: 800 40px "Baloo 2", system-ui, sans-serif; fill: var(--rim); text-anchor: middle; pointer-events: none; paint-order: stroke; stroke: #FFFFFF; stroke-width: 8px; stroke-linejoin: round; }
+  .ciudad { display: none; }
+  .ciudad.show { display: inline; }
+  .ciudad circle { fill: #D9443A; stroke: #FFFFFF; stroke-width: 4; }
+  .ciudad text { font: 800 34px "Baloo 2", system-ui, sans-serif; fill: var(--rim); paint-order: stroke; stroke: #FFFFFF; stroke-width: 7px; pointer-events: none; }
+  .mar { font: italic 700 34px "Baloo 2", system-ui, sans-serif; fill: #5A8FB0; text-anchor: middle; pointer-events: none; }
+  .coco-box { fill: none; stroke: #5A8FB0; stroke-width: 2; stroke-dasharray: 6 5; }
+  .coco-lab { font: 700 22px "Baloo 2", system-ui, sans-serif; fill: #3F6F8F; text-anchor: middle; pointer-events: none; }
+  .hide-labels .etq { display: none; }
+
+  .options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+  .options:empty { display: none; }
+  .options button { border-radius: 20px; font-size: clamp(1.05rem, 4.5vw, 1.3rem); padding: 8px 6px; }
+  .options button.right { background: #C9F2D6; border-color: var(--ok); box-shadow: 0 4px 0 var(--ok); opacity: 1; }
+  .options button.wrong { background: #FBD5D1; }
+
+  .feedback {
+    min-height: 4.6rem; margin-top: 10px; text-align: center; font-size: 1.5rem; font-weight: 800;
+    color: var(--page-ink); line-height: 1.15; display: flex; align-items: center; justify-content: center;
+  }
+  .feedback.ok { color: var(--ok); }
+  .feedback.almost { color: var(--almost); }
+  .feedback.bad { color: var(--bad); }
+  .feedback.info { font-size: 1.35rem; }
+  .feedback small { display: block; font-size: 1.05rem; font-weight: 700; color: var(--page-ink); opacity: .9; margin-top: 2px; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .feedback.ok { color: #7BE3A0; }
+    :root:not([data-theme="light"]) .feedback.almost { color: #FFC83D; }
+    :root:not([data-theme="light"]) .feedback.bad { color: #FF8A80; }
+  }
+
+  .bottom { display: flex; justify-content: center; margin-top: 6px; }
+  .bottom button { background: var(--btn); font-size: 1.3rem; padding: 8px 28px; }
+  .bottom button.pulse { animation: pulse 1s ease-in-out infinite; }
+  @keyframes pulse { 50% { transform: scale(1.08); } }
+  @media (prefers-reduced-motion: reduce) {
+    .prov.flash, .bottom button.pulse { animation-duration: .01s; animation-iteration-count: 1; }
+  }
+  .credito { margin-top: 14px; font-size: .8rem; color: var(--page-ink); opacity: .75; text-align: center; }
+  .credito a { color: inherit; }
+
+  .home-link {
+    position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 50; width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; text-decoration: none;
+    font-size: 1.6rem; background: #FFFFFF; border: 4px solid #1F3A5F; box-shadow: 0 4px 0 #1F3A5F;
+  }
+  body { padding-bottom: calc(84px + env(safe-area-inset-bottom, 0px)) !important; }
+  .home-link:active { transform: translateY(3px); box-shadow: 0 1px 0 #1F3A5F; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Modo">
+    <button data-modo="explorar" aria-pressed="true">Explorar</button>
+    <button data-modo="donde">¿Dónde queda?</button>
+    <button data-modo="cabecera">Cabeceras</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap prompt"><span id="prompt"></span><button class="speak" id="speak" aria-label="Escuchar" hidden>🔊</button></div>
+
+<div class="wrap map" id="map">
+  <svg viewBox="0 0 1000 953" role="group" aria-label="Mapa de Costa Rica por provincias">
+    <text class="mar" x="200" y="560">Océano Pacífico</text>
+    <text class="mar" x="800" y="150">Mar Caribe</text>
+    <path class="prov" data-id="guanacaste" d="M234,353 L232,351 L230,347 L228,348 L228,352 L233,356 L236,356 L238,358 L240,355 L239,352 L234,353Z M208,50 L180,36 L161,36 L132,24 L121,12 L107,9 L83,50 L90,55 L90,62 L84,65 L79,64 L77,66 L73,59 L69,61 L71,62 L71,64 L68,63 L67,65 L65,66 L66,68 L74,71 L78,74 L78,77 L84,80 L83,84 L80,84 L79,87 L75,86 L81,89 L80,92 L78,92 L77,93 L78,95 L75,96 L75,93 L73,91 L72,93 L72,91 L62,92 L59,91 L57,93 L56,91 L55,93 L52,93 L57,98 L53,100 L47,96 L46,94 L49,92 L47,89 L45,90 L28,88 L34,91 L33,95 L29,96 L23,100 L20,100 L9,106 L18,103 L33,109 L36,116 L39,115 L51,118 L53,116 L56,119 L55,121 L51,122 L52,125 L54,127 L59,128 L63,131 L68,126 L74,129 L76,129 L80,130 L82,132 L84,131 L87,133 L86,131 L87,131 L93,142 L92,150 L94,168 L93,172 L88,173 L89,174 L85,178 L89,178 L88,180 L84,181 L84,187 L81,187 L84,189 L84,188 L87,187 L88,181 L93,178 L100,180 L102,184 L98,187 L97,189 L96,189 L95,193 L92,194 L91,193 L88,193 L87,194 L88,196 L86,199 L81,198 L81,199 L84,201 L82,204 L79,205 L77,203 L75,206 L73,206 L66,211 L58,207 L58,209 L57,209 L57,211 L55,213 L55,215 L49,215 L53,218 L51,221 L54,222 L53,225 L55,225 L56,227 L58,227 L59,232 L60,233 L60,235 L57,238 L52,236 L54,238 L53,241 L55,243 L52,247 L48,249 L44,246 L44,250 L42,249 L42,251 L39,255 L38,258 L33,259 L30,262 L31,264 L35,265 L40,273 L40,278 L36,281 L38,283 L39,282 L38,282 L39,280 L42,283 L39,286 L39,283 L37,283 L37,290 L38,295 L41,297 L42,308 L47,314 L50,320 L49,323 L52,325 L55,339 L61,345 L62,348 L66,352 L69,359 L72,359 L74,362 L81,368 L87,377 L85,373 L86,374 L89,374 L86,375 L87,376 L88,374 L90,375 L88,375 L88,376 L89,376 L89,377 L86,378 L88,380 L87,382 L89,382 L92,388 L92,392 L91,394 L89,393 L90,395 L93,395 L95,396 L95,394 L98,393 L101,395 L101,398 L108,400 L111,398 L112,400 L119,403 L122,402 L127,404 L133,402 L136,405 L136,407 L139,407 L139,405 L142,404 L144,407 L143,408 L148,411 L150,411 L150,408 L155,407 L160,408 L160,410 L167,411 L166,410 L169,410 L175,411 L187,419 L181,414 L183,413 L183,415 L187,417 L188,419 L187,420 L190,420 L196,423 L195,421 L199,423 L201,423 L201,425 L197,424 L203,427 L207,432 L208,432 L206,431 L206,428 L208,427 L210,428 L204,437 L210,440 L216,445 L214,442 L217,443 L223,437 L227,430 L226,422 L232,409 L225,408 L219,396 L203,391 L203,388 L206,384 L204,381 L205,378 L209,378 L211,375 L217,376 L228,375 L232,371 L236,362 L236,361 L234,362 L233,361 L233,362 L236,361 L234,360 L234,357 L229,360 L228,358 L226,359 L228,358 L228,359 L230,360 L232,357 L230,355 L227,356 L230,355 L226,352 L228,352 L228,350 L226,351 L229,350 L228,349 L224,345 L228,347 L227,342 L218,340 L215,335 L214,336 L213,335 L211,336 L215,334 L214,328 L212,327 L211,324 L213,323 L212,315 L213,308 L212,305 L214,300 L212,295 L199,288 L201,281 L195,277 L193,273 L186,272 L181,274 L179,271 L180,274 L184,271 L193,271 L195,273 L196,276 L201,279 L203,282 L201,287 L206,288 L212,292 L214,292 L212,293 L217,299 L215,304 L221,313 L228,316 L232,316 L235,318 L237,317 L237,318 L242,320 L245,319 L246,316 L249,315 L255,316 L254,314 L256,317 L257,314 L257,317 L258,317 L258,315 L258,317 L260,315 L260,318 L262,316 L261,319 L268,318 L297,331 L301,331 L304,324 L303,319 L309,313 L315,311 L314,301 L319,287 L321,277 L325,270 L331,268 L337,270 L342,274 L348,261 L349,260 L346,254 L350,245 L348,221 L343,223 L342,220 L336,216 L335,212 L331,213 L328,210 L328,206 L319,201 L315,202 L311,199 L306,199 L303,195 L297,194 L290,188 L283,180 L278,160 L258,154 L255,155 L247,155 L242,148 L225,146 L214,141 L200,142 L197,139 L195,135 L190,128 L186,127 L182,121 L179,122 L174,122 L171,116 L167,111 L165,98 L158,85 L160,82 L170,78 L174,75 L179,62 L186,62 L189,60 L192,60 L197,65 L202,69 L205,69 L208,50Z"/>
+    <path class="prov" data-id="alajuela" d="M527,136 L517,135 L514,137 L512,135 L513,133 L508,132 L506,129 L504,128 L504,126 L508,125 L510,120 L507,110 L503,109 L502,107 L498,105 L490,104 L488,99 L483,96 L481,98 L479,97 L475,89 L471,88 L473,81 L469,75 L463,80 L457,81 L451,86 L442,84 L432,73 L409,64 L406,58 L397,62 L376,49 L309,90 L208,50 L205,69 L202,69 L197,65 L192,60 L189,60 L186,62 L179,62 L174,75 L170,78 L160,82 L158,85 L165,98 L167,111 L171,116 L174,122 L179,122 L182,121 L186,127 L190,128 L195,135 L197,139 L200,142 L214,141 L225,146 L242,148 L247,155 L255,155 L258,154 L278,160 L283,180 L290,188 L297,194 L303,195 L306,199 L311,199 L315,202 L319,201 L328,206 L328,210 L331,213 L335,212 L336,216 L342,220 L343,223 L348,221 L350,245 L346,254 L349,260 L348,261 L342,274 L347,281 L357,288 L371,282 L374,283 L381,291 L383,296 L376,311 L379,313 L379,330 L385,342 L389,344 L391,353 L407,354 L411,359 L412,364 L411,369 L404,372 L396,381 L387,381 L384,384 L381,392 L377,393 L375,396 L375,401 L377,405 L398,407 L400,413 L408,417 L411,415 L409,414 L412,411 L414,411 L414,407 L417,407 L415,403 L418,404 L418,402 L419,403 L420,400 L424,398 L425,399 L428,393 L429,394 L433,393 L437,391 L438,389 L446,390 L450,388 L452,390 L453,387 L458,387 L458,385 L464,388 L466,387 L471,391 L477,392 L487,387 L497,386 L499,388 L504,385 L506,382 L509,382 L511,377 L514,378 L517,374 L519,375 L517,374 L515,376 L515,374 L516,373 L515,369 L522,365 L522,357 L526,338 L525,309 L525,195 L527,136Z"/>
+    <path class="prov" data-id="heredia" d="M527,136 L525,195 L525,309 L526,338 L522,357 L522,365 L515,369 L516,373 L515,374 L515,376 L517,374 L520,376 L522,375 L524,377 L527,376 L530,378 L534,376 L539,378 L545,378 L548,375 L556,376 L557,373 L558,373 L562,369 L565,369 L566,362 L569,360 L569,356 L564,349 L564,343 L568,343 L572,339 L577,338 L579,329 L578,323 L581,317 L597,308 L604,301 L611,296 L617,285 L615,281 L616,273 L615,272 L616,268 L614,265 L615,263 L607,248 L609,241 L613,238 L614,235 L617,236 L621,231 L619,227 L622,222 L621,221 L621,219 L619,217 L619,210 L617,205 L621,196 L620,193 L617,190 L619,184 L619,177 L623,177 L634,174 L634,169 L639,162 L640,161 L646,163 L656,163 L654,160 L647,155 L647,152 L650,151 L647,145 L641,141 L633,141 L630,146 L619,148 L612,156 L604,155 L592,159 L591,155 L582,153 L581,148 L572,143 L566,134 L563,135 L562,140 L556,138 L554,140 L554,143 L552,144 L547,143 L543,139 L536,142 L534,140 L534,136 L527,136Z"/>
+    <path class="prov" data-id="sanjose" d="M519,375 L517,374 L514,378 L511,377 L509,382 L506,382 L504,385 L499,388 L497,386 L487,387 L477,392 L471,391 L466,387 L464,388 L460,385 L458,385 L458,387 L453,387 L450,390 L450,388 L446,390 L438,389 L437,391 L433,393 L429,394 L428,393 L425,399 L424,398 L420,400 L419,403 L418,402 L418,404 L415,403 L417,407 L414,407 L414,411 L412,411 L410,413 L410,416 L407,417 L403,420 L403,424 L408,423 L410,430 L414,430 L416,433 L411,438 L404,437 L402,439 L401,447 L404,453 L403,461 L404,465 L411,472 L412,483 L416,488 L424,490 L443,488 L444,493 L447,495 L458,481 L456,475 L458,472 L465,473 L479,472 L484,468 L490,472 L498,475 L507,475 L513,478 L523,475 L529,476 L532,477 L534,481 L534,484 L532,484 L531,489 L535,493 L537,496 L537,497 L544,493 L550,496 L551,506 L551,508 L546,510 L550,509 L559,520 L570,527 L571,530 L577,533 L580,540 L585,545 L591,544 L595,538 L600,539 L604,552 L611,558 L618,560 L615,567 L616,582 L623,588 L633,593 L641,594 L647,587 L657,593 L669,616 L681,621 L686,628 L700,633 L704,636 L710,636 L717,631 L719,626 L720,620 L723,615 L724,616 L725,615 L726,613 L723,609 L725,606 L722,605 L722,602 L721,601 L720,603 L716,600 L713,601 L712,597 L710,599 L710,598 L713,591 L715,583 L720,581 L724,574 L726,567 L732,559 L738,551 L732,547 L722,527 L720,518 L715,513 L707,510 L702,505 L682,496 L677,489 L671,489 L664,498 L658,497 L657,496 L653,498 L651,496 L645,495 L641,489 L642,486 L640,482 L636,482 L616,477 L617,470 L614,463 L606,464 L604,463 L601,458 L595,460 L594,456 L589,455 L587,451 L586,443 L578,441 L578,434 L576,434 L574,430 L564,436 L560,435 L552,436 L547,434 L550,425 L563,418 L565,413 L568,412 L567,410 L573,405 L572,403 L562,400 L560,397 L565,398 L568,396 L567,394 L570,391 L571,387 L570,384 L581,383 L583,381 L585,381 L587,379 L592,380 L597,379 L605,375 L607,376 L612,374 L614,371 L608,353 L604,348 L595,343 L589,329 L588,322 L592,312 L580,318 L577,338 L572,339 L568,343 L564,343 L564,349 L569,356 L569,360 L566,362 L565,369 L562,369 L558,373 L557,373 L556,376 L548,375 L545,378 L539,378 L534,376 L530,378 L527,376 L524,377 L522,375 L520,376 L519,375Z"/>
+    <path class="prov" data-id="cartago" d="M715,513 L713,496 L709,488 L737,463 L739,450 L742,445 L765,414 L763,408 L764,400 L762,395 L760,382 L764,381 L766,375 L771,371 L685,370 L635,348 L588,323 L595,343 L604,348 L608,353 L614,371 L612,374 L607,376 L605,375 L597,379 L592,380 L587,379 L585,381 L583,381 L581,383 L570,384 L571,387 L570,391 L567,394 L568,396 L565,398 L560,397 L562,400 L572,403 L573,405 L567,410 L568,412 L565,413 L563,418 L550,425 L548,430 L547,434 L549,435 L556,435 L564,436 L574,430 L576,434 L578,434 L578,441 L586,443 L587,451 L589,455 L594,456 L595,460 L601,458 L604,463 L606,464 L614,463 L617,470 L616,477 L636,482 L640,482 L642,486 L641,489 L645,495 L651,496 L653,498 L657,496 L658,497 L664,498 L671,489 L677,489 L682,496 L702,505 L707,510 L715,513Z"/>
+    <path class="prov" data-id="limon" d="M592,312 L588,323 L635,348 L685,370 L771,371 L766,375 L764,381 L760,382 L762,395 L764,400 L763,408 L765,414 L742,445 L739,450 L737,463 L709,488 L713,496 L715,513 L720,518 L722,527 L732,547 L744,553 L746,556 L747,560 L754,555 L760,556 L762,549 L767,545 L773,548 L781,555 L790,558 L794,564 L799,565 L809,563 L820,576 L842,585 L842,595 L846,602 L846,608 L860,611 L865,614 L868,631 L871,636 L875,639 L880,637 L880,521 L907,513 L905,509 L903,510 L903,507 L900,508 L898,506 L898,502 L900,500 L899,497 L897,498 L895,494 L897,490 L897,486 L902,486 L901,483 L903,478 L905,477 L907,481 L912,480 L913,484 L917,485 L921,483 L926,488 L930,487 L933,489 L934,487 L935,487 L937,490 L935,493 L938,494 L939,496 L941,496 L942,499 L945,499 L946,500 L946,503 L948,503 L949,500 L951,503 L947,505 L951,507 L952,511 L957,512 L956,515 L961,510 L962,514 L966,515 L969,512 L972,514 L975,512 L976,507 L977,503 L976,498 L977,496 L983,496 L988,502 L991,500 L990,497 L987,495 L986,491 L979,488 L972,480 L971,474 L963,472 L957,474 L952,471 L948,473 L940,471 L934,466 L930,468 L927,467 L920,458 L915,449 L916,441 L914,440 L910,444 L906,443 L900,438 L881,413 L877,410 L880,412 L857,381 L853,375 L853,370 L855,370 L853,368 L854,366 L847,363 L843,364 L843,362 L842,363 L838,363 L839,367 L838,365 L836,366 L831,364 L822,354 L808,333 L744,256 L727,228 L710,194 L695,150 L692,130 L680,106 L675,99 L669,94 L666,95 L666,92 L660,91 L660,92 L662,93 L666,99 L665,100 L666,102 L664,103 L668,106 L666,116 L670,126 L668,132 L660,136 L655,134 L653,136 L641,139 L640,141 L643,141 L647,145 L650,151 L647,152 L647,155 L654,160 L656,163 L646,163 L640,161 L639,162 L634,169 L634,174 L623,177 L619,177 L619,184 L617,190 L620,193 L621,196 L617,205 L619,210 L619,217 L621,219 L621,221 L622,222 L619,227 L621,231 L617,236 L614,235 L613,238 L609,241 L607,248 L609,253 L613,259 L615,263 L614,265 L616,268 L615,272 L616,273 L615,281 L617,285 L611,296 L604,301 L592,312Z"/>
+    <path class="prov" data-id="puntarenas" d="M811,775 L810,776 L810,774 L812,770 L810,774 L811,779 L815,786 L821,790 L819,787 L816,786 L816,784 L815,783 L813,780 L815,781 L815,779 L816,778 L815,776 L817,774 L814,775 L812,773 L811,775Z M261,319 L261,320 L264,320 L262,321 L264,322 L263,325 L260,325 L261,327 L266,328 L270,325 L276,328 L282,336 L293,340 L295,346 L299,344 L297,347 L293,346 L292,347 L297,349 L299,348 L304,355 L308,354 L306,356 L312,359 L317,363 L319,364 L320,362 L319,364 L322,366 L323,364 L322,364 L323,363 L323,366 L325,364 L323,365 L327,368 L327,366 L329,369 L331,368 L329,369 L331,370 L331,368 L333,368 L331,369 L335,371 L335,368 L337,368 L335,369 L336,371 L340,370 L338,368 L340,369 L339,368 L341,368 L341,366 L341,369 L339,368 L340,370 L341,370 L340,371 L343,371 L344,369 L342,372 L345,372 L345,370 L346,372 L346,369 L349,368 L346,368 L346,371 L352,371 L337,372 L327,374 L345,372 L355,375 L359,377 L358,381 L360,384 L366,389 L366,387 L369,388 L369,387 L369,388 L367,388 L367,390 L366,390 L366,392 L362,392 L363,394 L361,398 L368,403 L371,406 L370,408 L376,413 L383,422 L391,436 L389,443 L384,446 L381,452 L379,452 L379,454 L377,456 L379,463 L376,469 L379,469 L380,470 L381,469 L382,470 L383,472 L380,475 L391,481 L393,484 L391,486 L394,489 L416,505 L417,508 L436,504 L475,516 L486,517 L498,521 L501,521 L500,519 L489,517 L490,516 L493,518 L499,517 L496,518 L500,519 L501,522 L505,523 L506,523 L502,518 L502,516 L500,515 L501,515 L505,521 L506,520 L505,521 L507,523 L511,524 L507,523 L510,521 L509,522 L520,526 L519,527 L519,528 L513,525 L509,525 L510,525 L518,529 L524,534 L524,531 L524,534 L522,535 L524,536 L525,541 L522,542 L522,544 L525,543 L528,544 L530,547 L530,549 L531,548 L533,549 L533,547 L535,546 L537,552 L537,550 L539,550 L545,551 L579,564 L594,572 L617,590 L618,593 L617,595 L619,595 L620,596 L627,598 L629,600 L632,600 L633,602 L636,603 L642,611 L643,611 L642,611 L642,615 L645,615 L651,617 L653,621 L661,627 L663,631 L662,632 L666,633 L665,635 L673,640 L676,645 L676,646 L673,644 L671,641 L670,641 L679,655 L679,665 L681,669 L681,683 L685,682 L691,688 L692,687 L691,689 L688,687 L689,689 L695,691 L691,692 L697,693 L693,694 L686,692 L685,694 L686,697 L690,699 L694,704 L695,704 L695,701 L696,704 L696,705 L690,705 L689,706 L692,710 L686,710 L681,712 L677,715 L673,720 L675,720 L677,724 L678,724 L680,723 L684,717 L684,719 L683,724 L682,726 L680,727 L677,726 L675,728 L676,737 L674,738 L674,745 L672,749 L668,751 L666,749 L662,749 L657,751 L654,755 L655,762 L650,765 L651,768 L649,770 L649,777 L652,782 L654,781 L660,783 L661,784 L660,784 L662,787 L674,798 L674,800 L687,810 L691,818 L696,821 L698,824 L719,821 L735,825 L747,831 L745,829 L746,829 L752,832 L748,831 L763,836 L775,843 L777,843 L781,840 L780,831 L783,827 L779,822 L783,816 L777,806 L779,794 L777,795 L778,794 L779,797 L777,799 L778,796 L777,797 L777,796 L773,794 L767,786 L766,787 L760,784 L753,784 L752,781 L750,782 L746,779 L735,767 L736,764 L736,760 L732,757 L733,757 L729,754 L728,752 L726,753 L726,750 L725,751 L726,749 L725,747 L724,748 L724,750 L722,750 L721,746 L722,742 L726,742 L727,740 L730,741 L733,741 L737,744 L741,742 L744,737 L747,738 L747,737 L748,739 L752,736 L751,734 L753,734 L754,737 L755,736 L759,738 L761,737 L763,739 L766,740 L764,740 L765,742 L767,741 L764,743 L767,743 L765,747 L766,753 L773,756 L776,761 L781,759 L788,760 L793,769 L794,765 L796,765 L800,769 L802,768 L802,769 L804,769 L809,771 L811,767 L808,765 L811,764 L820,773 L822,777 L826,776 L828,779 L827,778 L824,780 L821,780 L821,782 L817,783 L817,786 L822,788 L822,790 L827,791 L830,790 L835,791 L838,794 L835,791 L831,791 L830,793 L829,790 L827,792 L831,795 L831,798 L831,797 L830,798 L832,798 L831,799 L832,800 L829,801 L828,799 L829,803 L828,804 L826,803 L827,806 L822,800 L823,796 L821,798 L818,792 L821,800 L830,811 L835,821 L832,825 L829,832 L822,837 L819,841 L819,846 L829,856 L850,867 L864,877 L870,883 L881,900 L884,910 L890,921 L890,928 L888,931 L886,930 L886,935 L888,940 L890,941 L893,938 L891,935 L894,930 L892,922 L894,921 L888,910 L887,904 L889,902 L887,901 L887,895 L885,896 L883,892 L880,891 L882,882 L879,879 L878,873 L875,874 L874,871 L871,871 L869,868 L864,873 L862,868 L860,868 L861,866 L854,864 L855,862 L853,860 L848,861 L846,855 L848,852 L859,848 L864,843 L866,844 L870,840 L875,832 L880,829 L881,825 L886,827 L899,824 L908,812 L910,805 L908,793 L913,787 L909,780 L911,776 L908,773 L911,773 L910,766 L900,754 L901,751 L900,748 L896,748 L893,744 L893,740 L890,740 L889,737 L885,736 L884,733 L887,730 L885,729 L887,726 L894,726 L893,721 L900,717 L901,714 L895,712 L895,710 L901,703 L913,701 L916,697 L920,696 L927,695 L933,691 L935,687 L945,683 L943,675 L936,670 L937,667 L936,664 L925,658 L919,659 L918,655 L914,654 L914,651 L909,650 L903,646 L902,643 L899,644 L897,642 L894,634 L892,634 L882,638 L880,637 L875,639 L871,636 L868,631 L865,614 L860,611 L846,608 L846,602 L842,595 L842,585 L820,576 L809,563 L799,565 L794,564 L790,558 L781,555 L773,548 L767,545 L762,549 L760,556 L754,555 L747,560 L746,556 L744,553 L738,551 L732,557 L720,581 L715,583 L713,591 L710,598 L710,599 L712,597 L713,601 L716,600 L720,603 L721,601 L722,602 L722,605 L725,606 L723,609 L726,613 L725,615 L724,616 L723,615 L720,620 L719,626 L717,631 L710,636 L704,636 L700,633 L686,628 L681,621 L669,616 L657,593 L647,587 L641,594 L633,593 L623,588 L616,582 L615,567 L618,560 L611,558 L604,552 L600,539 L595,538 L591,544 L585,545 L580,540 L577,533 L571,530 L570,527 L559,520 L550,509 L546,510 L551,508 L551,506 L550,496 L544,493 L537,497 L537,496 L535,493 L531,489 L532,484 L534,484 L534,481 L532,477 L529,476 L523,475 L513,478 L507,475 L498,475 L490,472 L484,468 L479,472 L465,473 L458,472 L456,475 L458,481 L447,495 L444,493 L443,488 L424,490 L416,488 L412,483 L411,472 L404,465 L403,461 L404,453 L401,447 L402,439 L404,437 L411,438 L416,433 L414,430 L410,430 L408,423 L403,424 L403,420 L407,417 L400,413 L398,407 L377,405 L375,401 L375,396 L377,393 L381,392 L387,381 L396,381 L404,372 L411,369 L412,364 L411,359 L407,354 L391,353 L389,344 L385,342 L379,330 L379,313 L376,311 L383,296 L381,291 L374,283 L371,282 L357,288 L347,281 L342,274 L337,270 L331,268 L325,270 L321,277 L319,287 L314,301 L315,311 L309,313 L303,319 L304,324 L301,331 L297,331 L268,318 L261,319Z M217,443 L218,446 L221,448 L217,445 L224,457 L225,462 L241,479 L242,489 L245,492 L248,492 L250,494 L249,495 L251,496 L252,493 L256,492 L257,488 L261,479 L261,476 L264,468 L267,464 L271,463 L272,460 L281,457 L285,453 L283,451 L279,451 L277,447 L278,448 L280,443 L286,440 L285,440 L287,440 L285,439 L289,436 L289,440 L286,441 L289,443 L291,445 L296,446 L298,445 L296,438 L300,437 L302,438 L304,436 L303,433 L307,430 L305,429 L306,427 L312,426 L312,422 L311,424 L308,421 L312,420 L312,423 L314,421 L318,422 L319,419 L322,417 L314,415 L308,418 L306,418 L306,417 L303,414 L302,416 L300,416 L302,412 L305,412 L306,410 L310,410 L310,408 L306,407 L306,404 L301,402 L303,396 L308,395 L306,388 L303,389 L302,388 L302,387 L295,384 L293,385 L292,383 L289,385 L288,384 L280,384 L276,378 L272,377 L268,374 L266,374 L266,375 L266,374 L264,375 L264,376 L262,376 L263,375 L262,375 L260,376 L259,375 L262,374 L260,373 L261,373 L257,375 L250,372 L249,374 L248,373 L250,372 L249,369 L245,369 L237,362 L234,364 L232,371 L228,375 L217,376 L211,375 L209,378 L205,378 L204,381 L206,384 L203,388 L203,391 L219,396 L225,408 L232,409 L226,422 L227,430 L223,437 L217,443Z M256,338 L254,338 L249,340 L248,336 L245,337 L244,338 L244,336 L240,338 L242,336 L238,336 L237,333 L238,335 L240,335 L239,334 L240,333 L239,334 L240,335 L245,336 L242,334 L244,334 L246,337 L253,335 L236,329 L227,331 L226,333 L228,336 L230,342 L238,345 L242,345 L252,343 L255,341 L256,338Z"/>
+    <rect class="coco-box" x="35" y="818" width="120" height="120" rx="12"/>
+    <path class="prov" data-id="puntarenas" data-coco="1" d="M60,874 L63,874 L62,877 L64,880 L67,880 L71,884 L71,887 L73,885 L73,887 L76,889 L76,892 L79,892 L82,895 L84,888 L88,884 L89,880 L93,882 L101,879 L105,874 L108,875 L109,873 L111,875 L115,869 L116,870 L117,867 L122,867 L123,868 L127,865 L130,857 L125,843 L124,841 L126,840 L123,841 L120,839 L116,843 L114,843 L111,841 L112,836 L109,835 L109,833 L106,833 L107,838 L105,838 L104,841 L102,841 L99,839 L97,841 L94,841 L94,843 L99,844 L99,847 L98,847 L97,849 L91,850 L87,849 L84,848 L82,851 L76,850 L73,852 L71,856 L66,859 L66,864 L65,865 L63,866 L65,867 L63,867 L64,870 L60,871 L60,874Z"/>
+    <text class="coco-lab" x="95" y="925">Isla del Coco</text>
+    <g id="labels"></g>
+  </svg>
+</div>
+
+<div class="wrap options" id="options"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" hidden>Otra pregunta</button></div>
+<div class="wrap credito">Mapa: © colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL), vía geoBoundaries.</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+
+  // 🗺️ Provincias: etiqueta (x, y), cabecera y su punto (cx, cy) en el mapa.
+  const PROV = {
+    guanacaste: { n: "Guanacaste", cab: "Liberia", x: 185, y: 250, cx: 157, cy: 180,
+      dato: "Se unió a Costa Rica el 25 de julio de 1824. ¡Tierra de sabaneros y playas!" },
+    alajuela: { n: "Alajuela", cab: "Alajuela", x: 420, y: 225, cx: 510, cy: 362,
+      dato: "Tierra de Juan Santamaría. Ahí está el aeropuerto que lleva su nombre." },
+    heredia: { n: "Heredia", cab: "Heredia", x: 565, y: 215, cx: 538, cy: 367,
+      dato: "Le dicen «la ciudad de las flores». Es la provincia más pequeña." },
+    sanjose: { n: "San José", cab: "San José", x: 590, y: 500, cx: 549, cy: 386,
+      dato: "Su cabecera es la capital de Costa Rica." },
+    cartago: { n: "Cartago", cab: "Cartago", x: 690, y: 450, cx: 596, cy: 406,
+      dato: "Fue la primera capital. Ahí está la Basílica de Nuestra Señora de los Ángeles." },
+    limon: { n: "Limón", cab: "Limón", x: 790, y: 330, cx: 851, cy: 369,
+      dato: "Está en el Caribe. Ahí queda el Parque Nacional Tortuguero." },
+    puntarenas: { n: "Puntarenas", cab: "Puntarenas", x: 740, y: 700, cx: 330, cy: 374,
+      dato: "Es la provincia más grande. ¡Hasta la Isla del Coco es de Puntarenas!" },
+  };
+  // Provincias que comparten frontera (para el «¡Casi!»)
+  const VECINAS = {
+    guanacaste: ["alajuela", "puntarenas"],
+    alajuela: ["guanacaste", "heredia", "sanjose", "puntarenas"],
+    heredia: ["alajuela", "sanjose", "limon"],
+    sanjose: ["alajuela", "heredia", "cartago", "limon", "puntarenas"],
+    cartago: ["sanjose", "limon"],
+    limon: ["heredia", "sanjose", "cartago", "puntarenas"],
+    puntarenas: ["guanacaste", "alajuela", "sanjose", "limon"],
+  };
+  const IDS = Object.keys(PROV);
+
+  let modo = "explorar", mazo = [], meta = null, fallos = 0, listo = false, ultimo = "";
+  let stars = 0;
+  try { stars = Number(localStorage.getItem("provincias-stars")) || 0; } catch (_) {}
+
+  // ---------- Voz ----------
+  const puedeHablar = "speechSynthesis" in window;
+  function hablar(texto) {
+    if (!puedeHablar) return;
+    try {
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(texto);
+      const voces = speechSynthesis.getVoices();
+      const voz = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang));
+      if (voz) u.voice = voz;
+      u.lang = voz ? voz.lang : "es-MX";
+      u.rate = 0.95;
+      speechSynthesis.speak(u);
+    } catch (_) {}
+  }
+  if (puedeHablar) $("speak").hidden = false;
+
+  // ---------- Etiquetas ----------
+  const svgNS = "http://www.w3.org/2000/svg";
+  const labels = $("labels");
+  IDS.forEach(id => {
+    const p = PROV[id];
+    const t = document.createElementNS(svgNS, "text");
+    t.setAttribute("class", "etq"); t.setAttribute("x", p.x); t.setAttribute("y", p.y);
+    t.textContent = p.n;
+    labels.appendChild(t);
+  });
+  IDS.forEach(id => {
+    const p = PROV[id];
+    const g = document.createElementNS(svgNS, "g");
+    g.setAttribute("class", "ciudad");
+    g.dataset.id = id;
+    const izq = id === "limon";
+    g.innerHTML = `<circle cx="${p.cx}" cy="${p.cy}" r="9"/><text x="${p.cx + (izq ? -14 : 14)}" y="${p.cy + 11}" text-anchor="${izq ? "end" : "start"}">${p.cab}</text>`;
+    labels.appendChild(g);
+  });
+
+  const provEls = Array.from(document.querySelectorAll(".prov"));
+  provEls.forEach(el => {
+    el.setAttribute("tabindex", "0");
+    el.setAttribute("role", "button");
+    el.setAttribute("aria-label", el.dataset.coco ? "Isla del Coco" : PROV[el.dataset.id].n);
+  });
+  const pintar = (id, cls) => provEls.forEach(el => { if (el.dataset.id === id) el.classList.add(cls); });
+  const limpiar = () => {
+    provEls.forEach(el => el.classList.remove("sel", "ok", "bad", "flash"));
+    document.querySelectorAll(".ciudad").forEach(g => g.classList.remove("show"));
+  };
+  const verCiudad = id => document.querySelector(`.ciudad[data-id="${id}"]`).classList.add("show");
+
+  function setFeedback(kind, main, sub) {
+    const fb = $("feedback");
+    fb.className = "wrap feedback " + (kind || "");
+    fb.innerHTML = main ? `<div>${main}${sub ? `<small>${sub}</small>` : ""}</div>` : "";
+  }
+  const setPrompt = html => { $("prompt").innerHTML = html; };
+
+  const barajar = arr => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+
+  // ---------- Modos ----------
+  function iniciar() {
+    limpiar();
+    $("map").classList.toggle("hide-labels", modo !== "explorar");
+    $("options").innerHTML = "";
+    setFeedback("", "");
+    mazo = [];
+    if (modo === "explorar") {
+      $("nextBtn").hidden = true;
+      setPrompt("Tocá una provincia para conocerla 👆");
+    } else {
+      $("nextBtn").hidden = false;
+      siguiente();
+    }
+  }
+
+  function siguiente() {
+    if (!mazo.length) {
+      mazo = barajar(IDS);
+      if (mazo[mazo.length - 1] === ultimo) mazo.unshift(mazo.pop());
+    }
+    meta = mazo.pop(); ultimo = meta;
+    fallos = 0; listo = false;
+    limpiar(); setFeedback("", "");
+    $("nextBtn").classList.remove("pulse");
+    if (modo === "donde") {
+      $("options").innerHTML = "";
+      setPrompt(`¿Dónde queda <b>${PROV[meta].n}</b>?`);
+    } else {
+      pintar(meta, "sel");
+      setPrompt(`¿Cuál es la cabecera de <b>${PROV[meta].n}</b>?`);
+      const otras = barajar(IDS.filter(id => id !== meta)).slice(0, 3);
+      $("options").innerHTML = barajar([meta, ...otras])
+        .map(id => `<button data-cab="${id}">${PROV[id].cab}</button>`).join("");
+    }
+  }
+
+  function textoPrompt() { return $("prompt").textContent; }
+
+  function ganar(sub) {
+    listo = true;
+    if (fallos === 0) {
+      stars++;
+      try { localStorage.setItem("provincias-stars", stars); } catch (_) {}
+      $("stars").textContent = "⭐ " + stars;
+      setFeedback("ok", "¡Acertado! 🎉", sub);
+      hablar("¡Acertado! " + sub);
+    } else {
+      setFeedback("almost", "¡Casi! 🤏 A la segunda", sub);
+      hablar(sub);
+    }
+    $("nextBtn").classList.add("pulse");
+  }
+
+  function tocar(id, esCoco) {
+    const p = PROV[id];
+    if (modo === "explorar") {
+      limpiar(); pintar(id, "sel"); verCiudad(id);
+      setPrompt(`<b>${p.n}</b>`);
+      setFeedback("info", `Cabecera: ${p.cab}`, (esCoco ? "La Isla del Coco es parte de Puntarenas. " : "") + p.dato);
+      hablar(`${p.n}. Su cabecera es ${p.cab}. ${p.dato}`);
+      return;
+    }
+    if (modo !== "donde" || listo) return;
+    if (id === meta) {
+      limpiar(); pintar(id, "ok"); verCiudad(id);
+      ganar(`Esa es ${p.n}. Su cabecera es ${p.cab}.`);
+    } else {
+      fallos++;
+      provEls.forEach(el => {
+        if (el.dataset.id === id) { el.classList.remove("flash"); void el.getBBox(); el.classList.add("flash"); }
+      });
+      if (VECINAS[meta].includes(id)) setFeedback("almost", "¡Casi! 🤏", `Esa es ${p.n}. ${PROV[meta].n} queda al lado.`);
+      else setFeedback("bad", "Uy, no es 🙈", `Esa es ${p.n}. Buscá más ${pista(id, meta)}.`);
+    }
+  }
+
+  // Dirección aproximada de una provincia respecto a otra, según sus etiquetas
+  function pista(desde, hacia) {
+    const a = PROV[desde], b = PROV[hacia];
+    const dx = b.x - a.x, dy = b.y - a.y;
+    if (Math.abs(dx) > Math.abs(dy)) return dx > 0 ? "a la derecha, hacia el Caribe" : "a la izquierda, hacia el Pacífico";
+    return dy > 0 ? "abajo, hacia el sur" : "arriba, hacia el norte";
+  }
+
+  $("map").addEventListener("click", e => {
+    const el = e.target.closest(".prov");
+    if (el) tocar(el.dataset.id, !!el.dataset.coco);
+  });
+  $("map").addEventListener("keydown", e => {
+    const el = e.target.closest(".prov");
+    if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); tocar(el.dataset.id, !!el.dataset.coco); }
+  });
+
+  $("options").addEventListener("click", e => {
+    const btn = e.target.closest("[data-cab]");
+    if (!btn || listo || btn.disabled) return;
+    if (btn.dataset.cab === meta) {
+      btn.classList.add("right");
+      $("options").querySelectorAll("button").forEach(b => { if (b !== btn) b.disabled = true; });
+      limpiar(); pintar(meta, "ok"); verCiudad(meta);
+      ganar(`${PROV[meta].cab} es la cabecera de ${PROV[meta].n}.`);
+    } else {
+      fallos++;
+      btn.classList.add("wrong"); btn.disabled = true;
+      setFeedback("bad", "Uy, no es 🙈", `${PROV[btn.dataset.cab].cab} es la cabecera de ${PROV[btn.dataset.cab].n}.`);
+    }
+  });
+
+  $("speak").addEventListener("click", () => hablar(textoPrompt()));
+  $("nextBtn").addEventListener("click", siguiente);
+  document.querySelectorAll(".levels button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      modo = btn.dataset.modo;
+      document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
+      iniciar();
+    });
+  });
+
+  $("stars").textContent = "⭐ " + stars;
+  iniciar();
+})();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

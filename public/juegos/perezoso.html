@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Llevá al perezoso</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root {
+    --materia: #14A3A3;
+    --arriba: #2F7FD1; --derecha: #2FA85A; --abajo: #F29A1F; --izquierda: #8E5BD9;
+  }
+  /* Niveles 1–10 */
+  .niveles { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; flex: 1; }
+  .niveles::-webkit-scrollbar { display: none; }
+  .niveles button { flex: none; min-width: 44px; padding: 0 8px; font-size: 1.1rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .niveles button small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
+  .niveles button[aria-pressed="true"] { background: var(--btn); }
+
+  /* Tablero */
+  .tablero {
+    margin-top: 10px; position: relative; border: 4px solid var(--rim); border-radius: 18px; overflow: hidden;
+    display: grid; background: #9ED97B; width: min(96vw, 460px);
+  }
+  .celda { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: clamp(1.6rem, 9vw, 2.8rem); line-height: 1;
+    border-right: 2px solid rgba(31, 58, 95, .12); border-bottom: 2px solid rgba(31, 58, 95, .12); }
+  .celda:nth-child(odd) { background: rgba(255, 255, 255, .12); }
+  .celda.rio { background: #7FC8F0; }
+  .celda.arbol { background: #7CC45A; }
+  .celda.salida { background: rgba(255, 255, 255, .45); }
+  .hoja.comida { opacity: 0; transform: scale(1.8); transition: all .35s; }
+  .perezoso {
+    position: absolute; left: 0; top: 0; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(1.9rem, 10vw, 3.1rem); line-height: 1; transition: transform .38s ease-in-out; z-index: 2; pointer-events: none;
+  }
+  .perezoso span { display: inline-block; transition: transform .2s; }
+  .perezoso.izq span { transform: scaleX(-1); }
+  .perezoso.choque span { animation: choque .45s; }
+  @keyframes choque { 20%, 60% { transform: translateX(-8px) rotate(-12deg); } 40%, 80% { transform: translateX(8px) rotate(12deg); } }
+  .perezoso.feliz span { animation: feliz .6s ease-in-out 2; }
+  @keyframes feliz { 50% { transform: translateY(-14px) scale(1.2); } }
+
+  /* Programa */
+  .programa {
+    margin-top: 10px; background: var(--face); border: 4px dashed var(--rim); border-radius: 18px;
+    min-height: 62px; padding: 6px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center; width: min(96vw, 460px);
+  }
+  .programa .vacio { font-weight: 800; opacity: .55; width: 100%; text-align: center; font-size: 1.05rem; }
+  .flecha { display: inline-flex; align-items: center; justify-content: center; border-radius: 12px; color: #fff; padding: 0; }
+  .flecha svg { width: 70%; height: 70%; fill: currentColor; }
+  .flecha.arriba { background: var(--arriba); } .flecha.derecha { background: var(--derecha); }
+  .flecha.abajo { background: var(--abajo); } .flecha.izquierda { background: var(--izquierda); }
+  .flecha.derecha svg { transform: rotate(90deg); } .flecha.abajo svg { transform: rotate(180deg); } .flecha.izquierda svg { transform: rotate(-90deg); }
+  .programa .flecha { width: 38px; height: 38px; border: 3px solid var(--rim); box-shadow: 0 2px 0 var(--rim); }
+  .programa .flecha.activa { outline: 4px solid var(--btn); outline-offset: 2px; transform: scale(1.12); }
+  .programa .flecha.mala { outline: 4px solid var(--bad); outline-offset: 2px; }
+  .programa .flecha.hecha { opacity: .55; }
+  .contador { font-weight: 800; font-size: .9rem; opacity: .6; margin-left: auto; }
+
+  /* Botonera */
+  .botonera { display: grid; grid-template-columns: repeat(4, 1fr) ; gap: 8px; margin-top: 10px; width: min(96vw, 460px); }
+  .botonera .flecha { height: 64px; border-radius: 18px; border: 4px solid var(--rim); box-shadow: 0 4px 0 var(--rim); }
+  .acciones { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 8px; margin-top: 8px; width: min(96vw, 460px); }
+  .acciones button { font-size: 1.8rem; padding: 4px 0; border-radius: 18px; }
+  #playBtn { background: var(--ok); color: #fff; }
+  #playBtn.pulse { animation: pulse 1s ease-in-out infinite; }
+  #nextBtn { background: var(--btn); }
+  #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🦥🍃</div>
+  <h1>Llevá al perezoso</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Armá el camino con flechas y tocá ▶️ para que el perezoso llegue a las hojas. ¡Es tu primer programa!</p>
+</div>
+
+<div class="wrap top">
+  <div class="niveles" id="niveles" role="group" aria-label="Nivel"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tablero" id="tablero"></div>
+<div class="programa" id="programa" aria-label="Tu programa" aria-live="polite"></div>
+
+<div class="botonera" id="botonera">
+  <button class="flecha arriba" data-dir="arriba" aria-label="Arriba"></button>
+  <button class="flecha izquierda" data-dir="izquierda" aria-label="Izquierda"></button>
+  <button class="flecha abajo" data-dir="abajo" aria-label="Abajo"></button>
+  <button class="flecha derecha" data-dir="derecha" aria-label="Derecha"></button>
+</div>
+<div class="acciones">
+  <button id="borrarBtn" aria-label="Borrar la última flecha">⌫</button>
+  <button id="limpiarBtn" aria-label="Borrar todo">🗑️</button>
+  <button id="playBtn" aria-label="Correr el programa">▶️</button>
+</div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Siguiente nivel" hidden>➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { NIVELES, DIRS, leer, ejecutar, minimo } from "../js/perezoso.js";
+
+const $ = id => document.getElementById(id);
+const FLECHA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.5 12H15v9.5H9V12H3.5z"/></svg>`;
+const MAX = 20;
+const PALABRA = { arriba: "arriba", derecha: "derecha", abajo: "abajo", izquierda: "izquierda" };
+
+let n = 0, juego = null, programa = [], corriendo = false, ganado = false, intentos = 0;
+let progreso = {};
+try { progreso = JSON.parse(localStorage.getItem("perezoso-progreso")) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("perezoso-progreso", JSON.stringify(progreso)); } catch (_) {} };
+
+document.querySelectorAll("#botonera .flecha").forEach(b => b.innerHTML = FLECHA);
+
+// ---------- Pintar ----------
+function pintarNiveles() {
+  $("niveles").innerHTML = NIVELES.map((_, i) =>
+    `<button data-n="${i}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}">${i + 1}<small>${"⭐".repeat(progreso[i] || 0)}</small></button>`).join("");
+  const total = Object.values(progreso).reduce((a, b) => a + b, 0);
+  $("stars").textContent = `⭐ ${total}`;
+  $("niveles").querySelector(`[data-n="${n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+function pintarTablero() {
+  const t = $("tablero");
+  t.style.gridTemplateColumns = `repeat(${juego.ancho}, 1fr)`;
+  t.innerHTML = juego.celdas.map(c => {
+    const hoja = juego.hojas.some(h => h.x === c.x && h.y === c.y);
+    const salida = juego.salida.x === c.x && juego.salida.y === c.y;
+    const dentro = c.tipo === "arbol" ? "🌳" : c.tipo === "rio" ? "🌊" : hoja ? `<span class="hoja" data-k="${c.x},${c.y}">🍃</span>` : "";
+    return `<div class="celda ${c.tipo}${salida ? " salida" : ""}">${dentro}</div>`;
+  }).join("") + `<div class="perezoso" id="perezoso"><span>🦥</span></div>`;
+  ponerPerezoso(juego.salida.x, juego.salida.y, false);
+}
+
+function ponerPerezoso(x, y, izq) {
+  const p = $("perezoso");
+  p.style.width = `${100 / juego.ancho}%`; p.style.height = `${100 / juego.alto}%`;
+  p.style.transform = `translate(${x * 100}%, ${y * 100}%)`;
+  if (izq !== undefined) p.classList.toggle("izq", izq);
+}
+
+function pintarPrograma(activa = -1, mala = -1) {
+  const el = $("programa");
+  el.innerHTML = programa.length
+    ? programa.map((d, i) => `<button class="flecha ${d}${i === activa ? " activa" : ""}${i === mala ? " mala" : ""}${activa >= 0 && i < activa ? " hecha" : ""}" data-i="${i}" aria-label="${PALABRA[d]}, tocá para quitar">${FLECHA}</button>`).join("")
+      + `<span class="contador">${programa.length}</span>`
+    : `<span class="vacio">👇 Tocá las flechas para armar el camino</span>`;
+  $("playBtn").classList.toggle("pulse", programa.length > 0 && !corriendo && !ganado);
+}
+
+// ---------- Niveles ----------
+function cargar(i) {
+  n = i; juego = leer(NIVELES[n]); programa = []; ganado = false; corriendo = false; intentos = 0;
+  pintarNiveles(); pintarTablero(); pintarPrograma(); feedback("");
+  $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
+  const varias = juego.hojas.length > 1;
+  instruccion(
+    `<span class="big">🦥</span> ➜ <span class="big">🍃</span>${varias ? ` ×${juego.hojas.length}` : ""}`,
+    n === 0
+      ? "Llevá al perezoso hasta la hoja. Tocá las flechas para armar el camino, y después tocá el botón verde para que camine."
+      : varias ? `Llevá al perezoso a comerse todas las hojas. ¡Son ${juego.hojas.length}!` : "Llevá al perezoso hasta la hoja."
+  );
+}
+
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-n]");
+  if (b && !corriendo) { sonido("tap"); cargar(Number(b.dataset.n)); }
+});
+
+// ---------- Armar el programa ----------
+function reiniciarSiHaceFalta() {
+  // Si ya corrió, al cambiar el programa el perezoso vuelve a la salida.
+  if (ganado) return false;
+  pintarTablero(); feedback("");
+  return true;
+}
+
+$("botonera").addEventListener("click", e => {
+  const b = e.target.closest("[data-dir]");
+  if (!b || corriendo || ganado) return;
+  if (programa.length >= MAX) { decir("¡Ya son muchas flechas! Probá con menos."); return; }
+  reiniciarSiHaceFalta();
+  programa.push(b.dataset.dir);
+  sonido("tap"); hablar(PALABRA[b.dataset.dir]);
+  pintarPrograma();
+});
+
+$("programa").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || corriendo || ganado) return;
+  reiniciarSiHaceFalta();
+  programa.splice(Number(b.dataset.i), 1);
+  sonido("tap"); pintarPrograma();
+});
+$("borrarBtn").addEventListener("click", () => {
+  if (corriendo || ganado || !programa.length) return;
+  reiniciarSiHaceFalta(); programa.pop(); sonido("tap"); pintarPrograma();
+});
+$("limpiarBtn").addEventListener("click", () => {
+  if (corriendo || ganado) return;
+  reiniciarSiHaceFalta(); programa = []; sonido("tap"); pintarPrograma();
+});
+
+// ---------- Correr ----------
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+const MENSAJE_CHOQUE = {
+  arbol: "¡Uy! Ahí hay un árbol. El perezoso no puede pasar.",
+  rio: "¡Uy! Ahí hay un río, y el perezoso no quiere mojarse.",
+  borde: "¡Uy! Por ahí se sale del camino.",
+};
+
+$("playBtn").addEventListener("click", async () => {
+  if (corriendo || ganado) return;
+  if (!programa.length) { decir("Primero armá el camino con las flechas."); return; }
+  corriendo = true; intentos++;
+  pintarTablero(); feedback(""); pintarPrograma(0);
+  const r = ejecutar(juego, programa);
+  await esperar(250);
+  for (const p of r.pasos) {
+    pintarPrograma(p.i, p.choque ? p.i : -1);
+    const d = DIRS[programa[p.i]];
+    if (p.choque) {
+      if (d.dx) $("perezoso").classList.toggle("izq", d.dx < 0);
+      $("perezoso").classList.add("choque");
+      sonido("mal");
+      break;
+    }
+    ponerPerezoso(p.x, p.y, d.dx ? d.dx < 0 : undefined);
+    sonido("tap");
+    await esperar(420);
+    if (p.comio) $("tablero").querySelector(`[data-k="${p.comio}"]`)?.classList.add("comida");
+  }
+  await esperar(250);
+  corriendo = false;
+  terminar(r);
+});
+
+function terminar(r) {
+  if (r.resultado === "gano") {
+    ganado = true;
+    const min = minimo(juego);
+    const estrellas = programa.length <= min ? 3 : 2;
+    progreso[n] = Math.max(progreso[n] || 0, estrellas);
+    guardar(); pintarNiveles();
+    pintarPrograma();
+    $("perezoso").classList.add("feliz");
+    const extra = estrellas === 3 ? "¡Y con el camino más corto!" : `Lo lograste con ${programa.length} flechas. ¿Podés hacerlo con ${min}?`;
+    feedback("ok", "🎉", `${"⭐".repeat(estrellas)}`);
+    decir(`${elogio()} El perezoso ${juego.hojas.length > 1 ? "se comió todas las hojas" : "llegó a la hoja"}. ${extra}`);
+    if (n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+    else decir(`${elogio()} ¡Terminaste todos los niveles! Sos un programador o programadora de verdad.`, { cola: true });
+    return;
+  }
+  // ¡Casi!: se comió alguna hoja o quedó a un paso de una
+  const cerca = juego.hojas.some(h => Math.abs(h.x - r.x) + Math.abs(h.y - r.y) === 1);
+  const algo = r.faltan < juego.hojas.length;
+  if (r.resultado === "choco") {
+    feedback(algo ? "almost" : "bad", algo ? "🤏" : "🙈", algo ? "¡Casi!" : "Chocó");
+    decir(`${MENSAJE_CHOQUE[r.choque]} Cambiá la flecha roja.`);
+  } else if (cerca || algo) {
+    feedback("almost", "🤏", "¡Casi!");
+    decir(algo && r.faltan ? `¡Casi! Todavía ${r.faltan === 1 ? "falta una hoja" : `faltan ${r.faltan} hojas`}.` : "¡Casi! Le faltó un pasito.");
+  } else {
+    feedback("bad", "🙈", "No llegó");
+    decir("El perezoso no llegó a la hoja. Probá otro camino.");
+  }
+  pintarPrograma();
+}
+
+$("nextBtn").addEventListener("click", () => cargar(Math.min(n + 1, NIVELES.length - 1)));
+
+// Arrancar en el primer nivel sin terminar
+const primero = NIVELES.findIndex((_, i) => !progreso[i]);
+n = primero === -1 ? 0 : primero;
+alEmpezar(() => cargar(n));
+pintarNiveles();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__perezoso = { get programa() { return programa; }, get n() { return n; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

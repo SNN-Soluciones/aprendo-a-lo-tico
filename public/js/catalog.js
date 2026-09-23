@@ -5,6 +5,7 @@ export const MATERIAS = [
   { id: "ciencias", nombre: "Ciencias",          emoji: "🌱", color: "#2FA85A" },
   { id: "sociales", nombre: "Estudios Sociales", emoji: "🗺️", color: "#F29A1F" },
   { id: "ingles",   nombre: "Inglés",            emoji: "💬", color: "#8E5BD9" },
+  { id: "prog",     nombre: "Programación",      emoji: "💻", color: "#14A3A3" },
 ];
 
 // 0 = Preparatoria (materno/transición), 1..6 = grados de primaria
@@ -117,5 +118,14 @@ export const JUEGOS = [
     materia: "espanol",
     grados: [0, 1],
     url: "juegos/trazos.html",
+  },
+  {
+    id: "perezoso",
+    titulo: "Llevá al perezoso",
+    descripcion: "Tu primer programa: armá el camino con flechas y el perezoso lo sigue. ¡Sin leer!",
+    emoji: "🦥",
+    materia: "prog",
+    grados: [0, 1, 2],
+    url: "juegos/perezoso.html",
   },
 ];

@@ -1,6 +1,6 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v7";
+const VERSION = "v8";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",
@@ -9,7 +9,7 @@ const SHELL = [
   "juegos/reloj.html", "juegos/restas-bloques.html", "juegos/pulperia.html",
   "juegos/sumas-bloques.html", "juegos/animales-cr.html", "juegos/provincias.html", "juegos/listen-tap.html",
   "juegos/contar.html", "juegos/colores-figuras.html", "juegos/sonido-inicial.html", "juegos/trazos.html",
-  "juegos/perezoso.html", "js/perezoso.js",
+  "juegos/perezoso.html", "js/perezoso.js", "juegos/repeti-decidi.html", "js/decidi.js",
 ];
 
 self.addEventListener("install", (e) => {

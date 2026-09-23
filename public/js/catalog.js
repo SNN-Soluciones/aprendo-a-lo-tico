@@ -128,4 +128,13 @@ export const JUEGOS = [
     grados: [0, 1, 2],
     url: "juegos/perezoso.html",
   },
+  {
+    id: "repeti-decidi",
+    titulo: "Repetí y decidí",
+    descripcion: "Programá con bloques: avanzar, girar, repetir y «si hay río, saltá». Como los programadores de verdad.",
+    emoji: "🔁",
+    materia: "prog",
+    grados: [2, 3, 4],
+    url: "juegos/repeti-decidi.html",
+  },
 ];

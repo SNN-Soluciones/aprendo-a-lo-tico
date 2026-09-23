@@ -114,7 +114,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] 🦥 Llevá al perezoso: secuencias con flechas, 10 niveles, sin leer (Prepa a 2°)
 - [ ] 🦥 Más niveles del perezoso y un editor para que los niños armen los suyos
-- [ ] 🔁 Repetí y decidí: bloques «repetir» y «si hay río, saltá» con el mismo tablero (2° a 4°)
+- [x] 🔁 Repetí y decidí: avanzar/girar, repetir N, repetir hasta, «si hay río / si está cerrado» y saltar; 10 niveles (2° a 4°)
+- [ ] 🔁 Repetí y decidí: arrastrar bloques en computadora y mover bloques ya puestos
 - [ ] 🦜 La lapa que dibuja: Blockly (descargado dentro del sitio) con avanzar, girar, repetir y colores (4° a 6°)
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 

@@ -75,6 +75,20 @@ sinpe: {
 
 Mientras `numero` diga `"PENDIENTE"`, la página de apoyo muestra un aviso en lugar del número.
 
+## Ideas y sugerencias (con fotos)
+
+`public/sugerencias.html` es un formulario para que papás y maestras manden ideas de juegos o ejercicios, con hasta 3 fotos. Como el sitio es estático, el correo se envía con [FormSubmit](https://formsubmit.co) (gratis, sin servidor propio). El destino se configura en `public/js/config.js`:
+
+```js
+sugerencias: {
+  destino: "andres.mayorga07@icloud.com",
+}
+```
+
+1. **Activación (una sola vez):** el primer mensaje que alguien mande dispara un correo de FormSubmit a esa dirección. Hay que abrirlo y confirmar. Hasta entonces no llegan los mensajes.
+2. **Esconder el correo (recomendado):** después de activar, FormSubmit da un código tipo `a1b2c3d4e5…`. Poné ese código en `destino` en lugar del correo, así no queda público en el código de la página.
+3. Las fotos se achican solas en el teléfono (máx. 1600 px) antes de enviarse, y se pide no subir fotos de niños.
+
 ## Desplegar en DigitalOcean App Platform
 
 **Opción A: panel web**
@@ -142,6 +156,7 @@ Usan `css/prepa.css`, `js/voz.js` y `js/prepa.js` (ver `juegos/contar.html` como
 - **Todo se dice en voz alta:** la instrucción, lo que se tocó y la retroalimentación. El botón 🔊 repite.
 - **Nada depende de leer:** íconos, dibujos y números. El texto chiquito es para el papá o la maestra.
 - **Sonidos cortos** de acierto y error con `sonido("ok" | "casi" | "mal")`, sin archivos de audio.
+- **Velocidad de la voz:** `VELOCIDAD` en `js/voz.js` (hoy `0.5`, bien despacio). Animales, provincias y listen-tap tienen su propia copia con el mismo valor.
 
 ### Guía de estilo de los juegos
 

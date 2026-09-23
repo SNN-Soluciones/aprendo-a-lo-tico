@@ -29,12 +29,14 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 ## 🚀 Fase 1 · Publicar bien
 
-- [ ] Poner el número real de SINPE en `js/config.js`
+- [x] Poner el número real de SINPE en `js/config.js`
 - [ ] Definir si las donaciones entran a cuenta personal, de SNN Soluciones o una cuenta aparte (consultarlo con un contador por el tema de Hacienda)
 - [ ] Comprar dominio (`aprendoalotico.com` / `.cr`) y conectarlo en App Platform
 - [ ] Logo e identidad visual (ícono definitivo, ilustraciones)
 - [ ] Fuente Baloo 2 local en `public/fonts/` (offline total y APK)
-- [ ] Página "Acerca de" + política de privacidad corta (no recolectamos datos)
+- [ ] Página "Acerca de" + política de privacidad corta (no recolectamos datos; mencionar FormSubmit en sugerencias)
+- [x] Página de ideas y sugerencias con fotos (`sugerencias.html`, vía FormSubmit)
+- [ ] Confirmar el correo de activación de FormSubmit y cambiar el correo por el código aleatorio en `js/config.js`
 - [ ] Definir licencia: código (MIT) y contenido (CC BY-NC-SA)
 - [ ] Imagen para compartir en WhatsApp/Facebook (`og:image`)
 - [ ] Analítica sin cookies ni datos personales (o ninguna)
@@ -42,6 +44,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 ## 🧒 Fase 2 · Para los más chiquitos (Prepa, 4–5 años)
 
 - [x] **Voz en todo:** instrucciones leídas con Web Speech API (`speechSynthesis`, voz `es-*`) → `js/voz.js`
+- [x] Voz más despacio en todos los juegos (`VELOCIDAD = 0.5`)
+- [ ] Botón de velocidad de voz para que cada familia la ajuste
 - [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
 - [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
 - [ ] Trazos: flechas y puntito de inicio con el orden correcto de cada trazo

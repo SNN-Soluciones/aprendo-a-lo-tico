@@ -2,6 +2,9 @@
 // Usa la Web Speech API del dispositivo: no descarga nada y funciona sin internet
 // si el teléfono tiene voces instaladas.
 
+// 🐢 Velocidad de la voz para todos los juegos (1 = normal). Más bajo = más despacio.
+export const VELOCIDAD = 0.5;
+
 export const puedeHablar = typeof window !== "undefined" && "speechSynthesis" in window;
 
 function buscarVoz(lang) {
@@ -17,7 +20,7 @@ function buscarVoz(lang) {
  * @param {string} texto
  * @param {{lang?: "es"|"en", rate?: number, cola?: boolean}} [op] cola: no cortar lo que se está diciendo
  */
-export function hablar(texto, { lang = "es", rate = 0.9, cola = false } = {}) {
+export function hablar(texto, { lang = "es", rate = VELOCIDAD, cola = false } = {}) {
   if (!puedeHablar || !texto) return Promise.resolve();
   return new Promise(resolve => {
     try {
@@ -28,7 +31,7 @@ export function hablar(texto, { lang = "es", rate = 0.9, cola = false } = {}) {
       u.lang = voz ? voz.lang : lang === "en" ? "en-US" : "es-MX";
       u.rate = rate;
       // Algunos navegadores no disparan onend: plan B por tiempo.
-      const plazo = setTimeout(resolve, 900 + texto.length * 90);
+      const plazo = setTimeout(resolve, 1000 + texto.length * 80 / rate);
       u.onend = u.onerror = () => { clearTimeout(plazo); resolve(); };
       speechSynthesis.speak(u);
     } catch (_) { resolve(); }

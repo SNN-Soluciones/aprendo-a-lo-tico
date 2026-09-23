@@ -45,6 +45,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] **Voz en todo:** instrucciones leídas con Web Speech API (`speechSynthesis`, voz `es-*`) → `js/voz.js`
 - [x] Botón 🐢 en todos los juegos con voz: normal a 1, tortuga a 0.5
+- [ ] Afinar la 🐢 en Apple con las mediciones de `prueba-voz.html` (hoy 0.25)
 - [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
 - [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
 - [ ] Trazos: flechas y puntito de inicio con el orden correcto de cada trazo

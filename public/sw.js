@@ -1,6 +1,6 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v4";
+const VERSION = "v5";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "404.html",
@@ -24,10 +24,13 @@ self.addEventListener("activate", (e) => {
 });
 
 // Primero la red (para ver cambios), si no hay internet usa la copia guardada.
+// Los archivos del sitio se piden con "no-cache": el navegador siempre le pregunta al servidor
+// si hay versión nueva, así un cambio publicado se ve de una vez (sin quedarse con JS viejo).
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
+  const propio = new URL(e.request.url).origin === self.location.origin;
   e.respondWith(
-    fetch(e.request)
+    (propio ? fetch(e.request.url, { cache: "no-cache" }) : fetch(e.request))
       .then((res) => {
         if (res && (res.ok || res.type === "opaque")) {
           const copy = res.clone();

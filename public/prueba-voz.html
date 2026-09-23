@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prueba de voz · Aprendo a lo Tico</title>
+<meta name="theme-color" content="#CFEFE3">
+<meta name="robots" content="noindex">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .fila { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 8px 0; }
+  select { font: inherit; font-size: 1rem; width: 100%; padding: 6px 10px; border: 3px solid var(--rim); border-radius: 12px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 1rem; }
+  td, th { border-bottom: 2px solid #E3EBF3; padding: 4px 6px; text-align: left; }
+  .ok { color: #2FA85A; font-weight: 800; } .mal { color: #D9443A; font-weight: 800; }
+  code { font-size: .85rem; word-break: break-all; }
+</style>
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Volver a los juegos</a>
+  <header class="hero"><h1>🔊 Prueba de voz</h1><p>Mide si la voz de este teléfono hace caso a la velocidad 🐢.</p></header>
+
+  <section class="card">
+    <h2>1. Escogé la voz</h2>
+    <select id="voz"></select>
+    <p id="info"></p>
+    <div class="fila">
+      <button class="btn" data-rate="1">▶️ Normal (1)</button>
+      <button class="btn" data-rate="0.5">🐢 Despacio (0.5)</button>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2. Medir</h2>
+    <p>Dice la misma frase a velocidad 1 y a 0.5 y cronometra cada una. Si la voz hace caso, la de 0.5 dura casi el doble.</p>
+    <div class="fila"><button class="btn" id="medir">⏱️ Medir esta voz</button></div>
+    <table><thead><tr><th>Voz</th><th>1</th><th>0.5</th><th>¿Hace caso?</th></tr></thead><tbody id="res"></tbody></table>
+  </section>
+
+  <section class="card">
+    <h2>Datos del teléfono</h2>
+    <code id="ua"></code>
+  </section>
+</main>
+<script>
+  const $ = id => document.getElementById(id);
+  const FRASE_ES = "¿Cuántos pollitos hay? Tocalos para contarlos.";
+  const FRASE_EN = "Listen and tap the red apple.";
+  let voces = [];
+  $("ua").textContent = navigator.userAgent;
+
+  function cargar() {
+    if (!("speechSynthesis" in window)) { $("info").textContent = "Este navegador no tiene voz."; return; }
+    voces = speechSynthesis.getVoices().filter(v => /^(es|en)/i.test(v.lang));
+    const actual = $("voz").value;
+    $("voz").innerHTML = voces.map((v, i) =>
+      `<option value="${i}">${v.name} · ${v.lang}${v.localService ? "" : " · en línea"}${v.default ? " · (predeterminada)" : ""}</option>`).join("");
+    if (actual) $("voz").value = actual;
+    $("info").textContent = voces.length ? `${voces.length} voces en español o inglés.` : "Cargando voces… (si no aparecen, tocá un botón)";
+  }
+  cargar();
+  speechSynthesis.addEventListener?.("voiceschanged", cargar);
+
+  function decir(rate) {
+    return new Promise(res => {
+      speechSynthesis.cancel();
+      const v = voces[Number($("voz").value)];
+      const u = new SpeechSynthesisUtterance(v && /^en/i.test(v.lang) ? FRASE_EN : FRASE_ES);
+      if (v) { u.voice = v; u.lang = v.lang; }
+      u.rate = rate;
+      let t0 = 0;
+      u.onstart = () => { t0 = performance.now(); };
+      u.onend = () => res(t0 ? (performance.now() - t0) / 1000 : null);
+      u.onerror = () => res(null);
+      setTimeout(() => res(null), 20000);
+      setTimeout(() => speechSynthesis.speak(u), 150);
+    });
+  }
+
+  document.querySelectorAll("[data-rate]").forEach(b => b.addEventListener("click", () => { cargar(); decir(Number(b.dataset.rate)); }));
+
+  $("medir").addEventListener("click", async () => {
+    cargar();
+    const v = voces[Number($("voz").value)];
+    $("medir").disabled = true;
+    const a = await decir(1);
+    await new Promise(r => setTimeout(r, 500));
+    const b = await decir(0.5);
+    $("medir").disabled = false;
+    const caso = a && b ? b / a > 1.4 : null;
+    $("res").insertAdjacentHTML("beforeend", `<tr><td>${v ? v.name : "predeterminada"}</td>
+      <td>${a ? a.toFixed(1) + " s" : "—"}</td><td>${b ? b.toFixed(1) + " s" : "—"}</td>
+      <td>${caso === null ? "no se pudo medir" : caso ? '<span class="ok">Sí ✓</span>' : '<span class="mal">No ✗</span>'}</td></tr>`);
+  });
+</script>
+</body>
+</html>

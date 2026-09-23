@@ -69,7 +69,8 @@
   @keyframes pop { 0% { transform: scale(.4) rotate(-12deg); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
   .nombre { font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 800; line-height: 1.1; }
   .pregunta { font-size: clamp(1.2rem, 5vw, 1.5rem); font-weight: 700; margin-top: 6px; color: var(--materia); }
-  .speak { position: absolute; top: 10px; right: 10px; font-size: 1.4rem; padding: 2px 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .speak.lento { right: 70px; font-size: 1.2rem; }
+  .speak { position: absolute; z-index: 2; top: 10px; right: 10px; font-size: 1.4rem; padding: 2px 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
 
   .options { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 14px; }
   .options button {
@@ -127,7 +128,7 @@
 </div>
 
 <div class="wrap card">
-  <button class="speak" id="speak" aria-label="Escuchar la pregunta" hidden>🔊</button>
+  <button class="speak" id="speak" aria-label="Escuchar la pregunta" hidden>🔊</button><button class="speak lento" id="lento" aria-label="Escuchar despacio" hidden>🐢</button>
   <div class="animal" id="animal" aria-hidden="true"></div>
   <div class="nombre" id="nombre"></div>
   <div class="pregunta" id="pregunta"></div>
@@ -190,7 +191,7 @@
 
   // ---------- Voz (Web Speech API) ----------
   const puedeHablar = "speechSynthesis" in window;
-  function hablar(texto) {
+  function hablar(texto, lento = false) {
     if (!puedeHablar) return;
     try {
       speechSynthesis.cancel();
@@ -199,11 +200,11 @@
       const voz = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang));
       if (voz) u.voice = voz;
       u.lang = voz ? voz.lang : "es-MX";
-      u.rate = 0.5; // igual que VELOCIDAD en js/voz.js
+      u.rate = lento ? 0.5 : 1; // normal y 🐢, igual que VELOCIDAD y LENTO en js/voz.js
       speechSynthesis.speak(u);
     } catch (_) {}
   }
-  if (puedeHablar) $("speak").hidden = false;
+  if (puedeHablar) $("speak").hidden = $("lento").hidden = false;
 
   const barajar = arr => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
 
@@ -269,6 +270,7 @@
   });
 
   $("speak").addEventListener("click", () => hablar(`${actual.n}. ${PREG[tipo].q(actual)}`));
+  $("lento").addEventListener("click", () => hablar(`${actual.n}. ${PREG[tipo].q(actual)}`, true));
   $("nextBtn").addEventListener("click", siguiente);
 
   document.querySelectorAll(".levels button").forEach(btn => {

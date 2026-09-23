@@ -2,8 +2,9 @@
 // Usa la Web Speech API del dispositivo: no descarga nada y funciona sin internet
 // si el teléfono tiene voces instaladas.
 
-// 🐢 Velocidad de la voz para todos los juegos (1 = normal). Más bajo = más despacio.
-export const VELOCIDAD = 0.5;
+// Velocidad de la voz: normal y 🐢 despacio (el botón de la tortuga repite a esta velocidad).
+export const VELOCIDAD = 1;
+export const LENTO = 0.5;
 
 export const puedeHablar = typeof window !== "undefined" && "speechSynthesis" in window;
 

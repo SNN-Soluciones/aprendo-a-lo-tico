@@ -114,7 +114,7 @@ async function presentar() {
   for (let i = 0; i < opciones.length; i++) {
     if (t !== turno) break;
     btns[i].classList.add("dicho");
-    await hablar(opciones[i][1], { rate: 0.85 });
+    await hablar(opciones[i][1]);
     btns[i].classList.remove("dicho");
   }
   if (t === turno) btns.forEach(x => x.classList.remove("dicho"));

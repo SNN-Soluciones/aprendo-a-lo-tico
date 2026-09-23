@@ -133,7 +133,7 @@ async function contarJuntos() {
     contadas++;
     el.classList.add("contada", "luz");
     el.insertAdjacentHTML("beforeend", `<span class="n">${contadas}</span>`);
-    await Promise.all([hablar(enPalabras(contadas), { rate: 1 }), new Promise(r => setTimeout(r, 450))]);
+    await Promise.all([hablar(enPalabras(contadas)), new Promise(r => setTimeout(r, 450))]);
   }
   ocupado = false;
 }

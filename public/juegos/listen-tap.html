@@ -240,7 +240,7 @@
       const voz = lang === "en" ? vozEn : vozEs;
       if (voz) u.voice = voz;
       u.lang = voz ? voz.lang : (lang === "en" ? "en-US" : "es-MX");
-      u.rate = lento ? 0.55 : 0.85;
+      u.rate = lento ? 0.35 : 0.5; // normal igual que VELOCIDAD en js/voz.js; 🐢 más despacio
       speechSynthesis.speak(u);
     } catch (_) {}
   }

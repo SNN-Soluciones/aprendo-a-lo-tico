@@ -171,7 +171,8 @@
 <div class="wrap bottom"><button id="nextBtn" hidden>Otra pregunta</button></div>
 <div class="wrap credito">Mapa: © colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL), vía geoBoundaries.</div>
 
-<script>
+<script type="module">
+import { VELOCIDAD, LENTO } from "../js/voz.js";
 (() => {
   const $ = id => document.getElementById(id);
 
@@ -219,7 +220,7 @@
       const voz = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang));
       if (voz) u.voice = voz;
       u.lang = voz ? voz.lang : "es-MX";
-      u.rate = lento ? 0.5 : 1; // normal y 🐢, igual que VELOCIDAD y LENTO en js/voz.js
+      u.rate = lento ? LENTO : VELOCIDAD;
       speechSynthesis.speak(u);
     } catch (_) {}
   }

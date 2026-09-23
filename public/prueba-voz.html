@@ -28,15 +28,18 @@
     <p id="info"></p>
     <div class="fila">
       <button class="btn" data-rate="1">▶️ Normal (1)</button>
-      <button class="btn" data-rate="0.5">🐢 Despacio (0.5)</button>
+      <button class="btn" data-rate="0.5" id="btnLento">🐢 Despacio (0.5)</button>
     </div>
   </section>
 
   <section class="card">
     <h2>2. Medir</h2>
-    <p>Dice la misma frase a velocidad 1 y a 0.5 y cronometra cada una. Si la voz hace caso, la de 0.5 dura casi el doble.</p>
+    <p>Dice la misma frase a varias velocidades y cronometra cada una. Buscamos la que dure <b>el doble</b> que la normal (2×): esa es la buena para la 🐢. Tarda como un minuto.</p>
     <div class="fila"><button class="btn" id="medir">⏱️ Medir esta voz</button></div>
-    <table><thead><tr><th>Voz</th><th>1</th><th>0.5</th><th>¿Hace caso?</th></tr></thead><tbody id="res"></tbody></table>
+    <p id="estado"></p>
+    <table><thead><tr><th>Velocidad</th><th>Duración</th><th>Qué tan lento</th></tr></thead><tbody id="res"></tbody></table>
+    <p id="resumen"></p>
+    <p class="nota">🐢 que usan hoy los juegos en este equipo: <b id="actual"></b></p>
   </section>
 
   <section class="card">
@@ -44,8 +47,11 @@
     <code id="ua"></code>
   </section>
 </main>
-<script>
+<script type="module">
+  import { LENTO } from "./js/voz.js";
   const $ = id => document.getElementById(id);
+  $("actual").textContent = LENTO;
+  $("btnLento").dataset.rate = LENTO; $("btnLento").textContent = `🐢 Despacio (${LENTO})`;
   const FRASE_ES = "¿Cuántos pollitos hay? Tocalos para contarlos.";
   const FRASE_EN = "Listen and tap the red apple.";
   let voces = [];
@@ -81,18 +87,27 @@
 
   document.querySelectorAll("[data-rate]").forEach(b => b.addEventListener("click", () => { cargar(); decir(Number(b.dataset.rate)); }));
 
+  const VELOCIDADES = [1, 0.5, 0.35, 0.25, 0.18, 0.12];
+  const pausa = ms => new Promise(r => setTimeout(r, ms));
+
   $("medir").addEventListener("click", async () => {
     cargar();
     const v = voces[Number($("voz").value)];
-    $("medir").disabled = true;
-    const a = await decir(1);
-    await new Promise(r => setTimeout(r, 500));
-    const b = await decir(0.5);
+    $("medir").disabled = true; $("res").innerHTML = ""; $("resumen").textContent = "";
+    let base = null, mejor = null;
+    for (const r of VELOCIDADES) {
+      $("estado").textContent = `Midiendo a ${r}…`;
+      const d = await decir(r);
+      if (r === 1) base = d;
+      const veces = d && base ? d / base : null;
+      if (veces && r < 1 && (!mejor || Math.abs(veces - 2) < Math.abs(mejor.veces - 2))) mejor = { r, veces };
+      $("res").insertAdjacentHTML("beforeend", `<tr><td>${r}</td><td>${d ? d.toFixed(1) + " s" : "—"}</td>
+        <td>${r === 1 ? "normal" : veces ? veces.toFixed(1) + "×" + (veces >= 1.8 && veces <= 2.3 ? ' <span class="ok">✓ el doble</span>' : "") : "no se pudo medir"}</td></tr>`);
+      await pausa(500);
+    }
+    $("estado").textContent = `Listo · voz: ${v ? v.name + " (" + v.lang + ")" : "predeterminada"}`;
+    $("resumen").innerHTML = mejor ? `👉 Para esta voz, la 🐢 debería ir a <b>${mejor.r}</b> (${mejor.veces.toFixed(1)}× más lento). Mandá una captura de esta tabla.` : "No se pudo medir. Probá otra voz.";
     $("medir").disabled = false;
-    const caso = a && b ? b / a > 1.4 : null;
-    $("res").insertAdjacentHTML("beforeend", `<tr><td>${v ? v.name : "predeterminada"}</td>
-      <td>${a ? a.toFixed(1) + " s" : "—"}</td><td>${b ? b.toFixed(1) + " s" : "—"}</td>
-      <td>${caso === null ? "no se pudo medir" : caso ? '<span class="ok">Sí ✓</span>' : '<span class="mal">No ✗</span>'}</td></tr>`);
   });
 </script>
 </body>

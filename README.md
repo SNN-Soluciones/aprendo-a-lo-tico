@@ -156,7 +156,7 @@ Usan `css/prepa.css`, `js/voz.js` y `js/prepa.js` (ver `juegos/contar.html` como
 - **Todo se dice en voz alta:** la instrucción, lo que se tocó y la retroalimentación. El botón 🔊 repite.
 - **Nada depende de leer:** íconos, dibujos y números. El texto chiquito es para el papá o la maestra.
 - **Sonidos cortos** de acierto y error con `sonido("ok" | "casi" | "mal")`, sin archivos de audio.
-- **Velocidad de la voz:** normal a `VELOCIDAD = 1` y el botón 🐢 repite despacio a `LENTO = 0.5` (en `js/voz.js`). Animales, provincias y listen-tap tienen su propia copia con los mismos valores.
+- **Velocidad de la voz:** normal a `VELOCIDAD = 1` y el botón 🐢 repite despacio a `LENTO` (en `js/voz.js`, lo usan todos los juegos). `LENTO` es `0.5`, salvo en iPhone, iPad y Safari, donde las voces de Apple necesitan `0.25` para sonar de verdad a la mitad. Para medirlo en un equipo: abrí `prueba-voz.html` y tocá **⏱️ Medir esta voz**.
 
 ### Guía de estilo de los juegos
 

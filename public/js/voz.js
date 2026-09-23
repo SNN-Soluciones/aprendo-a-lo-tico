@@ -3,8 +3,12 @@
 // si el teléfono tiene voces instaladas.
 
 // Velocidad de la voz: normal y 🐢 despacio (el botón de la tortuga repite a esta velocidad).
+// En iPhone, iPad y Safari (WebKit) las voces de Apple traducen la velocidad distinto:
+// ahí 0.5 suena apenas 1.3 veces más lento, así que hace falta un número más bajo.
+// Se puede medir en cada equipo con prueba-voz.html.
+export const ES_APPLE = typeof navigator !== "undefined" && /Apple/.test(navigator.vendor || "");
 export const VELOCIDAD = 1;
-export const LENTO = 0.5;
+export const LENTO = ES_APPLE ? 0.25 : 0.5;
 
 export const puedeHablar = typeof window !== "undefined" && "speechSynthesis" in window;
 

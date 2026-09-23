@@ -70,17 +70,20 @@ Mientras `numero` diga `"PENDIENTE"`, la página de apoyo muestra un aviso en lu
 
 1. Subí el repo a GitHub.
 2. En DigitalOcean: **Create → App → GitHub** y escogé el repo y la rama `main`.
-3. Cuando detecte el componente, configuralo como **Static Site**:
+3. **Antes de darle Next**, en **Source directory** poné `public`.
+   La raíz del repo no tiene `index.html` ni `package.json`, así que si lo dejás en `/`
+   aparece el error *"No components detected"*.
+4. Cuando detecte el componente, configuralo como **Static Site**:
    - **Source directory:** `public`
    - **Build command:** (vacío)
    - **Output directory:** (vacío)
-4. Crear. Cada `git push` a `main` redespliega solo.
+5. Crear. Cada `git push` a `main` redespliega solo.
 
 Los sitios estáticos de App Platform tienen capa gratuita (hasta 3 por cuenta), así que el costo inicial es ₡0.
 
 **Opción B: doctl con el spec**
 
-1. En `.do/app.yaml`, cambiá `TU_USUARIO` por tu usuario de GitHub.
+1. Revisá que `github.repo` en `.do/app.yaml` apunte a tu repo (ya dice `SNN-Soluciones/aprendo-a-lo-tico`).
 2. Ejecutá:
 
 ```bash

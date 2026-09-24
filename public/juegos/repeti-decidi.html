@@ -70,8 +70,15 @@
   /* Paleta */
   .paleta { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; }
   .paleta button { color: #fff; border-radius: 12px; font-size: 1rem; padding: 6px 10px; }
-  .acciones { display: grid; grid-template-columns: 1fr 2fr; gap: 8px; margin-top: 10px; }
-  .acciones button { font-size: 1.8rem; padding: 4px 0; border-radius: 18px; }
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.6rem; padding: 4px 0; border-radius: 18px; flex: 1; }
+  .acciones #playBtn { flex: 2.2; }
+  .niveles .etapa { flex: none; align-self: center; font-weight: 800; font-size: .8rem; color: var(--page-ink); opacity: .8; padding: 0 2px 0 8px; white-space: nowrap; }
+  .niveles .etapa:first-child { padding-left: 0; }
+  .niveles button.bug { background: #FFE3E0; }
+  .niveles button.bug[aria-pressed="true"] { background: var(--btn); }
+  .pista { background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; margin-top: 8px; font-weight: 700; font-size: 1rem; }
+  .pista[hidden] { display: none; }
   #playBtn { background: var(--ok); color: #fff; }
   #playBtn.pulse, #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
   #nextBtn { background: var(--btn); }
@@ -100,15 +107,18 @@
 <div class="programa ancho" id="programa" aria-live="polite"></div>
 <div class="acciones ancho">
   <button id="limpiarBtn" aria-label="Borrar todo">🗑️</button>
+  <button id="reiniciarBtn" aria-label="Volver al programa del principio">↺</button>
+  <button id="pistaBtn" aria-label="Ver una pista">💡</button>
   <button id="playBtn" aria-label="Correr el programa">▶️</button>
 </div>
+<div class="pista ancho" id="pista" aria-live="polite" hidden></div>
 <div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
 <div class="wrap bottom"><button id="nextBtn" aria-label="Siguiente nivel" hidden>➡️</button></div>
 
 <script type="module">
 import { elogio, sonido } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { NIVELES, leer, ejecutar, contar } from "../js/decidi.js";
+import { NIVELES, ETAPAS, leer, ejecutar, contar } from "../js/decidi.js";
 
 const $ = id => document.getElementById(id);
 const FLECHA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.5 12H15v9.5H9V12H3.5z"/></svg>`;
@@ -128,8 +138,10 @@ const nuevoBloque = t => t === "repetir" ? { t, n: 3, cuerpo: [] } : t === "hast
 
 let n = 0, nivel = null, juego = null, programa = [], activo = [], mala = null, corriendo = false, ganado = false;
 let progreso = {};
-try { progreso = JSON.parse(localStorage.getItem("decidi-progreso")) || {}; } catch (_) {}
-const guardar = () => { try { localStorage.setItem("decidi-progreso", JSON.stringify(progreso)); } catch (_) {} };
+// Guardado por id de nivel (no por número), así se pueden agregar niveles sin desordenar las estrellas
+try { progreso = JSON.parse(localStorage.getItem("decidi-progreso-v2")) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("decidi-progreso-v2", JSON.stringify(progreso)); } catch (_) {} };
+const etapaDe = nv => ETAPAS.find(e => e.id === nv.etapa);
 
 // ---------- Rutas dentro del programa: [i, "cuerpo", j, "si", k …] ----------
 function lista(ruta) {
@@ -143,8 +155,9 @@ const empiezaCon = (r, pre) => pre.length <= r.length && id(r.slice(0, pre.lengt
 
 // ---------- Pintar ----------
 function pintarNiveles() {
-  $("niveles").innerHTML = NIVELES.map((_, i) =>
-    `<button data-n="${i}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}">${i + 1}<small>${"⭐".repeat(progreso[i] || 0)}</small></button>`).join("");
+  $("niveles").innerHTML = NIVELES.map((nv, i) =>
+    (i === 0 || NIVELES[i - 1].etapa !== nv.etapa ? `<span class="etapa">${etapaDe(nv).emoji} ${etapaDe(nv).nombre}</span>` : "")
+    + `<button data-n="${i}" class="${nv.depurar ? "bug" : ""}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}: ${nv.titulo}">${nv.depurar ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[nv.id] || 0)}</small></button>`).join("");
   $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
   $("niveles").querySelector(`[data-n="${n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
 }
@@ -199,10 +212,11 @@ function pintarPaleta() {
 // ---------- Niveles ----------
 function cargar(i) {
   n = i; nivel = NIVELES[n]; juego = leer(nivel);
-  programa = []; activo = []; mala = null; ganado = false; corriendo = false;
+  programa = JSON.parse(JSON.stringify(nivel.inicial || [])); activo = []; mala = null; ganado = false; corriendo = false;
+  pista = 0; $("pista").hidden = true;
   pintarNiveles(); pintarTablero(); pintarPaleta(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
-  instruccion(`<span class="titulo">Nivel ${n + 1}: ${nivel.titulo}</span>🦥 ➜ 🍃${juego.hojas.length > 1 ? ` ×${juego.hojas.length}` : ""}`, nivel.voz);
+  instruccion(`<span class="titulo">${etapaDe(nivel).emoji} Nivel ${n + 1}: ${nivel.titulo}</span>🦥 ➜ 🍃${juego.hojas.length > 1 ? ` ×${juego.hojas.length}` : ""}`, nivel.voz);
 }
 $("niveles").addEventListener("click", e => {
   const b = e.target.closest("[data-n]");
@@ -300,7 +314,7 @@ function terminar(r) {
   if (r.resultado === "gano") {
     ganado = true;
     const estrellas = total <= nivel.objetivo ? 3 : 2;
-    progreso[n] = Math.max(progreso[n] || 0, estrellas);
+    progreso[nivel.id] = Math.max(progreso[nivel.id] || 0, estrellas);
     guardar(); pintarNiveles(); pintarPrograma();
     $("perezoso").classList.add("feliz");
     feedback("ok", "🎉", "⭐".repeat(estrellas));
@@ -330,7 +344,26 @@ function terminar(r) {
 
 $("nextBtn").addEventListener("click", () => cargar(Math.min(n + 1, NIVELES.length - 1)));
 
-const primero = NIVELES.findIndex((_, i) => !progreso[i]);
+// 💡 Pistas de una en una; ↺ vuelve al programa del principio (en los 🐞, el que tiene el error)
+let pista = 0;
+$("pistaBtn").addEventListener("click", () => {
+  const ps = nivel?.pistas || [];
+  if (!ps.length) return;
+  const k = Math.min(pista, ps.length - 1);
+  $("pista").hidden = false;
+  $("pista").innerHTML = `💡 <b>Pista ${k + 1} de ${ps.length}:</b> ${ps[k]}`;
+  sonido("tap"); decir(ps[k]);
+  pista = Math.min(pista + 1, ps.length - 1);
+});
+$("reiniciarBtn").addEventListener("click", () => {
+  if (corriendo) return;
+  ganado = false;
+  programa = JSON.parse(JSON.stringify(nivel.inicial || [])); activo = []; editado();
+  $("nextBtn").hidden = true; sonido("tap"); pintarPrograma();
+  decir(nivel.depurar ? "Volvió el programa con el error. ¡A buscarlo!" : "Listo, empezamos de nuevo.");
+});
+
+const primero = NIVELES.findIndex(nv => !progreso[nv.id]);
 n = primero === -1 ? 0 : primero;
 alEmpezar(() => cargar(n));
 pintarNiveles();

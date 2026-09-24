@@ -165,6 +165,16 @@ Usan `css/prepa.css`, `js/voz.js` y `js/prepa.js` (ver `juegos/contar.html` como
 - **Sonidos cortos** de acierto y error con `sonido("ok" | "casi" | "mal")`, sin archivos de audio.
 - **Velocidad de la voz:** normal a `VELOCIDAD = 1` y el botón 🐢 repite despacio a `LENTO` (en `js/voz.js`, lo usan todos los juegos). `LENTO` es `0.5`, salvo en iPhone, iPad y Safari, donde las voces de Apple necesitan `0.25` para sonar de verdad a la mitad. Para medirlo en un equipo: abrí `prueba-voz.html` y tocá **⏱️ Medir esta voz**.
 
+### Programación: etapas, pistas y niveles 🐞
+
+Los tres juegos de programación suben de a poquito: cada concepto se practica varias veces antes del siguiente (por ejemplo, en la lapa: cuadrado → dos cuadrados → tres en fila con el cuadrado ya puesto → molino → flores).
+
+- **`id`**: cada nivel tiene un nombre fijo; el progreso se guarda por ese nombre, así que se pueden agregar o reordenar niveles sin perder las estrellas.
+- **`inicial`**: bloques o flechas que ya vienen puestos (un empujón, o un programa con error).
+- **`depurar: true`**: nivel 🐞 «Arreglá el programa»; el `inicial` trae un error a propósito.
+- **`pistas`**: se muestran de una en una con el botón 💡 (en «Repetí y decidí» y en la lapa).
+- **`etapa`**: agrupa los niveles en el selector (ver `ETAPAS` en `js/decidi.js` y `js/lapa.js`).
+
 ### Agregar niveles al perezoso
 
 Los niveles están en `public/js/perezoso.js` como mapas de texto: `S` perezoso, `H` hoja, `#` árbol, `~` río y `.` camino. Las 3 estrellas se ganan con el camino más corto, que el juego calcula solo.

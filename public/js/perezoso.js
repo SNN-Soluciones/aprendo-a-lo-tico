@@ -5,17 +5,27 @@
 //   # = árbol (no se puede pasar)   ~ = río (tampoco: el perezoso no nada… bueno, casi)
 //   . = camino libre
 
+// id: para guardar el progreso. En los niveles 🐞 (depurar) el camino ya viene armado con una flecha equivocada.
 export const NIVELES = [
-  { mapa: [".....", "S..H.", "....."] },                     // 3 pasos: derecho
-  { mapa: ["..H..", ".....", ".....", "..S.."] },            // 3: para arriba
-  { mapa: ["S....", ".....", "....H"] },                     // 6: con vuelta
-  { mapa: [".....", "S.#.H", "....."] },                     // 6: rodear un árbol
-  { mapa: ["S.H..", ".....", "..H.."] },                     // 4: dos hojas
-  { mapa: ["S#H", ".#.", "..."] },                           // 6: laberinto chiquito
-  { mapa: ["S.~..", "..~..", "..~.H", "....."] },            // 8: rodear el río
-  { mapa: ["S..~.", "#.~~.", "..~H.", "....#"] },            // 7: río y árboles
-  { mapa: [".H...", "S.#.H", "...H."] },                     // 8: tres hojas
-  { mapa: ["S.#H.", "..#..", "H....", ".~~~.", "....H"] },   // 12: el gran reto
+  { id: "derecho", mapa: [".....", "S..H.", "....."] },                    // 3 pasos: derecho
+  { id: "arriba", mapa: ["..H..", ".....", ".....", "..S.."] },           // 3: para arriba
+  { id: "vuelta", mapa: ["S....", ".....", "....H"] },                    // 6: con vuelta
+  { id: "arregla-1", depurar: true, mapa: [".....", "S...H", "....."],     // 🐞 una flecha para abajo que sobra
+    inicial: ["derecha", "derecha", "abajo", "derecha"] },
+  { id: "arbol", mapa: [".....", "S.#.H", "....."] },                     // 6: rodear un árbol
+  { id: "dos-hojas", mapa: ["S.H..", ".....", "..H.."] },                 // 4: dos hojas
+  { id: "laberinto", mapa: ["S#H", ".#.", "..."] },                       // 6: laberinto chiquito
+  { id: "arregla-2", depurar: true, mapa: [".....", "S.#.H", "....."],     // 🐞 la última flecha va al revés
+    inicial: ["arriba", "derecha", "derecha", "derecha", "derecha", "arriba"] },
+  { id: "rio", mapa: ["S.~..", "..~..", "..~.H", "....."] },              // 8: rodear el río
+  { id: "rio-arboles", mapa: ["S..~.", "#.~~.", "..~H.", "....#"] },      // 7: río y árboles
+  { id: "tres-hojas", mapa: [".H...", "S.#.H", "...H."] },                // 8: tres hojas
+  { id: "arregla-3", depurar: true, mapa: ["S.H", "...", "H.H"],          // 🐞 le falta la última flecha
+    inicial: ["derecha", "derecha", "abajo", "abajo", "izquierda"] },
+  { id: "zigzag", mapa: ["S#...", ".#.#.", "...#H"] },                   // 10: zigzag entre árboles
+  { id: "gran-reto", mapa: ["S.#H.", "..#..", "H....", ".~~~.", "....H"] },  // 12: el gran reto
+  { id: "bosque", mapa: ["S.#...", ".##.#.", "...#H.", ".#....", "H..#.H"] }, // 13: el bosque, 3 hojas
+  { id: "cuatro-hojas", mapa: ["H...H", ".....", "..S..", ".....", "H...H"] }, // 16: 4 hojas en las esquinas
 ];
 
 export const DIRS = {

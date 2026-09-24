@@ -31,8 +31,13 @@
   .papel canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
   .papel .leyenda { position: absolute; left: 8px; bottom: 6px; font-size: .8rem; font-weight: 700; color: #8FA7BF; pointer-events: none; }
 
-  .controles { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-top: 8px; }
-  .controles button { font-size: 1.5rem; padding: 4px 0; border-radius: 16px; }
+  .controles { display: flex; gap: 8px; margin-top: 8px; }
+  .controles button { font-size: 1.5rem; padding: 4px 0; border-radius: 16px; flex: 1; }
+  .controles #playBtn { flex: 2.2; }
+  .retos .etapa { flex: none; align-self: center; font-weight: 800; font-size: .8rem; color: var(--page-ink); opacity: .8; padding: 0 2px 0 8px; white-space: nowrap; }
+  .retos .etapa:first-child { padding-left: 0; }
+  .pista { background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; margin-top: 8px; font-weight: 700; font-size: 1rem; }
+  .pista[hidden] { display: none; }
   #playBtn { background: var(--ok); color: #fff; }
   #playBtn.pulse, #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
   #velBtn[aria-pressed="true"] { background: var(--btn); }
@@ -75,8 +80,11 @@
     <div class="controles">
       <button id="playBtn" aria-label="Correr el programa">▶️</button>
       <button id="velBtn" aria-pressed="false" aria-label="Dibujar rápido">🐇</button>
+      <button id="pistaBtn" aria-label="Ver una pista">💡</button>
+      <button id="reiniciarBtn" aria-label="Volver a empezar este reto">↺</button>
       <button id="guardarBtn" aria-label="Guardar el dibujo como imagen">💾</button>
     </div>
+    <div class="pista" id="pista" aria-live="polite" hidden></div>
     <div class="wrap feedback" id="feedback" aria-live="polite" style="width:auto"></div>
     <div class="wrap bottom" style="width:auto"><button id="nextBtn" aria-label="Siguiente reto" hidden>➡️</button></div>
   </div>
@@ -91,7 +99,7 @@
 <script type="module">
 import { elogio, sonido } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { RETOS, TAM, COLORES, ejecutar, comparar, contar } from "../js/lapa.js";
+import { RETOS, ETAPAS, TAM, COLORES, ejecutar, comparar, contar } from "../js/lapa.js";
 
 const $ = id => document.getElementById(id);
 const LIBRE = RETOS.length; // el último botón es 🎨 dibujo libre
@@ -192,21 +200,38 @@ function pintarLapa(x, y, r) {
 
 // ---------- Retos ----------
 let reto = 0, metaRayas = [], corriendo = false, rapido = false;
+// El progreso y los bloques se guardan por nombre de reto (no por número), así se pueden agregar retos sin desordenar nada
+const nombre = i => i === LIBRE ? "libre" : RETOS[i].id;
 let progreso = {};
-try { progreso = JSON.parse(localStorage.getItem("lapa-progreso")) || {}; } catch (_) {}
-const guardarProgreso = () => { try { localStorage.setItem("lapa-progreso", JSON.stringify(progreso)); } catch (_) {} };
+try { progreso = JSON.parse(localStorage.getItem("lapa-progreso-v2")) || {}; } catch (_) {}
+const guardarProgreso = () => { try { localStorage.setItem("lapa-progreso-v2", JSON.stringify(progreso)); } catch (_) {} };
 const inicioDe = i => i === LIBRE ? { x: 200, y: 200, r: 0 } : RETOS[i].inicio;
 
 function pintarRetos() {
-  $("retos").innerHTML = RETOS.map((_, i) =>
-    `<button data-r="${i}" aria-pressed="${i === reto}" aria-label="Reto ${i + 1}">${i + 1}<small>${"⭐".repeat(progreso[i] || 0)}</small></button>`).join("")
-    + `<button data-r="${LIBRE}" aria-pressed="${reto === LIBRE}" aria-label="Dibujo libre">🎨<small>libre</small></button>`;
+  $("retos").innerHTML = RETOS.map((r, i) =>
+    (i === 0 || RETOS[i - 1].etapa !== r.etapa ? `<span class="etapa">${ETAPAS.find(e => e.id === r.etapa).emoji} ${ETAPAS.find(e => e.id === r.etapa).nombre}</span>` : "")
+    + `<button data-r="${i}" aria-pressed="${i === reto}" aria-label="Reto ${i + 1}: ${r.titulo}">${i + 1}<small>${"⭐".repeat(progreso[r.id] || 0)}</small></button>`).join("")
+    + `<span class="etapa">🎨 Libre</span><button data-r="${LIBRE}" aria-pressed="${reto === LIBRE}" aria-label="Dibujo libre">🎨<small>libre</small></button>`;
   $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
   $("retos").querySelector(`[data-r="${reto}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
 }
 
 // Cada reto guarda sus bloques en el dispositivo
-const claveWs = i => `lapa-ws-${i}`;
+const claveWs = i => `lapa-ws2-${nombre(i)}`;
+
+/** Programa → bloques de Blockly (para los retos que traen bloques ya puestos). */
+function aBloques(lista) {
+  if (!lista?.length) return undefined;
+  const [p, ...resto] = lista, b = { type: "lapa_" + p.t, fields: {} };
+  if (p.t === "avanzar") b.fields.N = p.n;
+  if (p.t === "girar") { b.fields.DIR = p.dir; b.fields.G = p.g; }
+  if (p.t === "lapiz") b.fields.L = p.abajo ? "abajo" : "arriba";
+  if (p.t === "color") b.fields.C = p.c;
+  if (p.t === "grosor") b.fields.N = p.n;
+  if (p.t === "repetir") { b.fields.N = p.n; const c = aBloques(p.cuerpo); if (c) b.inputs = { HACER: { block: c } }; }
+  const sig = aBloques(resto); if (sig) b.next = { block: sig };
+  return b;
+}
 let cargando = false;
 function cargarBloques(i) {
   cargando = true;
@@ -219,6 +244,11 @@ function cargarBloques(i) {
   if (!ok) {
     const b = ws.newBlock("lapa_inicio");
     b.setDeletable(false); b.initSvg(); b.render(); b.moveBy(20, 20);
+    const inicial = RETOS[i]?.inicial;
+    if (inicial) {
+      const primero = Blockly.serialization.blocks.append(aBloques(inicial), ws);
+      b.nextConnection.connect(primero.previousConnection);
+    }
   }
   inicioBloque()?.setDeletable(false);
   cargando = false;
@@ -233,8 +263,9 @@ ws.addChangeListener(e => {
   if (!corriendo) { $("nextBtn").hidden = true; }
 });
 
+let pista = 0;
 function cargarReto(i) {
-  reto = i; corriendo = false;
+  reto = i; corriendo = false; pista = 0; $("pista").hidden = true;
   metaRayas = i === LIBRE ? [] : ejecutar(RETOS[i].solucion, RETOS[i].inicio).rayas;
   pintarRetos(); pintarMeta();
   cDib.clearRect(0, 0, TAM, TAM);
@@ -242,9 +273,10 @@ function cargarReto(i) {
   cargarBloques(i);
   feedback(""); $("nextBtn").hidden = true;
   $("guardarBtn").hidden = i !== LIBRE;
+  $("pistaBtn").hidden = i === LIBRE;
   $("leyenda").textContent = i === LIBRE ? "Dibujo libre" : "La línea punteada es la meta";
   if (i === LIBRE) instruccion(`<span class="titulo">🎨 Dibujo libre</span>`, "¡Dibujo libre! Inventá lo que querás: cambiá colores, subí el lápiz y repetí figuras.");
-  else instruccion(`<span class="titulo">Reto ${i + 1}: ${RETOS[i].titulo}</span>⭐⭐⭐ con ${RETOS[i].objetivo} ${RETOS[i].objetivo === 1 ? "bloque" : "bloques"}`, RETOS[i].voz);
+  else instruccion(`<span class="titulo">${ETAPAS.find(e => e.id === RETOS[i].etapa).emoji} Reto ${i + 1}: ${RETOS[i].titulo}</span>⭐⭐⭐ con ${RETOS[i].objetivo} ${RETOS[i].objetivo === 1 ? "bloque" : "bloques"}`, RETOS[i].voz);
 }
 $("retos").addEventListener("click", e => {
   const b = e.target.closest("[data-r]");
@@ -308,7 +340,7 @@ function terminar(prog, res) {
   const total = contar(prog), obj = RETOS[reto].objetivo;
   if (c.igual) {
     const estrellas = total <= obj ? 3 : 2;
-    progreso[reto] = Math.max(progreso[reto] || 0, estrellas);
+    progreso[RETOS[reto].id] = Math.max(progreso[RETOS[reto].id] || 0, estrellas);
     guardarProgreso(); pintarRetos();
     feedback("ok", "🎉", "⭐".repeat(estrellas));
     decir(`${elogio()} ¡La lapa dibujó ${RETOS[reto].titulo.toLowerCase()}! ${estrellas === 3 ? "Y con muy pocos bloques." : `Usaste ${total} bloques. ¿Podés hacerlo con ${obj}? Probá con Repetir.`}`);
@@ -339,7 +371,25 @@ $("guardarBtn").addEventListener("click", () => {
 
 $("nextBtn").addEventListener("click", () => cargarReto(Math.min(reto + 1, RETOS.length - 1)));
 
-const primero = RETOS.findIndex((_, i) => !progreso[i]);
+// 💡 Pistas de una en una; ↺ vuelve a los bloques del principio
+$("pistaBtn").addEventListener("click", () => {
+  const ps = RETOS[reto]?.pistas || [];
+  if (!ps.length) return;
+  const txt = ps[Math.min(pista, ps.length - 1)];
+  $("pista").hidden = false;
+  $("pista").innerHTML = `💡 <b>Pista ${Math.min(pista, ps.length - 1) + 1} de ${ps.length}:</b> ${txt}`;
+  sonido("tap"); decir(txt);
+  pista = Math.min(pista + 1, ps.length - 1);
+});
+$("reiniciarBtn").addEventListener("click", () => {
+  if (corriendo) return;
+  try { localStorage.removeItem(claveWs(reto)); } catch (_) {}
+  cargarBloques(reto); cDib.clearRect(0, 0, TAM, TAM);
+  const ini = inicioDe(reto); pintarLapa(ini.x, ini.y, ini.r);
+  feedback(""); sonido("tap"); decir("Listo, empezamos de nuevo.");
+});
+
+const primero = RETOS.findIndex(r => !progreso[r.id]);
 reto = primero === -1 ? LIBRE : primero;
 alEmpezar(() => { cargarReto(reto); Blockly.svgResize(ws); });
 pintarRetos();

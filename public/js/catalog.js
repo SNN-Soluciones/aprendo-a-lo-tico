@@ -201,4 +201,13 @@ export const JUEGOS = [
     grados: [1, 2, 3],
     url: "juegos/oraciones.html",
   },
+  {
+    id: "planta",
+    titulo: "Partes de la planta",
+    descripcion: "Raíz, tallo, hoja, flor, fruto y semilla: dónde están, para qué sirven y qué parte nos comemos.",
+    emoji: "🌱",
+    materia: "ciencias",
+    grados: [1, 2, 3],
+    url: "juegos/planta.html",
+  },
 ];

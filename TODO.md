@@ -91,7 +91,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] Animales de Costa Rica (hábitat, qué comen)
 - [ ] Animales: más animales (manatí, danta, pizote, tucán) con ilustraciones propias en vez de emoji
-- [ ] 🌱 Partes de la planta: arrastrar etiquetas (raíz, tallo, hoja, flor, fruto) · 1°–3°
+- [x] 🌱 Partes de la planta: explorar, ¿dónde está?, ¿para qué sirve? y ¿qué parte comemos? (la papa es tallo, el café es semilla) · 1°–3°
 - [ ] 🌳 Ecosistemas ticos: bosque nuboso, manglar, arrecife, páramo, bosque seco · 4°–6°
 - [ ] Cuerpo humano básico
 

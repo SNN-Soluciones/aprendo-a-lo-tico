@@ -100,6 +100,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Provincias y cabeceras en mapa interactivo
 - [ ] Mapa: cantones por provincia (5°–6°), volcanes, ríos y parques nacionales
 - [x] 🌸 Símbolos patrios: conocer los 12, memoria dibujo–nombre (4, 6 y 8 parejas) y adivinanzas · 1°–4°
+- [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
 - [ ] 📅 Efemérides: parejas fecha–evento (15 de setiembre, 25 de julio, 1° de diciembre, 12 de octubre…) · 2°–6°
 - [ ] Mi comunidad: servicios, oficios
 

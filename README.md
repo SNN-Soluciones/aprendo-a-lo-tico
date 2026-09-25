@@ -29,6 +29,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🐸 Sudoku de ranitas | Pensamiento lógico | 1° a 6° | `public/juegos/sudoku-ranas.html` |
 | ❌ Gato contra el jaguar | Pensamiento lógico | Prepa a 6° | `public/juegos/gato.html` |
 | 📰 ¿Dato u opinión? | Pensamiento lógico | 3° a 6° | `public/juegos/dato-opinion.html` |
+| 🛡️ El escudo nacional | Estudios Sociales | 2° a 5° | `public/juegos/escudo.html` |
 | ✖️ Tablas en la feria | Matemáticas | 2° a 4° | `public/juegos/tablas.html` |
 | 🧩 Armo la oración | Español | 1° a 3° | `public/juegos/oraciones.html` |
 | 🌱 Partes de la planta | Ciencias | 1° a 3° | `public/juegos/planta.html` |
@@ -65,6 +66,7 @@ aprendo-a-lo-tico/
 │   ├── js/simbolos.js      # 🌸 Símbolos patrios: datos, memoria y adivinanzas
 │   ├── js/simbolos-svg.js  # 🌸 Dibujos SVG de los símbolos patrios
 │   ├── img/escudo.webp     # 🌸 Escudo nacional (sin fondo) para «Símbolos patrios»
+│   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app

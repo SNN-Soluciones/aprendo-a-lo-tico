@@ -219,4 +219,13 @@ export const JUEGOS = [
     grados: [1, 2, 3, 4],
     url: "juegos/simbolos.html",
   },
+  {
+    id: "escudo",
+    titulo: "El escudo nacional",
+    descripcion: "Tocá las estrellas, los volcanes, los barcos y el sol: descubrí qué significa cada parte del escudo.",
+    emoji: "🛡️",
+    materia: "sociales",
+    grados: [2, 3, 4, 5],
+    url: "juegos/escudo.html",
+  },
 ];

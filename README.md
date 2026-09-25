@@ -35,6 +35,18 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🧩 Armo la oración | Español | 1° a 3° | `public/juegos/oraciones.html` |
 | 🌱 Partes de la planta | Ciencias | 1° a 3° | `public/juegos/planta.html` |
 | 🌸 Símbolos patrios | Estudios Sociales | 1° a 4° | `public/juegos/simbolos.html` |
+| 🧊 Sólido, líquido o gaseoso | Ciencias | 1° a 4° | `public/juegos/estados.html` |
+| 🌳 Ecosistemas de Costa Rica | Ciencias | 3° a 6° | `public/juegos/ecosistemas.html` |
+| 🐝 Ortografía | Español | 3° a 6° | `public/juegos/ortografia.html` |
+| 📅 Efemérides | Estudios Sociales | 2° a 6° | `public/juegos/efemerides.html` |
+| 🧠 Memory in English | Inglés | 1° a 4° | `public/juegos/memory-ingles.html` |
+
+## 📝 Preparate para el examen
+
+`public/examen.html`: se elige para quién es (opcional), el grado, la materia (Matemáticas, Español,
+Ciencias, Estudios Sociales o Inglés), de 2 a 5 temas y cuántas preguntas por tema. El examen sale por
+partes, se entrega y da la nota de 0 a 100, cuánto sacó en cada tema, la revisión con explicaciones,
+«practicar lo que fallé» e impresión en papel con hoja de respuestas. Las preguntas se generan cada vez.
 
 ## Estructura
 
@@ -70,6 +82,16 @@ aprendo-a-lo-tico/
 │   ├── img/                # Escudo nacional (sin fondo) y fotos de símbolos patrios (yigüirro, guanacaste, venado, manatí, esferas)
 │   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/frases-en.js    # 🦜 Frases en inglés y español, fichas con trampas y revisión
+│   ├── js/memory-en.js    # 🧠 Palabras en inglés por tema y lógica de la memoria
+│   ├── js/efemerides.js   # 📅 Fechas patrias y celebraciones de Costa Rica
+│   ├── js/ortografia.js   # 🐝 Palabras con b/v, s/c/z y h, y sus reglas
+│   ├── js/ecosistemas.js  # 🌳 Ecosistemas, quién vive en cada uno y dónde quedan
+│   ├── js/estados.js      # 🧊 Estados de la materia y sus cambios
+│   ├── js/quiz.js          # ❓ Motor compartido de los juegos de preguntas (modos, estrellas, voz)
+│   ├── js/reto-dia.js      # 🎯 Reto del día: el mismo para todos (la fecha es la semilla)
+│   ├── examen.html         # 📝 Preparate para el examen: materia, grado y temas → examen de práctica
+│   ├── js/examen-temas.js  # 📝 Temas del examen por materia y grado (preguntas al azar)
+│   ├── css/quiz.css        # ❓ Estilos de esos juegos
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet

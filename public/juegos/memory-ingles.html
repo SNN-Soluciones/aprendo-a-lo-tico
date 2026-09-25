@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Memory in English</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #8E5BD9; }
+  .niveles { display: flex; gap: 6px; justify-content: center; margin-top: 8px; }
+  .niveles button { padding: 3px 12px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .niveles button[aria-pressed="true"] { background: var(--btn); }
+  .marcas { margin-top: 6px; text-align: center; font-weight: 800; color: var(--page-ink); }
+
+  .tablero { margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; perspective: 800px; }
+  .carta { aspect-ratio: 3 / 4; padding: 0; border-radius: 14px; position: relative; background: none; box-shadow: none; border: none; }
+  .carta:active { transform: none; }
+  .carta .in { position: absolute; inset: 0; transition: transform .35s; transform-style: preserve-3d; }
+  .carta.abierta .in, .carta.hecha .in { transform: rotateY(180deg); }
+  .carta .cara { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border: 3px solid var(--rim); border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--rim); overflow: hidden; padding: 4px; }
+  .carta .dorso { background: repeating-linear-gradient(45deg, #8E5BD9 0 12px, #A57AE3 12px 24px); font-size: 1.9rem; }
+  .carta .frente { background: var(--face); transform: rotateY(180deg); }
+  .carta .frente .e { font-size: clamp(2rem, 11vw, 3rem); }
+  .carta .frente b { font-size: clamp(.95rem, 4.6vw, 1.3rem); color: var(--ink); text-align: center; line-height: 1.05; word-break: break-word; }
+  .carta.hecha .frente { background: #CFF5DC; border-color: var(--ok); }
+  .carta.nope .frente { background: #FFE3E0; }
+  .detalle { margin-top: 10px; background: #F3ECFF; color: #3B2170; border: 3px dashed var(--materia); border-radius: 14px; padding: 8px 12px; font-weight: 800; text-align: center; font-size: 1.2rem; }
+  @media (prefers-reduced-motion: reduce) { .carta .in { transition: none; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🧠🐶🍎</div>
+  <h1>Memory in English</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Encontrá cada dibujo con su palabra en inglés. Al voltear una palabra, la vas a escuchar. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Tema"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="niveles ancho" id="niveles" role="group" aria-label="Cuántas parejas"></div>
+<div class="marcas ancho" id="marcas"></div>
+<div class="tablero ancho" id="tablero"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="detalle ancho" id="detalle" hidden aria-live="polite"></div>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { TEMAS, NIVELES, mazo, sonPareja, estrellasMemoria } from "../js/memory-en.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "memory-en";
+const BIEN = ["Great!", "Awesome!", "Good job!", "Yes!", "Well done!"];
+const en = (t, op = {}) => decir(t, { lang: "en", ...op });
+
+let prog = {};
+try { prog = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(prog)); } catch (_) {} };
+
+let tema = TEMAS[0], nivel = NIVELES[0], cartas = [], abiertas = [], hechas = 0, intentos = 0, ocupado = false;
+
+function pintarMenus() {
+  const est = (t, n) => prog[`${t}-${n}`] || 0;
+  $("modos").innerHTML = TEMAS.map(t => {
+    const s = Math.max(0, ...NIVELES.map(n => est(t.id, n.id)));
+    return `<button data-tema="${t.id}" aria-pressed="${t === tema}">${t.nombre}${s ? ` <span class="est">${"⭐".repeat(s)}</span>` : ""}</button>`;
+  }).join("");
+  $("niveles").innerHTML = NIVELES.map(n => `<button data-nivel="${n.id}" aria-pressed="${n === nivel}">${n.nombre}${est(tema.id, n.id) ? ` <span class="est">${"⭐".repeat(est(tema.id, n.id))}</span>` : ""}</button>`).join("");
+  $("stars").textContent = "⭐ " + Object.values(prog).reduce((a, b) => a + b, 0);
+}
+const pintarMarcas = () => { $("marcas").textContent = `✅ ${hechas} of ${nivel.parejas} pairs · 🔄 ${intentos}`; };
+
+function empezar() {
+  cartas = mazo(tema.id, nivel.parejas); abiertas = []; hechas = 0; intentos = 0; ocupado = false;
+  $("tablero").hidden = false; $("resumen").hidden = true; $("detalle").hidden = true; feedback("");
+  $("tablero").innerHTML = cartas.map(c => `<button class="carta" data-n="${c.n}" aria-label="Card ${c.n + 1}">
+    <span class="in"><span class="cara dorso">❓</span><span class="cara frente">${c.cara === "dibujo" ? `<span class="e">${c.e}</span>` : `<b>${c.en}</b>`}</span></span></button>`).join("");
+  pintarMenus(); pintarMarcas();
+  instruccion(`🧠 Encontrá cada <b>dibujo</b> con su palabra en <b>inglés</b>.`, "Tocá dos cartas. Encontrá cada dibujo con su palabra en inglés.");
+}
+
+$("tablero").addEventListener("click", e => {
+  const b = e.target.closest(".carta");
+  if (!b || ocupado || b.classList.contains("abierta") || b.classList.contains("hecha")) return;
+  const c = cartas[Number(b.dataset.n)];
+  b.classList.add("abierta"); sonido("tap");
+  if (c.cara === "palabra") en(c.en);           // la palabra se escucha en inglés
+  abiertas.push({ c, b });
+  if (abiertas.length < 2) return;
+  intentos++;
+  const [x, y] = abiertas; abiertas = [];
+  if (sonPareja(x.c, y.c)) {
+    hechas++;
+    [x.b, y.b].forEach(el => { el.classList.remove("abierta"); el.classList.add("hecha"); });
+    feedback("ok", "🎉", BIEN[Math.floor(Math.random() * BIEN.length)]);
+    $("detalle").hidden = false; $("detalle").textContent = `${x.c.e} ${x.c.en} = ${x.c.es}`;
+    en(x.c.en, { cola: true });
+    pintarMarcas();
+    if (hechas === nivel.parejas) setTimeout(fin, 900);
+  } else {
+    ocupado = true;
+    [x.b, y.b].forEach(el => el.classList.add("nope"));
+    setTimeout(() => { [x.b, y.b].forEach(el => el.classList.remove("abierta", "nope")); ocupado = false; }, 1100);
+    pintarMarcas();
+  }
+});
+
+function fin() {
+  const n = estrellasMemoria(intentos, nivel.parejas), clave = `${tema.id}-${nivel.id}`;
+  if (n > (prog[clave] || 0)) { prog[clave] = n; guardar(); }
+  pintarMenus();
+  const sig = NIVELES[NIVELES.indexOf(nivel) + 1];
+  const [msgEs, msgEn] = n === 3 ? ["¡Qué memoria!", "Excellent!"] : n === 2 ? ["¡Muy bien!", "Very good!"] : ["¡Lo lograste!", "Good job!"];
+  $("tablero").hidden = true; $("detalle").hidden = true; feedback("");
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${nivel.parejas} pairs · ${intentos} tries</p><p>${msgEs} ${msgEn}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra vez</button>${sig ? `<button class="sig" id="sigBtn2">${sig.nombre} ➡️</button>` : ""}</div>`;
+  instruccion("<b>¡Terminaste!</b>", msgEs).then(() => en(msgEn, { cola: true }));
+  sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigBtn2")?.addEventListener("click", () => { sonido("tap"); nivel = sig; empezar(); });
+}
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-tema]");
+  if (!b) return;
+  sonido("tap"); tema = TEMAS.find(t => t.id === b.dataset.tema); nivel = NIVELES[0]; empezar();
+});
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-nivel]");
+  if (!b) return;
+  sonido("tap"); nivel = NIVELES.find(n => n.id === b.dataset.nivel); empezar();
+});
+
+const repetir = lento => decir("Tocá dos cartas. Encontrá cada dibujo con su palabra en inglés.", lento ? { rate: LENTO } : undefined);
+alEmpezar(() => empezar(), repetir);
+pintarMenus();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__memory = { get cartas() { return cartas; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

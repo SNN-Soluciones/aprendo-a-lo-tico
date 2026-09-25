@@ -214,3 +214,47 @@ export function comparar(dibujo, meta, tol = 5) {
   const sobra = pd.length ? pd.filter(p => !cerca(p, meta, tol)).length / pd.length : 0;
   return { cobertura, sobra, igual: cobertura >= 0.97 && sobra <= 0.03 };
 }
+
+// ---------- 🎲 Retos al azar ----------
+// Figuras con tamaño al azar; se centran en el papel para que siempre quepan.
+const FIGURAS = [
+  r => { const n = [3, 5, 6, 8][r(4)], L = [0, 0, 0, 160, 0, 120, 100, 0, 70][n] + 10 * r(3);
+    const nombre = { 3: "Un triángulo", 5: "Un pentágono", 6: "Un hexágono", 8: "Un octágono" }[n];
+    return { titulo: nombre, solucion: [rep(n, av(L), der(360 / n))],
+      voz: `${nombre} con todos los lados iguales. ¿Cuántos lados tiene? ¿Cuánto tiene que girar en cada esquina?`,
+      pistas: [`Tiene ${n} lados: repetí ${n} veces.`, `Las vueltas de todas las esquinas suman 360 grados: 360 ÷ ${n} = ${360 / n}.`, `Repetir ${n} veces: avanzar ${L} y girar ${360 / n}.`] }; },
+  r => { const L = 180 + 20 * r(4);
+    return { titulo: "Una estrella", solucion: [rep(5, av(L), der(144))],
+      voz: "¡Una estrella de cinco puntas! Se dibuja sin levantar el lápiz, con vueltas bien cerradas.",
+      pistas: ["Tiene 5 puntas: repetí 5 veces.", "En cada punta gira 144 grados.", `Repetir 5 veces: avanzar ${L} y girar 144.`] }; },
+  r => { const a = 80 + 20 * r(5), b = 60 + 20 * r(4);
+    return { titulo: "Un rectángulo", solucion: [rep(2, av(a), der(90), av(b), der(90))],
+      voz: "Un rectángulo: dos lados largos y dos cortos. ¿Qué parte se repite?",
+      pistas: ["Un lado largo, una esquina, un lado corto, otra esquina… y se repite.", `Repetir 2 veces: avanzar ${a}, girar 90, avanzar ${b}, girar 90.`] }; },
+  r => { const k = 3 + r(3), L = [0, 0, 0, 60, 50, 40][k];
+    return { titulo: "Una escalera", solucion: [rep(k, av(L), der(90), av(L), izq(90))],
+      voz: "Una escalera: cada escalón es igual. ¡Repetilo!",
+      pistas: [`Un escalón: avanzar, girar a la derecha, avanzar, girar a la izquierda.`, `Son ${k} escalones de ${L} pasos.`] }; },
+  r => { const k = [4, 6, 8][r(3)], L = 60 + 10 * r(3);
+    return { titulo: "Una flor de cuadrados", solucion: [rep(k, cuadrado(L), der(360 / k))],
+      voz: "¡Una flor hecha con cuadrados! Dibujá un cuadrado, girá un poquito y volvé a empezar.",
+      pistas: ["Adentro de un Repetir, poné otro Repetir que dibuje un cuadrado.", `Son ${k} cuadrados: después de cada uno gira 360 ÷ ${k} = ${360 / k}.`, `Repetir ${k}: (repetir 4: avanzar ${L}, girar 90) y girar ${360 / k}.`] }; },
+];
+
+/** Un reto nuevo al azar, centrado en el papel. */
+export function retoAlAzar(rnd = Math.random) {
+  const r = n => Math.floor(rnd() * n);
+  for (let k = 0; k < 50; k++) {
+    const f = FIGURAS[r(FIGURAS.length)](r);
+    // Se dibuja desde (0, 0) para medirla y después se centra
+    const { rayas } = ejecutar(f.solucion, { x: 0, y: 0, r: 0 });
+    const xs = rayas.flatMap(s => [s.x1, s.x2]), ys = rayas.flatMap(s => [s.y1, s.y2]);
+    const ancho = Math.max(...xs) - Math.min(...xs), alto = Math.max(...ys) - Math.min(...ys);
+    if (ancho > TAM - 50 || alto > TAM - 50) continue;
+    const inicio = { x: Math.round(TAM / 2 - (Math.max(...xs) + Math.min(...xs)) / 2), y: Math.round(TAM / 2 - (Math.max(...ys) + Math.min(...ys)) / 2), r: 0 };
+    const reto = { id: "azar", azar: true, etapa: "azar", titulo: f.titulo, voz: f.voz, inicio, solucion: f.solucion, pistas: f.pistas };
+    reto.objetivo = contar(reto.solucion);
+    return reto;
+  }
+  return { ...RETOS[4], id: "azar", azar: true };
+}

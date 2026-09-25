@@ -83,7 +83,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Lectura de oraciones cortas con audio
 - [x] 🧩 Armo la oración: ordenar palabras (con voz), punto/pregunta/emoción y mayúsculas · 1°–3°
 - [ ] Mayúsculas y puntuación
-- [ ] 🐝 Ortografía: b/v, s/c/z, h (completar la palabra + pista de la regla) · 3°–6°
+- [x] 🐝 Ortografía: b/v, s/c/z y h con dibujo, voz y la regla (mb, nv, -aba, -bir, z→ces, hue-) · 3°–6°
 - [ ] 🦥 ¿Qué es? Sustantivo, verbo, adjetivo: clasificar en tres canastas · 3°–5°
 - [ ] 📖 Cuentos ticos cortos: comprensión lectora con cuentos originales (preguntas literales e inferenciales) · 2°–6°
 
@@ -92,7 +92,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Animales de Costa Rica (hábitat, qué comen)
 - [ ] Animales: más animales (manatí, danta, pizote, tucán) con ilustraciones propias en vez de emoji
 - [x] 🌱 Partes de la planta: explorar, ¿dónde está?, ¿para qué sirve? y ¿qué parte comemos? (la papa es tallo, el café es semilla) · 1°–3°
-- [ ] 🌳 Ecosistemas ticos: bosque nuboso, manglar, arrecife, páramo, bosque seco · 4°–6°
+- [x] 🌳 Ecosistemas de Costa Rica: ¿dónde vive?, ¿cómo es? y ¿dónde queda? · 3°–6°
+- [x] 🧊 Sólido, líquido o gaseoso: estados y cambios (derretir, congelar, evaporar, condensar) · 1°–4°
 - [ ] Cuerpo humano básico
 
 ## 🗺️ Estudios Sociales
@@ -101,14 +102,14 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Mapa: cantones por provincia (5°–6°), volcanes, ríos y parques nacionales
 - [x] 🌸 Símbolos patrios: conocer los 12, memoria dibujo–nombre (4, 6 y 8 parejas) y adivinanzas · 1°–4°
 - [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
-- [ ] 📅 Efemérides: parejas fecha–evento (15 de setiembre, 25 de julio, 1° de diciembre, 12 de octubre…) · 2°–6°
+- [x] 📅 Efemérides: ¿qué se celebra?, ¿qué día es? y ¿por qué? (15 fechas) · 2°–6°
 - [ ] Mi comunidad: servicios, oficios
 
 ## 💬 Inglés
 
 - [x] Vocabulario con imagen y audio (colores, animales, números, familia)
 - [x] Listen and tap
-- [ ] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
+- [x] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
 - [x] 🦜 Armo en inglés: escuchar y armar, traducir al inglés y al español, con fichas trampa y repaso de las falladas (tipo Duolingo)
 
 ## 💻 Programación (sin servidor: todo corre en el navegador)
@@ -123,15 +124,24 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🦜 Lapa: variables y «para cada» (espirales), y compartir el dibujo por WhatsApp
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 
+## 📝 Preparate para el examen
+
+- [x] Armar un examen de práctica: nombre, grado, materia (4 básicas e inglés), 2 a 5 temas, 3/5/10 preguntas por tema
+- [x] Nota de 0 a 100, resultado por tema, revisión con explicaciones y «practicar lo que fallé»
+- [x] Imprimir el examen con hoja de respuestas
+- [ ] Más temas por grado (según el programa del MEP) y preguntas con dibujos (relojes, figuras, mapas)
+- [ ] Compartir el examen por WhatsApp (mismo examen con un enlace)
+
 ## 🎲 Que no siempre sea lo mismo (generadores, sin servidor)
 
 - [x] Generador de oraciones en español e inglés («Armo la oración» y «Armo en inglés»)
 - [x] Generadores de datos, opiniones y mensajes para «¿Dato u opinión?»
 - [x] Casos al azar del jaguar detective
 - [x] Niveles al azar en «Llevá al perezoso» (mapas con verificador) y «Repetí y decidí» (pasillos, escaleras, cuadrados y ríos de tamaño al azar)
-- [ ] Niveles al azar en «La lapa que dibuja»
-- [ ] Más vocabulario en «Listen and tap» y más animales en «Animales de Costa Rica»
-- [ ] «Reto del día»: el mismo reto para todos ese día (semilla con la fecha)
+- [x] Retos al azar en «La lapa que dibuja» (polígonos, estrella, rectángulo, escalera y flor de cuadrados)
+- [x] Más vocabulario en «Listen and tap» (10 temas)
+- [ ] Más animales en «Animales de Costa Rica»
+- [x] «Reto del día» en el inicio: el mismo reto para todos ese día (semilla con la fecha), con ✅ al resolverlo
 
 ## 🧠 Pensamiento lógico y crítico
 

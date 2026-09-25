@@ -145,6 +145,11 @@
     <button data-tema="numbers">🔢 Numbers</button>
     <button data-tema="family">👪 Family</button>
     <button data-tema="fruits">🍎 Fruits</button>
+    <button data-tema="clothes">👕 Clothes</button>
+    <button data-tema="body">👂 Body</button>
+    <button data-tema="school">🎒 School</button>
+    <button data-tema="food">🍕 Food</button>
+    <button data-tema="bignumbers">💯 13–100</button>
   </div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
@@ -211,6 +216,60 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
       { en: "lemon", es: "limón", e: "🍋" },
       { en: "coconut", es: "pipa", e: "🥥" },
     ],
+    clothes: [
+      { en: "shirt", es: "camisa", e: "👕" },
+      { en: "pants", es: "pantalón", e: "👖" },
+      { en: "dress", es: "vestido", e: "👗" },
+      { en: "shoes", es: "zapatos", e: "👟" },
+      { en: "socks", es: "medias", e: "🧦" },
+      { en: "hat", es: "sombrero", e: "👒" },
+      { en: "cap", es: "gorra", e: "🧢" },
+      { en: "jacket", es: "jacket", e: "🧥" },
+      { en: "gloves", es: "guantes", e: "🧤" },
+      { en: "scarf", es: "bufanda", e: "🧣" },
+    ],
+    body: [
+      { en: "eye", es: "ojo", e: "👁️" },
+      { en: "ear", es: "oreja", e: "👂" },
+      { en: "nose", es: "nariz", e: "👃" },
+      { en: "mouth", es: "boca", e: "👄" },
+      { en: "hand", es: "mano", e: "✋" },
+      { en: "foot", es: "pie", e: "🦶" },
+      { en: "tooth", es: "diente", e: "🦷" },
+      { en: "leg", es: "pierna", e: "🦵" },
+      { en: "arm", es: "brazo", e: "💪" },
+    ],
+    school: [
+      { en: "book", es: "libro", e: "📚" },
+      { en: "pencil", es: "lápiz", e: "✏️" },
+      { en: "backpack", es: "mochila", e: "🎒" },
+      { en: "ruler", es: "regla", e: "📏" },
+      { en: "scissors", es: "tijeras", e: "✂️" },
+      { en: "notebook", es: "cuaderno", e: "📓" },
+      { en: "crayon", es: "crayola", e: "🖍️" },
+      { en: "computer", es: "computadora", e: "💻" },
+      { en: "clock", es: "reloj", e: "⏰" },
+      { en: "bus", es: "bus", e: "🚌" },
+    ],
+    food: [
+      { en: "rice", es: "arroz", e: "🍚" },
+      { en: "bread", es: "pan", e: "🍞" },
+      { en: "milk", es: "leche", e: "🥛" },
+      { en: "egg", es: "huevo", e: "🥚" },
+      { en: "cheese", es: "queso", e: "🧀" },
+      { en: "chicken", es: "pollo", e: "🍗" },
+      { en: "corn", es: "maíz", e: "🌽" },
+      { en: "ice cream", es: "helado", e: "🍦" },
+      { en: "cookie", es: "galleta", e: "🍪" },
+      { en: "juice", es: "jugo", e: "🧃" },
+      { en: "soup", es: "sopa", e: "🍲" },
+      { en: "carrot", es: "zanahoria", e: "🥕" },
+    ],
+    bignumbers: [
+      [13, "thirteen"], [14, "fourteen"], [15, "fifteen"], [16, "sixteen"], [17, "seventeen"], [18, "eighteen"], [19, "nineteen"],
+      [20, "twenty"], [30, "thirty"], [40, "forty"], [50, "fifty"], [60, "sixty"], [70, "seventy"], [80, "eighty"], [90, "ninety"], [100, "one hundred"],
+      [21, "twenty-one"], [35, "thirty-five"], [47, "forty-seven"], [58, "fifty-eight"], [99, "ninety-nine"],
+    ].map(([d, en]) => ({ en, es: String(d), d })),
   };
 
   let tema = "colors", mazo = [], meta = null, opciones = [], fallos = 0, listo = false;
@@ -340,6 +399,7 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
   });
 
   $("stars").textContent = "⭐ " + stars;
+  if (new URLSearchParams(location.search).has("prueba")) window.__listen = { get meta() { return meta; }, get opciones() { return opciones; } };
 })();
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>

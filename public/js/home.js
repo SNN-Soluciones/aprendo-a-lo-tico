@@ -1,4 +1,5 @@
 import { MATERIAS, GRADOS, JUEGOS } from "./catalog.js";
+import { retoDelDia, hecho } from "./reto-dia.js";
 
 // 🏠 Inicio: menú principal con categorías (#), página de cada categoría (#c/<id>) y menú ☰.
 const $ = (s) => document.querySelector(s);
@@ -28,7 +29,19 @@ function chipsGrado(el) {
 }
 
 // ---------- Menú principal ----------
+// 🎯 Reto del día: el mismo para todos hoy
+function pintarRetoDia() {
+  const r = retoDelDia(), listo = hecho(r.fecha);
+  const a = $("#retoDia");
+  a.href = r.url; a.hidden = false;
+  a.classList.toggle("hecho", listo);
+  a.innerHTML = `<span class="rd-emoji" aria-hidden="true">${r.emoji}</span>
+    <span class="rd-texto"><small>🎯 Reto del día${listo ? " · ✅ ¡Resuelto!" : ""}</small><b>${r.titulo}</b></span>
+    <span class="rd-ir" aria-hidden="true">${listo ? "🔁" : "▶️"}</span>`;
+}
+
 function pintarInicio() {
+  pintarRetoDia();
   chipsGrado($("#grados"));
   const tarjetas = [...MATERIAS, TODOS].map((m) => {
     const n = juegosDe(m.id).length;

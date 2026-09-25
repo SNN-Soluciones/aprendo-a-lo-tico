@@ -122,6 +122,9 @@
 import { hablar, elogio, sonido } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
 import { NIVELES, DIRS, leer, ejecutar, minimo, nivelAlAzar } from "../js/perezoso.js";
+import { desdeUrl, marcarHecho } from "../js/reto-dia.js";
+const dia = desdeUrl(); // 🎯 si se abrió como reto del día
+let delDia = false;
 
 const $ = id => document.getElementById(id);
 const FLECHA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.5 12H15v9.5H9V12H3.5z"/></svg>`;
@@ -177,18 +180,19 @@ function pintarPrograma(activa = -1, roja = mala) {
 
 // ---------- Niveles ----------
 // i: número de nivel, o "azar" para uno nuevo al azar
-function cargar(i) {
+function cargar(i, rnd = Math.random) {
   azar = i === "azar";
+  delDia = azar && rnd !== Math.random;
   if (!azar) n = i;
-  nivel = azar ? nivelAlAzar() : NIVELES[n];
+  nivel = azar ? nivelAlAzar(rnd) : NIVELES[n];
   juego = leer(nivel); programa = [...(nivel.inicial || [])]; ganado = false; corriendo = false; intentos = 0; mala = -1;
   pintarNiveles(); pintarTablero(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
   const varias = juego.hojas.length > 1;
   instruccion(
-    `<span class="big">🦥</span> ➜ <span class="big">🍃</span>${varias ? ` ×${juego.hojas.length}` : ""}`,
+    `${delDia ? "<b>🎯 Reto del día</b><br>" : ""}<span class="big">🦥</span> ➜ <span class="big">🍃</span>${varias ? ` ×${juego.hojas.length}` : ""}`,
     azar
-      ? `🎲 Un camino nuevo. Llevá al perezoso ${varias ? `a comerse las ${juego.hojas.length} hojas` : "hasta la hoja"}.`
+      ? `${delDia ? "🎯 ¡Reto del día!" : "🎲 Un camino nuevo."} Llevá al perezoso ${varias ? `a comerse las ${juego.hojas.length} hojas` : "hasta la hoja"}.`
       : nivel.depurar
       ? "¡Uy! Este camino tiene una flecha equivocada. Tocá el botón verde para ver qué pasa, y después arreglá la flecha."
       : n === 0
@@ -279,6 +283,7 @@ function terminar(r) {
     // Los niveles al azar suman estrellas cada vez; los fijos guardan la mejor
     if (azar) progreso.azar = (progreso.azar || 0) + estrellas;
     else progreso[nivel.id] = Math.max(progreso[nivel.id] || 0, estrellas);
+    if (delDia) marcarHecho(dia.fecha);
     guardar(); pintarNiveles();
     pintarPrograma();
     $("perezoso").classList.add("feliz");
@@ -311,7 +316,7 @@ $("nextBtn").addEventListener("click", () => cargar(azar ? "azar" : Math.min(n +
 // Arrancar en el primer nivel sin terminar
 const primero = NIVELES.findIndex(nv => !progreso[nv.id]);
 n = primero === -1 ? 0 : primero;
-alEmpezar(() => cargar(n));
+alEmpezar(() => (dia ? cargar("azar", dia.rnd) : cargar(n)));
 pintarNiveles();
 
 if (new URLSearchParams(location.search).has("prueba")) window.__perezoso = { get programa() { return programa; }, get n() { return n; }, get nivel() { return nivel; } };

@@ -21,6 +21,8 @@
   .retos button { flex: none; min-width: 44px; padding: 0 8px; font-size: 1.1rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
   .retos button small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
   .retos button[aria-pressed="true"] { background: var(--btn); }
+  .retos button.azar { background: #EFE4FF; }
+  .retos button.azar[aria-pressed="true"] { background: var(--btn); }
   .instr .titulo { display: block; font-size: 1.05rem; color: var(--materia); }
   .instr .txt { font-size: clamp(.95rem, 4vw, 1.15rem); }
 
@@ -99,10 +101,15 @@
 <script type="module">
 import { elogio, sonido } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { RETOS, ETAPAS, TAM, COLORES, ejecutar, comparar, contar } from "../js/lapa.js";
+import { RETOS, ETAPAS, TAM, COLORES, ejecutar, comparar, contar, retoAlAzar } from "../js/lapa.js";
+import { desdeUrl, marcarHecho } from "../js/reto-dia.js";
+const dia = desdeUrl(); // 🎯 si se abrió como reto del día
 
 const $ = id => document.getElementById(id);
-const LIBRE = RETOS.length; // el último botón es 🎨 dibujo libre
+const LIBRE = RETOS.length; // 🎨 dibujo libre
+const AZAR = RETOS.length + 1; // 🎲 reto nuevo al azar
+let retoAzar = null;
+const retoDe = i => (i === AZAR ? retoAzar : RETOS[i]);
 
 // ---------- Bloques ----------
 Blockly.defineBlocksWithJsonArray([
@@ -168,7 +175,7 @@ const [cMeta, cDib, cLapa] = capas;
 function pintarMeta() {
   cMeta.clearRect(0, 0, TAM, TAM);
   if (reto === LIBRE) return;
-  const r = RETOS[reto];
+  const r = retoDe(reto);
   cMeta.strokeStyle = "#C8D6E4"; cMeta.lineWidth = 9; cMeta.setLineDash([]);
   for (const s of metaRayas) { cMeta.beginPath(); cMeta.moveTo(s.x1, s.y1); cMeta.lineTo(s.x2, s.y2); cMeta.stroke(); }
   cMeta.strokeStyle = "#9DB3C9"; cMeta.lineWidth = 2; cMeta.setLineDash([6, 8]);
@@ -201,17 +208,18 @@ function pintarLapa(x, y, r) {
 // ---------- Retos ----------
 let reto = 0, metaRayas = [], corriendo = false, rapido = false;
 // El progreso y los bloques se guardan por nombre de reto (no por número), así se pueden agregar retos sin desordenar nada
-const nombre = i => i === LIBRE ? "libre" : RETOS[i].id;
+const nombre = i => i === LIBRE ? "libre" : i === AZAR ? "azar" : RETOS[i].id;
 let progreso = {};
 try { progreso = JSON.parse(localStorage.getItem("lapa-progreso-v2")) || {}; } catch (_) {}
 const guardarProgreso = () => { try { localStorage.setItem("lapa-progreso-v2", JSON.stringify(progreso)); } catch (_) {} };
-const inicioDe = i => i === LIBRE ? { x: 200, y: 200, r: 0 } : RETOS[i].inicio;
+const inicioDe = i => i === LIBRE ? { x: 200, y: 200, r: 0 } : retoDe(i).inicio;
 
 function pintarRetos() {
   $("retos").innerHTML = RETOS.map((r, i) =>
     (i === 0 || RETOS[i - 1].etapa !== r.etapa ? `<span class="etapa">${ETAPAS.find(e => e.id === r.etapa).emoji} ${ETAPAS.find(e => e.id === r.etapa).nombre}</span>` : "")
     + `<button data-r="${i}" aria-pressed="${i === reto}" aria-label="Reto ${i + 1}: ${r.titulo}">${i + 1}<small>${"⭐".repeat(progreso[r.id] || 0)}</small></button>`).join("")
-    + `<span class="etapa">🎨 Libre</span><button data-r="${LIBRE}" aria-pressed="${reto === LIBRE}" aria-label="Dibujo libre">🎨<small>libre</small></button>`;
+    + `<span class="etapa">🎨 Libre</span><button data-r="${LIBRE}" aria-pressed="${reto === LIBRE}" aria-label="Dibujo libre">🎨<small>libre</small></button>`
+    + `<span class="etapa">🎲 Al azar</span><button data-r="${AZAR}" class="azar" aria-pressed="${reto === AZAR}" aria-label="Reto nuevo al azar">🎲<small>nuevo</small></button>`;
   $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
   $("retos").querySelector(`[data-r="${reto}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
 }
@@ -244,7 +252,7 @@ function cargarBloques(i) {
   if (!ok) {
     const b = ws.newBlock("lapa_inicio");
     b.setDeletable(false); b.initSvg(); b.render(); b.moveBy(20, 20);
-    const inicial = RETOS[i]?.inicial;
+    const inicial = retoDe(i)?.inicial;
     if (inicial) {
       const primero = Blockly.serialization.blocks.append(aBloques(inicial), ws);
       b.nextConnection.connect(primero.previousConnection);
@@ -264,9 +272,10 @@ ws.addChangeListener(e => {
 });
 
 let pista = 0;
-function cargarReto(i) {
+function cargarReto(i, rnd) {
   reto = i; corriendo = false; pista = 0; $("pista").hidden = true;
-  metaRayas = i === LIBRE ? [] : ejecutar(RETOS[i].solucion, RETOS[i].inicio).rayas;
+  if (i === AZAR) { retoAzar = retoAlAzar(rnd); if (rnd) retoAzar.delDia = true; try { localStorage.removeItem(claveWs(AZAR)); } catch (_) {} } // cada reto nuevo empieza vacío
+  metaRayas = i === LIBRE ? [] : ejecutar(retoDe(i).solucion, retoDe(i).inicio).rayas;
   pintarRetos(); pintarMeta();
   cDib.clearRect(0, 0, TAM, TAM);
   const ini = inicioDe(i); pintarLapa(ini.x, ini.y, ini.r);
@@ -276,7 +285,11 @@ function cargarReto(i) {
   $("pistaBtn").hidden = i === LIBRE;
   $("leyenda").textContent = i === LIBRE ? "Dibujo libre" : "La línea punteada es la meta";
   if (i === LIBRE) instruccion(`<span class="titulo">🎨 Dibujo libre</span>`, "¡Dibujo libre! Inventá lo que querás: cambiá colores, subí el lápiz y repetí figuras.");
-  else instruccion(`<span class="titulo">${ETAPAS.find(e => e.id === RETOS[i].etapa).emoji} Reto ${i + 1}: ${RETOS[i].titulo}</span>⭐⭐⭐ con ${RETOS[i].objetivo} ${RETOS[i].objetivo === 1 ? "bloque" : "bloques"}`, RETOS[i].voz);
+  else {
+    const r = retoDe(i);
+    const titulo = i === AZAR ? `${r.delDia ? "🎯 Reto del día:" : "🎲"} ${r.titulo}` : `${ETAPAS.find(e => e.id === r.etapa).emoji} Reto ${i + 1}: ${r.titulo}`;
+    instruccion(`<span class="titulo">${titulo}</span>⭐⭐⭐ con ${r.objetivo} ${r.objetivo === 1 ? "bloque" : "bloques"}`, r.voz);
+  }
 }
 $("retos").addEventListener("click", e => {
   const b = e.target.closest("[data-r]");
@@ -337,14 +350,17 @@ function terminar(prog, res) {
   }
   if (reto === LIBRE) { feedback("ok", "🎨", "¡Qué bonito!"); sonido("ok"); decir("¡Qué dibujo más bonito! Tocá el disquete para guardarlo."); return; }
   const c = comparar(res.rayas, metaRayas);
-  const total = contar(prog), obj = RETOS[reto].objetivo;
+  const total = contar(prog), obj = retoDe(reto).objetivo;
   if (c.igual) {
     const estrellas = total <= obj ? 3 : 2;
-    progreso[RETOS[reto].id] = Math.max(progreso[RETOS[reto].id] || 0, estrellas);
+    // Los retos al azar suman estrellas cada vez; los fijos guardan la mejor
+    if (reto === AZAR) progreso.azar = (progreso.azar || 0) + estrellas;
+    else progreso[RETOS[reto].id] = Math.max(progreso[RETOS[reto].id] || 0, estrellas);
+    if (reto === AZAR && retoAzar.delDia) marcarHecho(dia.fecha);
     guardarProgreso(); pintarRetos();
     feedback("ok", "🎉", "⭐".repeat(estrellas));
-    decir(`${elogio()} ¡La lapa dibujó ${RETOS[reto].titulo.toLowerCase()}! ${estrellas === 3 ? "Y con muy pocos bloques." : `Usaste ${total} bloques. ¿Podés hacerlo con ${obj}? Probá con Repetir.`}`);
-    if (reto < RETOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+    decir(`${elogio()} ¡La lapa dibujó ${retoDe(reto).titulo.toLowerCase()}! ${estrellas === 3 ? "Y con muy pocos bloques." : `Usaste ${total} bloques. ¿Podés hacerlo con ${obj}? Probá con Repetir.`}`);
+    if (reto === AZAR || reto < RETOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
     else decir("¡Terminaste todos los retos! Ahora probá el dibujo libre.", { cola: true });
   } else if (c.cobertura >= 0.6 && c.sobra <= 0.35) {
     feedback("almost", "🤏", "¡Casi!");
@@ -369,11 +385,11 @@ $("guardarBtn").addEventListener("click", () => {
   const a = document.createElement("a"); a.download = "dibujo-de-la-lapa.png"; a.href = c.toDataURL("image/png"); a.click();
 });
 
-$("nextBtn").addEventListener("click", () => cargarReto(Math.min(reto + 1, RETOS.length - 1)));
+$("nextBtn").addEventListener("click", () => cargarReto(reto === AZAR ? AZAR : Math.min(reto + 1, RETOS.length - 1)));
 
 // 💡 Pistas de una en una; ↺ vuelve a los bloques del principio
 $("pistaBtn").addEventListener("click", () => {
-  const ps = RETOS[reto]?.pistas || [];
+  const ps = retoDe(reto)?.pistas || [];
   if (!ps.length) return;
   const txt = ps[Math.min(pista, ps.length - 1)];
   $("pista").hidden = false;
@@ -391,10 +407,12 @@ $("reiniciarBtn").addEventListener("click", () => {
 
 const primero = RETOS.findIndex(r => !progreso[r.id]);
 reto = primero === -1 ? LIBRE : primero;
-alEmpezar(() => { cargarReto(reto); Blockly.svgResize(ws); });
+alEmpezar(() => { if (dia) cargarReto(AZAR, dia.rnd); else cargarReto(reto); Blockly.svgResize(ws); });
 pintarRetos();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__lapa = { ws, programa, get reto() { return reto; } };
+if (new URLSearchParams(location.search).has("prueba")) window.__lapa = { ws, programa, get reto() { return reto; }, get retoActual() { return retoDe(reto); },
+  // pone un programa armado debajo de «al tocar ▶️» (para las pruebas)
+  poner: lista => { const b = Blockly.serialization.blocks.append(aBloques(lista), ws); inicioBloque().nextConnection.connect(b.previousConnection); } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

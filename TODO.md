@@ -81,7 +81,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 ## ✏️ Español
 
 - [ ] Lectura de oraciones cortas con audio
-- [ ] 🔤 Armo la oración: ordenar palabras, mayúscula y punto · 1°–2°
+- [x] 🧩 Armo la oración: ordenar palabras (con voz), punto/pregunta/emoción y mayúsculas · 1°–3°
 - [ ] Mayúsculas y puntuación
 - [ ] 🐝 Ortografía: b/v, s/c/z, h (completar la palabra + pista de la regla) · 3°–6°
 - [ ] 🦥 ¿Qué es? Sustantivo, verbo, adjetivo: clasificar en tres canastas · 3°–5°

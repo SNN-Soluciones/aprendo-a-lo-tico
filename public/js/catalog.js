@@ -7,15 +7,6 @@ export const MATERIAS = [
   { id: "ingles",   nombre: "Inglés",            emoji: "💬", color: "#8E5BD9" },
   { id: "prog",     nombre: "Programación",      emoji: "💻", color: "#14A3A3" },
   { id: "logica",   nombre: "Pensamiento lógico", emoji: "🧠", color: "#D9731F" },
-  {
-    id: "tablas",
-    titulo: "Tablas en la feria",
-    descripcion: "Multiplicá acomodando fruta en filas: tablas del 1 al 10 con trucos y un modo contra reloj.",
-    emoji: "✖️",
-    materia: "mate",
-    grados: [2, 3, 4],
-    url: "juegos/tablas.html",
-  },
 ];
 
 // 0 = Preparatoria (materno/transición), 1..6 = grados de primaria
@@ -191,5 +182,23 @@ export const JUEGOS = [
     materia: "logica",
     grados: [3, 4, 5, 6],
     url: "juegos/dato-opinion.html",
+  },
+  {
+    id: "tablas",
+    titulo: "Tablas en la feria",
+    descripcion: "Multiplicá acomodando fruta en filas: tablas del 1 al 10 con trucos y un modo contra reloj.",
+    emoji: "✖️",
+    materia: "mate",
+    grados: [2, 3, 4],
+    url: "juegos/tablas.html",
+  },
+  {
+    id: "oraciones",
+    titulo: "Armo la oración",
+    descripcion: "Escuchá y armá la oración con las palabras. Después: punto, pregunta o emoción, y las mayúsculas.",
+    emoji: "🧩",
+    materia: "espanol",
+    grados: [1, 2, 3],
+    url: "juegos/oraciones.html",
   },
 ];

@@ -29,6 +29,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🐸 Sudoku de ranitas | Pensamiento lógico | 1° a 6° | `public/juegos/sudoku-ranas.html` |
 | ❌ Gato contra el jaguar | Pensamiento lógico | Prepa a 6° | `public/juegos/gato.html` |
 | 📰 ¿Dato u opinión? | Pensamiento lógico | 3° a 6° | `public/juegos/dato-opinion.html` |
+| 🧩 Armo la oración | Español | 1° a 3° | `public/juegos/oraciones.html` |
 | ✖️ Tablas en la feria | Matemáticas | 2° a 4° | `public/juegos/tablas.html` |
 
 ## Estructura
@@ -57,6 +58,7 @@ aprendo-a-lo-tico/
 │   ├── js/ranas-svg.js     # 🐸 Dibujos SVG de las ranitas de Costa Rica
 │   ├── js/gato.js          # ❌⭕ Gato: jugadas del jaguar (fácil, medio, perfecto) y consejos
 │   ├── js/tablas.js       # ✖️ Tablas: preguntas, trucos de cada tabla y estrellas
+│   ├── js/oraciones.js    # 🧩 Oraciones para ordenar, signos y mayúsculas
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app

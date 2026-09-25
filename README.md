@@ -81,6 +81,7 @@ aprendo-a-lo-tico/
 │   ├── js/ecosistemas.js  # 🌳 Ecosistemas, quién vive en cada uno y dónde quedan
 │   ├── js/estados.js      # 🧊 Estados de la materia y sus cambios
 │   ├── js/quiz.js          # ❓ Motor compartido de los juegos de preguntas (modos, estrellas, voz)
+│   ├── js/reto-dia.js      # 🎯 Reto del día: el mismo para todos (la fecha es la semilla)
 │   ├── css/quiz.css        # ❓ Estilos de esos juegos
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»

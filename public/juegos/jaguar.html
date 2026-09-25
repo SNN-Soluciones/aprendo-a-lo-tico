@@ -133,6 +133,8 @@
 import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
 import { ANIMALES, CASOS, ETAPAS, descartadoPor, pistaQueFalla, casoAlAzar, libretaAlAzar } from "../js/detective.js";
+import { desdeUrl, marcarHecho } from "../js/reto-dia.js";
+const dia = desdeUrl(); // 🎯 si se abrió como reto del día
 
 const $ = id => document.getElementById(id);
 const A = id => ANIMALES[id];
@@ -186,7 +188,12 @@ function pintarLibreta(malas = []) {
 // ---------- Casos ----------
 function cargar(i) { k = i; azar = null; iniciar(CASOS[k]); }
 /** 🎲 Caso nuevo al azar: "facil" | "medio" | "dificil" | "libreta" */
-function cargarAzar(d) { azar = d; iniciar(d === "libreta" ? libretaAlAzar() : casoAlAzar(d)); }
+function cargarAzar(d, rnd = Math.random, delDia = false) {
+  azar = d;
+  const c = d === "libreta" ? libretaAlAzar(rnd) : casoAlAzar(d, rnd);
+  if (delDia) c.delDia = true;
+  iniciar(c);
+}
 
 function iniciar(c) {
   caso = c;
@@ -203,7 +210,7 @@ function iniciar(c) {
   const como = esLibreta
     ? "Tocá una casilla para marcar ✓ (sí fue) y otra vez para marcar ✗ (no fue)."
     : "Tachá a los que no pueden ser.";
-  instruccion(`<span class="titulo">${azar ? "🎲" : `🐆 Caso ${k + 1}:`} ${caso.titulo}</span>${caso.historia}`,
+  instruccion(`<span class="titulo">${azar ? (caso.delDia ? "🎯 Reto del día:" : "🎲") : `🐆 Caso ${k + 1}:`} ${caso.titulo}</span>${caso.historia}`,
     `${caso.titulo}. ${caso.historia} ${como} Primera pista: ${caso.pistas[0].txt}`);
 }
 $("casos").addEventListener("click", e => {
@@ -347,6 +354,7 @@ function ganar(estrellas, titulo, extra = "") {
   // Los casos al azar suman estrellas cada vez; los fijos guardan la mejor
   if (caso.azar) progreso.azar = (progreso.azar || 0) + estrellas;
   else progreso[caso.id] = Math.max(progreso[caso.id] || 0, estrellas);
+  if (caso.delDia) marcarHecho(dia.fecha);
   guardar(); pintarCasos();
   feedback("ok", "🎉", `${titulo} ${"⭐".repeat(estrellas)}`);
   const cierre = fallos === 0 ? "¡Resuelto al primer intento!" : "¡Resuelto! La próxima, revisá bien cada pista antes de acusar.";
@@ -363,7 +371,7 @@ $("nextBtn").addEventListener("click", () => (azar ? cargarAzar(azar) : cargar(M
 const leerCaso = lento => caso && decir(`${caso.historia} ${caso.pistas.slice(0, vistas).map((q, i) => `Pista ${i + 1}: ${q.txt}`).join(" ")}`, lento ? { rate: LENTO } : undefined);
 const primero = CASOS.findIndex(c => !progreso[c.id]);
 k = primero === -1 ? 0 : primero;
-alEmpezar(() => cargar(k), leerCaso);
+alEmpezar(() => (dia ? cargarAzar(dia.reto === "libreta" ? "libreta" : "dificil", dia.rnd, true) : cargar(k)), leerCaso);
 pintarCasos();
 
 if (new URLSearchParams(location.search).has("prueba")) window.__jaguar = { get caso() { return caso; } };

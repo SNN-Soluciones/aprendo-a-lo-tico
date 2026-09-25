@@ -133,7 +133,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Retos al azar en «La lapa que dibuja» (polígonos, estrella, rectángulo, escalera y flor de cuadrados)
 - [x] Más vocabulario en «Listen and tap» (10 temas)
 - [ ] Más animales en «Animales de Costa Rica»
-- [ ] «Reto del día»: el mismo reto para todos ese día (semilla con la fecha)
+- [x] «Reto del día» en el inicio: el mismo reto para todos ese día (semilla con la fecha), con ✅ al resolverlo
 
 ## 🧠 Pensamiento lógico y crítico
 

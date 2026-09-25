@@ -78,7 +78,7 @@ export const JUEGOS = [
   {
     id: "listen-tap",
     titulo: "Listen and tap",
-    descripcion: "Escuchá la palabra en inglés y tocá el dibujo: colores, animales, números y más.",
+    descripcion: "Escuchá la palabra en inglés y tocá el dibujo: 10 temas, de colores y animales a comida, ropa y números hasta 100.",
     emoji: "👂",
     materia: "ingles",
     grados: [1, 2, 3, 4],

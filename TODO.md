@@ -109,7 +109,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] Vocabulario con imagen y audio (colores, animales, números, familia)
 - [x] Listen and tap
-- [ ] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
+- [x] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
 - [x] 🦜 Armo en inglés: escuchar y armar, traducir al inglés y al español, con fichas trampa y repaso de las falladas (tipo Duolingo)
 
 ## 💻 Programación (sin servidor: todo corre en el navegador)
@@ -131,7 +131,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Casos al azar del jaguar detective
 - [x] Niveles al azar en «Llevá al perezoso» (mapas con verificador) y «Repetí y decidí» (pasillos, escaleras, cuadrados y ríos de tamaño al azar)
 - [ ] Niveles al azar en «La lapa que dibuja»
-- [ ] Más vocabulario en «Listen and tap» y más animales en «Animales de Costa Rica»
+- [x] Más vocabulario en «Listen and tap» (10 temas)
+- [ ] Más animales en «Animales de Costa Rica»
 - [ ] «Reto del día»: el mismo reto para todos ese día (semilla con la fecha)
 
 ## 🧠 Pensamiento lógico y crítico

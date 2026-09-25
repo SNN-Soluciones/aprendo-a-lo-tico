@@ -1,5 +1,5 @@
 // 🇨🇷 Dibujos de los símbolos patrios (SVG, sin imágenes externas).
-// Son dibujos sencillos, para reconocerlos; no son las versiones oficiales.
+// Son dibujos sencillos, para reconocerlos; no son las versiones oficiales (salvo el escudo, que es una imagen).
 
 const svg = (cuerpo, titulo) => `<svg viewBox="0 0 100 100" role="img" aria-label="${titulo}">${cuerpo}</svg>`;
 const estrella = (x, y, r) => {
@@ -15,14 +15,8 @@ const DIBUJOS = {
     <rect y="20" width="74" height="20" fill="#CE1126"/><rect y="40" width="74" height="10" fill="#fff"/><rect y="50" width="74" height="10" fill="#002B7F"/>
     <rect width="74" height="60" fill="none" stroke="#1F3A5F" stroke-width="2"/></g>`,
 
-  // Escudo: siete estrellas, tres volcanes, dos mares y dos barcos
-  escudo: `<path d="M20 14 H80 V52 Q80 82 50 94 Q20 82 20 52Z" fill="#FFD54F" stroke="#1F3A5F" stroke-width="3"/>
-    <path d="M26 20 H74 V52 Q74 76 50 86 Q26 76 26 52Z" fill="#9ED8F5"/>
-    <g fill="#fff">${[0, 1, 2, 3, 4, 5, 6].map(i => estrella(31 + i * 6.3, 29 - Math.sin(i / 6 * Math.PI) * 5, 3)).join("")}</g>
-    <path d="M26 60 L38 40 L46 52 L52 36 L60 50 L66 42 L74 58 V62 H26Z" fill="#3E8E41" stroke="#2A6A2D" stroke-width="1.5"/>
-    <path d="M26 60 H74 V70 Q64 76 50 80 Q36 76 26 70Z" fill="#2F6FD1"/>
-    <g fill="#8B5A2B"><path d="M30 62 h8 l-2 3 h-4z"/><path d="M60 64 h8 l-2 3 h-4z"/></g>
-    <g stroke="#fff" stroke-width="1"><path d="M34 62 v-5 l3 3z" fill="#fff"/><path d="M64 64 v-5 l3 3z" fill="#fff"/></g>`,
+  // Escudo nacional: imagen real (img/escudo.webp, sin el fondo blanco)
+  escudo: `<image href="../img/escudo.webp" x="2" y="1" width="96" height="98" preserveAspectRatio="xMidYMid meet"/>`,
 
   himno: `<g fill="#1F3A5F"><ellipse cx="30" cy="72" rx="11" ry="8" transform="rotate(-20 30 72)"/><ellipse cx="68" cy="64" rx="11" ry="8" transform="rotate(-20 68 64)"/>
     <rect x="38" y="20" width="4.5" height="52"/><rect x="76" y="12" width="4.5" height="52"/><path d="M38 20 L80.5 12 V24 L38 32Z"/></g>

@@ -63,6 +63,7 @@ aprendo-a-lo-tico/
 │   ├── js/gato.js          # ❌⭕ Gato: jugadas del jaguar (fácil, medio, perfecto) y consejos
 │   ├── js/tablas.js        # ✖️ Tablas: preguntas, trucos de cada tabla y estrellas
 │   ├── js/oraciones.js     # 🧩 Oraciones para ordenar, signos y mayúsculas
+│   ├── js/generador-frases.js # 🎲 Arma oraciones nuevas en español e inglés (concordancia y sentido)
 │   ├── js/planta.js        # 🌱 Partes de la planta, para qué sirven y qué parte comemos
 │   ├── js/simbolos.js      # 🌸 Símbolos patrios: datos, memoria y adivinanzas
 │   ├── js/simbolos-svg.js  # 🌸 Dibujos SVG de los símbolos patrios

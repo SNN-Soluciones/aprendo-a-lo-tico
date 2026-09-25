@@ -113,7 +113,7 @@
 <script type="module">
 import { elogio, sonido, LENTO } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { ETAPAS, fichas, esCorrecta, primerError, palabrasDe, signoDe, sinSignos, paraMayus, mayus, revisarMayus, ronda, estrellasDe } from "../js/oraciones.js";
+import { ETAPAS, fichas, esCorrecta, primerError, palabrasDe, signoDe, sinSignos, paraMayus, mayus, revisarMayus, ronda, estrellasDe, tieneDiasOMeses } from "../js/oraciones.js";
 
 const $ = id => document.getElementById(id);
 const CLAVE = "oraciones";
@@ -287,7 +287,7 @@ $("revisarBtn").addEventListener("click", () => {
   const nombres = paraMayus(t).map((p, i) => (p.mayus && i > 0 ? mayus(p.w).replace(/[.,]$/, "") : null)).filter(Boolean);
   let txt = `📓 <b>${t}</b><br>La primera palabra siempre va con mayúscula`;
   txt += nombres.length ? `, y también los nombres de personas, mascotas y lugares: ${nombres.join(", ")}.` : ".";
-  if (/\b(lunes|sábados|abril|setiembre|diciembre)\b/.test(t)) txt += " Los días de la semana y los meses van con minúscula.";
+  if (tieneDiasOMeses(t)) txt += " Los días de la semana y los meses van con minúscula.";
   if (r.exacto) feedback("ok", "🎉", elogio());
   else feedback(r.correctas.length === r.faltan.length ? "bad" : "almost", "🔎", `${r.faltan.length ? `Faltaron ${r.faltan.length}` : ""}${r.faltan.length && r.sobran.length ? " y " : ""}${r.sobran.length ? `${r.sobran.length} no ${r.sobran.length > 1 ? "llevaban" : "llevaba"}` : ""}.`);
   terminarPregunta(r.exacto ? 1 : (r.correctas.length - r.faltan.length) > 0 && r.sobran.length <= 1 ? 0.5 : 0, txt);

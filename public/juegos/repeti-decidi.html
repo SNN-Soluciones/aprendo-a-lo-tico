@@ -56,6 +56,8 @@
   .bloque .quitar { position: absolute; top: 4px; right: 4px; width: 26px; height: 26px; padding: 0; border-radius: 50%; border: 2px solid var(--rim);
     background: #fff; color: var(--rim); font-size: .8rem; line-height: 1; box-shadow: none; }
   .bloque .num, .bloque .cond { padding: 0 10px; font-size: 1rem; border-width: 2px; box-shadow: 0 2px 0 var(--rim); background: #fff; }
+  .bloque .num { min-width: 2.4em; }
+  .bloque .mas-menos { width: 30px; height: 30px; padding: 0; border-radius: 50%; font-size: 1.1rem; line-height: 1; border-width: 2px; box-shadow: 0 2px 0 var(--rim); background: #FFE7B8; }
   .bloque .cuerpo { margin: 0 6px 6px 16px; padding: 6px; background: rgba(255, 255, 255, .88); border-radius: 10px; border: 2px solid rgba(31, 58, 95, .25); }
   .bloque .etq { padding: 0 8px 4px; font-size: .95rem; }
   .avanzar { background: var(--b-mover); } .izq, .der { background: var(--b-girar); } .saltar { background: var(--b-saltar); }
@@ -133,6 +135,7 @@ const INFO = {
   hasta: { txt: "🔁 Repetir hasta la 🍃", voz: "repetir hasta comerse todas las hojas" },
   si: { txt: "❓ Si…", voz: "si" },
 };
+const MAX_VECES = 20;
 const COND = { rio: "🌊 hay río", cerrado: "🌳 está cerrado" };
 const nuevoBloque = t => t === "repetir" ? { t, n: 3, cuerpo: [] } : t === "hasta" ? { t, cuerpo: [] } : t === "si" ? { t, cond: "rio", si: [], sino: [] } : { t };
 
@@ -192,7 +195,7 @@ function htmlLista(l, ruta) {
 function htmlBloque(b, r) {
   const clase = `bloque ${b.t}${mala && mismaRuta(mala, r) ? " mala" : ""}`;
   const quitar = `<button class="quitar" data-quitar='${JSON.stringify(r)}' aria-label="Quitar bloque">✖</button>`;
-  if (b.t === "repetir") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">🔁 Repetir <button class="num" data-num='${JSON.stringify(r)}' aria-label="Cambiar cuántas veces">${b.n}</button> veces</div>${quitar}<div class="cuerpo">${htmlLista(b.cuerpo, [...r, "cuerpo"])}</div></div>`;
+  if (b.t === "repetir") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">🔁 Repetir <button class="mas-menos" data-num='${JSON.stringify(r)}' data-paso="-1" aria-label="Una vez menos">−</button><button class="num" data-num='${JSON.stringify(r)}' data-paso="1" aria-label="Cambiar cuántas veces">${b.n}</button><button class="mas-menos" data-num='${JSON.stringify(r)}' data-paso="1" aria-label="Una vez más">+</button> veces</div>${quitar}<div class="cuerpo">${htmlLista(b.cuerpo, [...r, "cuerpo"])}</div></div>`;
   if (b.t === "hasta") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">🔁 Repetir hasta comerse todas las 🍃</div>${quitar}<div class="cuerpo">${htmlLista(b.cuerpo, [...r, "cuerpo"])}</div></div>`;
   if (b.t === "si") return `<div class="${clase}" data-id="${id(r)}"><div class="cab">❓ Si adelante <button class="cond" data-cond='${JSON.stringify(r)}' aria-label="Cambiar condición">${COND[b.cond]}</button></div>${quitar}
     <div class="cuerpo">${htmlLista(b.si, [...r, "si"])}</div><div class="etq">si no:</div><div class="cuerpo">${htmlLista(b.sino, [...r, "sino"])}</div></div>`;
@@ -254,7 +257,9 @@ $("programa").addEventListener("click", e => {
     editado(); sonido("tap");
   } else if (num) {
     const r = JSON.parse(num.dataset.num), b = lista(r.slice(0, -1))[r[r.length - 1]];
-    b.n = b.n >= 10 ? 2 : b.n + 1;
+    // − y + cambian de a uno (de 1 a 20); tocar el número también suma uno y después de 20 vuelve a 1
+    const paso = Number(num.dataset.paso);
+    b.n = paso < 0 ? Math.max(1, b.n - 1) : b.n >= MAX_VECES ? 1 : b.n + 1;
     editado(); sonido("tap"); decir(`${b.n} veces`);
   } else if (cond) {
     const r = JSON.parse(cond.dataset.cond), b = lista(r.slice(0, -1))[r[r.length - 1]];

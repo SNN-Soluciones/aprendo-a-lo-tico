@@ -94,3 +94,58 @@ a { color: inherit; }
 .copied { min-height: 1.5rem; font-weight: 800; color: var(--ok); margin-top: 6px; }
 .pending { background: #FFF6E5; border: 3px dashed #B98A52; border-radius: 14px; padding: 10px; font-weight: 700; }
 .back { display: inline-block; margin-top: 4px; font-weight: 800; color: var(--page-ink); text-decoration: none; font-size: 1.1rem; }
+
+/* ---------- Barra de arriba y menú ☰ ---------- */
+.barra {
+  position: sticky; top: 0; z-index: 20; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: calc(6px + env(safe-area-inset-top, 0px)) 12px 6px; background: var(--bg);
+  border-bottom: 3px solid rgba(31, 58, 95, .15);
+}
+.hamburguesa, .cerrar {
+  font: inherit; font-weight: 800; font-size: 1.5rem; line-height: 1; cursor: pointer; color: var(--ink);
+  width: 46px; height: 46px; border-radius: 14px; border: 3px solid var(--rim); background: var(--face); box-shadow: 0 3px 0 var(--rim);
+}
+.hamburguesa:active, .cerrar:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--rim); }
+.marca { font-weight: 800; font-size: 1.25rem; text-decoration: none; color: var(--page-ink); }
+.marca .flag {
+  background: linear-gradient(#1F5FB0 0 20%, #fff 20% 35%, #D9443A 35% 65%, #fff 65% 80%, #1F5FB0 80%);
+  color: transparent; -webkit-background-clip: text; background-clip: text; -webkit-text-stroke: 1px var(--rim);
+}
+.barra-espacio { width: 46px; }
+.velo { position: fixed; inset: 0; z-index: 30; background: rgba(15, 30, 45, .45); }
+.velo[hidden], .menu[hidden] { display: none; }
+.menu {
+  position: fixed; z-index: 31; top: 0; left: 0; bottom: 0; width: min(84vw, 330px); overflow-y: auto;
+  background: var(--face); border-right: 4px solid var(--rim); padding: calc(10px + env(safe-area-inset-top, 0px)) 12px 20px;
+  box-shadow: 6px 0 0 rgba(31, 58, 95, .25); animation: entra .2s ease-out;
+}
+@keyframes entra { from { transform: translateX(-100%); } }
+@media (prefers-reduced-motion: reduce) { .menu { animation: none; } }
+.menu-cab { display: flex; justify-content: space-between; align-items: center; font-size: 1.3rem; margin-bottom: 6px; }
+.cerrar { width: 40px; height: 40px; font-size: 1.1rem; }
+.menu-titulo { margin: 14px 4px 4px; font-weight: 800; font-size: .85rem; text-transform: uppercase; letter-spacing: .04em; color: var(--soft); }
+.menu-item {
+  display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 14px; text-decoration: none;
+  font-weight: 800; font-size: 1.1rem; color: var(--ink); border-left: 6px solid var(--mat, transparent);
+}
+.menu-item:hover, .menu-item:focus-visible { background: #EEF3F8; }
+.menu-item.actual { background: #FFF1C2; }
+.menu-cuenta { margin-left: auto; font-size: .85rem; background: #EEF3F8; border-radius: 999px; padding: 0 9px; }
+body.menu-abierto { overflow: hidden; }
+
+/* ---------- Menú principal: tarjetas de categorías ---------- */
+.titulo-seccion { margin: 18px 0 8px; font-size: 1.35rem; color: var(--page-ink); }
+.categorias { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+.categoria {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; text-align: center; text-decoration: none;
+  min-height: 140px; padding: 12px 8px; border-radius: 22px; border: 4px solid var(--rim); box-shadow: 0 5px 0 var(--rim);
+  background: var(--face); color: var(--ink); position: relative; overflow: hidden;
+}
+.categoria::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 10px; background: var(--mat); }
+.categoria:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--rim); }
+.cat-emoji { font-size: 3rem; line-height: 1.1; }
+.cat-nombre { font-weight: 800; font-size: 1.15rem; line-height: 1.1; }
+.cat-cuenta { font-weight: 800; font-size: .9rem; color: #fff; background: var(--mat); border-radius: 999px; padding: 0 10px; margin-top: 4px; }
+.categoria.vacia { opacity: .6; }
+.categoria.vacia .cat-cuenta { background: var(--soft); }
+.cat-titulo { margin: 8px 0 0; font-size: clamp(1.8rem, 8vw, 2.6rem); color: var(--page-ink); line-height: 1.1; border-bottom: 6px solid var(--mat); display: inline-block; padding-bottom: 2px; }

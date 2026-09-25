@@ -65,7 +65,7 @@ aprendo-a-lo-tico/
 │   ├── js/planta.js        # 🌱 Partes de la planta, para qué sirven y qué parte comemos
 │   ├── js/simbolos.js      # 🌸 Símbolos patrios: datos, memoria y adivinanzas
 │   ├── js/simbolos-svg.js  # 🌸 Dibujos SVG de los símbolos patrios
-│   ├── img/escudo.webp     # 🌸 Escudo nacional (sin fondo) para «Símbolos patrios»
+│   ├── img/                # Escudo nacional (sin fondo) y fotos de símbolos patrios (yigüirro, guanacaste, venado, manatí, esferas)
 │   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet

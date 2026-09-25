@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El jaguar detective</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; }
+  .ancho { width: min(96vw, 560px); }
+
+  .casos { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; flex: 1; }
+  .casos::-webkit-scrollbar { display: none; }
+  .casos button { flex: none; min-width: 44px; padding: 0 8px; font-size: 1.1rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .casos button small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
+  .casos button[aria-pressed="true"] { background: var(--btn); }
+  .casos button.bug { background: #FFE3E0; }
+  .casos button.bug[aria-pressed="true"] { background: var(--btn); }
+  .casos .etapa { flex: none; align-self: center; font-weight: 800; font-size: .8rem; color: var(--page-ink); opacity: .8; padding: 0 2px 0 8px; white-space: nowrap; }
+  .casos .etapa:first-child { padding-left: 0; }
+
+  .instr .txt { text-align: left; font-size: clamp(1rem, 4.2vw, 1.15rem); font-weight: 700; }
+  .instr .titulo { display: block; font-size: clamp(1.1rem, 4.8vw, 1.35rem); font-weight: 800; color: var(--materia); }
+
+  /* Pistas */
+  .pistas { margin-top: 10px; background: #FFFBEF; border: 4px solid var(--rim); border-radius: 18px; padding: 8px 10px; }
+  .pistas h3 { margin: 0 0 4px; font-size: 1.05rem; display: flex; justify-content: space-between; align-items: center; }
+  .pista { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 2px dashed #E9DDBF; font-size: clamp(1.05rem, 4.6vw, 1.25rem); font-weight: 800; }
+  .pista:last-of-type { border-bottom: none; }
+  .pista .num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--materia); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .95rem; }
+  .pista .txt { flex: 1; }
+  .pista button { flex: none; font-size: 1rem; padding: 0 8px; border-width: 2px; box-shadow: 0 2px 0 var(--rim); }
+  .pista.nueva { animation: pop .45s ease-out; }
+  .pista.culpable { background: #FFE3E0; border-radius: 10px; }
+  #otraBtn { background: var(--btn); font-size: 1.05rem; padding: 4px 14px; margin-top: 6px; width: 100%; }
+
+  /* Sospechosos */
+  .sospechosos { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
+  .sospechoso { position: relative; border-radius: 18px; padding: 6px 4px 4px; display: flex; flex-direction: column; align-items: center; gap: 0; line-height: 1.05; }
+  .sospechoso .e { font-size: clamp(2.4rem, 12vw, 3.2rem); line-height: 1.1; }
+  .sospechoso .n { font-size: .85rem; font-weight: 800; }
+  .sospechoso.tachado { opacity: .45; background: #EEF2F6; }
+  .sospechoso.tachado::after { content: "✖"; position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 4rem; color: var(--bad); opacity: .85; pointer-events: none; }
+  .sospechosos.acusando .sospechoso:not(.tachado) { animation: pulse 1s ease-in-out infinite; background: #FFF6DA; }
+  .ayuda-tachar { font-size: .9rem; font-weight: 700; opacity: .8; margin: 4px 2px 0; }
+
+  /* Libreta */
+  .libreta { margin-top: 10px; border-collapse: separate; border-spacing: 5px; background: #fff; border: 4px solid var(--rim); border-radius: 18px; padding: 4px; }
+  .libreta th { font-size: clamp(1.8rem, 9vw, 2.4rem); line-height: 1; font-weight: 400; }
+  .libreta th small { display: block; font-size: .7rem; font-weight: 800; }
+  .libreta td button { width: clamp(56px, 18vw, 76px); height: clamp(52px, 15vw, 64px); border-radius: 14px; font-size: 1.8rem; padding: 0; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .libreta td button.si { background: #C9F2D6; color: var(--ok); }
+  .libreta td button.no { background: #FBD5D1; color: var(--bad); }
+  .libreta td button.mala { outline: 4px solid var(--bad); outline-offset: 2px; }
+  .centro { display: flex; justify-content: center; }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.25rem; padding: 6px 0; border-radius: 18px; flex: 1; }
+  #acusarBtn, #revisarBtn { flex: 2.2; background: var(--materia); color: #fff; }
+  #acusarBtn.pulse, #revisarBtn.pulse, #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
+  #acusarBtn[aria-pressed="true"] { background: var(--btn); color: var(--ink); }
+
+  .explicacion { margin-top: 10px; background: #F2FBF5; border: 3px solid var(--ok); border-radius: 16px; padding: 8px 12px; font-size: 1rem; font-weight: 700; }
+  .explicacion h3 { margin: 0 0 4px; font-size: 1.05rem; }
+  .explicacion ul { margin: 0; padding-left: 1.2rem; }
+  .explicacion li { margin: 2px 0; }
+  .trampa { margin-top: 10px; background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 16px; padding: 8px 12px; }
+  .trampa h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .trampa .ops { display: flex; flex-direction: column; gap: 6px; }
+  .trampa .ops button { text-align: left; border-radius: 14px; font-size: 1rem; padding: 6px 10px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🐆🔍</div>
+  <h1>El jaguar detective</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Leé las pistas, tachá a los que no pueden ser y descubrí al culpable. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="casos" id="casos" role="group" aria-label="Caso"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar el caso">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="pistas ancho" id="pistasBox">
+  <h3><span>🔍 Pistas</span><span id="cuenta"></span></h3>
+  <div id="pistas"></div>
+  <button id="otraBtn">🔍 Ver otra pista</button>
+</div>
+
+<div class="ancho" id="zonaSospechosos">
+  <div class="sospechosos" id="sospechosos"></div>
+  <p class="ayuda-tachar" id="ayudaTachar">Tocá a un sospechoso para tacharlo ✖ (y otra vez para destacharlo).</p>
+</div>
+<div class="ancho centro" id="zonaLibreta" hidden><table class="libreta" id="libreta"></table></div>
+
+<div class="acciones ancho">
+  <button id="reiniciarBtn" aria-label="Empezar el caso de nuevo">↺</button>
+  <button id="acusarBtn" aria-pressed="false">🎯 ¡Ya sé quién fue!</button>
+  <button id="revisarBtn" hidden>✔️ Revisar la libreta</button>
+</div>
+
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explicacion ancho" id="explicacion" hidden></div>
+<div class="trampa ancho" id="trampa" hidden></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Siguiente caso" hidden>➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { ANIMALES, CASOS, ETAPAS, descartadoPor, pistaQueFalla } from "../js/detective.js";
+
+const $ = id => document.getElementById(id);
+const A = id => ANIMALES[id];
+const nombreCon = id => `${A(id).art} ${A(id).n}`;
+const mayus = t => t.charAt(0).toUpperCase() + t.slice(1);
+
+let k = 0, caso = null, vistas = 0, tachados = new Set(), acusando = false, fallos = 0, resuelto = false;
+let libreta = {}; // "fila|col" → "si" | "no"
+let progreso = {};
+try { progreso = JSON.parse(localStorage.getItem("detective-progreso")) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("detective-progreso", JSON.stringify(progreso)); } catch (_) {} };
+const etapaDe = c => ETAPAS.find(e => e.id === c.etapa);
+
+// ---------- Pintar ----------
+function pintarCasos() {
+  $("casos").innerHTML = CASOS.map((c, i) =>
+    (i === 0 || CASOS[i - 1].etapa !== c.etapa ? `<span class="etapa">${etapaDe(c).emoji} ${etapaDe(c).nombre}</span>` : "")
+    + `<button data-k="${i}" class="${c.trampa !== undefined ? "bug" : ""}" aria-pressed="${i === k}" aria-label="Caso ${i + 1}: ${c.titulo}">${c.trampa !== undefined ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[c.id] || 0)}</small></button>`).join("");
+  $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
+  $("casos").querySelector(`[data-k="${k}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+function pintarPistas(nueva = -1, culpables = []) {
+  $("pistas").innerHTML = caso.pistas.slice(0, vistas).map((q, i) =>
+    `<div class="pista${i === nueva ? " nueva" : ""}${culpables.includes(i) ? " culpable" : ""}"><span class="num">${i + 1}</span><span class="txt">${q.txt}</span><button data-leer="${i}" aria-label="Escuchar la pista ${i + 1}">🔊</button></div>`).join("");
+  $("cuenta").textContent = `${vistas} de ${caso.pistas.length}`;
+  $("otraBtn").hidden = vistas >= caso.pistas.length;
+  $("otraBtn").textContent = `🔍 Ver otra pista (quedan ${caso.pistas.length - vistas})`;
+}
+
+function pintarSospechosos() {
+  $("sospechosos").classList.toggle("acusando", acusando);
+  $("sospechosos").innerHTML = caso.sospechosos.map(id =>
+    `<button class="sospechoso${tachados.has(id) ? " tachado" : ""}" data-s="${id}" aria-label="${mayus(A(id).n)}${tachados.has(id) ? ", tachado" : ""}"><span class="e" aria-hidden="true">${A(id).e}</span><span class="n">${mayus(A(id).n)}</span></button>`).join("");
+  const vivos = caso.sospechosos.filter(id => !tachados.has(id));
+  $("acusarBtn").classList.toggle("pulse", !resuelto && vivos.length === 1 && vistas >= caso.pistas.length);
+}
+
+function pintarLibreta(malas = []) {
+  const cols = caso.columnas;
+  $("libreta").innerHTML = `<tr><th></th>${cols.map(c => `<th>${c.e}<small>${c.n}</small></th>`).join("")}</tr>`
+    + caso.filas.map(f => `<tr><th>${A(f).e}<small>${A(f).n.split(" ")[0]}</small></th>${cols.map(c => {
+      const v = libreta[`${f}|${c.id}`] || "";
+      return `<td><button data-celda="${f}|${c.id}" class="${v}${malas.includes(f) && v === "si" ? " mala" : ""}" aria-label="${A(f).n} y ${c.n}: ${v === "si" ? "sí" : v === "no" ? "no" : "vacío"}">${v === "si" ? "✓" : v === "no" ? "✗" : ""}</button></td>`;
+    }).join("")}</tr>`).join("");
+  const completa = caso.filas.every(f => cols.filter(c => libreta[`${f}|${c.id}`] === "si").length === 1);
+  $("revisarBtn").classList.toggle("pulse", completa && !resuelto);
+}
+
+// ---------- Casos ----------
+function cargar(i) {
+  k = i; caso = CASOS[k];
+  vistas = 1; tachados = new Set(); acusando = false; fallos = 0; resuelto = false; libreta = {};
+  const esLibreta = caso.tipo === "libreta";
+  $("zonaSospechosos").hidden = esLibreta; $("zonaLibreta").hidden = !esLibreta;
+  $("acusarBtn").hidden = esLibreta; $("revisarBtn").hidden = !esLibreta;
+  $("acusarBtn").setAttribute("aria-pressed", "false"); $("acusarBtn").textContent = "🎯 ¡Ya sé quién fue!";
+  $("explicacion").hidden = true; $("trampa").hidden = true;
+  $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
+  feedback("");
+  pintarCasos(); pintarPistas(0);
+  if (esLibreta) pintarLibreta(); else pintarSospechosos();
+  const como = esLibreta
+    ? "Tocá una casilla para marcar ✓ (sí fue) y otra vez para marcar ✗ (no fue)."
+    : "Tachá a los que no pueden ser.";
+  instruccion(`<span class="titulo">🐆 Caso ${k + 1}: ${caso.titulo}</span>${caso.historia}`,
+    `${caso.titulo}. ${caso.historia} ${como} Primera pista: ${caso.pistas[0].txt}`);
+}
+$("casos").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]");
+  if (b) { sonido("tap"); cargar(Number(b.dataset.k)); }
+});
+
+$("otraBtn").addEventListener("click", () => {
+  if (vistas >= caso.pistas.length) return;
+  vistas++;
+  pintarPistas(vistas - 1);
+  if (caso.tipo === "sospechosos") pintarSospechosos();
+  sonido("tap"); decir(`Pista ${vistas}: ${caso.pistas[vistas - 1].txt}`);
+});
+$("pistas").addEventListener("click", e => {
+  const b = e.target.closest("[data-leer]");
+  if (b) decir(caso.pistas[Number(b.dataset.leer)].txt);
+});
+
+// ---------- Sospechosos: tachar y acusar ----------
+$("sospechosos").addEventListener("click", e => {
+  const b = e.target.closest("[data-s]");
+  if (!b || resuelto) return;
+  const id = b.dataset.s;
+  if (acusando) return acusar(id);
+  if (tachados.has(id)) tachados.delete(id); else tachados.add(id);
+  sonido("tap"); hablar(`${mayus(A(id).n)}${tachados.has(id) ? ", tachado" : ""}`);
+  pintarSospechosos();
+});
+
+$("acusarBtn").addEventListener("click", () => {
+  if (resuelto) return;
+  acusando = !acusando;
+  $("acusarBtn").setAttribute("aria-pressed", acusando);
+  $("acusarBtn").textContent = acusando ? "👆 Tocá al culpable" : "🎯 ¡Ya sé quién fue!";
+  sonido("tap");
+  if (acusando) decir("¿Quién fue? Tocá al culpable.");
+  pintarSospechosos();
+});
+
+function acusar(id) {
+  acusando = false;
+  $("acusarBtn").setAttribute("aria-pressed", "false"); $("acusarBtn").textContent = "🎯 ¡Ya sé quién fue!";
+  if (id === caso.culpable) {
+    resuelto = true;
+    pintarSospechosos();
+    // Explicación: por qué no fue cada uno de los otros
+    const razones = caso.sospechosos.filter(s => s !== id).map(s => {
+      const pi = descartadoPor(caso, s).filter(i => i !== caso.trampa)[0];
+      return `<li>${A(s).e} <b>${mayus(A(s).n)}</b>: no, por la pista ${pi + 1} («${caso.pistas[pi].txt}»)</li>`;
+    });
+    $("explicacion").hidden = false;
+    $("explicacion").innerHTML = `<h3>🕵️ ¡Fue ${nombreCon(id)}! ${A(id).e} Así se resolvía:</h3><ul>${razones.join("")}</ul>`;
+    const vio = vistas;
+    if (caso.trampa !== undefined) return preguntarTrampa(fallos === 0 ? 2 : 1, vio);
+    ganar(fallos === 0 ? 3 : fallos === 1 ? 2 : 1, `¡Fue ${nombreCon(id)}!`);
+  } else {
+    fallos++;
+    const pis = descartadoPor(caso, id).filter(i => i !== caso.trampa);
+    const visibles = pis.filter(i => i < vistas);
+    pintarSospechosos();
+    if (visibles.length) {
+      pintarPistas(-1, [visibles[0]]);
+      feedback("almost", "🤔", `No fue ${nombreCon(id)}`);
+      decir(`Mmm… no fue ${nombreCon(id)}. Fijate en la pista ${visibles[0] + 1}: ${caso.pistas[visibles[0]].txt}`);
+    } else {
+      feedback("almost", "🤔", "Todavía faltan pistas");
+      decir(`Con las pistas que viste, podría ser, pero no fue ${nombreCon(id)}. Mirá otra pista.`);
+    }
+  }
+}
+
+// ---------- Libreta ----------
+$("libreta").addEventListener("click", e => {
+  const b = e.target.closest("[data-celda]");
+  if (!b || resuelto) return;
+  const key = b.dataset.celda, [f, c] = key.split("|");
+  const v = libreta[key];
+  libreta[key] = v === "si" ? "no" : v === "no" ? undefined : "si";
+  if (!libreta[key]) delete libreta[key];
+  // Ayuda del detective: si marcás ✓, el resto de esa fila y columna se llena con ✗
+  if (libreta[key] === "si") {
+    caso.columnas.forEach(o => { if (o.id !== c && !libreta[`${f}|${o.id}`]) libreta[`${f}|${o.id}`] = "no"; });
+    caso.filas.forEach(o => { if (o !== f && !libreta[`${o}|${c}`]) libreta[`${o}|${c}`] = "no"; });
+  }
+  sonido("tap");
+  pintarLibreta();
+});
+
+$("revisarBtn").addEventListener("click", () => {
+  if (resuelto) return;
+  const mapa = {};
+  for (const f of caso.filas) {
+    const si = caso.columnas.filter(c => libreta[`${f}|${c.id}`] === "si");
+    if (si.length !== 1) { feedback("almost", "📋", "Falta completar"); decir(`Cada animal necesita un ✓. Revisá la fila ${A(f).art} ${A(f).n}.`); return; }
+    mapa[f] = si[0].id;
+  }
+  if (new Set(Object.values(mapa)).size !== caso.filas.length) { feedback("almost", "📋", "Hay repetidos"); decir("Dos animales no pueden tener lo mismo. Revisá los ✓ de cada columna."); return; }
+  const malas = caso.filas.filter(f => mapa[f] !== caso.solucion[f]);
+  if (!malas.length) {
+    resuelto = true;
+    $("explicacion").hidden = false;
+    $("explicacion").innerHTML = `<h3>🕵️ ¡Libreta resuelta!</h3><ul>${caso.filas.map(f => `<li>${A(f).e} ${mayus(nombreCon(f))} → ${caso.columnas.find(c => c.id === mapa[f]).e} ${caso.columnas.find(c => c.id === mapa[f]).n}</li>`).join("")}</ul>`;
+    if (caso.trampa !== undefined) return preguntarTrampa(fallos === 0 ? 2 : 1, vistas);
+    ganar(fallos === 0 ? 3 : fallos === 1 ? 2 : 1, "¡Libreta resuelta!");
+  } else {
+    fallos++;
+    const pi = pistaQueFalla(caso, mapa);
+    pintarLibreta(malas);
+    if (pi >= 0 && pi < vistas) { pintarPistas(-1, [pi]); feedback("almost", "🤔", "Casi"); decir(`Casi. Tu libreta no cumple la pista ${pi + 1}: ${caso.pistas[pi].txt}`); }
+    else { feedback("almost", "🤔", "Casi"); decir(pi >= vistas ? "Todavía hay pistas que no has visto. Mirá otra pista." : "Algo no calza. Revisá las filas marcadas."); }
+  }
+});
+
+// ---------- 🐞 ¿Qué pista no sirve? ----------
+function preguntarTrampa(base, vio) {
+  vistas = caso.pistas.length; pintarPistas();
+  $("trampa").hidden = false;
+  $("trampa").innerHTML = `<h3>🐞 Pregunta extra de detective: ¿qué pista no ayudó para nada?</h3><div class="ops">${caso.pistas.map((q, i) => `<button data-t="${i}">${i + 1}. ${q.txt}</button>`).join("")}</div>`;
+  feedback("ok", "🎉", `¡Resuelto! Ahora la pregunta extra`);
+  decir(`${elogio()} Ahora, una pregunta extra de detective: ¿qué pista no ayudó para nada?`);
+  $("trampa").onclick = e => {
+    const b = e.target.closest("[data-t]");
+    if (!b) return;
+    $("trampa").onclick = null;
+    const i = Number(b.dataset.t), bien = i === caso.trampa;
+    $("trampa").querySelectorAll("button").forEach(x => { x.disabled = true; if (Number(x.dataset.t) === caso.trampa) x.classList.add("right"); });
+    const porque = caso.tipo === "sospechosos"
+      ? `«${caso.pistas[caso.trampa].txt}» lo cumplen todos, así que no descarta a nadie.`
+      : `«${caso.pistas[caso.trampa].txt}» ya se sabía con las otras pistas.`;
+    ganar(base + (bien ? 1 : 0), bien ? "¡Encontraste la pista tramposa!" : "Esa sí servía", bien ? `¡Exacto! ${porque}` : `Esa pista sí servía. La que sobraba era la ${caso.trampa + 1}: ${porque}`);
+  };
+}
+
+function ganar(estrellas, titulo, extra = "") {
+  resuelto = true;
+  progreso[caso.id] = Math.max(progreso[caso.id] || 0, estrellas);
+  guardar(); pintarCasos();
+  feedback("ok", "🎉", `${titulo} ${"⭐".repeat(estrellas)}`);
+  const cierre = fallos === 0 ? "¡Resuelto al primer intento!" : "¡Resuelto! La próxima, revisá bien cada pista antes de acusar.";
+  decir(`${extra || elogio()} ${cierre}`);
+  if (k < CASOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+  else decir("¡Resolviste todos los casos! Sos un detective de verdad, como el jaguar.", { cola: true });
+}
+
+// ↺ limpia el tablero, pero recuerda los intentos fallidos (así no se "borran" para sacar 3 ⭐)
+$("reiniciarBtn").addEventListener("click", () => { const f = resuelto ? 0 : fallos; sonido("tap"); cargar(k); fallos = f; });
+$("nextBtn").addEventListener("click", () => cargar(Math.min(k + 1, CASOS.length - 1)));
+
+// 🔊 lee el caso con las pistas que ya se vieron (🐢 más despacio)
+const leerCaso = lento => caso && decir(`${caso.historia} ${caso.pistas.slice(0, vistas).map((q, i) => `Pista ${i + 1}: ${q.txt}`).join(" ")}`, lento ? { rate: LENTO } : undefined);
+const primero = CASOS.findIndex(c => !progreso[c.id]);
+k = primero === -1 ? 0 : primero;
+alEmpezar(() => cargar(k), leerCaso);
+pintarCasos();
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

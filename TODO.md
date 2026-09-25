@@ -72,7 +72,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Pulpería: ¿cuánta plata hay? (contar un montón)
 - [ ] Pulpería: alcancía (¿qué puedo comprar sin pasarme?)
 - [ ] Cambiar billetes (¿cuántas de ₡500 hacen ₡5 000?)
-- [ ] ✖️ Tablas en la feria: multiplicación como filas de mangos en el tramo, con modo contra reloj · 2°–4°
+- [x] ✖️ Tablas en la feria: multiplicación como filas de fruta en el tramo, tablas del 1 al 10 con trucos, contra reloj · 2°–4°
 - [ ] 🥭 Repartiendo mangos: división arrastrando a canastas, el sobrante es el residuo · 3°–4°
 - [ ] 🍕 Fracciones con pizza y sandía: cortar, pintar la fracción y comparar · 3°–5°
 - [ ] Decimales con plata

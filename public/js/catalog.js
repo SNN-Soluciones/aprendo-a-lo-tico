@@ -210,4 +210,13 @@ export const JUEGOS = [
     grados: [1, 2, 3],
     url: "juegos/planta.html",
   },
+  {
+    id: "simbolos",
+    titulo: "Símbolos patrios",
+    descripcion: "La bandera, el escudo, la guaria morada, el yigüirro, la carreta y más: conocelos, jugá memoria y adiviná.",
+    emoji: "🌸",
+    materia: "sociales",
+    grados: [1, 2, 3, 4],
+    url: "juegos/simbolos.html",
+  },
 ];

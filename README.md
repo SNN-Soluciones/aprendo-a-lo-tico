@@ -71,6 +71,7 @@ aprendo-a-lo-tico/
 │   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/frases-en.js    # 🦜 Frases en inglés y español, fichas con trampas y revisión
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
+│   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido

@@ -1,3 +1,5 @@
+import { dato as genDato, opinion as genOpinion, noticia as genNoticia } from "./generador-datos.js";
+
 // 📰 Contenido y lógica de «¿Dato u opinión?» (sin pantalla, para poder probarla sola).
 //   Dato:    se puede comprobar (en un mapa, un libro, midiendo…). Puede ser verdadero o falso.
 //   Opinión: es lo que alguien piensa o siente. No todos piensan igual.
@@ -150,25 +152,24 @@ export function ronda(etapaId, rnd = Math.random) {
   const n = e.preguntas;
   const dato = d => ({ tipo: "dato", ...d });
   const opinion = t => ({ tipo: "opinion", t });
+  // Se mezclan los escritos a mano con otros nuevos del generador (sin repetir en la misma ronda)
+  const unicos = arr => [...new Map(arr.map(x => [limpio(x.t || x), x])).values()];
+  const datosV = () => barajar(unicos([...DATOS.filter(d => d.v), ...Array.from({ length: 12 }, () => genDato(rnd, true))]), rnd);
+  const datosF = () => barajar(unicos([...DATOS.filter(d => !d.v), ...Array.from({ length: 12 }, () => genDato(rnd, false))]), rnd);
+  const opiniones = () => barajar(unicos([...OPINIONES, ...Array.from({ length: 16 }, () => genOpinion(rnd))]), rnd);
   if (etapaId === "clasificar") {
     // Solo datos verdaderos: primero aprendemos a distinguir, después a revisar si son ciertos.
     const k = Math.floor(n / 2);
-    return barajar([...barajar(DATOS.filter(d => d.v), rnd).slice(0, k).map(dato), ...barajar(OPINIONES, rnd).slice(0, n - k).map(opinion)], rnd);
+    return barajar([...datosV().slice(0, k).map(dato), ...opiniones().slice(0, n - k).map(opinion)], rnd);
   }
-  if (etapaId === "pista") return barajar(OPINIONES, rnd).slice(0, n).map(opinion);
+  if (etapaId === "pista") return opiniones().slice(0, n).map(opinion);
   if (etapaId === "verdad") {
     const k = n / 3;
-    return barajar([
-      ...barajar(DATOS.filter(d => d.v), rnd).slice(0, k).map(dato),
-      ...barajar(DATOS.filter(d => !d.v), rnd).slice(0, k).map(dato),
-      ...barajar(OPINIONES, rnd).slice(0, k).map(opinion),
-    ], rnd);
+    return barajar([...datosV().slice(0, k).map(dato), ...datosF().slice(0, k).map(dato), ...opiniones().slice(0, k).map(opinion)], rnd);
   }
-  // Noticias: 4 sospechosas y 2 confiables
-  return barajar([
-    ...barajar(NOTICIAS.filter(x => !x.ok), rnd).slice(0, 4),
-    ...barajar(NOTICIAS.filter(x => x.ok), rnd).slice(0, n - 4),
-  ], rnd).map(x => ({ tipo: "noticia", ...x }));
+  // Noticias: 4 sospechosas y 2 confiables, de las escritas a mano y de las generadas
+  const mensajes = ok => barajar(unicos([...NOTICIAS.filter(x => x.ok === ok), ...Array.from({ length: 8 }, () => genNoticia(rnd, ok))]), rnd);
+  return barajar([...mensajes(false).slice(0, 4), ...mensajes(true).slice(0, n - 4)], rnd).map(x => ({ tipo: "noticia", ...x }));
 }
 
 /** Respuesta correcta en las etapas de botones: "dato" | "opinion" | "verdadero" | "falso" | "confiable" | "sospechosa". */

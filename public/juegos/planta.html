@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Partes de la planta</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2FA85A; }
+  .ancho { width: min(96vw, 520px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos .est { font-size: .75rem; letter-spacing: -1px; }
+
+  .avance { margin-top: 8px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; min-height: 22px; }
+  .avance span { width: 16px; height: 16px; border-radius: 50%; background: var(--face); border: 3px solid var(--rim); }
+  .avance .ya-bien { background: var(--ok); }
+  .avance .ya-mal { background: var(--bad); }
+  .avance .ahora { outline: 3px solid var(--btn); outline-offset: 2px; }
+
+  .dibujo { margin-top: 8px; background: #DFF4FF; border: 4px solid var(--rim); border-radius: 22px; overflow: hidden; box-shadow: 0 5px 0 var(--rim); }
+  .dibujo svg { display: block; width: 100%; height: auto; max-height: 52vh; }
+  .parte { cursor: pointer; transition: filter .2s; }
+  .parte .toque { fill: transparent; stroke: transparent; }
+  .parte.brilla { filter: drop-shadow(0 0 5px #FFD400) drop-shadow(0 0 5px #FFD400); }
+  .parte.mal { filter: drop-shadow(0 0 5px #FF5A4E) drop-shadow(0 0 4px #FF5A4E); }
+  .bloqueado .parte { cursor: default; }
+  .etiqueta rect { fill: #fff; stroke: #1F3A5F; stroke-width: 3; }
+  .etiqueta text { font: 800 17px "Baloo 2", system-ui, sans-serif; fill: #1F3A5F; }
+  .etiqueta { animation: pop .3s; pointer-events: none; transform-box: fill-box; transform-origin: center; }
+  .bloqueado svg { height: 34vh; }
+
+  .tarjeta { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 20px; padding: 10px 14px; font-weight: 800; font-size: 1.2rem; text-align: center; line-height: 1.3; box-shadow: 0 5px 0 var(--rim); }
+  .tarjeta .comida { font-size: 3.4rem; line-height: 1; display: block; }
+  .opciones { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
+  .opciones button { font-size: 1.05rem; padding: 6px 2px; border-radius: 16px; line-height: 1.1; }
+  .opciones button b { display: block; font-size: 1.6rem; }
+  .opciones button.right { background: #CFF5DC; }
+  .opciones button.wrong { background: #FFE3E0; }
+  .opciones button:disabled { opacity: .55; }
+  .opciones button.right:disabled, .opciones button.wrong:disabled { opacity: 1; }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  #sigBtn { margin-top: 10px; width: 100%; font-size: 1.3rem; background: var(--btn); animation: pulse 1.2s ease-in-out infinite; }
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.05rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🌱🌸🥕</div>
+  <h1>Partes de la planta</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Raíz, tallo, hoja, flor, fruto y semilla: ¿dónde están, para qué sirven y cuáles nos comemos? Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo de juego"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="avance ancho" id="avance" aria-hidden="true"></div>
+<div id="juego" class="ancho">
+  <div class="tarjeta" id="tarjeta" hidden aria-live="polite"></div>
+  <div class="dibujo" id="dibujo">
+    <svg viewBox="0 0 300 380" role="img" aria-label="Una planta con raíz, tallo, hojas, flor, fruto y una semilla">
+      <!-- Tierra -->
+      <rect x="-400" y="256" width="1100" height="124" fill="#9C6B3E"/>
+      <path d="M-400 256 Q-380 248 -360 256 T-320 256 T-280 256 T-240 256 T-200 256 T-160 256 T-120 256 T-80 256 T-40 256 T0 256 T40 256 T80 256 T120 256 T160 256 T200 256 T240 256 T280 256 T320 256 T360 256 T400 256 T440 256 T480 256 T520 256 T560 256 T600 256 T640 256 T680 256 T720 256 V264 H-400Z" fill="#6DBE45"/>
+      <circle cx="40" cy="330" r="4" fill="#80542C"/><circle cx="250" cy="300" r="5" fill="#80542C"/><circle cx="270" cy="360" r="3" fill="#80542C"/>
+      <circle cx="262" cy="36" r="22" fill="#FFD54F"/>
+
+      <g class="parte" data-parte="raiz" aria-label="raíz">
+        <rect class="toque" x="88" y="262" width="130" height="112"/>
+        <g stroke="#F2D3A7" stroke-width="6" fill="none" stroke-linecap="round">
+          <path d="M150 258 L150 332"/><path d="M150 278 Q118 298 100 340"/><path d="M150 290 Q186 306 206 348"/>
+          <path d="M150 302 Q136 324 128 364"/><path d="M150 274 Q176 284 194 300"/><path d="M112 322 L98 330"/><path d="M190 330 L204 326"/>
+        </g>
+      </g>
+      <g class="parte" data-parte="hoja" aria-label="hojas">
+        <g fill="#5BBF4F" stroke="#2E7D32" stroke-width="3">
+          <g transform="translate(150 222) rotate(-18)"><path d="M0 0 Q34 -24 70 0 Q34 24 0 0Z"/><path d="M4 0 H62" fill="none"/></g>
+          <g transform="translate(150 222) scale(-1 1) rotate(-18)"><path d="M0 0 Q34 -24 70 0 Q34 24 0 0Z"/><path d="M4 0 H62" fill="none"/></g>
+          <g transform="translate(151 190) scale(-1 1) rotate(-22)"><path d="M0 0 Q28 -20 58 0 Q28 20 0 0Z"/><path d="M4 0 H50" fill="none"/></g>
+          <g transform="translate(150 130) rotate(-25)"><path d="M0 0 Q22 -16 46 0 Q22 16 0 0Z"/><path d="M4 0 H40" fill="none"/></g>
+        </g>
+      </g>
+      <g class="parte" data-parte="tallo" aria-label="tallo">
+        <path class="toque" d="M150 258 C 148 200 152 150 150 96" stroke-width="36" style="stroke:transparent"/>
+        <path d="M150 258 C 148 200 152 150 150 96" stroke="#3E8E41" stroke-width="12" fill="none" stroke-linecap="round"/>
+        <path d="M150 168 Q184 146 214 146" stroke="#3E8E41" stroke-width="6" fill="none" stroke-linecap="round"/>
+      </g>
+      <g class="parte" data-parte="fruto" aria-label="frutos">
+        <circle class="toque" cx="226" cy="162" r="34"/>
+        <path d="M214 146 L214 156 M214 146 L236 150" stroke="#3E8E41" stroke-width="4" fill="none"/>
+        <circle cx="214" cy="168" r="14" fill="#E53935" stroke="#9B1B1B" stroke-width="3"/>
+        <circle cx="238" cy="160" r="12" fill="#E53935" stroke="#9B1B1B" stroke-width="3"/>
+        <circle cx="209" cy="163" r="3.5" fill="#fff" opacity=".7"/><circle cx="234" cy="156" r="3" fill="#fff" opacity=".7"/>
+      </g>
+      <g class="parte" data-parte="flor" aria-label="flor">
+        <circle class="toque" cx="150" cy="70" r="40"/>
+        <g transform="translate(150 70)" fill="#F48FB1" stroke="#C2185B" stroke-width="3">
+          <ellipse rx="12" ry="22" transform="rotate(0) translate(0 -18)"/><ellipse rx="12" ry="22" transform="rotate(60) translate(0 -18)"/>
+          <ellipse rx="12" ry="22" transform="rotate(120) translate(0 -18)"/><ellipse rx="12" ry="22" transform="rotate(180) translate(0 -18)"/>
+          <ellipse rx="12" ry="22" transform="rotate(240) translate(0 -18)"/><ellipse rx="12" ry="22" transform="rotate(300) translate(0 -18)"/>
+          <circle r="11" fill="#FFD54F" stroke="#E0A000"/>
+        </g>
+      </g>
+      <g class="parte" data-parte="semilla" aria-label="semilla">
+        <circle class="toque" cx="58" cy="262" r="28"/>
+        <path d="M60 262 Q57 248 64 240" stroke="#3E8E41" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+        <path d="M64 240 Q74 234 78 242 Q70 246 64 240Z" fill="#5BBF4F" stroke="#2E7D32" stroke-width="2"/>
+        <ellipse cx="58" cy="270" rx="13" ry="8.5" fill="#8D5524" stroke="#4E2E12" stroke-width="3"/>
+      </g>
+      <g id="etiquetas"></g>
+    </svg>
+  </div>
+  <div class="opciones" id="opciones" hidden></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Siguiente ➡️</button>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { PARTES, parte, MODOS, ronda, opciones, estrellasDe } from "../js/planta.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "planta";
+// Dónde va el nombre de cada parte en el dibujo: x, y, alineación
+const ETIQ = { raiz: [214, 352, "start"], tallo: [138, 118, "end"], hoja: [52, 200, "middle"], flor: [188, 36, "start"], fruto: [246, 206, "middle"], semilla: [58, 306, "middle"] };
+
+let mejores = {};
+try { mejores = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(mejores)); } catch (_) {} };
+
+let modo = MODOS[0], preguntas = [], k = 0, puntos = 0, resultados = [], listo = false, vistas = new Set();
+const q = () => preguntas[k];
+
+// ---------- Dibujo ----------
+function etiqueta(id) {
+  const [x, y, anchor] = ETIQ[id], txt = parte(id).nombre, w = txt.length * 9.5 + 16;
+  const rx = anchor === "start" ? x - 8 : anchor === "end" ? x - w + 8 : x - w / 2;
+  return `<g class="etiqueta"><rect x="${rx}" y="${y - 17}" width="${w}" height="26" rx="10"/><text x="${x}" y="${y + 2}" text-anchor="${anchor}">${txt}</text></g>`;
+}
+function pintarEtiquetas(ids) { $("etiquetas").innerHTML = ids.map(etiqueta).join(""); }
+function marcar(id, clase) {
+  document.querySelectorAll(".parte").forEach(g => g.classList.remove("brilla", "mal"));
+  if (id) document.querySelector(`.parte[data-parte="${id}"]`).classList.add(clase || "brilla");
+}
+
+// ---------- Pintar ----------
+function pintarModos() {
+  $("modos").innerHTML = MODOS.map(m => {
+    const n = mejores[m.id] || 0;
+    return `<button data-modo="${m.id}" aria-pressed="${m === modo}">${m.nombre}${n ? ` <span class="est">${"⭐".repeat(n)}</span>` : ""}</button>`;
+  }).join("");
+  $("stars").textContent = "⭐ " + Object.values(mejores).reduce((a, b) => a + b, 0);
+}
+function pintarAvance() {
+  $("avance").innerHTML = preguntas.map((_, i) =>
+    `<span class="${i < resultados.length ? (resultados[i] ? "ya-bien" : "ya-mal") : ""} ${i === k && $("resumen").hidden ? "ahora" : ""}"></span>`).join("");
+}
+const botonParte = p => `<button data-p="${p.id}"><b>${p.emoji}</b>${p.nombre}</button>`;
+
+// ---------- Preguntas ----------
+function vozDe() {
+  if (modo.id === "explorar") return "Tocá cada parte de la planta para conocerla.";
+  if (modo.id === "donde") return `Tocá ${parte(q().parte).el}.`;
+  if (modo.id === "sirve") return `¿Qué parte de la planta hace esto? ${parte(q().parte).sirve.replace(/¡.*$/, "")}`;
+  return `¿Qué parte de la planta es ${q().n}?`;
+}
+
+function mostrar() {
+  listo = false;
+  $("juego").hidden = false; $("resumen").hidden = true;
+  $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  $("dibujo").classList.toggle("bloqueado", modo.id === "sirve" || modo.id === "comemos");
+  marcar(null); pintarEtiquetas([]);
+  $("tarjeta").hidden = modo.id === "explorar" || modo.id === "donde";
+  $("opciones").hidden = !(modo.id === "sirve" || modo.id === "comemos");
+  if (modo.id === "donde") {
+    instruccion(`Tocá <b>${parte(q().parte).el}</b> ${parte(q().parte).emoji}`, vozDe());
+  } else if (modo.id === "sirve") {
+    const p = parte(q().parte);
+    $("tarjeta").textContent = "«" + p.sirve.replace(/ ¡.*$/, "").replace(/ De la flor.*$/, "") + "»";
+    $("opciones").innerHTML = opciones(p.id).map(id => botonParte(parte(id))).join("");
+    instruccion(`¿Qué parte <b>hace esto</b>?`, vozDe());
+  } else if (modo.id === "comemos") {
+    $("tarjeta").innerHTML = `<span class="comida" aria-hidden="true">${q().e}</span>${q().n[0].toUpperCase() + q().n.slice(1)}`;
+    $("opciones").innerHTML = PARTES.map(botonParte).join("");
+    instruccion(`¿Qué parte de la planta es <b>${q().n}</b>?`, vozDe());
+  }
+  pintarAvance();
+}
+
+function terminarPregunta(ok, texto) {
+  listo = true;
+  puntos += ok ? 1 : 0; resultados.push(ok ? 1 : 0);
+  pintarAvance();
+  $("explica").hidden = false; $("explica").textContent = texto;
+  $("sigBtn").hidden = false;
+  $("sigBtn").textContent = k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
+  decir(texto, { cola: true });
+}
+
+// ---------- Tocar la planta ----------
+$("dibujo").addEventListener("click", e => {
+  const g = e.target.closest(".parte");
+  if (!g) return;
+  const id = g.dataset.parte, p = parte(id);
+  if (modo.id === "explorar") {
+    sonido("tap"); vistas.add(id);
+    marcar(id); pintarEtiquetas([...vistas]);
+    $("explica").hidden = false;
+    $("explica").innerHTML = `${p.emoji} <b>${p.el[0].toUpperCase() + p.el.slice(1)}</b>: ${p.sirve}<br><small>Conocés ${vistas.size} de 6 partes.</small>`;
+    decir(`${p.el}. ${p.sirve}`);
+    if (vistas.size === PARTES.length && !mejores.explorar) {
+      mejores.explorar = 1; guardar(); pintarModos();
+      feedback("ok", "🌟", "¡Ya conocés las 6 partes!");
+      decir("¡Ya conocés las seis partes de la planta! Ahora probá ¿Dónde está?", { cola: true });
+    }
+    return;
+  }
+  if (modo.id !== "donde" || listo) return;
+  const bien = q().parte, ok = id === bien;
+  if (ok) { marcar(id); feedback("ok", "🎉", elogio()); }
+  else { marcar(id, "mal"); setTimeout(() => { marcar(bien); }, 700); feedback("bad", "🤔", `Esa es ${p.el}.`); }
+  pintarEtiquetas(ok ? [bien] : [id, bien]);
+  terminarPregunta(ok, `${ok ? "" : `Tocaste ${p.el}. `}${parte(bien).el[0].toUpperCase() + parte(bien).el.slice(1)}: ${parte(bien).sirve}`);
+});
+
+// ---------- Opciones ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-p]");
+  if (!b || listo) return;
+  const bien = q().parte, ok = b.dataset.p === bien;
+  $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; if (x.dataset.p === bien) x.classList.add("right"); });
+  if (!ok) b.classList.add("wrong");
+  marcar(bien); pintarEtiquetas([bien]);
+  if (ok) feedback("ok", "🎉", elogio()); else feedback("bad", "🤔", `Es ${parte(bien).el}.`);
+  const texto = modo.id === "sirve" ? `${parte(bien).el[0].toUpperCase() + parte(bien).el.slice(1)}: ${parte(bien).sirve}` : q().dato;
+  terminarPregunta(ok, texto);
+});
+
+$("sigBtn").addEventListener("click", () => {
+  sonido("tap");
+  k++;
+  if (k < preguntas.length) mostrar(); else terminar();
+});
+
+// ---------- Modos ----------
+function empezar(m = modo) {
+  modo = m; preguntas = ronda(m.id); k = 0; puntos = 0; resultados = [];
+  pintarModos();
+  if (m.id === "explorar") {
+    vistas = new Set();
+    $("juego").hidden = false; $("resumen").hidden = true; $("tarjeta").hidden = true; $("opciones").hidden = true;
+    $("explica").hidden = true; $("sigBtn").hidden = true; feedback(""); $("avance").innerHTML = "";
+    $("dibujo").classList.remove("bloqueado");
+    marcar(null); pintarEtiquetas([]);
+    instruccion("🔎 <b>Tocá cada parte</b> de la planta para conocerla.", vozDe());
+    return;
+  }
+  mostrar();
+}
+
+function terminar() {
+  const n = estrellasDe(puntos, preguntas.length);
+  if (n > (mejores[modo.id] || 0)) { mejores[modo.id] = n; guardar(); }
+  const siguiente = MODOS[MODOS.indexOf(modo) + 1];
+  $("juego").hidden = true; $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  const msg = n === 3 ? "¡Excelente! Sabés un montón de plantas." : n === 2 ? "¡Muy bien! Ya casi." : n === 1 ? "¡Bien! Seguí practicando." : "¡Probá otra vez! Podés usar Explorar para repasar.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${puntos} de ${preguntas.length} bien</p><p>${msg}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra vez</button>${siguiente && n >= 2 ? `<button class="sig" id="sigModoBtn">${siguiente.nombre}</button>` : ""}</div>`;
+  pintarModos(); pintarAvance();
+  instruccion(`<b>¡Terminaste!</b>`, msg);
+  if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigModoBtn")?.addEventListener("click", () => { sonido("tap"); empezar(siguiente); });
+}
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  sonido("tap"); empezar(MODOS.find(m => m.id === b.dataset.modo));
+});
+
+const repetir = lento => decir($("resumen").hidden ? vozDe() : "Tocá otra vez o elegí otro modo arriba.", lento ? { rate: LENTO } : undefined);
+alEmpezar(() => empezar(), repetir);
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__planta = { get q() { return q(); }, get modo() { return modo.id; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

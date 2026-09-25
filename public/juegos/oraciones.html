@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Armo la oración</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; }
+  .ancho { width: min(96vw, 560px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos .est { font-size: .75rem; letter-spacing: -1px; }
+
+  .avance { margin-top: 8px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .avance span { width: 16px; height: 16px; border-radius: 50%; background: var(--face); border: 3px solid var(--rim); }
+  .avance .ya-bien { background: var(--ok); }
+  .avance .ya-medio { background: var(--almost); }
+  .avance .ya-mal { background: var(--bad); }
+  .avance .ahora { outline: 3px solid var(--btn); outline-offset: 2px; }
+
+  /* Renglón del cuaderno donde se arma la oración */
+  .renglon { margin-top: 10px; min-height: 96px; background: #FFFDF6; border: 4px solid var(--rim); border-radius: 18px; padding: 10px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; align-items: center;
+    background-image: linear-gradient(transparent 44px, #B9D4F1 44px, #B9D4F1 46px, transparent 46px); background-size: 100% 48px; background-position: 0 6px; }
+  .renglon.vacio::before { content: "👆 Tocá las palabras en orden"; color: #8AA0B6; font-weight: 700; }
+  .renglon.bien { border-color: var(--ok); background-color: #EFFFF4; }
+  .fichas { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 56px; }
+  .ficha { font-size: 1.35rem; padding: 4px 14px; border-radius: 14px; background: #FFF1B8; }
+  .ficha.puesta { background: var(--face); }
+  .ficha.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .ficha.ok { background: #CFF5DC; border-color: var(--ok); }
+
+  /* Signos y mayúsculas */
+  .frase { margin-top: 10px; background: #FFFDF6; color: var(--ink); border: 4px solid var(--rim); border-radius: 18px; padding: 14px;
+    font-size: 1.5rem; font-weight: 800; line-height: 1.5; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .frase .hueco { display: inline-block; min-width: 1.1em; border-bottom: 4px dashed var(--materia); color: var(--materia); }
+  .frase .w { font: inherit; padding: 0 6px; margin: 2px 1px; border-radius: 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); background: var(--face); }
+  .frase .w[aria-pressed="true"] { background: #FFE0B2; }
+  .frase .w:disabled { opacity: 1; cursor: default; }
+  .frase .w.bien { background: #CFF5DC; border-color: var(--ok); }
+  .frase .w.falto { background: #FFF6DA; border-color: var(--almost); border-style: dashed; }
+  .frase .w.sobro { background: #FFE3E0; border-color: var(--bad); }
+  .opciones { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(3, 1fr); }
+  .opciones button { font-size: 1.1rem; padding: 8px 4px; border-radius: 18px; line-height: 1.1; }
+  .opciones button b { display: block; font-size: 1.9rem; }
+  .opciones button.right { background: #CFF5DC; }
+  .opciones button.wrong { background: #FFE3E0; }
+  .opciones button:disabled { opacity: .55; }
+  .opciones button.right:disabled, .opciones button.wrong:disabled { opacity: 1; }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { flex: 1; font-size: 1.1rem; padding: 6px 0; border-radius: 16px; }
+  .acciones .principal { background: var(--btn); }
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  #sigBtn { margin-top: 10px; width: 100%; font-size: 1.3rem; background: var(--btn); animation: pulse 1.2s ease-in-out infinite; }
+
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 16px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.1rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🧩✏️📓</div>
+  <h1>Armo la oración</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Escuchá la oración y armala con las palabras. Después aprendé los signos y las mayúsculas. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Etapas"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="avance ancho" id="avance" aria-hidden="true"></div>
+<div id="juego" class="ancho">
+  <div id="zonaOrdenar">
+    <div class="renglon vacio" id="renglon" aria-label="Oración armada"></div>
+    <div class="fichas" id="fichas" aria-label="Palabras"></div>
+    <div class="acciones"><button id="borrarBtn">↩️ Quitar la última</button></div>
+  </div>
+  <div id="zonaFrase" hidden>
+    <div class="frase" id="frase" aria-live="polite"></div>
+    <div class="opciones" id="opciones" hidden>
+      <button data-r="punto"><b>.</b>Punto</button>
+      <button data-r="pregunta"><b>¿ ?</b>Pregunta</button>
+      <button data-r="exclamacion"><b>¡ !</b>Emoción</button>
+    </div>
+    <div class="acciones" id="accMayus" hidden><button class="principal" id="revisarBtn">✔️ Revisar</button></div>
+  </div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Siguiente ➡️</button>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { ETAPAS, fichas, esCorrecta, primerError, palabrasDe, signoDe, sinSignos, paraMayus, mayus, revisarMayus, ronda, estrellasDe } from "../js/oraciones.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "oraciones";
+const QUE_ES = {
+  punto: "Lleva punto porque cuenta algo: no pregunta ni grita de emoción.",
+  pregunta: "Es una pregunta: lleva ¿ al inicio y ? al final. En español se abren y se cierran.",
+  exclamacion: "Expresa una emoción (alegría, susto, sorpresa o un aviso): lleva ¡ al inicio y ! al final.",
+};
+
+let mejores = {};
+try { mejores = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(mejores)); } catch (_) {} };
+
+let etapa = ETAPAS[0], preguntas = [], k = 0, puntos = 0, resultados = [], intentos = 0, listo = false;
+let sueltas = [], puestas = [];   // fichas: { id, w }
+let elegidas = new Set();          // mayúsculas elegidas (índices)
+const o = () => preguntas[k];
+const ordenar = () => etapa.id === "cortas" || etapa.id === "largas";
+
+// ---------- Pintar ----------
+function pintarModos() {
+  $("modos").innerHTML = ETAPAS.map(e => {
+    const n = mejores[e.id] || 0;
+    return `<button data-etapa="${e.id}" aria-pressed="${e === etapa}">${e.emoji} ${e.nombre}${n ? ` <span class="est">${"⭐".repeat(n)}</span>` : ""}</button>`;
+  }).join("");
+  $("stars").textContent = "⭐ " + Object.values(mejores).reduce((a, b) => a + b, 0);
+}
+function pintarAvance() {
+  $("avance").innerHTML = preguntas.map((_, i) =>
+    `<span class="${i < resultados.length ? (resultados[i] === 1 ? "ya-bien" : resultados[i] > 0 ? "ya-medio" : "ya-mal") : ""} ${i === k && $("resumen").hidden ? "ahora" : ""}"></span>`).join("");
+}
+function pintarFichas(marcas = {}) {
+  $("renglon").innerHTML = puestas.map((f, i) => `<button class="ficha puesta ${marcas[i] || ""}" data-puesta="${i}">${f.w}</button>`).join("");
+  $("renglon").classList.toggle("vacio", !puestas.length);
+  $("fichas").innerHTML = sueltas.map((f, i) => `<button class="ficha" data-suelta="${i}">${f.w}</button>`).join("");
+}
+function pintarMayus(marcas = {}) {
+  $("frase").innerHTML = paraMayus(o().t).map((p, i) => {
+    const on = elegidas.has(i);
+    return `<button class="w ${marcas[i] || ""}" data-i="${i}" aria-pressed="${on}" ${listo ? "disabled" : ""}>${on ? mayus(p.w) : p.w}</button>`;
+  }).join(" ");
+}
+
+// ---------- Voz ----------
+function vozDe() {
+  const t = o().t;
+  if (ordenar()) return `Escuchá y armá la oración: ${t}`;
+  if (etapa.id === "signos") return `${sinSignos(t)}. ¿Qué signo le falta?`;
+  return "Tocá las palabras que llevan mayúscula. " + t;
+}
+
+// ---------- Mostrar una pregunta ----------
+function mostrar() {
+  listo = false; intentos = 0;
+  $("juego").hidden = false; $("resumen").hidden = true;
+  $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  $("zonaOrdenar").hidden = !ordenar(); $("zonaFrase").hidden = ordenar();
+  $("opciones").hidden = etapa.id !== "signos"; $("accMayus").hidden = etapa.id !== "mayus";
+  const t = o().t;
+  if (ordenar()) {
+    sueltas = fichas(t); puestas = [];
+    $("renglon").classList.remove("bien");
+    pintarFichas();
+    instruccion(`Escuchá 🔊 y <b>armá la oración</b> tocando las palabras en orden.`, vozDe());
+  } else if (etapa.id === "signos") {
+    $("frase").innerHTML = `<span class="hueco">&nbsp;</span>${sinSignos(t)}<span class="hueco">&nbsp;</span>`;
+    $("opciones").querySelectorAll("button").forEach(b => { b.disabled = false; b.className = ""; });
+    instruccion(`¿Qué signos le faltan? <b>.</b> &nbsp; <b>¿?</b> &nbsp; <b>¡!</b>`, `Leé la oración. ¿Cuenta algo, pregunta algo o expresa una emoción?`);
+  } else {
+    elegidas = new Set();
+    pintarMayus(); $("revisarBtn").disabled = false;
+    instruccion(`Tocá las palabras que llevan <b>Mayúscula</b>.`, `Tocá las palabras que llevan mayúscula.`);
+  }
+  pintarAvance();
+}
+
+function terminarPregunta(pts, explica, hablar = true) {
+  listo = true;
+  puntos += pts; resultados.push(pts);
+  pintarAvance();
+  if (explica) { $("explica").hidden = false; $("explica").innerHTML = explica; }
+  $("sigBtn").hidden = false;
+  $("sigBtn").textContent = k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
+  if (hablar && explica) decir(explica.replace(/<[^>]+>/g, ""), { cola: true });
+}
+
+// ---------- Ordenar ----------
+$("fichas").addEventListener("click", e => {
+  const b = e.target.closest("[data-suelta]");
+  if (!b || listo) return;
+  sonido("tap");
+  puestas.push(sueltas.splice(Number(b.dataset.suelta), 1)[0]);
+  pintarFichas();
+  if (!sueltas.length) revisarOrden();
+});
+$("renglon").addEventListener("click", e => {
+  const b = e.target.closest("[data-puesta]");
+  if (!b || listo) return;
+  sonido("tap");
+  sueltas.push(...puestas.splice(Number(b.dataset.puesta), 1));
+  pintarFichas(); feedback("");
+});
+$("borrarBtn").addEventListener("click", () => {
+  if (listo || !puestas.length) return;
+  sonido("tap"); sueltas.push(puestas.pop()); pintarFichas(); feedback("");
+});
+
+function revisarOrden() {
+  const armada = puestas.map(f => f.w), q = o();
+  if (esCorrecta(armada, q)) {
+    pintarFichas(Object.fromEntries(puestas.map((_, i) => [i, "ok"])));
+    $("renglon").classList.add("bien");
+    feedback("ok", "🎉", elogio());
+    decir(`${elogio()} ${armada.join(" ")}`);
+    terminarPregunta(intentos === 0 ? 1 : 0.5, null);
+    return;
+  }
+  intentos++;
+  const i = primerError(armada, q);
+  const marcas = {};
+  for (let j = 0; j < armada.length; j++) marcas[j] = j < i ? "ok" : "mal";
+  pintarFichas(marcas);
+  if (intentos < 3) {
+    feedback("almost", "🤔", i === 0 ? "Revisá la primera palabra: empieza con mayúscula." : "Las verdes están bien. Tocá las rojas para quitarlas y probá otra vez.");
+    decir(i === 0 ? "Revisá la primera palabra. La primera palabra empieza con mayúscula." : "Las verdes están bien. Quitá las rojas y probá otra vez. Escuchá: " + q.t);
+    // Las rojas vuelven solas a las fichas
+    setTimeout(() => { if (listo) return; sueltas.push(...puestas.splice(i)); pintarFichas(Object.fromEntries(puestas.map((_, j) => [j, "ok"]))); }, 1100);
+  } else {
+    puestas = palabrasDe(q.t).map((w, id) => ({ id, w })); sueltas = [];
+    pintarFichas(Object.fromEntries(puestas.map((_, j) => [j, "ok"])));
+    feedback("bad", "💡", "Así queda:");
+    terminarPregunta(0, `📓 <b>${q.t}</b><br>Empieza con mayúscula y termina con punto.`);
+  }
+}
+
+// ---------- Signos ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-r]");
+  if (!b || listo) return;
+  const t = o().t, bien = signoDe(t), acerto = b.dataset.r === bien;
+  $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; if (x.dataset.r === bien) x.classList.add("right"); });
+  if (!acerto) b.classList.add("wrong");
+  $("frase").textContent = t;
+  if (acerto) { feedback("ok", "🎉", elogio()); decir(`${elogio()} ${t}`); }
+  else { feedback("bad", "🤔", "¡Casi! Escuchá cómo suena:"); decir(t); }
+  terminarPregunta(acerto ? 1 : 0, (bien === "punto" ? "⚫ " : bien === "pregunta" ? "❓ " : "❗ ") + QUE_ES[bien], false);
+});
+
+// ---------- Mayúsculas ----------
+$("frase").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || etapa.id !== "mayus") return;
+  sonido("tap");
+  const i = Number(b.dataset.i);
+  elegidas.has(i) ? elegidas.delete(i) : elegidas.add(i);
+  pintarMayus();
+});
+$("revisarBtn").addEventListener("click", () => {
+  if (listo) return;
+  const t = o().t, r = revisarMayus([...elegidas], t);
+  const marcas = {};
+  r.correctas.forEach(i => marcas[i] = r.faltan.includes(i) ? "falto" : "bien");
+  r.sobran.forEach(i => marcas[i] = "sobro");
+  listo = true;
+  // Se muestra bien escrita, con colores
+  elegidas = new Set(r.correctas);
+  pintarMayus(marcas);
+  $("revisarBtn").disabled = true;
+  const nombres = paraMayus(t).map((p, i) => (p.mayus && i > 0 ? mayus(p.w).replace(/[.,]$/, "") : null)).filter(Boolean);
+  let txt = `📓 <b>${t}</b><br>La primera palabra siempre va con mayúscula`;
+  txt += nombres.length ? `, y también los nombres de personas, mascotas y lugares: ${nombres.join(", ")}.` : ".";
+  if (/\b(lunes|sábados|abril|setiembre|diciembre)\b/.test(t)) txt += " Los días de la semana y los meses van con minúscula.";
+  if (r.exacto) feedback("ok", "🎉", elogio());
+  else feedback(r.correctas.length === r.faltan.length ? "bad" : "almost", "🔎", `${r.faltan.length ? `Faltaron ${r.faltan.length}` : ""}${r.faltan.length && r.sobran.length ? " y " : ""}${r.sobran.length ? `${r.sobran.length} no ${r.sobran.length > 1 ? "llevaban" : "llevaba"}` : ""}.`);
+  terminarPregunta(r.exacto ? 1 : (r.correctas.length - r.faltan.length) > 0 && r.sobran.length <= 1 ? 0.5 : 0, txt);
+});
+
+$("sigBtn").addEventListener("click", () => {
+  sonido("tap");
+  k++;
+  if (k < preguntas.length) mostrar(); else terminar();
+});
+
+// ---------- Rondas ----------
+function empezar(e = etapa) {
+  etapa = e; preguntas = ronda(e.id); k = 0; puntos = 0; resultados = [];
+  pintarModos(); mostrar();
+}
+
+function terminar() {
+  const n = estrellasDe(puntos, preguntas.length);
+  if (n > (mejores[etapa.id] || 0)) { mejores[etapa.id] = n; guardar(); }
+  const siguiente = ETAPAS[ETAPAS.indexOf(etapa) + 1];
+  $("juego").hidden = true; $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  const perfectas = resultados.filter(x => x === 1).length;
+  const msg = n === 3 ? "¡Excelente! Escribís como todo un escritor." : n === 2 ? "¡Muy bien! Ya casi." : n === 1 ? "¡Bien! Con práctica te va a salir mejor." : "¡Seguí practicando! Escuchá bien cada oración.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${perfectas} de ${preguntas.length} perfectas</p><p>${msg}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra ronda</button>${siguiente && n >= 2 ? `<button class="sig" id="sigEtapaBtn">${siguiente.emoji} Siguiente etapa</button>` : ""}</div>`;
+  pintarModos(); pintarAvance();
+  instruccion(`<b>${etapa.nombre}</b> terminada`, msg);
+  if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigEtapaBtn")?.addEventListener("click", () => { sonido("tap"); empezar(siguiente); });
+}
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-etapa]");
+  if (!b) return;
+  sonido("tap"); empezar(ETAPAS.find(x => x.id === b.dataset.etapa));
+});
+
+const repetir = lento => decir($("resumen").hidden ? (etapa.id === "signos" && !listo ? sinSignos(o().t) : ordenar() ? o().t : vozDe()) : "Tocá otra ronda o elegí una etapa arriba.", lento ? { rate: LENTO } : undefined);
+alEmpezar(() => empezar(), repetir);
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__oraciones = { get o() { return o(); }, get etapa() { return etapa.id; }, get sueltas() { return sueltas; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

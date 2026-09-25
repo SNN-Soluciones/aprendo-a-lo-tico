@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Símbolos patrios</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #F29A1F; }
+  .ancho { width: min(96vw, 560px); }
+  .modos, .niveles { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button, .niveles button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"], .niveles button[aria-pressed="true"] { background: var(--btn); }
+  .est { font-size: .75rem; letter-spacing: -1px; }
+  .niveles { margin-top: 8px; justify-content: center; }
+  .marcas { margin-top: 6px; text-align: center; font-weight: 800; color: var(--page-ink); }
+
+  /* Conocer */
+  .galeria { margin-top: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+  .galeria button { border-radius: 16px; padding: 6px 4px; font-size: .85rem; line-height: 1.1; }
+  .galeria button svg { width: 100%; height: 64px; display: block; }
+  .galeria button.visto { background: #FFF1B8; }
+
+  /* Memoria */
+  .tablero { margin-top: 10px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; perspective: 800px; }
+  .carta { aspect-ratio: 3 / 4; padding: 0; border-radius: 14px; position: relative; background: none; box-shadow: none; border: none; }
+  .carta:active { transform: none; }
+  .carta .in { position: absolute; inset: 0; transition: transform .35s; transform-style: preserve-3d; }
+  .carta.abierta .in, .carta.hecha .in { transform: rotateY(180deg); }
+  .carta .cara { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border: 3px solid var(--rim); border-radius: 14px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; box-shadow: 0 3px 0 var(--rim); overflow: hidden; }
+  .carta .dorso { background: linear-gradient(#002B7F 0 17%, #fff 17% 33%, #CE1126 33% 67%, #fff 67% 83%, #002B7F 83%); font-size: 1.8rem; }
+  .carta .dorso span { background: #fff; border-radius: 50%; width: 1.6em; height: 1.6em; display: flex; align-items: center; justify-content: center; color: var(--rim); }
+  .carta .frente { background: var(--face); transform: rotateY(180deg); padding: 4px; }
+  .carta .frente svg { width: 92%; height: 92%; }
+  .carta .frente b { font-size: clamp(.8rem, 3.6vw, 1.1rem); line-height: 1.1; text-align: center; color: var(--ink); }
+  .carta.hecha .frente { background: #CFF5DC; border-color: var(--ok); }
+  .carta.nope .frente { background: #FFE3E0; }
+
+  /* Adivinanzas */
+  .tarjeta { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 20px; padding: 12px 14px; font-weight: 800; font-size: 1.25rem; text-align: center; line-height: 1.3; box-shadow: 0 5px 0 var(--rim); }
+  .tarjeta small { display: block; font-size: .85rem; opacity: .7; }
+  .opciones { margin-top: 10px; display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
+  .opciones button { border-radius: 16px; padding: 6px 4px; font-size: .9rem; line-height: 1.1; }
+  .opciones button svg { width: 100%; height: 80px; display: block; }
+  .opciones button.right { background: #CFF5DC; }
+  .opciones button.wrong { background: #FFE3E0; }
+  .opciones button:disabled { opacity: .55; }
+  .opciones button.right:disabled, .opciones button.wrong:disabled { opacity: 1; }
+  .avance { margin-top: 8px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .avance span { width: 16px; height: 16px; border-radius: 50%; background: var(--face); border: 3px solid var(--rim); }
+  .avance .ya-bien { background: var(--ok); }
+  .avance .ya-mal { background: var(--bad); }
+  .avance .ahora { outline: 3px solid var(--btn); outline-offset: 2px; }
+
+  .detalle { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; display: flex; gap: 10px; align-items: center; }
+  .detalle svg { width: 72px; height: 72px; flex: none; }
+  #sigBtn { margin-top: 10px; width: 100%; font-size: 1.3rem; background: var(--btn); animation: pulse 1.2s ease-in-out infinite; }
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.05rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .carta .in { transition: none; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🌸🐦🌳</div>
+  <h1>Símbolos patrios</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>La bandera, el escudo, la guaria morada, el yigüirro, la carreta… Conocelos, jugá memoria y resolvé adivinanzas. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo de juego">
+    <button data-modo="conocer" aria-pressed="true">📖 Conocer</button>
+    <button data-modo="memoria" aria-pressed="false">🧠 Memoria</button>
+    <button data-modo="adivinanzas" aria-pressed="false">❓ Adivinanzas</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="niveles ancho" id="niveles" role="group" aria-label="Cuántas parejas" hidden></div>
+<div class="marcas ancho" id="marcas" hidden></div>
+<div class="avance ancho" id="avance" aria-hidden="true"></div>
+<div class="galeria ancho" id="galeria" hidden></div>
+<div class="tablero ancho" id="tablero" hidden></div>
+<div id="adivina" class="ancho" hidden>
+  <div class="tarjeta" id="tarjeta" aria-live="polite"></div>
+  <div class="opciones" id="opciones"></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="detalle ancho" id="detalle" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Siguiente ➡️</button>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { SIMBOLOS, simbolo, titulo, NIVELES, mazo, sonPareja, estrellasMemoria, adivinanzas, estrellasDe } from "../js/simbolos.js";
+import { dibujo } from "../js/simbolos-svg.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "simbolos";
+
+let prog = { vistos: [], memoria: {}, adivinanzas: 0 };
+try { prog = { ...prog, ...JSON.parse(localStorage.getItem(CLAVE)) }; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(prog)); } catch (_) {} };
+const total = () => Object.values(prog.memoria).reduce((a, b) => a + b, 0) + prog.adivinanzas + (prog.vistos.length === SIMBOLOS.length ? 1 : 0);
+
+let modo = "conocer", nivel = NIVELES[0];
+let cartas = [], abiertas = [], hechas = 0, intentos = 0, ocupado = false;
+let preguntas = [], k = 0, puntos = 0, resultados = [], listo = false;
+
+function ocultarTodo() {
+  ["galeria", "tablero", "adivina", "niveles", "marcas", "detalle", "sigBtn", "resumen"].forEach(id => $(id).hidden = true);
+  $("avance").innerHTML = ""; feedback("");
+}
+function pintarEstrellas() {
+  $("stars").textContent = "⭐ " + total();
+  $("niveles").innerHTML = NIVELES.map(n => `<button data-nivel="${n.id}" aria-pressed="${n === nivel}">${n.nombre}${prog.memoria[n.id] ? ` <span class="est">${"⭐".repeat(prog.memoria[n.id])}</span>` : ""}</button>`).join("");
+}
+function mostrarDetalle(s) {
+  $("detalle").hidden = false;
+  $("detalle").innerHTML = `${dibujo(s.id, s.nombre)}<div><b>${titulo(s)}</b><br>${s.dato}</div>`;
+}
+
+// ---------- Conocer ----------
+function conocer() {
+  ocultarTodo();
+  $("galeria").hidden = false;
+  $("galeria").innerHTML = SIMBOLOS.map(s => `<button data-id="${s.id}" class="${prog.vistos.includes(s.id) ? "visto" : ""}">${dibujo(s.id, s.nombre)}${s.nombre}</button>`).join("");
+  instruccion("📖 <b>Tocá cada símbolo</b> para conocerlo.", "Tocá cada símbolo patrio para conocerlo.");
+}
+$("galeria").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b) return;
+  const s = simbolo(b.dataset.id);
+  sonido("tap"); b.classList.add("visto");
+  mostrarDetalle(s);
+  decir(`${titulo(s)}. ${s.dato}`);
+  if (!prog.vistos.includes(s.id)) {
+    prog.vistos.push(s.id); guardar(); pintarEstrellas();
+    if (prog.vistos.length === SIMBOLOS.length) { feedback("ok", "🌟", "¡Ya conocés los 12 símbolos!"); decir("¡Ya conocés los doce símbolos! Ahora probá la memoria.", { cola: true }); }
+  }
+});
+
+// ---------- Memoria ----------
+function memoria() {
+  ocultarTodo();
+  $("niveles").hidden = false; $("marcas").hidden = false; $("tablero").hidden = false;
+  cartas = mazo(nivel.parejas); abiertas = []; hechas = 0; intentos = 0; ocupado = false;
+  pintarEstrellas(); pintarTablero(); pintarMarcas();
+  instruccion("🧠 Encontrá cada <b>dibujo</b> con su <b>nombre</b>.", "Tocá dos cartas. Encontrá cada dibujo con su nombre.");
+}
+function pintarMarcas() { $("marcas").textContent = `✅ ${hechas} de ${nivel.parejas} parejas · 🔄 ${intentos} intentos`; }
+function caraDe(c) {
+  const s = simbolo(c.id);
+  return c.cara === "dibujo" ? dibujo(s.id, s.nombre) : `<b>${s.nombre}</b>`;
+}
+function pintarTablero() {
+  $("tablero").innerHTML = cartas.map(c => `<button class="carta" data-n="${c.n}" aria-label="Carta ${c.n + 1}">
+    <span class="in"><span class="cara dorso"><span>?</span></span><span class="cara frente">${caraDe(c)}</span></span></button>`).join("");
+}
+$("tablero").addEventListener("click", e => {
+  const b = e.target.closest(".carta");
+  if (!b || ocupado || b.classList.contains("abierta") || b.classList.contains("hecha")) return;
+  const c = cartas[Number(b.dataset.n)];
+  sonido("tap");
+  b.classList.add("abierta"); b.setAttribute("aria-label", c.cara === "dibujo" ? `Dibujo: ${simbolo(c.id).nombre}` : simbolo(c.id).nombre);
+  abiertas.push({ c, b });
+  if (abiertas.length === 1) { decir(simbolo(c.id).nombre); return; }
+  intentos++;
+  const [x, y] = abiertas; abiertas = [];
+  if (sonPareja(x.c, y.c)) {
+    hechas++;
+    [x.b, y.b].forEach(el => { el.classList.remove("abierta"); el.classList.add("hecha"); });
+    const s = simbolo(x.c.id);
+    feedback("ok", "🎉", `¡Pareja! ${s.nombre}`);
+    mostrarDetalle(s);
+    decir(`¡Pareja! ${titulo(s)}. ${s.dato}`);
+    pintarMarcas();
+    if (hechas === nivel.parejas) setTimeout(finMemoria, 900);
+  } else {
+    ocupado = true;
+    decir(simbolo(y.c.id).nombre);
+    [x.b, y.b].forEach(el => el.classList.add("nope"));
+    setTimeout(() => { [x.b, y.b].forEach(el => el.classList.remove("abierta", "nope")); ocupado = false; }, 1100);
+    pintarMarcas();
+  }
+});
+function finMemoria() {
+  const n = estrellasMemoria(intentos, nivel.parejas);
+  if (n > (prog.memoria[nivel.id] || 0)) { prog.memoria[nivel.id] = n; guardar(); }
+  pintarEstrellas();
+  const sig = NIVELES[NIVELES.indexOf(nivel) + 1];
+  const msg = n === 3 ? "¡Qué memoria! Casi sin fallar." : n === 2 ? "¡Muy bien!" : "¡Lo lograste! La próxima, fijate bien dónde está cada carta.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${nivel.parejas} parejas en ${intentos} intentos</p><p>${msg}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra vez</button>${sig ? `<button class="sig" id="sigBtn2">${sig.nombre} ➡️</button>` : `<button class="sig" id="adivBtn">❓ Adivinanzas</button>`}</div>`;
+  instruccion("<b>¡Terminaste!</b>", msg); sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); memoria(); });
+  $("sigBtn2")?.addEventListener("click", () => { sonido("tap"); nivel = sig; memoria(); });
+  $("adivBtn")?.addEventListener("click", () => { sonido("tap"); cambiarModo("adivinanzas"); });
+}
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-nivel]");
+  if (!b) return;
+  sonido("tap"); nivel = NIVELES.find(n => n.id === b.dataset.nivel); memoria();
+});
+
+// ---------- Adivinanzas ----------
+function adivinar() {
+  ocultarTodo();
+  preguntas = adivinanzas(); k = 0; puntos = 0; resultados = [];
+  mostrarAdivinanza();
+}
+function pintarAvance() {
+  $("avance").innerHTML = preguntas.map((_, i) =>
+    `<span class="${i < resultados.length ? (resultados[i] ? "ya-bien" : "ya-mal") : ""} ${i === k && $("resumen").hidden ? "ahora" : ""}"></span>`).join("");
+}
+function mostrarAdivinanza() {
+  listo = false;
+  const q = preguntas[k], s = simbolo(q.id);
+  $("adivina").hidden = false; $("detalle").hidden = true; $("sigBtn").hidden = true; feedback("");
+  $("tarjeta").innerHTML = `<small>Adivinanza ${k + 1} de ${preguntas.length}</small>«${s.pista}»`;
+  $("opciones").innerHTML = q.opciones.map(id => `<button data-id="${id}">${dibujo(id, simbolo(id).nombre)}${simbolo(id).nombre}</button>`).join("");
+  pintarAvance();
+  instruccion("❓ ¿De qué <b>símbolo</b> se trata?", `${s.pista} ¿Qué símbolo es?`);
+}
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo) return;
+  listo = true;
+  const q = preguntas[k], ok = b.dataset.id === q.id, s = simbolo(q.id);
+  $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; if (x.dataset.id === q.id) x.classList.add("right"); });
+  if (!ok) b.classList.add("wrong");
+  puntos += ok ? 1 : 0; resultados.push(ok ? 1 : 0); pintarAvance();
+  if (ok) feedback("ok", "🎉", elogio()); else feedback("bad", "🤔", `${s.id === "esferas" ? "Son" : "Es"} ${s.el}.`);
+  mostrarDetalle(s);
+  decir(`${ok ? elogio() : ""} ${titulo(s)}. ${s.dato}`);
+  $("sigBtn").hidden = false;
+  $("sigBtn").textContent = k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
+});
+$("sigBtn").addEventListener("click", () => {
+  sonido("tap"); k++;
+  if (k < preguntas.length) return mostrarAdivinanza();
+  const n = estrellasDe(puntos, preguntas.length);
+  if (n > prog.adivinanzas) { prog.adivinanzas = n; guardar(); }
+  pintarEstrellas();
+  ocultarTodo(); pintarAvance();
+  const msg = n === 3 ? "¡Excelente! Conocés muy bien los símbolos patrios." : n === 2 ? "¡Muy bien!" : "¡Seguí practicando! En Conocer podés repasarlos.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${puntos} de ${preguntas.length} bien</p><p>${msg}</p><div class="botones"><button class="sig" id="otraBtn">🔄 Otra vez</button></div>`;
+  instruccion("<b>¡Terminaste!</b>", msg); if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); adivinar(); });
+});
+
+// ---------- Modos ----------
+function cambiarModo(m) {
+  modo = m;
+  document.querySelectorAll("#modos button").forEach(x => x.setAttribute("aria-pressed", x.dataset.modo === m ? "true" : "false"));
+  ({ conocer, memoria, adivinanzas: adivinar })[m]();
+}
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  sonido("tap"); cambiarModo(b.dataset.modo);
+});
+
+const repetir = lento => {
+  const txt = modo === "adivinanzas" && $("resumen").hidden ? simbolo(preguntas[k].id).pista + " ¿Qué símbolo es?"
+    : modo === "memoria" ? "Tocá dos cartas. Encontrá cada dibujo con su nombre." : "Tocá cada símbolo patrio para conocerlo.";
+  decir(txt, lento ? { rate: LENTO } : undefined);
+};
+alEmpezar(() => cambiarModo("conocer"), repetir);
+pintarEstrellas();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__simbolos = { get cartas() { return cartas; }, get q() { return preguntas[k]; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

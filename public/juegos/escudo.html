@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El escudo nacional</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #F29A1F; }
+  .ancho { width: min(96vw, 520px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos .est { font-size: .75rem; letter-spacing: -1px; }
+
+  .avance { margin-top: 8px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; min-height: 22px; }
+  .avance span { width: 16px; height: 16px; border-radius: 50%; background: var(--face); border: 3px solid var(--rim); }
+  .avance .ya-bien { background: var(--ok); }
+  .avance .ya-mal { background: var(--bad); }
+  .avance .ahora { outline: 3px solid var(--btn); outline-offset: 2px; }
+
+  .marco { margin-top: 8px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px; padding: 10px; box-shadow: 0 5px 0 var(--rim); display: flex; justify-content: center; }
+  .escudo { position: relative; width: min(100%, 44vh * 334 / 360); aspect-ratio: 334 / 360; }
+  .escudo img { width: 100%; height: 100%; display: block; }
+  .escudo svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .zona { fill: transparent; cursor: pointer; }
+  .zona path, .zona ellipse, .zona rect { vector-effect: non-scaling-stroke; }
+  .zona.brilla { fill: rgba(255, 214, 0, .35); stroke: #FFB300; stroke-width: 4; stroke-dasharray: 8 5; animation: latido 1s ease-in-out infinite; }
+  .zona.bien { fill: rgba(47, 168, 90, .3); stroke: var(--ok); stroke-width: 4; }
+  .zona.mal { fill: rgba(217, 68, 58, .3); stroke: var(--bad); stroke-width: 4; }
+  .zona.vista { fill: rgba(255, 255, 255, .12); }
+  .bloqueado .zona { cursor: default; }
+  @keyframes latido { 50% { fill: rgba(255, 214, 0, .12); } }
+
+  .tarjeta { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 16px; padding: 8px 12px; font-weight: 800; font-size: 1.15rem; text-align: center; line-height: 1.3; }
+  .opciones { margin-top: 10px; display: grid; gap: 8px; }
+  .opciones button { font-size: 1.02rem; padding: 8px 12px; border-radius: 16px; text-align: left; line-height: 1.2; }
+  .opciones button.right { background: #CFF5DC; }
+  .opciones button.wrong { background: #FFE3E0; }
+  .opciones button:disabled { opacity: .55; }
+  .opciones button.right:disabled, .opciones button.wrong:disabled { opacity: 1; }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  .lista { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .lista span { background: var(--face); border: 2px solid var(--rim); border-radius: 999px; padding: 0 10px; font-weight: 800; font-size: .9rem; opacity: .4; }
+  .lista span.vista { opacity: 1; background: #CFF5DC; }
+  #sigBtn { margin-top: 10px; width: 100%; font-size: 1.3rem; background: var(--btn); animation: pulse 1.2s ease-in-out infinite; }
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.05rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .zona.brilla { animation: none; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🛡️⭐🌋</div>
+  <h1>El escudo nacional</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Las estrellas, los volcanes, los barcos, el sol… ¿qué significa cada parte del escudo de Costa Rica? Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo de juego"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="avance ancho" id="avance" aria-hidden="true"></div>
+<div id="juego" class="ancho">
+  <div class="tarjeta" id="tarjeta" hidden aria-live="polite"></div>
+  <div class="marco" id="marco">
+    <div class="escudo">
+      <img src="../img/escudo.webp" alt="Escudo nacional de Costa Rica">
+      <svg viewBox="0 0 100 100" preserveAspectRatio="none" id="zonas"></svg>
+    </div>
+  </div>
+  <div class="opciones" id="opciones" hidden></div>
+  <div class="lista" id="lista" hidden></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Siguiente ➡️</button>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { PARTES, parte, MODOS, ronda, estrellasDe } from "../js/escudo.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "escudo";
+
+let mejores = {};
+try { mejores = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(mejores)); } catch (_) {} };
+
+let modo = MODOS[0], preguntas = [], k = 0, puntos = 0, resultados = [], listo = false, vistas = new Set();
+const q = () => preguntas[k];
+
+$("zonas").innerHTML = PARTES.map(p => `<g class="zona" data-id="${p.id}" role="button" aria-label="${p.nombre}">${p.zona}</g>`).join("");
+
+function marcar(marcas = {}) {
+  document.querySelectorAll(".zona").forEach(z => z.setAttribute("class", "zona " + (marcas[z.dataset.id] || "")));
+}
+
+// ---------- Pintar ----------
+function pintarModos() {
+  $("modos").innerHTML = MODOS.map(m => {
+    const n = mejores[m.id] || 0;
+    return `<button data-modo="${m.id}" aria-pressed="${m === modo}">${m.nombre}${n ? ` <span class="est">${"⭐".repeat(n)}</span>` : ""}</button>`;
+  }).join("");
+  $("stars").textContent = "⭐ " + Object.values(mejores).reduce((a, b) => a + b, 0);
+}
+function pintarAvance() {
+  $("avance").innerHTML = preguntas.map((_, i) =>
+    `<span class="${i < resultados.length ? (resultados[i] ? "ya-bien" : "ya-mal") : ""} ${i === k && $("resumen").hidden ? "ahora" : ""}"></span>`).join("");
+}
+function pintarLista() {
+  $("lista").innerHTML = PARTES.map(p => `<span class="${vistas.has(p.id) ? "vista" : ""}">${p.emoji} ${p.nombre.replace(/^(La|Las|Los|El) /, "")}</span>`).join("");
+}
+
+function vozDe() {
+  if (modo.id === "explorar") return "Tocá cada parte del escudo para saber qué significa.";
+  const p = parte(q().id);
+  if (modo.id === "significa") return `${p.nombre}. ¿Qué significa?`;
+  return `¿Qué parte del escudo significa esto? ${p.significa}`;
+}
+
+// ---------- Mostrar ----------
+function mostrar() {
+  listo = false;
+  $("juego").hidden = false; $("resumen").hidden = true;
+  $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  $("lista").hidden = true;
+  const p = parte(q().id);
+  $("marco").classList.toggle("bloqueado", modo.id === "significa");
+  if (modo.id === "significa") {
+    marcar({ [p.id]: "brilla" });
+    $("tarjeta").hidden = true;
+    $("opciones").hidden = false;
+    $("opciones").innerHTML = q().opciones.map(id => `<button data-id="${id}">${parte(id).significa}</button>`).join("");
+    instruccion(`${p.emoji} <b>${p.nombre}</b>: ¿qué significa?`, vozDe());
+  } else {
+    marcar();
+    $("opciones").hidden = true;
+    $("tarjeta").hidden = false; $("tarjeta").textContent = "«" + p.significa + "»";
+    instruccion(`👆 ¿Qué parte del escudo <b>significa esto</b>?`, vozDe());
+  }
+  pintarAvance();
+}
+
+function terminarPregunta(ok, texto) {
+  listo = true;
+  puntos += ok ? 1 : 0; resultados.push(ok ? 1 : 0);
+  pintarAvance();
+  $("explica").hidden = false; $("explica").textContent = texto;
+  $("sigBtn").hidden = false;
+  $("sigBtn").textContent = k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
+  decir(texto, { cola: true });
+}
+
+// ---------- Tocar el escudo ----------
+$("zonas").addEventListener("click", e => {
+  const z = e.target.closest(".zona");
+  if (!z) return;
+  const p = parte(z.dataset.id);
+  if (modo.id === "explorar") {
+    sonido("tap"); vistas.add(p.id);
+    marcar(Object.fromEntries([...vistas].map(id => [id, id === p.id ? "brilla" : "vista"])));
+    pintarLista();
+    $("explica").hidden = false;
+    const verbo = /^(La|El) /.test(p.nombre) ? "representa" : "representan";
+    $("explica").innerHTML = `${p.emoji} <b>${p.nombre}</b> ${verbo}: ${p.significa[0].toLowerCase() + p.significa.slice(1)}`;
+    decir(`${p.nombre}. ${p.significa}`);
+    if (vistas.size === PARTES.length && !mejores.explorar) {
+      mejores.explorar = 1; guardar(); pintarModos();
+      feedback("ok", "🌟", "¡Conocés todo el escudo!");
+      decir("¡Ya conocés todas las partes del escudo! Ahora probá ¿Qué significa?", { cola: true });
+    }
+    return;
+  }
+  if (modo.id !== "donde" || listo) return;
+  const bien = q().id, ok = p.id === bien;
+  marcar(ok ? { [bien]: "bien" } : { [p.id]: "mal", [bien]: "bien" });
+  if (ok) feedback("ok", "🎉", elogio()); else feedback("bad", "🤔", `Tocaste ${p.nombre.toLowerCase()}.`);
+  terminarPregunta(ok, `${parte(bien).emoji} ${parte(bien).nombre}: ${parte(bien).significa}`);
+});
+
+// ---------- Opciones ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo) return;
+  const bien = q().id, ok = b.dataset.id === bien;
+  $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; if (x.dataset.id === bien) x.classList.add("right"); });
+  if (!ok) b.classList.add("wrong");
+  marcar({ [bien]: ok ? "bien" : "brilla" });
+  if (ok) feedback("ok", "🎉", elogio()); else feedback("bad", "🤔", "¡Casi!");
+  terminarPregunta(ok, `${parte(bien).emoji} ${parte(bien).nombre}: ${parte(bien).significa}`);
+});
+
+$("sigBtn").addEventListener("click", () => {
+  sonido("tap"); k++;
+  if (k < preguntas.length) mostrar(); else terminar();
+});
+
+// ---------- Modos ----------
+function empezar(m = modo) {
+  modo = m; preguntas = ronda(m.id); k = 0; puntos = 0; resultados = [];
+  pintarModos();
+  if (m.id === "explorar") {
+    vistas = new Set();
+    $("juego").hidden = false; $("resumen").hidden = true; $("tarjeta").hidden = true; $("opciones").hidden = true;
+    $("explica").hidden = true; $("sigBtn").hidden = true; feedback(""); $("avance").innerHTML = "";
+    $("marco").classList.remove("bloqueado");
+    $("lista").hidden = false; pintarLista(); marcar();
+    instruccion("🔎 <b>Tocá cada parte</b> del escudo para saber qué significa.", vozDe());
+    return;
+  }
+  mostrar();
+}
+
+function terminar() {
+  const n = estrellasDe(puntos, preguntas.length);
+  if (n > (mejores[modo.id] || 0)) { mejores[modo.id] = n; guardar(); }
+  const siguiente = MODOS[MODOS.indexOf(modo) + 1];
+  $("juego").hidden = true; $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  const msg = n === 3 ? "¡Excelente! Conocés muy bien el escudo nacional." : n === 2 ? "¡Muy bien! Ya casi." : n === 1 ? "¡Bien! Seguí practicando." : "¡Probá otra vez! En Explorar podés repasar.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${puntos} de ${preguntas.length} bien</p><p>${msg}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra vez</button>${siguiente && n >= 2 ? `<button class="sig" id="sigModoBtn">${siguiente.nombre}</button>` : ""}</div>`;
+  pintarModos(); pintarAvance();
+  instruccion("<b>¡Terminaste!</b>", msg);
+  if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigModoBtn")?.addEventListener("click", () => { sonido("tap"); empezar(siguiente); });
+}
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  sonido("tap"); empezar(MODOS.find(m => m.id === b.dataset.modo));
+});
+
+const repetir = lento => decir($("resumen").hidden ? vozDe() : "Tocá otra vez o elegí otro modo arriba.", lento ? { rate: LENTO } : undefined);
+alEmpezar(() => empezar(), repetir);
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__escudo = { get q() { return q(); }, get modo() { return modo.id; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

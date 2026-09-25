@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tablas en la feria</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .ancho { width: min(96vw, 520px); }
+  .modos, .tablas { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .95rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"], .tablas button[aria-pressed="true"] { background: var(--btn); }
+  .tablas { margin-top: 8px; justify-content: center; }
+  .tablas button { min-width: 46px; padding: 2px 6px; font-size: 1.05rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); line-height: 1.05; }
+  .tablas small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
+
+  .tramo { margin-top: 10px; background: #8B5A2B; border: 4px solid #5C3A1A; border-radius: 16px; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .tramo .fila { display: flex; align-items: center; gap: 2px; background: #F4E1C1; border-radius: 10px; padding: 2px 6px; }
+  .tramo .fila b { width: 1.6rem; font-size: .8rem; color: #5C3A1A; flex: none; }
+  .tramo .fruta { font-size: var(--tam, 1.9rem); line-height: 1.1; background: none; border: none; box-shadow: none; padding: 0 1px; border-radius: 8px; }
+  .tramo .fruta:active { transform: scale(.9); box-shadow: none; }
+  .tramo .fruta.contada { background: #FFE66D; }
+  .tramo .fila.resaltar { outline: 3px solid var(--btn); }
+  .cuenta { color: #fff; font-weight: 800; text-align: center; font-size: 1.05rem; }
+
+  .pregunta { margin-top: 10px; text-align: center; font-size: 2.6rem; font-weight: 800; color: var(--page-ink); line-height: 1.1; }
+  .pregunta .caja { display: inline-block; min-width: 2.2em; border: 4px solid var(--rim); background: var(--face); color: var(--ink); border-radius: 16px; padding: 0 10px; }
+  .pregunta .caja.ok { background: #CFF5DC; border-color: var(--ok); }
+  .pregunta .caja.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .pregunta .sub { display: block; font-size: 1.05rem; color: var(--page-ink); opacity: .85; }
+
+  .teclado { margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .teclado button { font-size: 1.7rem; padding: 4px 0; border-radius: 16px; }
+  .teclado .ok { background: var(--btn); }
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { flex: 1; font-size: 1.05rem; padding: 6px 0; border-radius: 16px; }
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 700; }
+
+  .reloj { margin-top: 10px; height: 16px; border: 3px solid var(--rim); border-radius: 999px; background: var(--face); overflow: hidden; }
+  .reloj div { height: 100%; background: var(--ok); width: 100%; transition: width .25s linear; }
+  .reloj.poco div { background: var(--bad); }
+  .marcas { margin-top: 6px; text-align: center; font-weight: 800; color: var(--page-ink); font-size: 1.1rem; }
+
+  .lista { margin-top: 10px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
+  .lista span { background: var(--face); border: 2px solid var(--rim); border-radius: 10px; text-align: center; font-size: .85rem; font-weight: 800; padding: 2px 0; opacity: .45; }
+  .lista span.bien { opacity: 1; background: #CFF5DC; }
+  .lista span.medio { opacity: 1; background: #FFF1B8; }
+
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.05rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🥭✖️🍍</div>
+  <h1>Tablas en la feria</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Multiplicar es juntar filas iguales. ¡Ayudá a acomodar la fruta en la feria del agricultor! Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo de juego">
+    <button data-modo="filas" aria-pressed="true">🥭 Filas de fruta</button>
+    <button data-modo="tabla" aria-pressed="false">📋 Tablas</button>
+    <button data-modo="reloj" aria-pressed="false">⏱️ Contra reloj</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tablas ancho" id="tablas" role="group" aria-label="Elegí la tabla" hidden></div>
+<div class="reloj ancho" id="reloj" hidden><div id="relojBarra"></div></div>
+<div class="marcas ancho" id="marcas" hidden></div>
+
+<div id="juego" class="ancho">
+  <div class="tramo" id="tramo" hidden></div>
+  <div class="pregunta" id="pregunta" aria-live="polite"></div>
+  <div class="teclado" id="teclado">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="borrar" aria-label="Borrar">⌫</button><button data-k="0">0</button><button data-k="ok" class="ok" aria-label="Revisar">✔️</button>
+  </div>
+  <div class="acciones">
+    <button id="ayudaBtn">💡 Ayuda</button>
+  </div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="lista ancho" id="lista" hidden></div>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { FRUTAS, preguntasTabla, preguntaMezcla, preguntasFilas, sumaRepetida, contarDeA, truco, estrellasTabla } from "../js/tablas.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "tablas-feria";
+const SEGUNDOS = 60;
+
+let prog = { tablas: {}, filas: 0, record: 0 };
+try { prog = { ...prog, ...JSON.parse(localStorage.getItem(CLAVE)) }; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(prog)); } catch (_) {} };
+
+let modo = "filas", tabla = 2, preguntas = [], k = 0, q = null, escrito = "", intentos = 0, errores = 0, resultados = [], fruta = FRUTAS[0];
+let bloqueado = false, fin = 0, timer = null, aciertos = 0;
+
+const totalEstrellas = () => Object.values(prog.tablas).reduce((a, b) => a + b, 0) + prog.filas;
+
+// ---------- Pintar ----------
+function pintarTablas() {
+  $("tablas").innerHTML = Array.from({ length: 10 }, (_, i) => i + 1).map(n =>
+    `<button data-tabla="${n}" aria-pressed="${n === tabla}" aria-label="Tabla del ${n}">×${n}<small>${"⭐".repeat(prog.tablas[n] || 0)}</small></button>`).join("");
+  $("stars").textContent = "⭐ " + totalEstrellas();
+}
+
+// resaltar: cuenta fila por fila; "pista" deja la última con «?» para que el niño haga el último paso
+function pintarTramo(a, b, resaltar = false) {
+  const tam = b > 8 ? "1.35rem" : b > 6 ? "1.6rem" : "1.9rem";
+  $("tramo").style.setProperty("--tam", tam);
+  $("tramo").innerHTML = Array.from({ length: a }, (_, f) =>
+    `<div class="fila ${resaltar ? "resaltar" : ""}"><b>${resaltar === "pista" && f === a - 1 ? "?" : resaltar ? b * (f + 1) : f + 1 + "ª"}</b>${Array.from({ length: b }, () => `<button class="fruta" aria-label="${fruta.n}">${fruta.e}</button>`).join("")}</div>`).join("")
+    + `<div class="cuenta">${a} ${a === 1 ? "fila" : "filas"} de ${b} ${fruta.n}</div>`;
+  $("tramo").hidden = false;
+}
+
+function pintarPregunta(estado = "") {
+  const sub = modo === "filas" ? `<span class="sub">¿${fruta.cuantas} ${fruta.n} hay en total?</span>` : "";
+  $("pregunta").innerHTML = `${q.a} × ${q.b} = <span class="caja ${estado}">${escrito || "?"}</span>${sub}`;
+}
+
+function pintarLista() {
+  if (modo !== "tabla") { $("lista").hidden = true; return; }
+  const hechas = {};
+  resultados.forEach(r => hechas[r.b] = r.ok ? "bien" : "medio");
+  $("lista").hidden = false;
+  $("lista").innerHTML = Array.from({ length: 10 }, (_, i) => i + 1)
+    .map(b => `<span class="${hechas[b] || ""}">${tabla}×${b}${hechas[b] ? "=" + tabla * b : ""}</span>`).join("");
+}
+
+// ---------- Preguntas ----------
+const vozDe = p => `¿Cuánto es ${p.a} por ${p.b}?`;
+
+function siguiente() {
+  escrito = ""; intentos = 0; bloqueado = false;
+  $("explica").hidden = true; feedback("");
+  if (modo === "reloj") q = preguntaMezcla([2, 3, 4, 5, 6, 7, 8, 9, 10], q);
+  else q = preguntas[k];
+  fruta = FRUTAS[Math.floor(Math.random() * FRUTAS.length)];
+  if (modo === "filas") pintarTramo(q.a, q.b); else $("tramo").hidden = true;
+  pintarPregunta(); pintarLista();
+  if (modo === "filas") instruccion(`Hay <b>${q.a} filas</b> de <b>${q.b}</b>. ¿${fruta.cuantas} hay en total?`, `En el tramo hay ${q.a} filas de ${q.b} ${fruta.n}. ¿${fruta.cuantas} hay en total? Podés tocar cada fruta para contar.`);
+  else if (modo === "tabla") instruccion(`Tabla del <b>${tabla}</b> · ${k + 1} de 10`, vozDe(q));
+  else decir(vozDe(q), aciertos === 0 ? { cola: true } : undefined); // la primera espera a la instrucción
+}
+
+function empezar() {
+  clearInterval(timer);
+  k = 0; errores = 0; resultados = []; aciertos = 0; q = null;
+  $("resumen").hidden = true; $("juego").hidden = false;
+  $("tablas").hidden = modo !== "tabla";
+  $("reloj").hidden = $("marcas").hidden = modo !== "reloj";
+  $("ayudaBtn").parentElement.hidden = modo === "reloj";
+  if (modo === "filas") preguntas = preguntasFilas();
+  if (modo === "tabla") { preguntas = preguntasTabla(tabla); pintarTablas(); }
+  if (modo === "reloj") {
+    fin = Date.now() + SEGUNDOS * 1000;
+    $("marcas").textContent = `✅ 0 · 🏆 Récord: ${prog.record}`;
+    timer = setInterval(tic, 250); tic();
+    instruccion(`⏱️ <b>${SEGUNDOS} segundos</b>: ¿cuántas podés?`, `Tenés ${SEGUNDOS} segundos. ¡Contestá todas las que podás!`);
+  }
+  siguiente();
+}
+
+function tic() {
+  const quedan = Math.max(0, fin - Date.now());
+  $("relojBarra").style.width = (quedan / (SEGUNDOS * 1000)) * 100 + "%";
+  $("reloj").classList.toggle("poco", quedan < 10000);
+  if (!quedan) terminarReloj();
+}
+
+// ---------- Responder ----------
+function revisar() {
+  if (!escrito || bloqueado) return;
+  const n = Number(escrito);
+  if (n === q.r) {
+    pintarPregunta("ok");
+    if (modo === "reloj") {
+      aciertos++; sonido("ok");
+      $("marcas").textContent = `✅ ${aciertos} · 🏆 Récord: ${Math.max(prog.record, aciertos)}`;
+      setTimeout(siguiente, 250);
+      return;
+    }
+    bloqueado = true;
+    resultados.push({ b: q.b, ok: intentos === 0 });
+    feedback("ok", "🎉", `${elogio()} ${q.a} × ${q.b} = ${q.r}`);
+    if (modo === "filas") { pintarTramo(q.a, q.b, true); explicar(`${sumaRepetida(q.a, q.b)} = ${q.r}. ¡Por eso ${q.a} × ${q.b} = ${q.r}!`, false); }
+    decir(`${elogio()} ${q.a} por ${q.b} es ${q.r}.`);
+    pintarLista();
+    setTimeout(avanzar, modo === "filas" ? 2600 : 1400);
+    return;
+  }
+  // Error
+  intentos++;
+  pintarPregunta("mal");
+  if (modo === "reloj") { sonido("mal"); escrito = ""; setTimeout(() => pintarPregunta(), 300); return; }
+  if (intentos === 1) {
+    feedback("almost", "🤔", "¡Casi! Probá otra vez.");
+    ayuda();
+    escrito = "";
+    setTimeout(() => pintarPregunta(), 500);
+  } else {
+    errores++; bloqueado = true;
+    resultados.push({ b: q.b, ok: false });
+    escrito = String(q.r); pintarPregunta("ok");
+    feedback("bad", "💡", `Es ${q.r}.`);
+    pintarTramo(q.a, q.b, true);
+    explicar(`${q.a} × ${q.b} = ${q.r}. ${modo === "filas" ? sumaRepetida(q.a, q.b) + " = " + q.r : truco(q.a, q.b)}`);
+    // Se repite al final para practicarla
+    if (modo === "tabla") preguntas.push({ ...q, repaso: true });
+    pintarLista();
+    setTimeout(avanzar, 3800);
+  }
+}
+
+function avanzar() {
+  k++;
+  if (k < preguntas.length) siguiente(); else terminar();
+}
+
+function explicar(txt, habla = true) {
+  $("explica").hidden = false; $("explica").textContent = "💡 " + txt;
+  if (habla) decir(txt.replace(/×/g, "por").replace(/−/g, "menos"), { cola: true });
+}
+
+function ayuda() {
+  if (bloqueado || !q) return;
+  if (modo === "filas") {
+    pintarTramo(q.a, q.b, "pista");
+    explicar(`Contá de ${q.b} en ${q.b}, una fila a la vez: ${contarDeA(q.a, q.b).slice(0, -1).join(", ")}… ¿y la última fila?`);
+  } else {
+    pintarTramo(q.a, q.b, false);
+    explicar(truco(q.a, q.b), true);
+  }
+}
+
+// ---------- Final ----------
+function terminar() {
+  $("juego").hidden = true; $("explica").hidden = true; feedback("");
+  const primeras = resultados.slice(0, 10);
+  const bien = primeras.filter(r => r.ok).length;
+  const n = estrellasTabla(primeras.length - bien);
+  let extra = "", sig = null;
+  if (modo === "tabla") {
+    if (n > (prog.tablas[tabla] || 0)) prog.tablas[tabla] = n;
+    if (tabla < 10) sig = tabla + 1;
+    extra = `<p>La tabla del ${tabla}: ${Array.from({ length: 10 }, (_, i) => `${tabla * (i + 1)}`).join(", ")}</p>`;
+  } else {
+    if (n > prog.filas) prog.filas = n;
+  }
+  guardar(); pintarTablas();
+  const msg = n === 3 ? "¡Perfecto! Te las sabés todas." : n === 2 ? "¡Muy bien! Ya casi." : n === 1 ? "¡Bien! Con práctica te van a salir solitas." : "¡Seguí practicando! Usá la ayuda 💡.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${bien} de ${primeras.length} a la primera</p><p>${msg}</p>${extra}
+    <div class="botones"><button id="otraBtn">🔄 Otra vez</button>${sig && n >= 2 ? `<button class="sig" id="sigBtn">Tabla del ${sig} ➡️</button>` : ""}${modo === "filas" && n >= 2 ? `<button class="sig" id="aTablasBtn">📋 A las tablas</button>` : ""}</div>`;
+  instruccion(`<b>¡Terminaste!</b>`, msg);
+  if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigBtn")?.addEventListener("click", () => { sonido("tap"); tabla = sig; empezar(); });
+  $("aTablasBtn")?.addEventListener("click", () => { sonido("tap"); cambiarModo("tabla"); });
+}
+
+function terminarReloj() {
+  clearInterval(timer); bloqueado = true;
+  const nuevo = aciertos > prog.record;
+  if (nuevo) { prog.record = aciertos; guardar(); }
+  $("juego").hidden = true; $("explica").hidden = true; feedback("");
+  $("resumen").hidden = false;
+  const msg = nuevo && aciertos ? `¡Nuevo récord: ${aciertos}!` : `Contestaste ${aciertos}. Tu récord es ${prog.record}.`;
+  $("resumen").innerHTML = `<div class="grande">⏱️ ${aciertos}</div><p>${msg}</p>
+    <div class="botones"><button class="sig" id="otraBtn">🔄 Otra vez</button></div>`;
+  $("marcas").textContent = `✅ ${aciertos} · 🏆 Récord: ${prog.record}`;
+  instruccion(`<b>¡Se acabó el tiempo!</b>`, msg);
+  sonido(nuevo ? "ok" : "tap");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+}
+
+// ---------- Eventos ----------
+$("teclado").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]");
+  if (!b || bloqueado || !q) return;
+  const t = b.dataset.k;
+  if (t === "ok") return revisar();
+  sonido("tap");
+  if (t === "borrar") escrito = escrito.slice(0, -1);
+  else if (escrito.length < 3) escrito = (escrito === "0" ? "" : escrito) + t;
+  pintarPregunta();
+});
+document.addEventListener("keydown", e => {
+  if ($("start").hidden === false || !q) return;
+  if (/^[0-9]$/.test(e.key)) $("teclado").querySelector(`[data-k="${e.key}"]`).click();
+  else if (e.key === "Backspace") $("teclado").querySelector('[data-k="borrar"]').click();
+  else if (e.key === "Enter") revisar();
+});
+$("tramo").addEventListener("click", e => {
+  const f = e.target.closest(".fruta");
+  if (!f) return;
+  f.classList.toggle("contada"); sonido("tap");
+  const n = $("tramo").querySelectorAll(".contada").length;
+  if (f.classList.contains("contada")) decir(String(n));
+});
+$("ayudaBtn").addEventListener("click", () => { sonido("tap"); ayuda(); });
+$("tablas").addEventListener("click", e => {
+  const b = e.target.closest("[data-tabla]");
+  if (!b) return;
+  sonido("tap"); tabla = Number(b.dataset.tabla); empezar();
+});
+
+function cambiarModo(m) {
+  modo = m;
+  document.querySelectorAll("#modos button").forEach(x => x.setAttribute("aria-pressed", x.dataset.modo === m ? "true" : "false"));
+  empezar();
+}
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  sonido("tap"); cambiarModo(b.dataset.modo);
+});
+
+const repetir = lento => decir(!$("resumen").hidden ? "Tocá otra vez o elegí otro modo arriba." : modo === "filas" ? `Hay ${q.a} filas de ${q.b} ${fruta.n}. ¿${fruta.cuantas} hay en total?` : vozDe(q), lento ? { rate: LENTO } : undefined);
+alEmpezar(() => empezar(), repetir);
+pintarTablas();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__tablas = { get q() { return q; }, get modo() { return modo; }, get k() { return k; }, get preguntas() { return preguntas; }, fin: () => { fin = Date.now(); } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

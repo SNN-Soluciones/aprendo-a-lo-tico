@@ -72,7 +72,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Pulpería: ¿cuánta plata hay? (contar un montón)
 - [ ] Pulpería: alcancía (¿qué puedo comprar sin pasarme?)
 - [ ] Cambiar billetes (¿cuántas de ₡500 hacen ₡5 000?)
-- [ ] ✖️ Tablas en la feria: multiplicación como filas de mangos en el tramo, con modo contra reloj · 2°–4°
+- [x] ✖️ Tablas en la feria: multiplicación como filas de fruta en el tramo, tablas del 1 al 10 con trucos, contra reloj · 2°–4°
 - [ ] 🥭 Repartiendo mangos: división arrastrando a canastas, el sobrante es el residuo · 3°–4°
 - [ ] 🍕 Fracciones con pizza y sandía: cortar, pintar la fracción y comparar · 3°–5°
 - [ ] Decimales con plata
@@ -81,7 +81,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 ## ✏️ Español
 
 - [ ] Lectura de oraciones cortas con audio
-- [ ] 🔤 Armo la oración: ordenar palabras, mayúscula y punto · 1°–2°
+- [x] 🧩 Armo la oración: ordenar palabras (con voz), punto/pregunta/emoción y mayúsculas · 1°–3°
 - [ ] Mayúsculas y puntuación
 - [ ] 🐝 Ortografía: b/v, s/c/z, h (completar la palabra + pista de la regla) · 3°–6°
 - [ ] 🦥 ¿Qué es? Sustantivo, verbo, adjetivo: clasificar en tres canastas · 3°–5°
@@ -91,7 +91,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] Animales de Costa Rica (hábitat, qué comen)
 - [ ] Animales: más animales (manatí, danta, pizote, tucán) con ilustraciones propias en vez de emoji
-- [ ] 🌱 Partes de la planta: arrastrar etiquetas (raíz, tallo, hoja, flor, fruto) · 1°–3°
+- [x] 🌱 Partes de la planta: explorar, ¿dónde está?, ¿para qué sirve? y ¿qué parte comemos? (la papa es tallo, el café es semilla) · 1°–3°
 - [ ] 🌳 Ecosistemas ticos: bosque nuboso, manglar, arrecife, páramo, bosque seco · 4°–6°
 - [ ] Cuerpo humano básico
 
@@ -99,7 +99,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] Provincias y cabeceras en mapa interactivo
 - [ ] Mapa: cantones por provincia (5°–6°), volcanes, ríos y parques nacionales
-- [ ] 🇨🇷 Símbolos patrios: memoria (guaria morada, yigüirro, guanacaste, carreta, antorcha…) · 1°–3°
+- [x] 🌸 Símbolos patrios: conocer los 12, memoria dibujo–nombre (4, 6 y 8 parejas) y adivinanzas · 1°–4°
+- [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
 - [ ] 📅 Efemérides: parejas fecha–evento (15 de setiembre, 25 de julio, 1° de diciembre, 12 de octubre…) · 2°–6°
 - [ ] Mi comunidad: servicios, oficios
 

@@ -83,7 +83,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Lectura de oraciones cortas con audio
 - [x] 🧩 Armo la oración: ordenar palabras (con voz), punto/pregunta/emoción y mayúsculas · 1°–3°
 - [ ] Mayúsculas y puntuación
-- [ ] 🐝 Ortografía: b/v, s/c/z, h (completar la palabra + pista de la regla) · 3°–6°
+- [x] 🐝 Ortografía: b/v, s/c/z y h con dibujo, voz y la regla (mb, nv, -aba, -bir, z→ces, hue-) · 3°–6°
 - [ ] 🦥 ¿Qué es? Sustantivo, verbo, adjetivo: clasificar en tres canastas · 3°–5°
 - [ ] 📖 Cuentos ticos cortos: comprensión lectora con cuentos originales (preguntas literales e inferenciales) · 2°–6°
 
@@ -92,7 +92,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Animales de Costa Rica (hábitat, qué comen)
 - [ ] Animales: más animales (manatí, danta, pizote, tucán) con ilustraciones propias en vez de emoji
 - [x] 🌱 Partes de la planta: explorar, ¿dónde está?, ¿para qué sirve? y ¿qué parte comemos? (la papa es tallo, el café es semilla) · 1°–3°
-- [ ] 🌳 Ecosistemas ticos: bosque nuboso, manglar, arrecife, páramo, bosque seco · 4°–6°
+- [x] 🌳 Ecosistemas de Costa Rica: ¿dónde vive?, ¿cómo es? y ¿dónde queda? · 3°–6°
+- [x] 🧊 Sólido, líquido o gaseoso: estados y cambios (derretir, congelar, evaporar, condensar) · 1°–4°
 - [ ] Cuerpo humano básico
 
 ## 🗺️ Estudios Sociales
@@ -101,7 +102,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Mapa: cantones por provincia (5°–6°), volcanes, ríos y parques nacionales
 - [x] 🌸 Símbolos patrios: conocer los 12, memoria dibujo–nombre (4, 6 y 8 parejas) y adivinanzas · 1°–4°
 - [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
-- [ ] 📅 Efemérides: parejas fecha–evento (15 de setiembre, 25 de julio, 1° de diciembre, 12 de octubre…) · 2°–6°
+- [x] 📅 Efemérides: ¿qué se celebra?, ¿qué día es? y ¿por qué? (15 fechas) · 2°–6°
 - [ ] Mi comunidad: servicios, oficios
 
 ## 💬 Inglés

@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Dato u opinión?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; --dato: #1E6FD9; --opinion: #9C4DCC; }
+  .ancho { width: min(96vw, 560px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos .est { font-size: .75rem; letter-spacing: -1px; }
+
+  .avance { margin-top: 8px; display: flex; gap: 5px; justify-content: center; flex-wrap: wrap; }
+  .avance span { width: 16px; height: 16px; border-radius: 50%; background: var(--face); border: 3px solid var(--rim); }
+  .avance .ya-bien { background: var(--ok); }
+  .avance .ya-medio { background: var(--almost); }
+  .avance .ya-mal { background: var(--bad); }
+  .avance .ahora { outline: 3px solid var(--btn); outline-offset: 2px; }
+
+  .frase { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 16px 18px;
+    font-size: 1.45rem; font-weight: 800; line-height: 1.35; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .frase.mensaje { text-align: left; font-size: 1.2rem; font-weight: 700; border-radius: 22px 22px 22px 6px; background: #E9FFE0; position: relative; padding-top: 30px; }
+  .frase.mensaje::before { content: "📱 Mensaje recibido"; position: absolute; top: 6px; left: 16px; font-size: .8rem; color: #4F7A43; font-weight: 800; }
+  .frase .w { display: inline-block; border: 3px solid transparent; background: none; box-shadow: none; padding: 0 3px; margin: 1px 0; font: inherit; color: inherit; border-radius: 10px; cursor: pointer; }
+  .frase .w:hover { background: #FFF6DA; }
+  .frase .w:active { transform: none; }
+  .frase .w.pista { background: #FFE66D; border-color: #D9A400; }
+  .frase .w.toque-mal { background: #FFE3E0; border-color: var(--bad); }
+  .frase .w:disabled { opacity: 1; cursor: default; }
+
+  .opciones { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+  .opciones button { font-size: 1.2rem; padding: 10px 6px; border-radius: 18px; line-height: 1.15; }
+  .opciones button small { display: block; font-size: .8rem; font-weight: 700; opacity: .8; }
+  .opciones button.right { background: #CFF5DC; }
+  .opciones button.wrong { background: #FFE3E0; }
+
+  .senales { margin-top: 12px; }
+  .senales h2 { font-size: 1.1rem; margin: 0 0 6px; color: var(--page-ink); text-align: center; }
+  .senales .lista { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .senales button { text-align: left; font-size: 1rem; padding: 6px 10px; border-radius: 14px; line-height: 1.15; }
+  .senales button small { display: block; font-size: .78rem; font-weight: 700; opacity: .8; }
+  .senales button[aria-pressed="true"] { background: #FFE0B2; outline: 3px solid #E07000; }
+  .senales button.bien { background: #CFF5DC; outline: 3px solid var(--ok); }
+  .senales button.falto { background: #FFF6DA; outline: 3px dashed var(--almost); }
+  .senales button.sobro { background: #FFE3E0; outline: 3px solid var(--bad); text-decoration: line-through; }
+  #revisarBtn { margin-top: 10px; width: 100%; font-size: 1.2rem; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  #sigBtn { margin-top: 10px; width: 100%; font-size: 1.3rem; background: var(--btn); animation: pulse 1.2s ease-in-out infinite; }
+
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 16px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.1rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  .opciones button:disabled, .senales button:disabled { opacity: .55; }
+  .opciones button.right, .opciones button.wrong, .senales button.bien, .senales button.falto, .senales button.sobro { opacity: 1; }
+  body { padding-bottom: 90px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">📏💭📱</div>
+  <h1>¿Dato u opinión?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Un <b>dato</b> se puede comprobar. Una <b>opinión</b> es lo que alguien piensa. ¡Aprendé a distinguirlos y a detectar noticias falsas! Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Etapas"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="avance ancho" id="avance" aria-hidden="true"></div>
+<div id="juego" class="ancho">
+  <div class="frase" id="frase" aria-live="polite"></div>
+  <div class="opciones" id="opciones"></div>
+  <div class="senales" id="senales" hidden>
+    <h2>🚩 ¿Qué señales de alerta tiene? Marcá todas las que veás.</h2>
+    <div class="lista" id="listaSenales"></div>
+    <button id="revisarBtn">✔️ Revisar</button>
+  </div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Siguiente ➡️</button>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { ETAPAS, SENALES, ronda, respuesta, palabras, pistasDe, limpio, revisarSenales, estrellasDe } from "../js/datos.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "dato-opinion";
+const BOTONES = {
+  clasificar: [["dato", "📏 Dato", "se puede comprobar"], ["opinion", "💭 Opinión", "es lo que alguien piensa"]],
+  verdad: [["verdadero", "✅ Dato verdadero", ""], ["falso", "❌ Dato falso", ""], ["opinion", "💭 Opinión", ""]],
+  noticias: [["confiable", "🔍 Confiable", ""], ["sospechosa", "🚩 Sospechoso", ""]],
+};
+
+let mejores = {};  // { etapaId: mejores estrellas }
+try { mejores = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(mejores)); } catch (_) {} };
+
+let etapa = ETAPAS[0], preguntas = [], k = 0, puntos = 0, resultados = [], respondida = false;
+const p = () => preguntas[k];
+
+// ---------- Pintar ----------
+function pintarModos() {
+  $("modos").innerHTML = ETAPAS.map(e => {
+    const n = mejores[e.id] || 0;
+    return `<button data-etapa="${e.id}" aria-pressed="${e === etapa}">${e.emoji} ${e.nombre}${n ? ` <span class="est">${"⭐".repeat(n)}</span>` : ""}</button>`;
+  }).join("");
+  $("stars").textContent = "⭐ " + Object.values(mejores).reduce((a, b) => a + b, 0);
+}
+function pintarAvance() {
+  $("avance").innerHTML = preguntas.map((_, i) =>
+    `<span class="${i < resultados.length ? ["ya-mal", "ya-medio", "ya-bien"][resultados[i] === 1 ? 2 : resultados[i] > 0 ? 1 : 0] : ""} ${i === k && !$("resumen").textContent ? "ahora" : ""}"></span>`).join("");
+}
+
+function vozPregunta() {
+  const q = p();
+  return etapa.voz + " " + limpio(q.t);
+}
+
+function mostrar() {
+  respondida = false;
+  const q = p();
+  $("juego").hidden = false; $("resumen").hidden = true; $("resumen").textContent = "";
+  $("explica").hidden = true; $("sigBtn").hidden = true; $("senales").hidden = true; feedback("");
+  $("frase").className = "frase" + (q.tipo === "noticia" ? " mensaje" : "");
+  if (etapa.id === "pista") {
+    $("frase").innerHTML = palabras(q.t).map((w, i) => `<button class="w" data-w="${i}">${w.w}</button>`).join(" ");
+    $("opciones").innerHTML = "";
+  } else {
+    $("frase").textContent = limpio(q.t);
+    $("opciones").innerHTML = BOTONES[etapa.id].map(([r, txt, sub]) => `<button data-r="${r}">${txt}${sub ? `<small>${sub}</small>` : ""}</button>`).join("");
+  }
+  pintarAvance();
+  instruccion(etapa.instr, vozPregunta());
+}
+
+function explicar(texto, habla = true) {
+  $("explica").hidden = false; $("explica").innerHTML = texto;
+  if (habla) decir(texto.replace(/<[^>]+>/g, ""), { cola: true });
+}
+
+function listo(pts) {
+  respondida = true;
+  puntos += pts; resultados.push(pts);
+  pintarAvance();
+  $("opciones").querySelectorAll("button").forEach(b => b.disabled = true);
+  $("frase").querySelectorAll("button").forEach(b => b.disabled = true);
+  $("sigBtn").hidden = false;
+  $("sigBtn").textContent = k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
+}
+
+// ---------- Explicaciones ----------
+function porQue(q) {
+  if (q.tipo === "opinion") {
+    const ps = pistasDe(q.t).map(x => `«${x}»`).join(" y ");
+    return `💭 Es una <b>opinión</b>: ${ps} muestra lo que alguien piensa. Otra persona puede pensar distinto, y no se puede comprobar.`;
+  }
+  if (q.tipo === "dato") return q.v ? `📏 Es un <b>dato${etapa.id === "verdad" ? " verdadero" : ""}</b>: ${q.como[0].toLowerCase() + q.como.slice(1)}` : `📏 Es un <b>dato falso</b>: se puede comprobar, ¡y no es cierto! ${q.real}`;
+  return (q.ok ? "🔍 Es <b>confiable</b>: " : "🚩 Es <b>sospechoso</b>: ") + q.porque;
+}
+
+// ---------- Responder ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-r]");
+  if (!b || respondida) return;
+  const q = p(), bien = respuesta(q, etapa.id);
+  const acerto = b.dataset.r === bien;
+  $("opciones").querySelectorAll("[data-r]").forEach(x => { if (x.dataset.r === bien) x.classList.add("right"); });
+  if (!acerto) b.classList.add("wrong");
+
+  // En el detector, si dijo «sospechoso» y lo era, falta marcar las señales
+  if (etapa.id === "noticias" && acerto && !q.ok) {
+    respondida = true;
+    $("opciones").querySelectorAll("button").forEach(x => x.disabled = true);
+    feedback("ok", "🚩", "¡Bien! Es sospechoso.");
+    $("listaSenales").innerHTML = SENALES.map(s => `<button data-s="${s.id}" aria-pressed="false">${s.emoji} ${s.nombre}<small>${s.ayuda}</small></button>`).join("");
+    $("senales").hidden = false; $("revisarBtn").hidden = false;
+    decir("¡Bien! Es sospechoso. Ahora marcá las señales de alerta que tiene y tocá revisar.");
+    return;
+  }
+  if (acerto) { feedback("ok", "🎉", elogio()); } else { feedback("bad", "🤔", "¡Casi! Mirá por qué:"); }
+  listo(acerto ? 1 : 0);
+  explicar(porQue(q));
+  if (etapa.id === "noticias" && !q.ok) mostrarSenalesCorrectas(q);
+});
+
+function mostrarSenalesCorrectas(q) {
+  $("listaSenales").innerHTML = SENALES.filter(s => q.senales.includes(s.id))
+    .map(s => `<button class="bien" disabled>${s.emoji} ${s.nombre}<small>${s.ayuda}</small></button>`).join("");
+  $("senales").hidden = false; $("revisarBtn").hidden = true;
+}
+
+$("listaSenales").addEventListener("click", e => {
+  const b = e.target.closest("[data-s]");
+  if (!b || b.disabled) return;
+  sonido("tap");
+  b.setAttribute("aria-pressed", b.getAttribute("aria-pressed") === "true" ? "false" : "true");
+});
+
+$("revisarBtn").addEventListener("click", () => {
+  const q = p();
+  const elegidas = [...$("listaSenales").querySelectorAll('[aria-pressed="true"]')].map(b => b.dataset.s);
+  if (!elegidas.length) { feedback("almost", "👆", "Marcá al menos una señal."); decir("Marcá al menos una señal de alerta."); return; }
+  const r = revisarSenales(elegidas, q.senales);
+  $("listaSenales").querySelectorAll("[data-s]").forEach(b => {
+    const s = b.dataset.s; b.disabled = true; b.setAttribute("aria-pressed", "false");
+    if (r.bien.includes(s)) b.classList.add("bien"); else if (r.faltan.includes(s)) b.classList.add("falto"); else if (r.sobran.includes(s)) b.classList.add("sobro");
+  });
+  $("revisarBtn").hidden = true;
+  // Reconocer que es sospechoso ya vale medio punto; las señales, el otro medio
+  const pts = r.exacto ? 1 : r.bien.length ? 0.75 : 0.5;
+  if (r.exacto) feedback("ok", "🕵️", "¡Encontraste todas las señales!");
+  else feedback("almost", "🔎", `Encontraste ${r.bien.length} de ${q.senales.length} señales${r.sobran.length ? " y marcaste alguna de más" : ""}.`);
+  listo(pts);
+  explicar(porQue(q) + (r.exacto ? "" : "<br>🟡 Las punteadas son las que faltaron."));
+});
+
+$("frase").addEventListener("click", e => {
+  const b = e.target.closest("[data-w]");
+  if (!b || respondida || etapa.id !== "pista") return;
+  const ws = palabras(p().t), acerto = ws[Number(b.dataset.w)].pista;
+  $("frase").querySelectorAll("[data-w]").forEach(x => { if (ws[Number(x.dataset.w)].pista) x.classList.add("pista"); });
+  if (acerto) feedback("ok", "🎉", elogio());
+  else { b.classList.add("toque-mal"); feedback("bad", "🤔", "¡Casi! La pista está marcada en amarillo."); }
+  listo(acerto ? 1 : 0);
+  explicar(porQue(p()));
+});
+
+$("sigBtn").addEventListener("click", () => {
+  sonido("tap");
+  k++;
+  if (k < preguntas.length) mostrar(); else terminar();
+});
+
+// ---------- Rondas ----------
+function empezar(e = etapa) {
+  etapa = e; preguntas = ronda(e.id); k = 0; puntos = 0; resultados = [];
+  pintarModos(); mostrar();
+}
+
+function terminar() {
+  const n = estrellasDe(puntos, preguntas.length);
+  const antes = mejores[etapa.id] || 0;
+  if (n > antes) { mejores[etapa.id] = n; guardar(); }
+  const i = ETAPAS.indexOf(etapa), siguiente = ETAPAS[i + 1];
+  $("juego").hidden = true; $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  const correctas = resultados.filter(x => x === 1).length;
+  const msg = n === 3 ? "¡Excelente! Sos un detective de la información." : n === 2 ? "¡Muy bien! Vas aprendiendo a distinguir." : n === 1 ? "¡Bien! Con práctica te va a salir cada vez mejor." : "¡Seguí practicando! Cada ronda se aprende algo.";
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${correctas} de ${preguntas.length} perfectas</p><p>${msg}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra ronda</button>${siguiente && n >= 2 ? `<button class="sig" id="sigEtapaBtn">${siguiente.emoji} Siguiente etapa</button>` : ""}</div>`;
+  pintarModos(); pintarAvance();
+  instruccion(`<b>${etapa.nombre}</b> terminada`, `${msg} ${siguiente && n >= 2 ? "Podés pasar a la siguiente etapa." : ""}`);
+  if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigEtapaBtn")?.addEventListener("click", () => { sonido("tap"); empezar(siguiente); });
+}
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-etapa]");
+  if (!b) return;
+  sonido("tap");
+  empezar(ETAPAS.find(x => x.id === b.dataset.etapa));
+});
+
+const repetir = lento => decir($("resumen").hidden ? vozPregunta() : "Tocá otra ronda o elegí una etapa arriba.", lento ? { rate: LENTO } : undefined);
+alEmpezar(() => empezar(), repetir);
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__datos = { get p() { return p(); }, get etapa() { return etapa.id; }, get puntos() { return puntos; }, respuesta };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

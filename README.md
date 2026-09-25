@@ -28,6 +28,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🐆 El jaguar detective | Pensamiento lógico | 1° a 6° | `public/juegos/jaguar.html` |
 | 🐸 Sudoku de ranitas | Pensamiento lógico | 1° a 6° | `public/juegos/sudoku-ranas.html` |
 | ❌ Gato contra el jaguar | Pensamiento lógico | Prepa a 6° | `public/juegos/gato.html` |
+| 📰 ¿Dato u opinión? | Pensamiento lógico | 3° a 6° | `public/juegos/dato-opinion.html` |
 
 ## Estructura
 
@@ -35,7 +36,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 aprendo-a-lo-tico/
 ├── .do/app.yaml            # Spec de DigitalOcean App Platform
 ├── public/                 # Todo lo que se publica (sitio estático, sin build)
-│   ├── index.html          # Inicio: filtros por materia y grado
+│   ├── index.html          # Inicio: menú de categorías (☰) y filtro por grado
 │   ├── apoyar.html         # Página de donación por SINPE Móvil
 │   ├── 404.html
 │   ├── manifest.webmanifest
@@ -54,6 +55,7 @@ aprendo-a-lo-tico/
 │   ├── js/sudoku.js        # 🐸 Generador de sudokus (una sola solución, sin adivinar) y pistas
 │   ├── js/ranas-svg.js     # 🐸 Dibujos SVG de las ranitas de Costa Rica
 │   ├── js/gato.js          # ❌⭕ Gato: jugadas del jaguar (fácil, medio, perfecto) y consejos
+│   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido

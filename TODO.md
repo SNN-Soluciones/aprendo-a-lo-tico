@@ -128,7 +128,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🐆 Más casos y libretas de 4 × 4
 - [x] 🐸 Sudoku de ranitas de Costa Rica (4×4 y 6×6, 5 dificultades, pistas que explican el razonamiento)
 - [ ] 🐸 Sudoku: modo con números o letras para 6°, y sudoku del día
-- [ ] 📰 ¿Dato u opinión? (detectar noticias falsas)
+- [x] 📰 ¿Dato u opinión? (4 etapas: clasificar, palabra pista, verdadero/falso y detector de noticias con señales de alerta)
 - [x] ❌⭕ Gato contra el jaguar (fácil, medio, difícil que nunca pierde, 2 jugadores, consejos que explican)
 - [ ] ♟️ Estrategia contra el jaguar: quitar piedras (Nim) y cuatro en línea
 - [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)

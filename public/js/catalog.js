@@ -6,6 +6,7 @@ export const MATERIAS = [
   { id: "sociales", nombre: "Estudios Sociales", emoji: "🗺️", color: "#F29A1F" },
   { id: "ingles",   nombre: "Inglés",            emoji: "💬", color: "#8E5BD9" },
   { id: "prog",     nombre: "Programación",      emoji: "💻", color: "#14A3A3" },
+  { id: "logica",   nombre: "Pensamiento lógico", emoji: "🧠", color: "#D9731F" },
 ];
 
 // 0 = Preparatoria (materno/transición), 1..6 = grados de primaria
@@ -145,5 +146,14 @@ export const JUEGOS = [
     materia: "prog",
     grados: [4, 5, 6],
     url: "juegos/lapa.html",
+  },
+  {
+    id: "jaguar",
+    titulo: "El jaguar detective",
+    descripcion: "Leé las pistas, tachá sospechosos y descubrí al culpable. ¡Pensamiento crítico con animales ticos!",
+    emoji: "🐆",
+    materia: "logica",
+    grados: [1, 2, 3, 4, 5, 6],
+    url: "juegos/jaguar.html",
   },
 ];

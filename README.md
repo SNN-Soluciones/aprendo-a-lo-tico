@@ -25,6 +25,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🦥 Llevá al perezoso | Programación | Prepa a 2° | `public/juegos/perezoso.html` |
 | 🔁 Repetí y decidí | Programación | 2° a 4° | `public/juegos/repeti-decidi.html` |
 | 🦜 La lapa que dibuja | Programación | 4° a 6° | `public/juegos/lapa.html` |
+| 🐆 El jaguar detective | Pensamiento lógico | 1° a 6° | `public/juegos/jaguar.html` |
 
 ## Estructura
 
@@ -47,6 +48,7 @@ aprendo-a-lo-tico/
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"
+│   ├── js/detective.js     # 🐆 Animales, casos y verificador de "El jaguar detective"
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido
@@ -191,6 +193,15 @@ node --input-type=module -e 'import { NIVELES, leer, ejecutar } from "./js/decid
 ### La lapa que dibuja (Blockly)
 
 Usa [Blockly](https://github.com/google/blockly), la librería de bloques de Google (licencia Apache 2.0). Está copiada en `public/vendor/blockly/` (núcleo, español y `media/`), sin descargar nada de internet. Los bloques propios (`avanzar`, `girar`, `repetir`, `color`, `lápiz`, `grosor`) se definen en `juegos/lapa.html`. La lógica está en `js/lapa.js`: cada reto trae una `solucion` que dibuja la meta y fija las 3 estrellas. El dibujo del niño se compara con la meta sin importar el orden ni los colores.
+
+### Casos del jaguar detective
+
+En `public/js/detective.js`. Cada animal tiene sus características (`cubierta`, `vuela`, `patas`, `vive`, `come`, `color`, `noche`), y cada pista es una frase más una función que dice si el animal la cumple. Hay dos tipos de caso: **sospechosos** (tachar y acusar) y **libreta** (cuadro de doble entrada). `trampa` marca la pista 🐞 que no sirve. Para comprobar que cada caso tiene una sola respuesta y que ninguna pista sobra:
+
+```bash
+cd public
+node --input-type=module -e 'import { CASOS, revisarCaso } from "./js/detective.js"; CASOS.forEach(c => console.log(c.id, revisarCaso(c).join("; ") || "✓"))'
+```
 
 ### Guía de estilo de los juegos
 

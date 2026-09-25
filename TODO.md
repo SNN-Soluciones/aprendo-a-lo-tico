@@ -122,6 +122,15 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🦜 Lapa: variables y «para cada» (espirales), y compartir el dibujo por WhatsApp
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 
+## 🧠 Pensamiento lógico y crítico
+
+- [x] 🐆 El jaguar detective: 18 casos en 4 etapas (pistas, pistas con NO, libreta de doble entrada, casos con «o» y «si… entonces»), con 🐞 pistas trampa
+- [ ] 🐆 Más casos y libretas de 4 × 4
+- [ ] 🧩 Sudoku de animales ticos (4×4 y 6×6)
+- [ ] 📰 ¿Dato u opinión? (detectar noticias falsas)
+- [ ] ♟️ Estrategia contra el jaguar (quitar piedras, tres en línea)
+- [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)
+
 ## 👨‍👩‍👧 Perfiles y progreso (local)
 
 - [ ] Perfiles por niño (nombre + avatar) en `localStorage`

@@ -8,7 +8,7 @@ const mayus = t => t[0].toLocaleUpperCase("es") + t.slice(1);
 const otro = (arr, x, rnd) => { let y; do y = elegir(arr, rnd); while (y === x); return y; };
 
 // ---------- Datos ----------
-const CABECERAS = [["San José", "San José"], ["Alajuela", "Alajuela"], ["Cartago", "Cartago"], ["Heredia", "Heredia"],
+export const CABECERAS = [["San José", "San José"], ["Alajuela", "Alajuela"], ["Cartago", "Cartago"], ["Heredia", "Heredia"],
   ["Guanacaste", "Liberia"], ["Puntarenas", "Puntarenas"], ["Limón", "Limón"]];
 
 const MEDIDAS = [

@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Preparate para el examen</title>
+<meta name="description" content="Armá un examen de práctica: elegí la materia, el grado y los temas que vienen en el examen.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prepa.css">
+<link rel="stylesheet" href="css/quiz.css">
+<style>
+  :root { --materia: #1F3A5F; }
+  /* 🏠 arriba (abajo tapaba la barra de Entregar) */
+  .home-link { position: static; align-self: flex-start; margin: 0 0 4px; }
+  .ancho { width: min(96vw, 620px); }
+  h1 { margin: 6px 0 0; color: var(--page-ink); font-size: clamp(1.6rem, 7vw, 2.2rem); text-align: center; line-height: 1.1; }
+  .sub { text-align: center; color: var(--page-ink); font-weight: 700; margin: 4px 0 0; }
+
+  /* Armar el examen */
+  .paso { margin-top: 14px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 20px; padding: 10px 14px 14px; box-shadow: 0 5px 0 var(--rim); }
+  .paso h2 { margin: 0 0 8px; font-size: 1.15rem; }
+  .paso h2 .n { display: inline-flex; width: 1.6em; height: 1.6em; align-items: center; justify-content: center; border-radius: 50%; background: var(--btn); border: 3px solid var(--rim); margin-right: 6px; font-size: .9rem; }
+  .paso input[type=text] { font: inherit; font-weight: 700; font-size: 1.1rem; width: 100%; padding: 8px 12px; border: 3px solid var(--rim); border-radius: 14px; color: var(--ink); }
+  .grupo { display: flex; flex-wrap: wrap; gap: 8px; }
+  .grupo button { padding: 5px 12px; font-size: 1rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); line-height: 1.1; }
+  .grupo button small { display: block; font-size: .72rem; font-weight: 700; opacity: .75; }
+  .grupo button[aria-pressed="true"] { background: var(--btn); }
+  .grupo button:disabled { opacity: .4; }
+  .grupo.temas button { flex: 1 1 45%; text-align: left; border-radius: 14px; }
+  .grupo.temas button[aria-pressed="true"]::after { content: " ✔"; }
+  .nota-temas { margin: 8px 0 0; font-weight: 700; font-size: .95rem; }
+  #crearBtn { margin-top: 16px; width: 100%; font-size: 1.35rem; background: var(--ok); color: #fff; border-color: #1D6B3A; box-shadow: 0 5px 0 #1D6B3A; }
+  #crearBtn:disabled { background: #D5DDE5; color: #7C8B99; border-color: #9DB3C9; box-shadow: 0 5px 0 #9DB3C9; opacity: 1; }
+  .historial { margin-top: 12px; font-weight: 700; color: var(--page-ink); font-size: .95rem; }
+  .historial li { margin: 2px 0; }
+
+  /* El examen */
+  .hoja-titulo { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 20px; padding: 10px 14px; box-shadow: 0 5px 0 var(--rim); text-align: center; }
+  .hoja-titulo b { display: block; font-size: 1.3rem; }
+  .seccion { margin-top: 16px; }
+  .seccion > h3 { margin: 0 0 6px; color: var(--page-ink); font-size: 1.15rem; }
+  .preg { margin-top: 10px; background: var(--face); color: var(--ink); border: 3px solid var(--rim); border-radius: 16px; padding: 10px 12px; }
+  .preg.contestada { border-color: var(--ok); }
+  .preg .enunciado { display: flex; gap: 8px; align-items: flex-start; font-weight: 800; font-size: 1.12rem; line-height: 1.3; }
+  .preg .num { flex: none; background: var(--rim); color: #fff; border-radius: 10px; padding: 0 8px; font-size: .95rem; }
+  .preg .enunciado .t { flex: 1; }
+  .preg .leer { flex: none; padding: 0 6px; font-size: 1rem; border-width: 2px; box-shadow: none; }
+  .preg .ops { margin-top: 8px; display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); }
+  .preg .ops button { font-size: 1rem; padding: 6px 8px; border-radius: 12px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); text-align: left; line-height: 1.2; }
+  .preg .ops button[aria-pressed="true"] { background: #FFE9A8; outline: 3px solid var(--btn); }
+  .preg input { margin-top: 8px; font: inherit; font-weight: 800; font-size: 1.3rem; width: 11em; max-width: 100%; padding: 4px 10px; border: 3px solid var(--rim); border-radius: 12px; color: var(--ink); }
+  .barra-entregar { position: sticky; bottom: 0; margin-top: 16px; padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); background: var(--bg); display: flex; gap: 8px; align-items: center; }
+  .barra-entregar span { font-weight: 800; color: var(--page-ink); flex: 1; }
+  #entregarBtn { font-size: 1.2rem; background: var(--ok); color: #fff; border-color: #1D6B3A; box-shadow: 0 4px 0 #1D6B3A; }
+
+  /* Resultado */
+  .nota { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .nota .grande { font-size: 3.4rem; font-weight: 800; line-height: 1; }
+  .nota p { margin: 6px 0; font-weight: 700; }
+  .por-tema { margin-top: 10px; display: grid; gap: 6px; }
+  .por-tema div { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; font-weight: 800; color: var(--page-ink); }
+  .por-tema .b { grid-column: 1 / -1; height: 12px; background: var(--face); border: 2px solid var(--rim); border-radius: 999px; overflow: hidden; }
+  .por-tema .b i { display: block; height: 100%; background: var(--ok); }
+  .por-tema .b i.medio { background: var(--almost); }
+  .por-tema .b i.bajo { background: var(--bad); }
+  .acciones-res { margin-top: 12px; display: grid; gap: 8px; grid-template-columns: 1fr 1fr; }
+  .acciones-res button { font-size: 1rem; padding: 8px 6px; border-radius: 16px; }
+  .acciones-res .principal { background: var(--btn); }
+  .revision h3 { color: var(--page-ink); margin: 16px 0 4px; }
+  .rev { margin-top: 8px; background: var(--face); color: var(--ink); border: 3px solid var(--bad); border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  .rev.bien { border-color: var(--ok); }
+  .rev .q { font-weight: 800; }
+  .rev .tu { color: var(--bad); }
+  .rev .ok { color: #1D6B3A; }
+  .rev .por { font-size: .95rem; opacity: .9; }
+
+  /* 🖨️ Para imprimir */
+  #imprimir { display: none; }
+  @page { margin: 1.6cm; }
+  @media print {
+    body > *:not(#imprimir) { display: none !important; }
+    body { background: #fff; padding: 0; display: block; }
+    #imprimir { display: block; color: #000; font-family: "Baloo 2", Arial, sans-serif; }
+    #imprimir h1 { color: #000; text-align: left; font-size: 20pt; }
+    #imprimir .datos { display: flex; gap: 24px; font-size: 12pt; margin-bottom: 8px; }
+    #imprimir h2 { font-size: 14pt; border-bottom: 2px solid #000; margin: 14px 0 6px; }
+    #imprimir ol { margin: 0; padding-left: 34px; }
+    #imprimir li { margin: 0 0 10px; font-size: 12pt; break-inside: avoid; }
+    #imprimir .lineas { display: block; border-bottom: 1px solid #000; width: 45%; height: 18px; }
+    #imprimir .opciones-p span { display: inline-block; margin-right: 18px; }
+    #imprimir .respuestas { break-before: page; }
+  }
+</style>
+</head>
+<body>
+<a class="home-link" href="index.html" aria-label="Volver al inicio">🏠</a>
+
+<!-- 1️⃣ Armar el examen -->
+<div id="config" class="ancho">
+  <h1>📝 Preparate para el examen</h1>
+  <p class="sub">Elegí lo que viene en el examen y practicá. Cada vez salen preguntas nuevas.</p>
+
+  <div class="paso">
+    <h2><span class="n">1</span>¿Para quién es? <small>(opcional)</small></h2>
+    <input type="text" id="nombre" maxlength="30" placeholder="Por ejemplo: Samantha" autocomplete="off">
+  </div>
+  <div class="paso">
+    <h2><span class="n">2</span>¿En qué grado está?</h2>
+    <div class="grupo" id="grados"></div>
+  </div>
+  <div class="paso">
+    <h2><span class="n">3</span>¿De qué materia es el examen?</h2>
+    <div class="grupo" id="materias"></div>
+  </div>
+  <div class="paso">
+    <h2><span class="n">4</span>¿Qué temas vienen? <small>(de 2 a 5)</small></h2>
+    <div class="grupo temas" id="temas"></div>
+    <p class="nota-temas" id="notaTemas"></p>
+  </div>
+  <div class="paso">
+    <h2><span class="n">5</span>¿Cuántas preguntas por tema?</h2>
+    <div class="grupo" id="cantidades"></div>
+  </div>
+  <button id="crearBtn" disabled>📝 Crear examen</button>
+  <ul class="historial" id="historial"></ul>
+</div>
+
+<!-- 2️⃣ El examen -->
+<div id="examen" class="ancho" hidden>
+  <div class="hoja-titulo" id="hojaTitulo"></div>
+  <div id="secciones"></div>
+  <div class="barra-entregar">
+    <span id="cuenta"></span>
+    <button id="imprimirBtn" aria-label="Imprimir el examen">🖨️</button>
+    <button id="entregarBtn">✅ Entregar</button>
+  </div>
+</div>
+
+<!-- 3️⃣ Resultado -->
+<div id="resultado" class="ancho" hidden></div>
+
+<div id="imprimir" aria-hidden="true"></div>
+
+<script type="module">
+import { decir } from "./js/prepa.js";
+import { sonido } from "./js/voz.js";
+import { MATERIAS_EXAMEN, temasPara, armarExamen, revisar, nota } from "./js/examen-temas.js";
+
+const $ = id => document.getElementById(id);
+const GRADOS = [[1, "6–7 años"], [2, "7–8 años"], [3, "8–9 años"], [4, "9–10 años"], [5, "10–11 años"], [6, "11–12 años"]];
+const CANTIDADES = [3, 5, 10];
+const limpio = t => t.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+
+let cfg = { nombre: "", grado: 3, materia: "mate", temas: [], porTema: 5 };
+try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem("examen-config")) }; } catch (_) {}
+let historial = [];
+try { historial = JSON.parse(localStorage.getItem("examen-historial")) || []; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("examen-config", JSON.stringify(cfg)); localStorage.setItem("examen-historial", JSON.stringify(historial.slice(0, 8))); } catch (_) {} };
+
+let secciones = [], respuestas = {}, avisado = false;
+const materia = () => MATERIAS_EXAMEN.find(m => m.id === cfg.materia);
+
+// ---------- 1️⃣ Armar ----------
+function pintarConfig() {
+  $("nombre").value = cfg.nombre;
+  $("grados").innerHTML = GRADOS.map(([g, edad]) => `<button data-g="${g}" aria-pressed="${g === cfg.grado}">${g}°<small>${edad}</small></button>`).join("");
+  $("materias").innerHTML = MATERIAS_EXAMEN.map(m => `<button data-m="${m.id}" aria-pressed="${m.id === cfg.materia}">${m.emoji} ${m.nombre}</button>`).join("");
+  const disponibles = temasPara(cfg.materia, cfg.grado);
+  cfg.temas = cfg.temas.filter(id => disponibles.some(t => t.id === id));
+  $("temas").innerHTML = disponibles.map(t => {
+    const on = cfg.temas.includes(t.id);
+    return `<button data-t="${t.id}" aria-pressed="${on}" ${!on && cfg.temas.length >= 5 ? "disabled" : ""}>${t.emoji} ${t.nombre}</button>`;
+  }).join("");
+  const n = cfg.temas.length;
+  $("notaTemas").textContent = n < 2 ? `Elegí ${n ? "al menos 1 tema más" : "de 2 a 5 temas"}.` : `${n} temas · ${n * cfg.porTema} preguntas en total.`;
+  $("cantidades").innerHTML = CANTIDADES.map(c => `<button data-c="${c}" aria-pressed="${c === cfg.porTema}">${c}</button>`).join("");
+  $("crearBtn").disabled = n < 2 || n > 5;
+  $("historial").innerHTML = historial.length ? `<b>📈 Últimos exámenes:</b>` + historial.map(h => `<li>${h.fecha} · ${h.nombre ? h.nombre + " · " : ""}${h.materia} (${h.grado}°): <b>${h.nota}</b></li>`).join("") : "";
+}
+$("nombre").addEventListener("input", () => { cfg.nombre = $("nombre").value.trim(); guardar(); });
+$("config").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b || b.disabled) return;
+  if (b.dataset.g) { cfg.grado = Number(b.dataset.g); }
+  else if (b.dataset.m) { cfg.materia = b.dataset.m; cfg.temas = []; }
+  else if (b.dataset.t) { cfg.temas = cfg.temas.includes(b.dataset.t) ? cfg.temas.filter(x => x !== b.dataset.t) : [...cfg.temas, b.dataset.t]; }
+  else if (b.dataset.c) { cfg.porTema = Number(b.dataset.c); }
+  else return;
+  sonido("tap"); guardar(); pintarConfig();
+});
+$("crearBtn").addEventListener("click", () => { sonido("tap"); crear(cfg.temas); });
+
+// ---------- 2️⃣ Examen ----------
+function crear(temas) {
+  secciones = armarExamen({ ...cfg, temas }); respuestas = {}; avisado = false;
+  const m = materia();
+  $("config").hidden = true; $("resultado").hidden = true; $("examen").hidden = false;
+  $("hojaTitulo").innerHTML = `<b>${m.emoji} Examen de ${m.nombre} · ${cfg.grado}°</b>${cfg.nombre ? `👤 ${cfg.nombre} · ` : ""}📅 ${new Date().toLocaleDateString("es-CR")}`;
+  let k = 0;
+  $("secciones").innerHTML = secciones.map((s, si) => `<section class="seccion"><h3>Parte ${si + 1}: ${s.tema.emoji} ${s.tema.nombre}</h3>`
+    + s.preguntas.map((q, qi) => {
+      k++;
+      const id = `${si}-${qi}`;
+      const resp = q.tipo === "numero"
+        ? `<input type="text" inputmode="numeric" data-q="${id}" aria-label="Respuesta de la pregunta ${k}" autocomplete="off">`
+        : `<div class="ops">${q.opciones.map((o, oi) => `<button data-q="${id}" data-o="${oi}" aria-pressed="false">${o}</button>`).join("")}</div>`;
+      return `<div class="preg" id="p${id}"><div class="enunciado"><span class="num">${k}</span><span class="t">${q.texto}</span><button class="leer" data-leer="${id}" aria-label="Escuchar la pregunta">🔊</button></div>${resp}</div>`;
+    }).join("") + `</section>`).join("");
+  pintarCuenta();
+  window.scrollTo(0, 0);
+  decir(`Examen de ${m.nombre}. ${cfg.nombre ? `¡Mucha suerte, ${cfg.nombre}!` : "¡Mucha suerte!"} Leé cada pregunta con calma.`);
+}
+const pregunta = id => { const [si, qi] = id.split("-").map(Number); return secciones[si].preguntas[qi]; };
+const total = () => secciones.reduce((s, x) => s + x.preguntas.length, 0);
+const contestadas = () => Object.values(respuestas).filter(v => String(v).trim() !== "").length;
+function pintarCuenta() {
+  $("cuenta").textContent = `${contestadas()} de ${total()} contestadas`;
+  $("entregarBtn").textContent = "✅ Entregar";
+  avisado = false;
+}
+$("secciones").addEventListener("click", e => {
+  const leer = e.target.closest("[data-leer]");
+  if (leer) { const q = pregunta(leer.dataset.leer); decir(limpio(q.texto) + (q.opciones ? ". Las opciones son: " + q.opciones.map(limpio).join(", ") : "")); return; }
+  const b = e.target.closest("[data-o]");
+  if (!b) return;
+  const id = b.dataset.q;
+  respuestas[id] = pregunta(id).opciones[Number(b.dataset.o)];
+  b.parentElement.querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  $(`p${id}`).classList.add("contestada");
+  sonido("tap"); pintarCuenta();
+});
+$("secciones").addEventListener("input", e => {
+  const i = e.target.closest("input[data-q]");
+  if (!i) return;
+  respuestas[i.dataset.q] = i.value;
+  $(`p${i.dataset.q}`).classList.toggle("contestada", i.value.trim() !== "");
+  pintarCuenta();
+});
+
+$("entregarBtn").addEventListener("click", () => {
+  const faltan = total() - contestadas();
+  if (faltan && !avisado) { avisado = true; $("entregarBtn").textContent = `Faltan ${faltan}. ¿Entregar igual?`; decir(`Te ${faltan === 1 ? "falta una pregunta" : `faltan ${faltan} preguntas`}. Si querés entregar igual, tocá otra vez.`); return; }
+  calificar();
+});
+
+// ---------- 3️⃣ Resultado ----------
+function calificar() {
+  const m = materia();
+  const filas = secciones.map((s, si) => {
+    const res = s.preguntas.map((q, qi) => ({ q, tu: respuestas[`${si}-${qi}`], ok: revisar(q, respuestas[`${si}-${qi}`]) }));
+    return { tema: s.tema, res, bien: res.filter(x => x.ok).length };
+  });
+  const bien = filas.reduce((s, f) => s + f.bien, 0), n = nota(bien, total());
+  const msg = n >= 90 ? "¡Excelente! Estás listo o lista para el examen. 🎉" : n >= 70 ? "¡Muy bien! Repasá lo que falló y vas a salir muy bien." : n >= 50 ? "Vas bien. Repasá los temas en rojo y probá otra vez." : "Hay que estudiar un poquito más. ¡Practicá los temas en rojo y lo vas a lograr!";
+  historial.unshift({ fecha: new Date().toLocaleDateString("es-CR"), nombre: cfg.nombre, materia: m.nombre, grado: cfg.grado, nota: n });
+  guardar();
+  const flojos = filas.filter(f => f.bien < f.res.length).map(f => f.tema.id);
+  let k = 0;
+  const revision = filas.map(f => f.res.map(x => {
+    k++;
+    return `<div class="rev ${x.ok ? "bien" : ""}"><div class="q">${k}. ${x.q.texto}</div>
+      ${x.ok ? `<div class="ok">✅ ${x.q.correcta}</div>` : `<div class="tu">❌ Tu respuesta: ${x.tu ?? "(sin contestar)"}</div><div class="ok">✔️ Correcta: ${x.q.correcta}</div>`}
+      <div class="por">💡 ${x.q.explica}</div></div>`;
+  }).join("")).join("");
+  $("examen").hidden = true; $("resultado").hidden = false;
+  $("resultado").innerHTML = `<div class="nota"><p>${m.emoji} ${m.nombre} · ${cfg.grado}°${cfg.nombre ? ` · ${cfg.nombre}` : ""}</p>
+      <div class="grande">${n}</div><p>${bien} de ${total()} bien</p><p>${msg}</p></div>
+    <div class="por-tema">${filas.map(f => { const p = f.bien / f.res.length; return `<div><span>${f.tema.emoji} ${f.tema.nombre}</span><span>${f.bien}/${f.res.length}</span><span class="b"><i class="${p >= 0.8 ? "" : p >= 0.5 ? "medio" : "bajo"}" style="width:${Math.max(4, p * 100)}%"></i></span></div>`; }).join("")}</div>
+    <div class="acciones-res">
+      ${flojos.length ? `<button class="principal" id="fallosBtn">🎯 Practicar lo que fallé</button>` : ""}
+      <button ${flojos.length ? "" : 'class="principal"'} id="otroBtn">🔁 Otro examen igual</button>
+      <button id="cambiarBtn">⚙️ Cambiar temas</button>
+      <button id="imprimirBtn2">🖨️ Imprimir</button>
+    </div>
+    <div class="revision"><h3>📋 Revisión</h3>${revision}</div>`;
+  window.scrollTo(0, 0);
+  sonido(n >= 70 ? "ok" : "casi");
+  decir(`${cfg.nombre ? cfg.nombre + ", tu" : "Tu"} nota es ${n}. ${msg.replace(/[🎉]/g, "")}`);
+  $("fallosBtn")?.addEventListener("click", () => { sonido("tap"); crear(flojos.length >= 1 ? flojos : cfg.temas); });
+  $("otroBtn").addEventListener("click", () => { sonido("tap"); crear(cfg.temas); });
+  $("cambiarBtn").addEventListener("click", () => { sonido("tap"); $("resultado").hidden = true; $("config").hidden = false; pintarConfig(); window.scrollTo(0, 0); });
+  $("imprimirBtn2").addEventListener("click", imprimir);
+}
+
+// ---------- 🖨️ Imprimir: el examen en papel y, en otra hoja, las respuestas ----------
+function imprimir() {
+  const m = materia();
+  let k = 0, r = 0;
+  $("imprimir").innerHTML = `<h1>${m.emoji} Examen de ${m.nombre} · ${cfg.grado}°</h1>
+    <div class="datos"><span>Nombre: ${cfg.nombre || "______________________"}</span><span>Fecha: ${new Date().toLocaleDateString("es-CR")}</span><span>Nota: ______</span></div>`
+    + secciones.map((s, si) => `<h2>Parte ${si + 1}: ${s.tema.nombre}</h2><ol start="${k + 1}">${s.preguntas.map(q => { k++; return `<li>${q.texto}${q.tipo === "numero" ? `<span class="lineas"></span>` : `<div class="opciones-p">${q.opciones.map(o => `<span>( ) ${o}</span>`).join("")}</div>`}</li>`; }).join("")}</ol>`).join("")
+    + `<div class="respuestas"><h2>✔️ Respuestas</h2><ol>${secciones.flatMap(s => s.preguntas).map(q => { r++; return `<li>${q.correcta}</li>`; }).join("")}</ol></div>`;
+  window.print();
+}
+$("imprimirBtn").addEventListener("click", imprimir);
+
+pintarConfig();
+if (new URLSearchParams(location.search).has("prueba")) window.__examen = { get secciones() { return secciones; }, get cfg() { return cfg; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>

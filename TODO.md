@@ -124,6 +124,14 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🦜 Lapa: variables y «para cada» (espirales), y compartir el dibujo por WhatsApp
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 
+## 📝 Preparate para el examen
+
+- [x] Armar un examen de práctica: nombre, grado, materia (4 básicas e inglés), 2 a 5 temas, 3/5/10 preguntas por tema
+- [x] Nota de 0 a 100, resultado por tema, revisión con explicaciones y «practicar lo que fallé»
+- [x] Imprimir el examen con hoja de respuestas
+- [ ] Más temas por grado (según el programa del MEP) y preguntas con dibujos (relojes, figuras, mapas)
+- [ ] Compartir el examen por WhatsApp (mismo examen con un enlace)
+
 ## 🎲 Que no siempre sea lo mismo (generadores, sin servidor)
 
 - [x] Generador de oraciones en español e inglés («Armo la oración» y «Armo en inglés»)

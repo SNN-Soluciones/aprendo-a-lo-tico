@@ -1,14 +1,14 @@
 // 🧊 Contenido de «Sólido, líquido o gaseoso» (usa el motor js/quiz.js).
 import { barajar } from "./quiz.js";
 
-const ESTADOS = {
+export const ESTADOS = {
   solido: { html: "<b>🧊</b>Sólido", nombre: "sólido", explica: "Es <b>sólido</b>: tiene su propia forma y no se derrama." },
   liquido: { html: "<b>💧</b>Líquido", nombre: "líquido", explica: "Es <b>líquido</b>: toma la forma del recipiente y se puede derramar." },
   gas: { html: "<b>♨️</b>Gaseoso", nombre: "gaseoso", explica: "Es un <b>gas</b>: se esparce por todo el espacio y casi no se ve." },
 };
 
 // ¿En qué estado está? (e: emoji, n: nombre, extra: algo más para aprender)
-const COSAS = [
+export const COSAS = [
   { e: "🧊", n: "el hielo", s: "solido", extra: "Es agua congelada." },
   { e: "💧", n: "el agua del vaso", s: "liquido" },
   { e: "♨️", n: "el vapor de la olla", s: "gas", extra: "Es agua que se calentó tanto que se volvió gas." },
@@ -29,14 +29,14 @@ const COSAS = [
   { e: "🍦", n: "el helado del congelador", s: "solido", extra: "Si lo dejás al sol, se derrite y se vuelve líquido." },
 ];
 
-const CAMBIOS = {
+export const CAMBIOS = {
   derrite: { html: "<b>🫠</b>Se derrite", nombre: "se derrite", de: "sólido a líquido", causa: "calor" },
   congela: { html: "<b>🥶</b>Se congela", nombre: "se congela", de: "líquido a sólido", causa: "frio" },
   evapora: { html: "<b>♨️</b>Se evapora", nombre: "se evapora", de: "líquido a gas", causa: "calor" },
   condensa: { html: "<b>💦</b>Se condensa", nombre: "se condensa", de: "gas a líquido", causa: "frio" },
 };
 // ¿Qué le pasó? (c: cambio)
-const SITUACIONES = [
+export const SITUACIONES = [
   { e: "🧊☀️", t: "Un cubito de hielo al sol se vuelve agua.", c: "derrite" },
   { e: "💧❄️", t: "Metemos agua en el congelador y hacemos cubitos.", c: "congela" },
   { e: "🍲🔥", t: "El agua de la olla hierve y sale vapor.", c: "evapora" },

@@ -11,7 +11,7 @@ export const ECOS = {
 };
 
 // ¿Dónde vive? · tambien: otros ecosistemas donde también vive (no se ponen como opción incorrecta)
-const SERES = [
+export const SERES = [
   { e: "🦜", n: "El quetzal", eco: "nuboso", dato: "Vive en los bosques nubosos, como en San Gerardo de Dota y Monteverde." },
   { e: "🦌", n: "El venado cola blanca", eco: "seco", tambien: ["lluvioso", "nuboso"], dato: "Es muy común en el bosque seco de Guanacaste." },
   { e: "🌳", n: "El árbol de guanacaste", eco: "seco", dato: "Es típico del bosque seco: da mucha sombra en el verano caliente." },
@@ -31,7 +31,7 @@ const SERES = [
 ];
 
 // ¿Dónde queda? · lugares reales
-const LUGARES = [
+export const LUGARES = [
   { n: "Monteverde", eco: "nuboso" }, { n: "San Gerardo de Dota", eco: "nuboso" },
   { n: "el Parque Nacional Santa Rosa, en Guanacaste", eco: "seco" }, { n: "Barra Honda, en Guanacaste", eco: "seco" },
   { n: "Tortuguero", eco: "lluvioso", tambien: ["manglar"] }, { n: "Corcovado, en la península de Osa", eco: "lluvioso", tambien: ["manglar"] },

@@ -41,6 +41,13 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 📅 Efemérides | Estudios Sociales | 2° a 6° | `public/juegos/efemerides.html` |
 | 🧠 Memory in English | Inglés | 1° a 4° | `public/juegos/memory-ingles.html` |
 
+## 📝 Preparate para el examen
+
+`public/examen.html`: se elige para quién es (opcional), el grado, la materia (Matemáticas, Español,
+Ciencias, Estudios Sociales o Inglés), de 2 a 5 temas y cuántas preguntas por tema. El examen sale por
+partes, se entrega y da la nota de 0 a 100, cuánto sacó en cada tema, la revisión con explicaciones,
+«practicar lo que fallé» e impresión en papel con hoja de respuestas. Las preguntas se generan cada vez.
+
 ## Estructura
 
 ```
@@ -82,6 +89,8 @@ aprendo-a-lo-tico/
 │   ├── js/estados.js      # 🧊 Estados de la materia y sus cambios
 │   ├── js/quiz.js          # ❓ Motor compartido de los juegos de preguntas (modos, estrellas, voz)
 │   ├── js/reto-dia.js      # 🎯 Reto del día: el mismo para todos (la fecha es la semilla)
+│   ├── examen.html         # 📝 Preparate para el examen: materia, grado y temas → examen de práctica
+│   ├── js/examen-temas.js  # 📝 Temas del examen por materia y grado (preguntas al azar)
 │   ├── css/quiz.css        # ❓ Estilos de esos juegos
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»

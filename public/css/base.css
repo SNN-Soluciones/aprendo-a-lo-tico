@@ -162,3 +162,5 @@ body.menu-abierto { overflow: hidden; }
 .reto-dia.hecho { background: linear-gradient(135deg, #DDF7E6, #BDEFCD); }
 .reto-dia.hecho small { color: #1D6B3A; }
 .reto-dia[hidden] { display: none; }
+.reto-dia.examen { background: linear-gradient(135deg, #E4F0FF, #C9E0FF); }
+.reto-dia.examen small { color: #1E5AA8; }

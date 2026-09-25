@@ -129,15 +129,16 @@ const PALABRA = { arriba: "arriba", derecha: "derecha", abajo: "abajo", izquierd
 let n = 0, juego = null, programa = [], corriendo = false, ganado = false, intentos = 0;
 let mala = -1; // flecha que hizo chocar al perezoso (se queda roja hasta cambiar el programa)
 let progreso = {};
-try { progreso = JSON.parse(localStorage.getItem("perezoso-progreso")) || {}; } catch (_) {}
-const guardar = () => { try { localStorage.setItem("perezoso-progreso", JSON.stringify(progreso)); } catch (_) {} };
+// Guardado por id de nivel (no por número), así se pueden agregar niveles sin desordenar las estrellas
+try { progreso = JSON.parse(localStorage.getItem("perezoso-progreso-v2")) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("perezoso-progreso-v2", JSON.stringify(progreso)); } catch (_) {} };
 
 document.querySelectorAll("#botonera .flecha").forEach(b => b.innerHTML = FLECHA);
 
 // ---------- Pintar ----------
 function pintarNiveles() {
   $("niveles").innerHTML = NIVELES.map((_, i) =>
-    `<button data-n="${i}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}">${i + 1}<small>${"⭐".repeat(progreso[i] || 0)}</small></button>`).join("");
+    `<button data-n="${i}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}${NIVELES[i].depurar ? ": arreglá la flecha" : ""}">${NIVELES[i].depurar ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[NIVELES[i].id] || 0)}</small></button>`).join("");
   const total = Object.values(progreso).reduce((a, b) => a + b, 0);
   $("stars").textContent = `⭐ ${total}`;
   $("niveles").querySelector(`[data-n="${n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
@@ -173,13 +174,15 @@ function pintarPrograma(activa = -1, roja = mala) {
 
 // ---------- Niveles ----------
 function cargar(i) {
-  n = i; juego = leer(NIVELES[n]); programa = []; ganado = false; corriendo = false; intentos = 0; mala = -1;
+  n = i; juego = leer(NIVELES[n]); programa = [...(NIVELES[n].inicial || [])]; ganado = false; corriendo = false; intentos = 0; mala = -1;
   pintarNiveles(); pintarTablero(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
   const varias = juego.hojas.length > 1;
   instruccion(
     `<span class="big">🦥</span> ➜ <span class="big">🍃</span>${varias ? ` ×${juego.hojas.length}` : ""}`,
-    n === 0
+    NIVELES[n].depurar
+      ? "¡Uy! Este camino tiene una flecha equivocada. Tocá el botón verde para ver qué pasa, y después arreglá la flecha."
+      : n === 0
       ? "Llevá al perezoso hasta la hoja. Tocá las flechas para armar el camino, y después tocá el botón verde para que camine."
       : varias ? `Llevá al perezoso a comerse todas las hojas. ¡Son ${juego.hojas.length}!` : "Llevá al perezoso hasta la hoja."
   );
@@ -264,7 +267,7 @@ function terminar(r) {
     ganado = true;
     const min = minimo(juego);
     const estrellas = programa.length <= min ? 3 : 2;
-    progreso[n] = Math.max(progreso[n] || 0, estrellas);
+    progreso[NIVELES[n].id] = Math.max(progreso[NIVELES[n].id] || 0, estrellas);
     guardar(); pintarNiveles();
     pintarPrograma();
     $("perezoso").classList.add("feliz");
@@ -295,7 +298,7 @@ function terminar(r) {
 $("nextBtn").addEventListener("click", () => cargar(Math.min(n + 1, NIVELES.length - 1)));
 
 // Arrancar en el primer nivel sin terminar
-const primero = NIVELES.findIndex((_, i) => !progreso[i]);
+const primero = NIVELES.findIndex(nv => !progreso[nv.id]);
 n = primero === -1 ? 0 : primero;
 alEmpezar(() => cargar(n));
 pintarNiveles();

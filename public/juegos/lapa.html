@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La lapa que dibuja</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #14A3A3; }
+  body { user-select: auto; -webkit-user-select: auto; }
+  .ancho { width: min(96vw, 560px); }
+
+  .retos { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; flex: 1; }
+  .retos::-webkit-scrollbar { display: none; }
+  .retos button { flex: none; min-width: 44px; padding: 0 8px; font-size: 1.1rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .retos button small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
+  .retos button[aria-pressed="true"] { background: var(--btn); }
+  .instr .titulo { display: block; font-size: 1.05rem; color: var(--materia); }
+  .instr .txt { font-size: clamp(.95rem, 4vw, 1.15rem); }
+
+  .mesa { display: grid; gap: 10px; margin-top: 10px; }
+  @media (min-width: 900px) { .ancho { width: min(96vw, 1100px); } .mesa { grid-template-columns: 420px 1fr; align-items: start; } }
+
+  .papel { position: relative; aspect-ratio: 1; background: #FFFDF6; border: 4px solid var(--rim); border-radius: 18px; overflow: hidden; width: 100%; max-width: 420px; justify-self: center; }
+  .papel canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .papel .leyenda { position: absolute; left: 8px; bottom: 6px; font-size: .8rem; font-weight: 700; color: #8FA7BF; pointer-events: none; }
+
+  .controles { display: flex; gap: 8px; margin-top: 8px; }
+  .controles button { font-size: 1.5rem; padding: 4px 0; border-radius: 16px; flex: 1; }
+  .controles #playBtn { flex: 2.2; }
+  .retos .etapa { flex: none; align-self: center; font-weight: 800; font-size: .8rem; color: var(--page-ink); opacity: .8; padding: 0 2px 0 8px; white-space: nowrap; }
+  .retos .etapa:first-child { padding-left: 0; }
+  .pista { background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; margin-top: 8px; font-weight: 700; font-size: 1rem; }
+  .pista[hidden] { display: none; }
+  #playBtn { background: var(--ok); color: #fff; }
+  #playBtn.pulse, #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
+  #velBtn[aria-pressed="true"] { background: var(--btn); }
+
+  .bloques { height: 420px; border: 4px solid var(--rim); border-radius: 18px; overflow: hidden; background: #fff; }
+  .blocklyToolboxCategory, .blocklyTreeRow { padding: 4px 8px !important; }
+  .blocklyTreeLabel, .blocklyToolboxCategoryLabel { font: 800 15px "Baloo 2", system-ui, sans-serif !important; }
+  .ayuda-bloques { font-size: .9rem; font-weight: 700; opacity: .8; margin: 4px 2px 0; }
+  #nextBtn { background: var(--btn); }
+  .mesa .feedback { min-height: 3.2rem; margin-top: 6px; }
+  .mesa .bottom { margin-top: 0; }
+  .mesa .bottom:has(#nextBtn[hidden]) { display: none; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🦜✏️</div>
+  <h1>La lapa que dibuja</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Programá a la lapa con bloques para que dibuje figuras. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="retos" id="retos" role="group" aria-label="Reto"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="mesa ancho">
+  <div>
+    <div class="papel" id="papel">
+      <canvas id="meta" aria-hidden="true"></canvas>
+      <canvas id="dibujo" aria-label="Dibujo de la lapa"></canvas>
+      <canvas id="lapa" aria-hidden="true"></canvas>
+      <div class="leyenda" id="leyenda"></div>
+    </div>
+    <div class="controles">
+      <button id="playBtn" aria-label="Correr el programa">▶️</button>
+      <button id="velBtn" aria-pressed="false" aria-label="Dibujar rápido">🐇</button>
+      <button id="pistaBtn" aria-label="Ver una pista">💡</button>
+      <button id="reiniciarBtn" aria-label="Volver a empezar este reto">↺</button>
+      <button id="guardarBtn" aria-label="Guardar el dibujo como imagen">💾</button>
+    </div>
+    <div class="pista" id="pista" aria-live="polite" hidden></div>
+    <div class="wrap feedback" id="feedback" aria-live="polite" style="width:auto"></div>
+    <div class="wrap bottom" style="width:auto"><button id="nextBtn" aria-label="Siguiente reto" hidden>➡️</button></div>
+  </div>
+  <div>
+    <div class="bloques" id="bloques"></div>
+    <p class="ayuda-bloques">Tocá una pestaña de arriba, arrastrá un bloque y pegalo debajo de <b>🦜 al tocar ▶️</b>. Para borrar uno, llevalo al basurero.</p>
+  </div>
+</div>
+
+<script src="../vendor/blockly/blockly_compressed.js"></script>
+<script src="../vendor/blockly/msg/es.js"></script>
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { RETOS, ETAPAS, TAM, COLORES, ejecutar, comparar, contar } from "../js/lapa.js";
+
+const $ = id => document.getElementById(id);
+const LIBRE = RETOS.length; // el último botón es 🎨 dibujo libre
+
+// ---------- Bloques ----------
+Blockly.defineBlocksWithJsonArray([
+  { type: "lapa_inicio", message0: "🦜 al tocar ▶️", nextStatement: null, colour: 20, hat: "cap", tooltip: "El programa empieza aquí" },
+  { type: "lapa_avanzar", message0: "avanzar %1 pasos", args0: [{ type: "field_number", name: "N", value: 100, min: -400, max: 400 }],
+    previousStatement: null, nextStatement: null, colour: 210, tooltip: "La lapa camina hacia adelante y dibuja" },
+  { type: "lapa_girar", message0: "girar %1 %2 grados",
+    args0: [{ type: "field_dropdown", name: "DIR", options: [["↻ a la derecha", "der"], ["↺ a la izquierda", "izq"]] },
+            { type: "field_number", name: "G", value: 90, min: 0, max: 360 }],
+    previousStatement: null, nextStatement: null, colour: 290, tooltip: "La lapa da vuelta sin moverse" },
+  { type: "lapa_repetir", message0: "repetir %1 veces %2 %3",
+    args0: [{ type: "field_number", name: "N", value: 4, min: 1, max: 60, precision: 1 }, { type: "input_dummy" }, { type: "input_statement", name: "HACER" }],
+    previousStatement: null, nextStatement: null, colour: 30, tooltip: "Repite los bloques de adentro" },
+  { type: "lapa_color", message0: "color %1",
+    args0: [{ type: "field_dropdown", name: "C", options: [["⚫ negro", "negro"], ["🔴 rojo", "rojo"], ["🔵 azul", "azul"], ["🟡 amarillo", "amarillo"],
+      ["🟢 verde", "verde"], ["🟠 anaranjado", "anaranjado"], ["🟣 morado", "morado"], ["🩷 rosado", "rosado"], ["🟤 café", "cafe"]] }],
+    previousStatement: null, nextStatement: null, colour: 160, tooltip: "Cambia el color del lápiz" },
+  { type: "lapa_grosor", message0: "grosor %1", args0: [{ type: "field_number", name: "N", value: 4, min: 1, max: 30, precision: 1 }],
+    previousStatement: null, nextStatement: null, colour: 160, tooltip: "Qué tan gruesa es la raya" },
+  { type: "lapa_lapiz", message0: "%1 el lápiz", args0: [{ type: "field_dropdown", name: "L", options: [["☝️ subir", "arriba"], ["✏️ bajar", "abajo"]] }],
+    previousStatement: null, nextStatement: null, colour: 160, tooltip: "Con el lápiz arriba, la lapa camina sin dibujar" },
+]);
+
+// Pestañas por tema (en celular se ven todas; una sola barra escondía bloques a la derecha)
+const toolbox = { kind: "categoryToolbox", contents: [
+  { kind: "category", name: "🦜 Moverse", colour: 210, contents: [{ kind: "block", type: "lapa_avanzar" }, { kind: "block", type: "lapa_girar" }] },
+  { kind: "category", name: "🔁 Repetir", colour: 30, contents: [{ kind: "block", type: "lapa_repetir" }] },
+  { kind: "category", name: "✏️ Lápiz", colour: 160, contents: [{ kind: "block", type: "lapa_color" }, { kind: "block", type: "lapa_lapiz" }, { kind: "block", type: "lapa_grosor" }] },
+] };
+
+const ws = Blockly.inject("bloques", {
+  toolbox, horizontalLayout: true, toolboxPosition: "start", renderer: "zelos",
+  media: "../vendor/blockly/media/", trashcan: true, sounds: true,
+  zoom: { controls: true, startScale: 0.72, wheel: false, pinch: true },
+  move: { scrollbars: true, drag: true, wheel: true },
+  grid: { spacing: 24, length: 2, colour: "#E3EAF2", snap: true },
+});
+addEventListener("resize", () => Blockly.svgResize(ws));
+
+/** Convierte los bloques pegados a "🦜 al tocar ▶️" en un programa. */
+function leer(b) {
+  const out = [];
+  for (; b; b = b.getNextBlock()) {
+    if (!b.isEnabled()) continue;
+    const id = b.id;
+    if (b.type === "lapa_avanzar") out.push({ t: "avanzar", n: Number(b.getFieldValue("N")), id });
+    else if (b.type === "lapa_girar") out.push({ t: "girar", dir: b.getFieldValue("DIR"), g: Number(b.getFieldValue("G")), id });
+    else if (b.type === "lapa_repetir") out.push({ t: "repetir", n: Number(b.getFieldValue("N")), cuerpo: leer(b.getInputTargetBlock("HACER")), id });
+    else if (b.type === "lapa_color") out.push({ t: "color", c: b.getFieldValue("C"), id });
+    else if (b.type === "lapa_grosor") out.push({ t: "grosor", n: Number(b.getFieldValue("N")), id });
+    else if (b.type === "lapa_lapiz") out.push({ t: "lapiz", abajo: b.getFieldValue("L") === "abajo", id });
+  }
+  return out;
+}
+const inicioBloque = () => ws.getBlocksByType("lapa_inicio", false)[0];
+const programa = () => leer(inicioBloque()?.getNextBlock());
+
+// ---------- Papel ----------
+const ESC = 2; // el papel se dibuja al doble para que se vea nítido
+const capas = ["meta", "dibujo", "lapa"].map(k => { const c = $(k); c.width = c.height = TAM * ESC; const x = c.getContext("2d"); x.scale(ESC, ESC); x.lineCap = x.lineJoin = "round"; return x; });
+const [cMeta, cDib, cLapa] = capas;
+
+function pintarMeta() {
+  cMeta.clearRect(0, 0, TAM, TAM);
+  if (reto === LIBRE) return;
+  const r = RETOS[reto];
+  cMeta.strokeStyle = "#C8D6E4"; cMeta.lineWidth = 9; cMeta.setLineDash([]);
+  for (const s of metaRayas) { cMeta.beginPath(); cMeta.moveTo(s.x1, s.y1); cMeta.lineTo(s.x2, s.y2); cMeta.stroke(); }
+  cMeta.strokeStyle = "#9DB3C9"; cMeta.lineWidth = 2; cMeta.setLineDash([6, 8]);
+  for (const s of metaRayas) { cMeta.beginPath(); cMeta.moveTo(s.x1, s.y1); cMeta.lineTo(s.x2, s.y2); cMeta.stroke(); }
+  cMeta.setLineDash([]);
+  // punto de salida
+  cMeta.fillStyle = "#FFC83D"; cMeta.beginPath(); cMeta.arc(r.inicio.x, r.inicio.y, 7, 0, Math.PI * 2); cMeta.fill();
+}
+
+function raya(ctx, s, hasta = 1) {
+  ctx.strokeStyle = s.color; ctx.lineWidth = s.grosor;
+  ctx.beginPath(); ctx.moveTo(s.x1, s.y1); ctx.lineTo(s.x1 + (s.x2 - s.x1) * hasta, s.y1 + (s.y2 - s.y1) * hasta); ctx.stroke();
+}
+
+function pintarLapa(x, y, r) {
+  cLapa.clearRect(0, 0, TAM, TAM);
+  const rad = r * Math.PI / 180, dx = Math.sin(rad), dy = -Math.cos(rad);
+  // flechita que muestra hacia dónde mira
+  cLapa.fillStyle = "#FFC83D"; cLapa.strokeStyle = "#1F3A5F"; cLapa.lineWidth = 2;
+  cLapa.beginPath();
+  cLapa.moveTo(x + dx * 30, y + dy * 30);
+  cLapa.lineTo(x + dx * 18 - dy * 8, y + dy * 18 + dx * 8);
+  cLapa.lineTo(x + dx * 18 + dy * 8, y + dy * 18 - dx * 8);
+  cLapa.closePath(); cLapa.fill(); cLapa.stroke();
+  cLapa.font = "26px system-ui, 'Apple Color Emoji', 'Noto Color Emoji', sans-serif";
+  cLapa.textAlign = "center"; cLapa.textBaseline = "middle";
+  cLapa.fillText("🦜", x, y);
+}
+
+// ---------- Retos ----------
+let reto = 0, metaRayas = [], corriendo = false, rapido = false;
+// El progreso y los bloques se guardan por nombre de reto (no por número), así se pueden agregar retos sin desordenar nada
+const nombre = i => i === LIBRE ? "libre" : RETOS[i].id;
+let progreso = {};
+try { progreso = JSON.parse(localStorage.getItem("lapa-progreso-v2")) || {}; } catch (_) {}
+const guardarProgreso = () => { try { localStorage.setItem("lapa-progreso-v2", JSON.stringify(progreso)); } catch (_) {} };
+const inicioDe = i => i === LIBRE ? { x: 200, y: 200, r: 0 } : RETOS[i].inicio;
+
+function pintarRetos() {
+  $("retos").innerHTML = RETOS.map((r, i) =>
+    (i === 0 || RETOS[i - 1].etapa !== r.etapa ? `<span class="etapa">${ETAPAS.find(e => e.id === r.etapa).emoji} ${ETAPAS.find(e => e.id === r.etapa).nombre}</span>` : "")
+    + `<button data-r="${i}" aria-pressed="${i === reto}" aria-label="Reto ${i + 1}: ${r.titulo}">${i + 1}<small>${"⭐".repeat(progreso[r.id] || 0)}</small></button>`).join("")
+    + `<span class="etapa">🎨 Libre</span><button data-r="${LIBRE}" aria-pressed="${reto === LIBRE}" aria-label="Dibujo libre">🎨<small>libre</small></button>`;
+  $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
+  $("retos").querySelector(`[data-r="${reto}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+
+// Cada reto guarda sus bloques en el dispositivo
+const claveWs = i => `lapa-ws2-${nombre(i)}`;
+
+/** Programa → bloques de Blockly (para los retos que traen bloques ya puestos). */
+function aBloques(lista) {
+  if (!lista?.length) return undefined;
+  const [p, ...resto] = lista, b = { type: "lapa_" + p.t, fields: {} };
+  if (p.t === "avanzar") b.fields.N = p.n;
+  if (p.t === "girar") { b.fields.DIR = p.dir; b.fields.G = p.g; }
+  if (p.t === "lapiz") b.fields.L = p.abajo ? "abajo" : "arriba";
+  if (p.t === "color") b.fields.C = p.c;
+  if (p.t === "grosor") b.fields.N = p.n;
+  if (p.t === "repetir") { b.fields.N = p.n; const c = aBloques(p.cuerpo); if (c) b.inputs = { HACER: { block: c } }; }
+  const sig = aBloques(resto); if (sig) b.next = { block: sig };
+  return b;
+}
+let cargando = false;
+function cargarBloques(i) {
+  cargando = true;
+  ws.clear();
+  let ok = false;
+  try {
+    const guardado = JSON.parse(localStorage.getItem(claveWs(i)));
+    if (guardado) { Blockly.serialization.workspaces.load(guardado, ws); ok = !!inicioBloque(); }
+  } catch (_) { ws.clear(); }
+  if (!ok) {
+    const b = ws.newBlock("lapa_inicio");
+    b.setDeletable(false); b.initSvg(); b.render(); b.moveBy(20, 20);
+    const inicial = RETOS[i]?.inicial;
+    if (inicial) {
+      const primero = Blockly.serialization.blocks.append(aBloques(inicial), ws);
+      b.nextConnection.connect(primero.previousConnection);
+    }
+  }
+  inicioBloque()?.setDeletable(false);
+  cargando = false;
+}
+let temporizador = null;
+ws.addChangeListener(e => {
+  if (cargando || e.isUiEvent) return;
+  clearTimeout(temporizador);
+  temporizador = setTimeout(() => {
+    try { localStorage.setItem(claveWs(reto), JSON.stringify(Blockly.serialization.workspaces.save(ws))); } catch (_) {}
+  }, 300);
+  if (!corriendo) { $("nextBtn").hidden = true; }
+});
+
+let pista = 0;
+function cargarReto(i) {
+  reto = i; corriendo = false; pista = 0; $("pista").hidden = true;
+  metaRayas = i === LIBRE ? [] : ejecutar(RETOS[i].solucion, RETOS[i].inicio).rayas;
+  pintarRetos(); pintarMeta();
+  cDib.clearRect(0, 0, TAM, TAM);
+  const ini = inicioDe(i); pintarLapa(ini.x, ini.y, ini.r);
+  cargarBloques(i);
+  feedback(""); $("nextBtn").hidden = true;
+  $("guardarBtn").hidden = i !== LIBRE;
+  $("pistaBtn").hidden = i === LIBRE;
+  $("leyenda").textContent = i === LIBRE ? "Dibujo libre" : "La línea punteada es la meta";
+  if (i === LIBRE) instruccion(`<span class="titulo">🎨 Dibujo libre</span>`, "¡Dibujo libre! Inventá lo que querás: cambiá colores, subí el lápiz y repetí figuras.");
+  else instruccion(`<span class="titulo">${ETAPAS.find(e => e.id === RETOS[i].etapa).emoji} Reto ${i + 1}: ${RETOS[i].titulo}</span>⭐⭐⭐ con ${RETOS[i].objetivo} ${RETOS[i].objetivo === 1 ? "bloque" : "bloques"}`, RETOS[i].voz);
+}
+$("retos").addEventListener("click", e => {
+  const b = e.target.closest("[data-r]");
+  if (b && !corriendo) { sonido("tap"); cargarReto(Number(b.dataset.r)); }
+});
+
+// ---------- Correr ----------
+const cuadro = () => new Promise(r => requestAnimationFrame(r));
+async function animar(eventos) {
+  const vel = rapido ? 2.4 : 0.6;        // píxeles por milisegundo
+  const largo = eventos.reduce((s, e) => s + (e.t === "mover" ? Math.hypot(e.x2 - e.x1, e.y2 - e.y1) : 0), 0);
+  const extra = Math.max(1, largo / (vel * 9000)); // que nada dure más de ~9 segundos
+  let ultimo = null;
+  for (const e of eventos) {
+    if (!corriendo) return;
+    if (e.id && e.id !== ultimo) { ws.highlightBlock(e.id); ultimo = e.id; }
+    if (e.t === "mover") {
+      const dur = Math.hypot(e.x2 - e.x1, e.y2 - e.y1) / (vel * extra);
+      const t0 = performance.now();
+      for (;;) {
+        const k = Math.min(1, (performance.now() - t0) / Math.max(dur, 1));
+        if (e.raya) { raya(cDib, e.raya, k); }
+        pintarLapa(e.x1 + (e.x2 - e.x1) * k, e.y1 + (e.y2 - e.y1) * k, e.r);
+        if (k >= 1) break;
+        await cuadro();
+      }
+    } else if (e.t === "girar") {
+      const giro = ((e.r - e.r0 + 540) % 360) - 180;
+      const dur = rapido || extra > 1 ? 40 : 160, t0 = performance.now();
+      for (;;) {
+        const k = Math.min(1, (performance.now() - t0) / dur);
+        pintarLapa(e.x, e.y, e.r0 + giro * k);
+        if (k >= 1) break;
+        await cuadro();
+      }
+    }
+  }
+  ws.highlightBlock(null);
+}
+
+$("playBtn").addEventListener("click", async () => {
+  if (corriendo) return;
+  const prog = programa();
+  if (!prog.length) { decir("Primero arrastrá bloques y pegalos debajo de al tocar play."); return; }
+  corriendo = true; $("playBtn").classList.remove("pulse"); feedback("");
+  cDib.clearRect(0, 0, TAM, TAM);
+  const res = ejecutar(prog, inicioDe(reto));
+  await animar(res.eventos);
+  corriendo = false;
+  terminar(prog, res);
+});
+
+function terminar(prog, res) {
+  if (res.resultado === "largo") {
+    feedback("bad", "😵", "Demasiados pasos");
+    decir("¡Uf! Son demasiados pasos. Revisá los números de tus bloques de repetir.");
+    return;
+  }
+  if (reto === LIBRE) { feedback("ok", "🎨", "¡Qué bonito!"); sonido("ok"); decir("¡Qué dibujo más bonito! Tocá el disquete para guardarlo."); return; }
+  const c = comparar(res.rayas, metaRayas);
+  const total = contar(prog), obj = RETOS[reto].objetivo;
+  if (c.igual) {
+    const estrellas = total <= obj ? 3 : 2;
+    progreso[RETOS[reto].id] = Math.max(progreso[RETOS[reto].id] || 0, estrellas);
+    guardarProgreso(); pintarRetos();
+    feedback("ok", "🎉", "⭐".repeat(estrellas));
+    decir(`${elogio()} ¡La lapa dibujó ${RETOS[reto].titulo.toLowerCase()}! ${estrellas === 3 ? "Y con muy pocos bloques." : `Usaste ${total} bloques. ¿Podés hacerlo con ${obj}? Probá con Repetir.`}`);
+    if (reto < RETOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+    else decir("¡Terminaste todos los retos! Ahora probá el dibujo libre.", { cola: true });
+  } else if (c.cobertura >= 0.6 && c.sobra <= 0.35) {
+    feedback("almost", "🤏", "¡Casi!");
+    decir(c.sobra > 0.03 ? "¡Casi! Se parece mucho, pero hay rayas de más. Revisá los números." : "¡Casi! Le falta un pedacito. Revisá cuántas veces repetís o cuánto avanza.");
+  } else if (c.sobra > 0.35) {
+    feedback("bad", "🙈", "Se salió");
+    decir("La lapa dibujó por otro lado. Fijate en los grados que gira y cuánto avanza.");
+  } else {
+    feedback("bad", "🙈", "Todavía no");
+    decir("Todavía no se parece. Seguí la línea punteada: ¿para dónde va primero?");
+  }
+}
+
+$("velBtn").addEventListener("click", () => {
+  rapido = !rapido; $("velBtn").setAttribute("aria-pressed", rapido); $("velBtn").textContent = rapido ? "🐇" : "🐇";
+  sonido("tap"); decir(rapido ? "Rápido" : "Normal");
+});
+
+$("guardarBtn").addEventListener("click", () => {
+  const c = document.createElement("canvas"); c.width = c.height = TAM * ESC;
+  const x = c.getContext("2d"); x.fillStyle = "#FFFFFF"; x.fillRect(0, 0, c.width, c.height); x.drawImage($("dibujo"), 0, 0);
+  const a = document.createElement("a"); a.download = "dibujo-de-la-lapa.png"; a.href = c.toDataURL("image/png"); a.click();
+});
+
+$("nextBtn").addEventListener("click", () => cargarReto(Math.min(reto + 1, RETOS.length - 1)));
+
+// 💡 Pistas de una en una; ↺ vuelve a los bloques del principio
+$("pistaBtn").addEventListener("click", () => {
+  const ps = RETOS[reto]?.pistas || [];
+  if (!ps.length) return;
+  const txt = ps[Math.min(pista, ps.length - 1)];
+  $("pista").hidden = false;
+  $("pista").innerHTML = `💡 <b>Pista ${Math.min(pista, ps.length - 1) + 1} de ${ps.length}:</b> ${txt}`;
+  sonido("tap"); decir(txt);
+  pista = Math.min(pista + 1, ps.length - 1);
+});
+$("reiniciarBtn").addEventListener("click", () => {
+  if (corriendo) return;
+  try { localStorage.removeItem(claveWs(reto)); } catch (_) {}
+  cargarBloques(reto); cDib.clearRect(0, 0, TAM, TAM);
+  const ini = inicioDe(reto); pintarLapa(ini.x, ini.y, ini.r);
+  feedback(""); sonido("tap"); decir("Listo, empezamos de nuevo.");
+});
+
+const primero = RETOS.findIndex(r => !progreso[r.id]);
+reto = primero === -1 ? LIBRE : primero;
+alEmpezar(() => { cargarReto(reto); Blockly.svgResize(ws); });
+pintarRetos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__lapa = { ws, programa, get reto() { return reto; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

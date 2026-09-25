@@ -113,10 +113,13 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 ## 💻 Programación (sin servidor: todo corre en el navegador)
 
 - [x] 🦥 Llevá al perezoso: secuencias con flechas, 10 niveles, sin leer (Prepa a 2°)
-- [ ] 🦥 Más niveles del perezoso y un editor para que los niños armen los suyos
+- [x] Más ejercicios con progresión suave: perezoso 16 niveles, «Repetí y decidí» 24 en 7 etapas, lapa 24 en 5 etapas
+- [x] Niveles 🐞 «Arreglá el programa» (depurar), bloques iniciales y botón 💡 de pistas
+- [ ] 🦥 Editor para que los niños armen sus propios niveles y los compartan
 - [x] 🔁 Repetí y decidí: avanzar/girar, repetir N, repetir hasta, «si hay río / si está cerrado» y saltar; 10 niveles (2° a 4°)
 - [ ] 🔁 Repetí y decidí: arrastrar bloques en computadora y mover bloques ya puestos
-- [ ] 🦜 La lapa que dibuja: Blockly (descargado dentro del sitio) con avanzar, girar, repetir y colores (4° a 6°)
+- [x] 🦜 La lapa que dibuja: Blockly (dentro del sitio) con avanzar, girar, repetir, color, lápiz y grosor; 10 retos + dibujo libre (4° a 6°)
+- [ ] 🦜 Lapa: variables y «para cada» (espirales), y compartir el dibujo por WhatsApp
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 
 ## 👨‍👩‍👧 Perfiles y progreso (local)

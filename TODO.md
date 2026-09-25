@@ -123,10 +123,21 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🦜 Lapa: variables y «para cada» (espirales), y compartir el dibujo por WhatsApp
 - [ ] Guardar proyectos en el dispositivo y exportarlos o importarlos como archivo
 
+## 🎲 Que no siempre sea lo mismo (generadores, sin servidor)
+
+- [x] Generador de oraciones en español e inglés («Armo la oración» y «Armo en inglés»)
+- [x] Generadores de datos, opiniones y mensajes para «¿Dato u opinión?»
+- [x] Casos al azar del jaguar detective
+- [x] Niveles al azar en «Llevá al perezoso» (mapas con verificador) y «Repetí y decidí» (pasillos, escaleras, cuadrados y ríos de tamaño al azar)
+- [ ] Niveles al azar en «La lapa que dibuja»
+- [ ] Más vocabulario en «Listen and tap» y más animales en «Animales de Costa Rica»
+- [ ] «Reto del día»: el mismo reto para todos ese día (semilla con la fecha)
+
 ## 🧠 Pensamiento lógico y crítico
 
 - [x] 🐆 El jaguar detective: 18 casos en 4 etapas (pistas, pistas con NO, libreta de doble entrada, casos con «o» y «si… entonces»), con 🐞 pistas trampa
-- [ ] 🐆 Más casos y libretas de 4 × 4
+- [x] 🎲 Jaguar detective: casos nuevos al azar (fácil, medio, difícil y libreta), siempre con una sola respuesta
+- [ ] 🐆 Libretas de 4 × 4
 - [x] 🐸 Sudoku de ranitas de Costa Rica (4×4 y 6×6, 5 dificultades, pistas que explican el razonamiento)
 - [ ] 🐸 Sudoku: modo con números o letras para 6°, y sudoku del día
 - [x] 📰 ¿Dato u opinión? (4 etapas: clasificar, palabra pista, verdadero/falso y detector de noticias con señales de alerta)

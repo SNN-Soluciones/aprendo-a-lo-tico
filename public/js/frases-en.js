@@ -1,3 +1,5 @@
+import { frases } from "./generador-frases.js";
+
 // 🦜 Contenido y lógica de «Armo en inglés» (sin pantalla, para poder probarla sola).
 // Cada frase tiene su versión en inglés y en español; `altEn` / `altEs` son otras traducciones que también están bien
 // (solo sirven si se pueden armar con las fichas, por ejemplo quitando el «Yo»).
@@ -64,18 +66,23 @@ function barajar(arr, rnd) {
   return a;
 }
 
-/** Fichas para armar la frase en el idioma `a`: las correctas más 2 o 3 «trampas» de otras frases. */
-export function fichas(f, a, rnd = Math.random) {
+/** Fichas para armar la frase en el idioma `a`: las correctas más 2 o 3 «trampas» de otras frases (de `pool`). */
+export function fichas(f, a, rnd = Math.random, pool = FRASES) {
   const buenas = fichasDe(a === "en" ? f.en : f.es);
   const usadas = new Set(buenas.map(w => w.toLocaleLowerCase()));
-  const otras = [...new Set(FRASES.filter(x => x !== f).flatMap(x => fichasDe(a === "en" ? x.en : x.es)))]
+  const otras = [...new Set(pool.filter(x => x !== f).flatMap(x => fichasDe(a === "en" ? x.en : x.es)))]
     .filter(w => !usadas.has(w.toLocaleLowerCase()) && !NO_TRAMPA.has(w.toLocaleLowerCase()));
   const trampas = barajar(otras, rnd).slice(0, buenas.length <= 4 ? 2 : 3);
   return barajar([...buenas, ...trampas], rnd).map((w, id) => ({ id, w }));
 }
 
-/** Frases de una ronda. */
-export const ronda = (rnd = Math.random) => barajar(FRASES, rnd).slice(0, PREGUNTAS);
+/** Frases de una ronda: la mitad escritas a mano y la otra mitad nuevas, del generador. */
+export function ronda(rnd = Math.random) {
+  const nuevas = frases(PREGUNTAS * 2, rnd, { tiempo: 0.25 });
+  const vistas = new Set(FRASES.map(f => normal(f.es)));
+  const mitad = Math.ceil(PREGUNTAS / 2);
+  return barajar([...barajar(FRASES, rnd).slice(0, mitad), ...nuevas.filter(f => !vistas.has(normal(f.es))).slice(0, PREGUNTAS - mitad)], rnd);
+}
 
 export function estrellasDe(bien, total) {
   const p = bien / total;

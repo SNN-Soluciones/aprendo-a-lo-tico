@@ -1,3 +1,5 @@
+import { frases, fraseMayus, fraseSigno, DIAS_Y_MESES } from "./generador-frases.js";
+
 // ✏️ Contenido y lógica de «Armo la oración» (sin pantalla, para poder probarla sola).
 // Etapas: ordenar palabras (cortas y largas), elegir el signo (. ¿? ¡!) y poner las mayúsculas.
 
@@ -135,16 +137,24 @@ export function revisarMayus(elegidas, t) {
   return { correctas, faltan, sobran, exacto: !faltan.length && !sobran.length };
 }
 
-/** Preguntas de una ronda de la etapa. */
+/** Preguntas de una ronda: se mezclan las oraciones escritas a mano con otras nuevas del generador. */
 export function ronda(etapaId, rnd = Math.random) {
   const e = ETAPAS.find(x => x.id === etapaId);
-  const fuente = { cortas: CORTAS, largas: LARGAS, signos: SIGNOS.map(t => ({ t })), mayus: MAYUS.map(t => ({ t })) }[etapaId];
-  if (etapaId !== "signos") return barajar(fuente, rnd).slice(0, e.preguntas);
+  const unicas = arr => [...new Map(arr.map(o => [o.t, o])).values()];
+  const n = t => palabrasDe(t).length;
+  // Del generador: las otras formas correctas solo sirven si usan las mismas fichas (misma cantidad de palabras)
+  const generadas = (cuantas, tiempo) => frases(cuantas, rnd, { tiempo }).map(f => ({ t: f.es, alt: f.altEs.filter(x => n(x) === n(f.es)) }));
+  if (etapaId === "cortas") return barajar(unicas([...CORTAS, ...generadas(30, 0).filter(o => n(o.t) <= 4)]), rnd).slice(0, e.preguntas);
+  if (etapaId === "largas") return barajar(unicas([...LARGAS, ...generadas(30, 0.7).filter(o => n(o.t) >= 5)]), rnd).slice(0, e.preguntas);
+  if (etapaId === "mayus") return barajar(unicas([...MAYUS, ...Array.from({ length: 12 }, () => fraseMayus(rnd))].map(t => ({ t }))), rnd).slice(0, e.preguntas);
   // Signos: que haya de los tres tipos
-  const por = tipo => barajar(fuente.filter(o => signoDe(o.t) === tipo), rnd);
+  const por = tipo => barajar(unicas([...SIGNOS.filter(t => signoDe(t) === tipo), ...Array.from({ length: 6 }, () => fraseSigno(tipo, rnd))].map(t => ({ t }))), rnd);
   const [p, q, x] = [por("punto"), por("pregunta"), por("exclamacion")];
   return barajar([...p.slice(0, 3), ...q.slice(0, 3), ...x.slice(0, 2)], rnd);
 }
+
+/** ¿La oración tiene días de la semana o meses? (van con minúscula) */
+export const tieneDiasOMeses = t => palabrasDe(t.toLocaleLowerCase("es").replace(/[.,]/g, "")).some(w => DIAS_Y_MESES.includes(w));
 
 /** Estrellas de una ronda (0 a 3). */
 export function estrellasDe(puntos, total) {

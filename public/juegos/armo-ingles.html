@@ -91,7 +91,7 @@
 <script type="module">
 import { elogio, sonido, LENTO } from "../js/voz.js";
 import { decir, instruccion, alEmpezar } from "../js/prepa.js";
-import { ETAPAS, PREGUNTAS, fichas, esCorrecta, ronda, estrellasDe } from "../js/frases-en.js";
+import { ETAPAS, PREGUNTAS, FRASES, fichas, esCorrecta, ronda, estrellasDe } from "../js/frases-en.js";
 
 const $ = id => document.getElementById(id);
 const CLAVE = "armo-ingles";
@@ -133,7 +133,7 @@ function decirPregunta(lento = false) {
 function mostrar() {
   listo = false; puestas = [];
   f = cola[0];
-  todas = fichas(f, etapa.a);
+  todas = fichas(f, etapa.a, Math.random, [...FRASES, ...cola]);
   $("juego").hidden = false; $("resumen").hidden = true; $("resultado").hidden = true;
   $("comprobarBtn").hidden = false;
   if (etapa.id === "escuchar") {

@@ -273,3 +273,79 @@ export function ejecutar(juego, programa) {
   catch (e) { if (!(e instanceof Fin)) throw e; fin = e; }
   return { ...fin, eventos, x, y, d, faltan: faltan.size, pasos };
 }
+
+// ---------- 🎲 Niveles al azar ----------
+// Se arma el mapa «caminando» la solución: las casillas por donde pasa quedan libres y el resto son árboles.
+// Así el nivel siempre se puede resolver con esa solución corta (y se revisa corriéndola).
+function tallar(programa, hojasExtra = []) {
+  let x = 0, y = 0, d = 1;
+  const libres = new Map([["0,0", "."]]), camino = [[0, 0]];
+  const correr = lista => lista.forEach(b => {
+    if (b.t === "avanzar") { x += DX[d]; y += DY[d]; libres.set(`${x},${y}`, "."); camino.push([x, y]); }
+    else if (b.t === "der") d = (d + 1) % 4;
+    else if (b.t === "izq") d = (d + 3) % 4;
+    else if (b.t === "saltar") { libres.set(`${x + DX[d]},${y + DY[d]}`, "~"); x += 2 * DX[d]; y += 2 * DY[d]; libres.set(`${x},${y}`, "."); camino.push([x, y]); }
+    else if (b.t === "repetir") for (let k = 0; k < b.n; k++) correr(b.cuerpo);
+  });
+  correr(programa);
+  const xs = [...libres.keys()].map(k => +k.split(",")[0]), ys = [...libres.keys()].map(k => +k.split(",")[1]);
+  const x0 = Math.min(...xs), y0 = Math.min(...ys), ancho = Math.max(...xs) - x0 + 1, alto = Math.max(...ys) - y0 + 1;
+  const g = Array.from({ length: alto }, () => Array(ancho).fill("#"));
+  for (const [k, v] of libres) { const [a, b] = k.split(",").map(Number); g[b - y0][a - x0] = v; }
+  g[-y0][-x0] = ">";
+  const hojas = [camino[camino.length - 1], ...hojasExtra.map(i => camino[i])];
+  for (const [a, b] of hojas) g[b - y0][a - x0] = "H";
+  return { mapa: g.map(f => f.join("")), ancho, alto };
+}
+
+const PATRONES = [
+  // Pasillo con una esquina: repetir, girar, repetir
+  r => {
+    const a = 3 + r(4), b = 2 + r(4), giro = r(2) ? der : izq;
+    return { titulo: "Pasillo con esquina", etapa: "repetir", bloques: ["avanzar", "izq", "der", "repetir"],
+      solucion: [rep(a, av), giro, rep(b, av)],
+      voz: "Un pasillo con una esquina. Usá Repetir para cada parte recta, y girá en la esquina.",
+      pistas: [`La primera parte recta tiene ${a} casillas.`, `Después girá a la ${giro === der ? "derecha" : "izquierda"} y repetí ${b} veces más.`] };
+  },
+  // Escalera de k escalones (para abajo o para arriba)
+  r => {
+    const k = 3 + r(3), baja = r(2);
+    const escalon = baja ? [av, der, av, izq] : [av, izq, av, der];
+    return { titulo: baja ? "Escalera para abajo" : "Escalera para arriba", etapa: "repetir", bloques: ["avanzar", "izq", "der", "repetir"],
+      solucion: [rep(k, ...escalon), av],
+      voz: "Una escalera: cada escalón se hace igual. ¡Repetilo!",
+      pistas: [`Un escalón: avanzar, girar a la ${baja ? "derecha" : "izquierda"}, avanzar, girar a la ${baja ? "izquierda" : "derecha"}.`, `Son ${k} escalones, y al final un Avanzar más.`] };
+  },
+  // Cuadrado con hojas en las esquinas: repetir adentro de repetir
+  r => {
+    const l = 2 + r(3), vueltas = 3, giro = r(2) ? der : izq;
+    return { titulo: "El cuadrado", etapa: "anidado", bloques: ["avanzar", "izq", "der", "repetir"],
+      solucion: [rep(vueltas, rep(l, av), giro)], hojasExtra: [l, 2 * l],
+      voz: "Hojas en las esquinas de un cuadrado. Cada lado es igual: un Repetir adentro de otro Repetir.",
+      pistas: [`Un lado: repetir ${l} veces Avanzar, y después girar a la ${giro === der ? "derecha" : "izquierda"}.`, `Repetí el lado ${vueltas} veces.`] };
+  },
+  // Camino con ríos: repetir hasta + si hay río, saltar
+  r => {
+    const tramos = 2 + r(2), unrolled = [];
+    for (let i = 0; i < tramos; i++) unrolled.push(...Array(tramos === 2 ? 1 + r(2) : 1).fill(av), saltar);
+    unrolled.push(av);
+    return { titulo: "Ríos en el camino", etapa: "hasta", bloques: ["avanzar", "saltar", "si", "hasta"],
+      carve: unrolled, solucion: [hasta(si("rio", [saltar], [av]))],
+      voz: "¡Hay ríos en el camino! Repetí hasta comer la hoja: si hay río, saltá; si no, avanzá.",
+      pistas: ["Usá Repetir hasta, y adentro un Si.", "Si hay río: saltar. Si no: avanzar."] };
+  },
+];
+
+/** Un nivel nuevo al azar para «Repetí y decidí» (se revisa que la solución gane). */
+export function nivelAlAzar(rnd = Math.random) {
+  const r = n => Math.floor(rnd() * n);
+  for (let intento = 0; intento < 100; intento++) {
+    const p = PATRONES[r(PATRONES.length)](r);
+    const { mapa, ancho, alto } = tallar(p.carve || p.solucion, p.hojasExtra);
+    if (ancho > 10 || alto > 7) continue;
+    const nivel = { id: "azar", azar: true, titulo: `🎲 ${p.titulo}`, etapa: p.etapa, voz: p.voz, mapa, bloques: p.bloques, solucion: p.solucion, pistas: p.pistas };
+    nivel.objetivo = contar(nivel.solucion);
+    if (ejecutar(leer(nivel), nivel.solucion).resultado === "gano") return nivel;
+  }
+  return { ...NIVELES[4], id: "azar", azar: true };
+}

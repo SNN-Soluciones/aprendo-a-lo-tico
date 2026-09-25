@@ -195,3 +195,146 @@ export function revisarCaso(caso) {
   }
   return mal;
 }
+
+// ---------- 🎲 Casos nuevos al azar ----------
+// Pistas posibles para un animal: cada una dice si la cumple (f) y si es una pista con NO.
+// Solo se usan características que todos los sospechosos tienen definidas (sin null), para que no haya dudas.
+const COLOR = { cafe: "café", negro: "negro", rojo: "rojo", verde: "verde", gris: "gris", azul: "azul" };
+const CUBIERTAS = { pelo: "pelo", plumas: "plumas", escamas: "escamas", caparazon: "caparazón" };
+const PATAS = { 0: "No tiene patas.", 2: "Tiene dos patas.", 4: "Tiene cuatro patas.", 6: "Tiene seis patas." };
+const PATAS_NO = { 0: "Tiene patas.", 2: "No tiene dos patas.", 4: "No tiene cuatro patas.", 6: "No tiene seis patas." };
+const VIVE = { arbol: "los árboles", agua: "el agua", suelo: "el suelo" };
+
+function pistasPara(culpable, ids) {
+  const c = ANIMALES[culpable], out = [];
+  const definido = k => ids.every(id => ANIMALES[id][k] !== null && ANIMALES[id][k] !== undefined);
+  const add = (txt, f, no = false) => out.push({ txt, f, no });
+  if (definido("cubierta")) {
+    if (CUBIERTAS[c.cubierta]) add(`Tiene ${CUBIERTAS[c.cubierta]}.`, a => a.cubierta === c.cubierta);
+    for (const [v, n] of Object.entries(CUBIERTAS)) if (v !== c.cubierta) add(`No tiene ${n}.`, a => a.cubierta !== v, true);
+  }
+  if (definido("vuela")) add(c.vuela ? "Puede volar." : "No puede volar.", a => a.vuela === c.vuela, !c.vuela);
+  if (definido("patas")) {
+    add(PATAS[c.patas], a => a.patas === c.patas, c.patas === 0);
+    for (const v of [0, 2, 4, 6]) if (v !== c.patas) add(PATAS_NO[v], a => a.patas !== v, v !== 0);
+  }
+  if (definido("vive")) {
+    add(`Vive en ${VIVE[c.vive]}.`, a => a.vive === c.vive);
+    for (const [v, n] of Object.entries(VIVE)) if (v !== c.vive) add(`No vive en ${n}.`, a => a.vive !== v, true);
+  }
+  // «Come de todo» también come plantas: para no confundir, solo se usa si nadie come de todo
+  if (definido("come") && ids.every(id => ANIMALES[id].come !== "todo")) {
+    add(c.come === "plantas" ? "Come plantas." : "Come otros animales.", a => a.come === c.come);
+    add(c.come === "plantas" ? "No come otros animales." : "No come plantas.", a => a.come === c.come, true);
+  }
+  if (definido("color")) {
+    add(`Es de color ${COLOR[c.color]}.`, a => a.color === c.color);
+    for (const [v, n] of Object.entries(COLOR)) if (v !== c.color) add(`No es de color ${n}.`, a => a.color !== v, true);
+  }
+  if (definido("noche")) add(c.noche ? "Sale de noche." : "Sale de día.", a => a.noche === c.noche);
+  if (definido("lento")) add(c.lento ? "Se mueve muy despacio." : "No se mueve despacio.", a => a.lento === c.lento, !c.lento);
+  return out;
+}
+
+const HISTORIAS = [
+  ["¿Quién se comió {cosa}?", "¡Alguien se comió {cosa}! El jaguar sacó su libreta."],
+  ["Un ruido en {lugar}", "Anoche alguien hizo mucho ruido en {lugar}. ¿Quién fue?"],
+  ["Huellas en {lugar}", "Aparecieron huellas misteriosas en {lugar}. ¡A investigar!"],
+  ["¿Quién se llevó {cosa}?", "Alguien se llevó {cosa}. El jaguar tiene varios sospechosos."],
+];
+const COSAS = ["los mangos de la pulpería", "el queso del recreo", "las galletas de la maestra", "el pan de la abuela", "las fresas del jardín",
+  "los bananos de la feria", "la sandía del paseo", "el arroz con leche de la fiesta"];
+const LUGARES = ["la biblioteca", "el aula de sexto", "la plaza", "la cocina de la escuela", "el jardín", "la bodega", "el gimnasio"];
+
+export const DIFICULTADES = [
+  { id: "facil", nombre: "Fácil", sospechosos: [3, 3], pistas: [1, 2], no: false },
+  { id: "medio", nombre: "Medio", sospechosos: [4, 5], pistas: [2, 3], no: true },
+  { id: "dificil", nombre: "Difícil", sospechosos: [5, 6], pistas: [3, 4], no: true },
+];
+
+const barajar = (arr, rnd) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+const entre = ([a, b], rnd) => a + Math.floor(rnd() * (b - a + 1));
+// El título y la historia usan la misma cosa y el mismo lugar
+const llenar = (textos, rnd) => { const cosa = COSAS[Math.floor(rnd() * COSAS.length)], lugar = LUGARES[Math.floor(rnd() * LUGARES.length)]; return textos.map(t => t.replace("{cosa}", cosa).replace("{lugar}", lugar)); };
+
+/** Un caso de sospechosos nuevo, con una sola respuesta. dificultad: "facil" | "medio" | "dificil" */
+export function casoAlAzar(dificultad = "facil", rnd = Math.random) {
+  const d = DIFICULTADES.find(x => x.id === dificultad);
+  for (let intento = 0; intento < 300; intento++) {
+    const ids = barajar(Object.keys(ANIMALES), rnd).slice(0, entre(d.sospechosos, rnd));
+    const culpable = ids[0];
+    let posibles = pistasPara(culpable, ids).filter(q => d.no || !q.no);
+    const pistas = [];
+    let quedan = ids.slice(1);
+    while (quedan.length && pistas.length < d.pistas[1]) {
+      // Pistas que descartan a alguien que todavía queda; se prefieren las que descartan pocos (así hacen falta varias)
+      const utiles = posibles.filter(q => quedan.some(id => !q.f(ANIMALES[id])));
+      if (!utiles.length) break;
+      const menor = Math.min(...utiles.map(q => quedan.filter(id => !q.f(ANIMALES[id])).length));
+      const q = barajar(utiles.filter(x => quedan.filter(id => !x.f(ANIMALES[id])).length <= menor + 1), rnd)[0];
+      pistas.push(q);
+      quedan = quedan.filter(id => q.f(ANIMALES[id]));
+      posibles = posibles.filter(x => x.txt !== q.txt);
+    }
+    if (quedan.length) continue;
+    // Se quitan las pistas que sobran: en un buen caso hacen falta todas
+    const resuelve = ps => ids.filter(id => ps.every(q => q.f(ANIMALES[id]))).length === 1;
+    for (let i = pistas.length - 1; i >= 0; i--) if (resuelve(pistas.filter((_, j) => j !== i))) pistas.splice(i, 1);
+    if (pistas.length < d.pistas[0]) continue;
+    if (d.no && !pistas.some(q => q.no)) continue;
+    const [titulo, historia] = llenar(HISTORIAS[Math.floor(rnd() * HISTORIAS.length)], rnd);
+    const caso = { id: `azar-${dificultad}`, azar: dificultad, etapa: "azar", tipo: "sospechosos", titulo, historia,
+      sospechosos: barajar(ids, rnd), culpable, pistas: barajar(pistas, rnd).map(({ txt, f }) => ({ txt, f })) };
+    if (!revisarCaso(caso).length) return caso;
+  }
+  return { ...CASOS[0], id: `azar-${dificultad}`, azar: dificultad };
+}
+
+// Libretas al azar: tres animales y tres cosas; pistas directas, con NO, o por características
+const TEMAS = [
+  { titulo: "¿Qué fruta comió cada uno?", historia: "Cada uno comió una fruta distinta. ¡A llenar la libreta!", verbo: "comió",
+    columnas: [{ id: "mango", e: "🥭", n: "mango", art: "el" }, { id: "banano", e: "🍌", n: "banano", art: "el" }, { id: "sandia", e: "🍉", n: "sandía", art: "la" }, { id: "pina", e: "🍍", n: "piña", art: "la" }] },
+  { titulo: "¿Dónde durmió cada uno?", historia: "Cada uno durmió en un lugar distinto. ¿Dónde?", verbo: "durmió en",
+    columnas: [{ id: "arbol", e: "🌳", n: "árbol", art: "el" }, { id: "piedra", e: "🪨", n: "piedra", art: "la" }, { id: "hoja", e: "🍃", n: "hoja", art: "la" }, { id: "cueva", e: "🕳️", n: "cueva", art: "la" }] },
+  { titulo: "El festival de música", historia: "En el festival, cada uno tocó un instrumento distinto.", verbo: "tocó",
+    columnas: [{ id: "tambor", e: "🥁", n: "tambor", art: "el" }, { id: "guitarra", e: "🎸", n: "guitarra", art: "la" }, { id: "trompeta", e: "🎺", n: "trompeta", art: "la" }, { id: "marimba", e: "🎹", n: "marimba", art: "la" }] },
+  { titulo: "¿De qué color es cada mochila?", historia: "Cada uno llevó una mochila de otro color al paseo.", verbo: "llevó la mochila",
+    columnas: [{ id: "roja", e: "🔴", n: "roja", art: "" }, { id: "azul", e: "🔵", n: "azul", art: "" }, { id: "amarilla", e: "🟡", n: "amarilla", art: "" }, { id: "verde", e: "🟢", n: "verde", art: "" }] },
+];
+
+/** Una libreta 3 × 3 nueva, con una sola solución y sin pistas de sobra. */
+export function libretaAlAzar(rnd = Math.random) {
+  const Q = s => s[0].toUpperCase() + s.slice(1);
+  for (let intento = 0; intento < 200; intento++) {
+    const tema = TEMAS[Math.floor(rnd() * TEMAS.length)];
+    const filas = barajar(Object.keys(ANIMALES), rnd).slice(0, 3);
+    const columnas = barajar(tema.columnas, rnd).slice(0, 3).map(({ id, e, n, art }) => ({ id, e, n, art }));
+    const perm = barajar(columnas.map(c => c.id), rnd);
+    const solucion = Object.fromEntries(filas.map((f, i) => [f, perm[i]]));
+    const cosa = c => { const col = columnas.find(x => x.id === c); return `${col.art ? col.art + " " : ""}${col.n}`; };
+    const nom = f => `${ANIMALES[f].art} ${ANIMALES[f].n}`;
+    // Pistas candidatas (todas verdaderas para la solución)
+    const cand = [];
+    for (const f of filas) for (const c of columnas) {
+      if (solucion[f] === c.id) cand.push(p(`${Q(nom(f))} ${tema.verbo} ${cosa(c.id)}.`, s => s.de(f) === c.id));
+      else cand.push(p(`${Q(nom(f))} no ${tema.verbo} ${cosa(c.id)}.`, s => s.de(f) !== c.id));
+    }
+    for (const c of columnas) {
+      const a = ANIMALES[filas.find(f => solucion[f] === c.id)];
+      if (CUBIERTAS[a.cubierta] && filas.filter(f => ANIMALES[f].cubierta === a.cubierta).length === 1)
+        cand.push(p(`El que ${tema.verbo} ${cosa(c.id)} tiene ${CUBIERTAS[a.cubierta]}.`, s => ANIMALES[s.quien(c.id)].cubierta === a.cubierta));
+    }
+    // Se agregan pistas al azar hasta que haya una sola solución, y después se quitan las que sobran
+    const caso = { id: "azar-libreta", azar: "libreta", etapa: "azar", tipo: "libreta", titulo: tema.titulo, historia: tema.historia, filas, columnas, solucion, pistas: [] };
+    // Las directas («X comió Y») son muy fáciles: se usan poco
+    for (const q of barajar(cand, rnd).sort((a, b) => (/ no /.test(b.txt) || /El que/.test(b.txt) ? 1 : 0) - (/ no /.test(a.txt) || /El que/.test(a.txt) ? 1 : 0))) {
+      if (soluciones(caso).length === 1) break;
+      const antes = soluciones(caso).length;
+      caso.pistas.push(q);
+      if (soluciones(caso).length === antes) caso.pistas.pop();
+    }
+    for (let i = caso.pistas.length - 1; i >= 0; i--) if (soluciones(caso, [i]).length === 1) caso.pistas.splice(i, 1);
+    if (caso.pistas.length >= 2 && !revisarCaso(caso).length) { caso.pistas = barajar(caso.pistas, rnd); return caso; }
+  }
+  return { ...CASOS.find(c => c.tipo === "libreta"), id: "azar-libreta", azar: "libreta" };
+}

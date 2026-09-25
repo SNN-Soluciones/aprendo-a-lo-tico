@@ -63,6 +63,7 @@ aprendo-a-lo-tico/
 │   ├── js/gato.js          # ❌⭕ Gato: jugadas del jaguar (fácil, medio, perfecto) y consejos
 │   ├── js/tablas.js        # ✖️ Tablas: preguntas, trucos de cada tabla y estrellas
 │   ├── js/oraciones.js     # 🧩 Oraciones para ordenar, signos y mayúsculas
+│   ├── js/generador-frases.js # 🎲 Arma oraciones nuevas en español e inglés (concordancia y sentido)
 │   ├── js/planta.js        # 🌱 Partes de la planta, para qué sirven y qué parte comemos
 │   ├── js/simbolos.js      # 🌸 Símbolos patrios: datos, memoria y adivinanzas
 │   ├── js/simbolos-svg.js  # 🌸 Dibujos SVG de los símbolos patrios
@@ -70,6 +71,7 @@ aprendo-a-lo-tico/
 │   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/frases-en.js    # 🦜 Frases en inglés y español, fichas con trampas y revisión
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
+│   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido

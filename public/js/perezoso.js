@@ -99,3 +99,37 @@ export function minimo(juego) {
   }
   return Infinity;
 }
+
+// ---------- 🎲 Niveles al azar ----------
+/**
+ * Arma un mapa nuevo que se puede resolver: el camino más corto queda entre `pasos[0]` y `pasos[1]`
+ * (así no es ni muy fácil ni más largo que las 20 flechas que caben).
+ */
+export function nivelAlAzar(rnd = Math.random, { pasos = [5, 14] } = {}) {
+  const r = n => Math.floor(rnd() * n);
+  for (let intento = 0; intento < 500; intento++) {
+    const ancho = 4 + r(3), alto = 3 + r(3);             // de 4×3 a 6×5
+    const g = Array.from({ length: alto }, () => Array(ancho).fill("."));
+    const libres = [];
+    for (let y = 0; y < alto; y++) for (let x = 0; x < ancho; x++) libres.push([x, y]);
+    const sacar = () => libres.splice(r(libres.length), 1)[0];
+    const [sx, sy] = sacar(); g[sy][sx] = "S";
+    const hojas = 1 + r(3);
+    for (let i = 0; i < hojas; i++) { const [x, y] = sacar(); g[y][x] = "H"; }
+    // Árboles sueltos y, a veces, un pedazo de río en línea
+    const arboles = Math.floor(ancho * alto * (0.12 + rnd() * 0.12));
+    for (let i = 0; i < arboles && libres.length > 2; i++) { const [x, y] = sacar(); g[y][x] = "#"; }
+    if (rnd() < 0.5) {
+      const vertical = rnd() < 0.5, largo = 2 + r(2);
+      let [x, y] = libres[r(libres.length)];
+      for (let i = 0; i < largo; i++) {
+        if (x >= ancho || y >= alto || g[y][x] !== ".") break;
+        g[y][x] = "~"; vertical ? y++ : x++;
+      }
+    }
+    const nivel = { id: "azar", azar: true, mapa: g.map(f => f.join("")) };
+    const m = minimo(leer(nivel));
+    if (m >= pasos[0] && m <= pasos[1]) return nivel;
+  }
+  return { ...NIVELES[NIVELES.length - 1], id: "azar", azar: true };
+}

@@ -128,7 +128,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Generador de oraciones en español e inglés («Armo la oración» y «Armo en inglés»)
 - [x] Generadores de datos, opiniones y mensajes para «¿Dato u opinión?»
 - [x] Casos al azar del jaguar detective
-- [ ] Niveles al azar en «Llevá al perezoso» y «Repetí y decidí» (con verificador que los resuelva)
+- [x] Niveles al azar en «Llevá al perezoso» (mapas con verificador) y «Repetí y decidí» (pasillos, escaleras, cuadrados y ríos de tamaño al azar)
+- [ ] Niveles al azar en «La lapa que dibuja»
 - [ ] Más vocabulario en «Listen and tap» y más animales en «Animales de Costa Rica»
 - [ ] «Reto del día»: el mismo reto para todos ese día (semilla con la fecha)
 

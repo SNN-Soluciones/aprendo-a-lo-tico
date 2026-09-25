@@ -79,6 +79,8 @@
   .niveles .etapa:first-child { padding-left: 0; }
   .niveles button.bug { background: #FFE3E0; }
   .niveles button.bug[aria-pressed="true"] { background: var(--btn); }
+  .niveles button.azar { background: #EFE4FF; }
+  .niveles button.azar[aria-pressed="true"] { background: var(--btn); }
   .pista { background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; margin-top: 8px; font-weight: 700; font-size: 1rem; }
   .pista[hidden] { display: none; }
   #playBtn { background: var(--ok); color: #fff; }
@@ -120,7 +122,7 @@
 <script type="module">
 import { elogio, sonido } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { NIVELES, ETAPAS, leer, ejecutar, contar } from "../js/decidi.js";
+import { NIVELES, ETAPAS, leer, ejecutar, contar, nivelAlAzar } from "../js/decidi.js";
 
 const $ = id => document.getElementById(id);
 const FLECHA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.5 12H15v9.5H9V12H3.5z"/></svg>`;
@@ -139,7 +141,7 @@ const MAX_VECES = 20;
 const COND = { rio: "🌊 hay río", cerrado: "🌳 está cerrado" };
 const nuevoBloque = t => t === "repetir" ? { t, n: 3, cuerpo: [] } : t === "hasta" ? { t, cuerpo: [] } : t === "si" ? { t, cond: "rio", si: [], sino: [] } : { t };
 
-let n = 0, nivel = null, juego = null, programa = [], activo = [], mala = null, corriendo = false, ganado = false;
+let n = 0, azar = false, nivel = null, juego = null, programa = [], activo = [], mala = null, corriendo = false, ganado = false;
 let progreso = {};
 // Guardado por id de nivel (no por número), así se pueden agregar niveles sin desordenar las estrellas
 try { progreso = JSON.parse(localStorage.getItem("decidi-progreso-v2")) || {}; } catch (_) {}
@@ -160,9 +162,10 @@ const empiezaCon = (r, pre) => pre.length <= r.length && id(r.slice(0, pre.lengt
 function pintarNiveles() {
   $("niveles").innerHTML = NIVELES.map((nv, i) =>
     (i === 0 || NIVELES[i - 1].etapa !== nv.etapa ? `<span class="etapa">${etapaDe(nv).emoji} ${etapaDe(nv).nombre}</span>` : "")
-    + `<button data-n="${i}" class="${nv.depurar ? "bug" : ""}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}: ${nv.titulo}">${nv.depurar ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[nv.id] || 0)}</small></button>`).join("");
+    + `<button data-n="${i}" class="${nv.depurar ? "bug" : ""}" aria-pressed="${i === n && !azar}" aria-label="Nivel ${i + 1}: ${nv.titulo}">${nv.depurar ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[nv.id] || 0)}</small></button>`).join("")
+    + `<span class="etapa">🎲 Al azar</span><button data-n="azar" class="azar" aria-pressed="${azar}" aria-label="Nivel nuevo al azar">🎲<small>nuevo</small></button>`;
   $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
-  $("niveles").querySelector(`[data-n="${n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+  $("niveles").querySelector(`[data-n="${azar ? "azar" : n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
 }
 
 function pintarTablero() {
@@ -213,17 +216,20 @@ function pintarPaleta() {
 }
 
 // ---------- Niveles ----------
+// i: número de nivel, o "azar" para uno nuevo (pasillos, escaleras, cuadrados o ríos de tamaño al azar)
 function cargar(i) {
-  n = i; nivel = NIVELES[n]; juego = leer(nivel);
+  azar = i === "azar";
+  if (!azar) n = i;
+  nivel = azar ? nivelAlAzar() : NIVELES[n]; juego = leer(nivel);
   programa = JSON.parse(JSON.stringify(nivel.inicial || [])); activo = []; mala = null; ganado = false; corriendo = false;
   pista = 0; $("pista").hidden = true;
   pintarNiveles(); pintarTablero(); pintarPaleta(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
-  instruccion(`<span class="titulo">${etapaDe(nivel).emoji} Nivel ${n + 1}: ${nivel.titulo}</span>🦥 ➜ 🍃${juego.hojas.length > 1 ? ` ×${juego.hojas.length}` : ""}`, nivel.voz);
+  instruccion(`<span class="titulo">${azar ? nivel.titulo : `${etapaDe(nivel).emoji} Nivel ${n + 1}: ${nivel.titulo}`}</span>🦥 ➜ 🍃${juego.hojas.length > 1 ? ` ×${juego.hojas.length}` : ""}`, nivel.voz);
 }
 $("niveles").addEventListener("click", e => {
   const b = e.target.closest("[data-n]");
-  if (b && !corriendo) { sonido("tap"); cargar(Number(b.dataset.n)); }
+  if (b && !corriendo) { sonido("tap"); cargar(b.dataset.n === "azar" ? "azar" : Number(b.dataset.n)); }
 });
 
 // ---------- Editar ----------
@@ -319,13 +325,15 @@ function terminar(r) {
   if (r.resultado === "gano") {
     ganado = true;
     const estrellas = total <= nivel.objetivo ? 3 : 2;
-    progreso[nivel.id] = Math.max(progreso[nivel.id] || 0, estrellas);
+    // Los niveles al azar suman estrellas cada vez; los fijos guardan la mejor
+    if (azar) progreso.azar = (progreso.azar || 0) + estrellas;
+    else progreso[nivel.id] = Math.max(progreso[nivel.id] || 0, estrellas);
     guardar(); pintarNiveles(); pintarPrograma();
     $("perezoso").classList.add("feliz");
     feedback("ok", "🎉", "⭐".repeat(estrellas));
     const extra = estrellas === 3 ? "¡Y con muy pocos bloques!" : `Usaste ${total} bloques. ¿Podés hacerlo con ${nivel.objetivo}?`;
     decir(`${elogio()} ${juego.hojas.length > 1 ? "Se comió todas las hojas" : "Llegó a la hoja"}. ${extra}`);
-    if (n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+    if (azar || n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
     else decir("¡Terminaste todos los niveles! Ya sabés repetir y decidir, como los programadores de verdad.", { cola: true });
     return;
   }
@@ -347,7 +355,7 @@ function terminar(r) {
   }
 }
 
-$("nextBtn").addEventListener("click", () => cargar(Math.min(n + 1, NIVELES.length - 1)));
+$("nextBtn").addEventListener("click", () => cargar(azar ? "azar" : Math.min(n + 1, NIVELES.length - 1)));
 
 // 💡 Pistas de una en una; ↺ vuelve al programa del principio (en los 🐞, el que tiene el error)
 let pista = 0;
@@ -373,7 +381,7 @@ n = primero === -1 ? 0 : primero;
 alEmpezar(() => cargar(n));
 pintarNiveles();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__decidi = { poner: p => { programa = JSON.parse(JSON.stringify(p)); pintarPrograma(); } };
+if (new URLSearchParams(location.search).has("prueba")) window.__decidi = { poner: p => { programa = JSON.parse(JSON.stringify(p)); pintarPrograma(); }, get nivel() { return nivel; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

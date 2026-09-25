@@ -22,6 +22,8 @@
   .niveles button { flex: none; min-width: 44px; padding: 0 8px; font-size: 1.1rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
   .niveles button small { display: block; font-size: .6rem; letter-spacing: -1px; min-height: .8rem; }
   .niveles button[aria-pressed="true"] { background: var(--btn); }
+  .niveles button.azar { background: #EFE4FF; }
+  .niveles button.azar[aria-pressed="true"] { background: var(--btn); }
 
   /* Tablero */
   .tablero {
@@ -119,14 +121,14 @@
 <script type="module">
 import { hablar, elogio, sonido } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { NIVELES, DIRS, leer, ejecutar, minimo } from "../js/perezoso.js";
+import { NIVELES, DIRS, leer, ejecutar, minimo, nivelAlAzar } from "../js/perezoso.js";
 
 const $ = id => document.getElementById(id);
 const FLECHA = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5 20.5 12H15v9.5H9V12H3.5z"/></svg>`;
 const MAX = 20;
 const PALABRA = { arriba: "arriba", derecha: "derecha", abajo: "abajo", izquierda: "izquierda" };
 
-let n = 0, juego = null, programa = [], corriendo = false, ganado = false, intentos = 0;
+let n = 0, nivel = null, azar = false, juego = null, programa = [], corriendo = false, ganado = false, intentos = 0;
 let mala = -1; // flecha que hizo chocar al perezoso (se queda roja hasta cambiar el programa)
 let progreso = {};
 // Guardado por id de nivel (no por número), así se pueden agregar niveles sin desordenar las estrellas
@@ -138,10 +140,11 @@ document.querySelectorAll("#botonera .flecha").forEach(b => b.innerHTML = FLECHA
 // ---------- Pintar ----------
 function pintarNiveles() {
   $("niveles").innerHTML = NIVELES.map((_, i) =>
-    `<button data-n="${i}" aria-pressed="${i === n}" aria-label="Nivel ${i + 1}${NIVELES[i].depurar ? ": arreglá la flecha" : ""}">${NIVELES[i].depurar ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[NIVELES[i].id] || 0)}</small></button>`).join("");
+    `<button data-n="${i}" aria-pressed="${i === n && !azar}" aria-label="Nivel ${i + 1}${NIVELES[i].depurar ? ": arreglá la flecha" : ""}">${NIVELES[i].depurar ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[NIVELES[i].id] || 0)}</small></button>`).join("")
+    + `<button data-n="azar" class="azar" aria-pressed="${azar}" aria-label="Nivel nuevo al azar">🎲<small>nuevo</small></button>`;
   const total = Object.values(progreso).reduce((a, b) => a + b, 0);
   $("stars").textContent = `⭐ ${total}`;
-  $("niveles").querySelector(`[data-n="${n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+  $("niveles").querySelector(`[data-n="${azar ? "azar" : n}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
 }
 
 function pintarTablero() {
@@ -173,14 +176,20 @@ function pintarPrograma(activa = -1, roja = mala) {
 }
 
 // ---------- Niveles ----------
+// i: número de nivel, o "azar" para uno nuevo al azar
 function cargar(i) {
-  n = i; juego = leer(NIVELES[n]); programa = [...(NIVELES[n].inicial || [])]; ganado = false; corriendo = false; intentos = 0; mala = -1;
+  azar = i === "azar";
+  if (!azar) n = i;
+  nivel = azar ? nivelAlAzar() : NIVELES[n];
+  juego = leer(nivel); programa = [...(nivel.inicial || [])]; ganado = false; corriendo = false; intentos = 0; mala = -1;
   pintarNiveles(); pintarTablero(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
   const varias = juego.hojas.length > 1;
   instruccion(
     `<span class="big">🦥</span> ➜ <span class="big">🍃</span>${varias ? ` ×${juego.hojas.length}` : ""}`,
-    NIVELES[n].depurar
+    azar
+      ? `🎲 Un camino nuevo. Llevá al perezoso ${varias ? `a comerse las ${juego.hojas.length} hojas` : "hasta la hoja"}.`
+      : nivel.depurar
       ? "¡Uy! Este camino tiene una flecha equivocada. Tocá el botón verde para ver qué pasa, y después arreglá la flecha."
       : n === 0
       ? "Llevá al perezoso hasta la hoja. Tocá las flechas para armar el camino, y después tocá el botón verde para que camine."
@@ -190,7 +199,7 @@ function cargar(i) {
 
 $("niveles").addEventListener("click", e => {
   const b = e.target.closest("[data-n]");
-  if (b && !corriendo) { sonido("tap"); cargar(Number(b.dataset.n)); }
+  if (b && !corriendo) { sonido("tap"); cargar(b.dataset.n === "azar" ? "azar" : Number(b.dataset.n)); }
 });
 
 // ---------- Armar el programa ----------
@@ -267,14 +276,16 @@ function terminar(r) {
     ganado = true;
     const min = minimo(juego);
     const estrellas = programa.length <= min ? 3 : 2;
-    progreso[NIVELES[n].id] = Math.max(progreso[NIVELES[n].id] || 0, estrellas);
+    // Los niveles al azar suman estrellas cada vez; los fijos guardan la mejor
+    if (azar) progreso.azar = (progreso.azar || 0) + estrellas;
+    else progreso[nivel.id] = Math.max(progreso[nivel.id] || 0, estrellas);
     guardar(); pintarNiveles();
     pintarPrograma();
     $("perezoso").classList.add("feliz");
     const extra = estrellas === 3 ? "¡Y con el camino más corto!" : `Lo lograste con ${programa.length} flechas. ¿Podés hacerlo con ${min}?`;
     feedback("ok", "🎉", `${"⭐".repeat(estrellas)}`);
     decir(`${elogio()} El perezoso ${juego.hojas.length > 1 ? "se comió todas las hojas" : "llegó a la hoja"}. ${extra}`);
-    if (n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+    if (azar || n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
     else decir(`${elogio()} ¡Terminaste todos los niveles! Sos un programador o programadora de verdad.`, { cola: true });
     return;
   }
@@ -295,7 +306,7 @@ function terminar(r) {
   pintarPrograma();
 }
 
-$("nextBtn").addEventListener("click", () => cargar(Math.min(n + 1, NIVELES.length - 1)));
+$("nextBtn").addEventListener("click", () => cargar(azar ? "azar" : Math.min(n + 1, NIVELES.length - 1)));
 
 // Arrancar en el primer nivel sin terminar
 const primero = NIVELES.findIndex(nv => !progreso[nv.id]);
@@ -303,7 +314,7 @@ n = primero === -1 ? 0 : primero;
 alEmpezar(() => cargar(n));
 pintarNiveles();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__perezoso = { get programa() { return programa; }, get n() { return n; } };
+if (new URLSearchParams(location.search).has("prueba")) window.__perezoso = { get programa() { return programa; }, get n() { return n; }, get nivel() { return nivel; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

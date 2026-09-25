@@ -205,8 +205,10 @@ $("fichas").addEventListener("click", e => {
   const b = e.target.closest("[data-suelta]");
   if (!b || listo) return;
   sonido("tap");
-  puestas.push(sueltas.splice(Number(b.dataset.suelta), 1)[0]);
+  const f = sueltas.splice(Number(b.dataset.suelta), 1)[0];
+  puestas.push(f);
   pintarFichas();
+  decir(f.w.replace(/[.,;:¿?¡!]/g, "")); // dice la palabra que se agregó
   if (!sueltas.length) revisarOrden();
 });
 $("renglon").addEventListener("click", e => {
@@ -227,7 +229,7 @@ function revisarOrden() {
     pintarFichas(Object.fromEntries(puestas.map((_, i) => [i, "ok"])));
     $("renglon").classList.add("bien");
     feedback("ok", "🎉", elogio());
-    decir(`${elogio()} ${armada.join(" ")}`);
+    decir(`${elogio()} ${armada.join(" ")}`, { cola: true });
     terminarPregunta(intentos === 0 ? 1 : 0.5, null);
     return;
   }
@@ -238,7 +240,7 @@ function revisarOrden() {
   pintarFichas(marcas);
   if (intentos < 3) {
     feedback("almost", "🤔", i === 0 ? "Revisá la primera palabra: empieza con mayúscula." : "Las verdes están bien. Tocá las rojas para quitarlas y probá otra vez.");
-    decir(i === 0 ? "Revisá la primera palabra. La primera palabra empieza con mayúscula." : "Las verdes están bien. Quitá las rojas y probá otra vez. Escuchá: " + q.t);
+    decir(i === 0 ? "Revisá la primera palabra. La primera palabra empieza con mayúscula." : "Las verdes están bien. Quitá las rojas y probá otra vez. Escuchá: " + q.t, { cola: true });
     // Las rojas vuelven solas a las fichas
     setTimeout(() => { if (listo) return; sueltas.push(...puestas.splice(i)); pintarFichas(Object.fromEntries(puestas.map((_, j) => [j, "ok"]))); }, 1100);
   } else {

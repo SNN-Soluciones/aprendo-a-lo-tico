@@ -15,33 +15,63 @@
 <link rel="stylesheet" href="css/base.css">
 </head>
 <body>
+<header class="barra">
+  <button class="hamburguesa" id="menuBtn" aria-label="Abrir el menú" aria-expanded="false" aria-controls="menu">☰</button>
+  <a class="marca" href="#">Aprendo a lo <span class="flag">Tico</span></a>
+  <span class="barra-espacio" aria-hidden="true"></span>
+</header>
+
+<div class="velo" id="velo" hidden></div>
+<nav class="menu" id="menu" aria-label="Menú principal" hidden>
+  <div class="menu-cab"><b>Menú</b><button class="cerrar" id="cerrarMenu" aria-label="Cerrar el menú">✕</button></div>
+  <a class="menu-item" href="#">🏠 Inicio</a>
+  <p class="menu-titulo">Categorías</p>
+  <div id="menuCategorias"></div>
+  <p class="menu-titulo">Aprendo a lo Tico</p>
+  <a class="menu-item" href="apoyar.html">💚 Apoyar con SINPE</a>
+  <a class="menu-item" href="sugerencias.html">💡 Enviar ideas</a>
+</nav>
+
 <main class="page">
-  <header class="hero">
-    <h1>Aprendo a lo <span class="flag">Tico</span></h1>
-    <p>Juegos gratis para aprender jugando, con colones, pulpería y la hora como la decimos aquí.</p>
-  </header>
+  <!-- 🏠 Menú principal: categorías -->
+  <section id="vistaInicio">
+    <header class="hero">
+      <h1>Aprendo a lo <span class="flag">Tico</span></h1>
+      <p>Juegos gratis para aprender jugando, con colones, pulpería y la hora como la decimos aquí.</p>
+    </header>
 
-  <section class="filters" aria-label="Filtros">
-    <div>
-      <h2>Materia</h2>
-      <div class="chips" id="materias"></div>
-    </div>
-    <div>
-      <h2>Grado</h2>
-      <div class="chips" id="grados"></div>
-    </div>
+    <section class="filters" aria-label="Grado">
+      <div>
+        <h2>¿En qué grado estás?</h2>
+        <div class="chips" id="grados"></div>
+      </div>
+    </section>
+
+    <h2 class="titulo-seccion">¿Qué querés aprender hoy?</h2>
+    <section class="categorias" id="categorias" aria-label="Categorías"></section>
+
+    <section class="support">
+      <p>Es gratis, sin anuncios y no guardamos datos de los chicos. Si te sirve, podés ayudarnos a seguir.</p>
+      <a class="btn" href="apoyar.html">💚 Apoyar con SINPE</a>
+    </section>
+
+    <section class="support">
+      <p>¿Tenés una idea de juego o un ejercicio que te gustaría ver aquí? Mandanos tu idea, con fotos si querés.</p>
+      <a class="btn" href="sugerencias.html">💡 Enviar ideas</a>
+    </section>
   </section>
 
-  <section class="games" id="juegos" aria-live="polite"></section>
-
-  <section class="support">
-    <p>Es gratis, sin anuncios y no guardamos datos de los chicos. Si te sirve, podés ayudarnos a seguir.</p>
-    <a class="btn" href="apoyar.html">💚 Apoyar con SINPE</a>
-  </section>
-
-  <section class="support">
-    <p>¿Tenés una idea de juego o un ejercicio que te gustaría ver aquí? Mandanos tu idea, con fotos si querés.</p>
-    <a class="btn" href="sugerencias.html">💡 Enviar ideas</a>
+  <!-- 🎮 Juegos de una categoría -->
+  <section id="vistaCategoria" hidden>
+    <a class="back" href="#">← Todas las categorías</a>
+    <h1 class="cat-titulo" id="catTitulo"></h1>
+    <section class="filters" aria-label="Grado">
+      <div>
+        <h2>Grado</h2>
+        <div class="chips" id="gradosCat"></div>
+      </div>
+    </section>
+    <section class="games" id="juegos" aria-live="polite"></section>
   </section>
 
   <p class="foot">Hecho con cariño en Costa Rica 🇨🇷</p>

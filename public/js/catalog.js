@@ -165,4 +165,22 @@ export const JUEGOS = [
     grados: [1, 2, 3, 4, 5, 6],
     url: "juegos/sudoku-ranas.html",
   },
+  {
+    id: "gato",
+    titulo: "Gato contra el jaguar",
+    descripcion: "El clásico tres en línea con ❌ y ⭕. Jugá contra el jaguar (fácil, medio o difícil) o con un amigo.",
+    emoji: "❌",
+    materia: "logica",
+    grados: [0, 1, 2, 3, 4, 5, 6],
+    url: "juegos/gato.html",
+  },
+  {
+    id: "dato-opinion",
+    titulo: "¿Dato u opinión?",
+    descripcion: "¿Se puede comprobar o es lo que alguien piensa? Descubrí datos falsos y detectá noticias sospechosas.",
+    emoji: "📰",
+    materia: "logica",
+    grados: [3, 4, 5, 6],
+    url: "juegos/dato-opinion.html",
+  },
 ];

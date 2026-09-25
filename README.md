@@ -26,6 +26,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🔁 Repetí y decidí | Programación | 2° a 4° | `public/juegos/repeti-decidi.html` |
 | 🦜 La lapa que dibuja | Programación | 4° a 6° | `public/juegos/lapa.html` |
 | 🐆 El jaguar detective | Pensamiento lógico | 1° a 6° | `public/juegos/jaguar.html` |
+| 🐸 Sudoku de ranitas | Pensamiento lógico | 1° a 6° | `public/juegos/sudoku-ranas.html` |
 
 ## Estructura
 
@@ -49,6 +50,8 @@ aprendo-a-lo-tico/
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"
 │   ├── js/detective.js     # 🐆 Animales, casos y verificador de "El jaguar detective"
+│   ├── js/sudoku.js        # 🐸 Generador de sudokus (una sola solución, sin adivinar) y pistas
+│   ├── js/ranas-svg.js     # 🐸 Dibujos SVG de las ranitas de Costa Rica
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   └── juegos/             # Cada juego es un HTML autocontenido

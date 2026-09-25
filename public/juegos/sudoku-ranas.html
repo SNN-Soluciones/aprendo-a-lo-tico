@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sudoku de ranitas</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; --caja: #1F3A5F; }
+  .ancho { width: min(96vw, 520px); }
+  .modos { display: flex; gap: 6px; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; flex: 1; }
+  .modos::-webkit-scrollbar { display: none; }
+  .modos button { flex: none; padding: 2px 10px; font-size: .95rem; line-height: 1.1; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button small { display: block; font-size: .65rem; min-height: .8rem; }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .instr .txt { text-align: left; font-size: clamp(1rem, 4.2vw, 1.12rem); font-weight: 700; }
+  .instr .titulo { display: block; font-size: clamp(1.1rem, 4.8vw, 1.3rem); font-weight: 800; color: var(--materia); }
+
+  /* Tablero */
+  .tablero { margin-top: 10px; display: grid; background: var(--caja); border: 4px solid var(--caja); border-radius: 14px; gap: 2px; padding: 0; overflow: hidden; }
+  .celda { aspect-ratio: 1; border: none; border-radius: 0; box-shadow: none; padding: 3px; background: #FFFDF6; display: flex; align-items: center; justify-content: center; }
+  .celda:active { transform: none; box-shadow: none; }
+  .celda svg { width: 100%; height: 100%; display: block; }
+  .celda.dada { background: #E9F3EC; cursor: default; }
+  .celda.mala { background: #FBD5D1; animation: nope .35s; }
+  .celda.pista { background: #FFF1B8; }
+  .celda.pista svg { animation: pop .5s ease-out; }
+  .celda.colocada svg { animation: pop .35s ease-out; }
+  .celda:focus-visible { outline: 4px dashed var(--materia); outline-offset: -4px; }
+  /* líneas gruesas entre cuadros */
+  .celda.br { border-right: 4px solid var(--caja); }
+  .celda.bb { border-bottom: 4px solid var(--caja); }
+
+  /* Paleta de ranas */
+  .paleta { display: grid; gap: 6px; margin-top: 10px; }
+  .paleta button { border-radius: 16px; padding: 3px; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .paleta button svg { width: 88%; height: 88%; }
+  .paleta button[aria-pressed="true"] { background: var(--btn); outline: 4px solid var(--materia); outline-offset: 2px; }
+  .paleta button.borrar { font-size: 1.8rem; }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.1rem; padding: 6px 0; border-radius: 16px; flex: 1; }
+  .explica { margin-top: 10px; background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 700; }
+  #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
+  #nextBtn { background: var(--btn); }
+
+  details.conoce { margin-top: 14px; background: #fff; border: 4px solid var(--rim); border-radius: 18px; padding: 8px 12px; }
+  details.conoce summary { font-weight: 800; font-size: 1.1rem; cursor: pointer; }
+  .ficha { display: flex; gap: 10px; align-items: center; padding: 6px 0; border-bottom: 2px dashed #E3EAF2; }
+  .ficha:last-child { border-bottom: none; }
+  .ficha .dib { width: 64px; height: 64px; flex: none; }
+  .ficha b { color: var(--materia); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" id="startRanas" aria-hidden="true" style="display:flex;gap:4px;width:220px"></div>
+  <h1>Sudoku de ranitas</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Poné las ranitas de Costa Rica sin repetir en ninguna fila, columna ni cuadro. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Tamaño y dificultad"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tablero ancho" id="tablero" role="grid" aria-label="Tablero del sudoku"></div>
+<div class="paleta ancho" id="paleta" aria-label="Escogé una rana"></div>
+<div class="acciones ancho">
+  <button id="reiniciarBtn" aria-label="Empezar este tablero de nuevo">↺ De nuevo</button>
+  <button id="pistaBtn" aria-label="Pedir una pista">💡 Pista</button>
+  <button id="nuevoBtn" aria-label="Otro tablero">🔀 Otro</button>
+</div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro tablero" hidden>➡️</button></div>
+
+<details class="conoce ancho" id="conoce">
+  <summary>📖 Conocé las ranitas de Costa Rica</summary>
+  <div id="fichas"></div>
+</details>
+
+<script type="module">
+import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { RANAS, MODOS, caja, generar, choques, pista } from "../js/sudoku.js";
+import { ranaSVG } from "../js/ranas-svg.js";
+
+const $ = id => document.getElementById(id);
+const rana = v => RANAS[v - 1];
+const dib = v => ranaSVG(rana(v).id, rana(v).n);
+
+let modo = MODOS[0], n = 4, dado = [], t = [], sol = [], elegida = 1, errores = 0, pistas = 0, ganado = false;
+let progreso = { total: 0, ganados: {} };
+try { progreso = { ...progreso, ...JSON.parse(localStorage.getItem("sudoku-ranas")) }; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("sudoku-ranas", JSON.stringify(progreso)); } catch (_) {} };
+
+$("startRanas").innerHTML = RANAS.slice(0, 4).map(r => ranaSVG(r.id)).join("");
+$("fichas").innerHTML = RANAS.map(r => `<div class="ficha"><div class="dib">${ranaSVG(r.id, r.n)}</div><div><b>${r.n[0].toUpperCase() + r.n.slice(1)}</b><br>${r.dato}</div></div>`).join("");
+
+// ---------- Pintar ----------
+function pintarModos() {
+  $("modos").innerHTML = MODOS.map(m =>
+    `<button data-m="${m.id}" aria-pressed="${m.id === modo.id}">${m.nombre}<small>${progreso.ganados[m.id] ? `🐸×${progreso.ganados[m.id]}` : m.grados}</small></button>`).join("");
+  $("stars").textContent = `⭐ ${progreso.total}`;
+}
+
+function pintarTablero(marcas = {}) {
+  const malas = choques(t, n);
+  $("tablero").className = `tablero ancho n${n}`;
+  $("tablero").style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  $("tablero").innerHTML = t.flatMap((fila, f) => fila.map((v, c) => {
+    const k = `${f},${c}`;
+    const { h, w } = caja(n);
+    const cls = ["celda", (c + 1) % w === 0 && c < n - 1 ? "br" : "", (f + 1) % h === 0 && f < n - 1 ? "bb" : "", dado[f][c] ? "dada" : "", malas.has(k) && !dado[f][c] ? "mala" : "", marcas[k] || ""].join(" ");
+    const nombre = v ? rana(v).n : "vacía";
+    return `<button class="${cls}" data-f="${f}" data-c="${c}" role="gridcell" aria-label="Fila ${f + 1}, columna ${c + 1}: ${nombre}${dado[f][c] ? " (ya venía)" : ""}">${v ? dib(v) : ""}</button>`;
+  })).join("");
+}
+
+function pintarPaleta() {
+  $("paleta").style.gridTemplateColumns = `repeat(${n + 1}, 1fr)`;
+  $("paleta").innerHTML = RANAS.slice(0, n).map((r, i) =>
+    `<button data-v="${i + 1}" aria-pressed="${elegida === i + 1}" aria-label="${r.n}">${ranaSVG(r.id)}</button>`).join("")
+    + `<button class="borrar" data-v="0" aria-pressed="${elegida === 0}" aria-label="Borrar">🧽</button>`;
+}
+
+// ---------- Tableros ----------
+function nuevo(m = modo) {
+  modo = m; n = m.n;
+  const g = generar(n, m.vacias, Date.now());
+  dado = g.tablero.map(r => r.map(v => v > 0));
+  t = g.tablero.map(r => [...r]); sol = g.solucion;
+  elegida = 1; errores = 0; pistas = 0; ganado = false;
+  $("explica").hidden = true; $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
+  feedback("");
+  pintarModos(); pintarTablero(); pintarPaleta();
+  const { h, w } = caja(n);
+  instruccion(`<span class="titulo">🐸 Sudoku ${m.nombre}</span>Cada fila, cada columna y cada cuadro de ${h} × ${w} tiene que tener las ${n} ranitas, sin repetir.`,
+    `Sudoku de ${n} por ${n}. Cada fila, cada columna y cada cuadro tiene que tener las ${n} ranitas, sin repetir ninguna. Escogé una rana abajo y tocá una casilla vacía.`);
+}
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]");
+  if (b) { sonido("tap"); nuevo(MODOS.find(m => m.id === b.dataset.m)); }
+});
+
+$("paleta").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]");
+  if (!b) return;
+  elegida = Number(b.dataset.v);
+  sonido("tap"); hablar(elegida ? rana(elegida).n : "borrar");
+  pintarPaleta();
+});
+
+// ¿Dónde está repetida? (para explicar el error)
+function dondeRepite(f, c, v) {
+  const { h, w } = caja(n);
+  if (t[f].some((x, j) => j !== c && x === v)) return "esta fila";
+  if (t.some((fila, i) => i !== f && fila[c] === v)) return "esta columna";
+  const f0 = f - f % h, c0 = c - c % w;
+  for (let i = 0; i < h; i++) for (let j = 0; j < w; j++) if ((f0 + i !== f || c0 + j !== c) && t[f0 + i][c0 + j] === v) return "este cuadro";
+  return null;
+}
+
+$("tablero").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]");
+  if (!b || ganado) return;
+  const f = Number(b.dataset.f), c = Number(b.dataset.c);
+  if (dado[f][c]) { decir(`Esa ${rana(t[f][c]).n} ya venía puesta. No se puede cambiar.`); return; }
+  const v = elegida === 0 || t[f][c] === elegida ? 0 : elegida;
+  t[f][c] = v;
+  $("explica").hidden = true;
+  if (!v) { sonido("tap"); pintarTablero(); return; }
+  const donde = dondeRepite(f, c, v);
+  if (donde) {
+    errores++;
+    pintarTablero();
+    feedback("almost", "🐸", "¡Repetida!");
+    decir(`¡Uy! La ${rana(v).n} ya está en ${donde}. Probá con otra.`);
+    return;
+  }
+  sonido("tap");
+  pintarTablero({ [`${f},${c}`]: "colocada" });
+  feedback("");
+  revisarFin();
+});
+
+function revisarFin() {
+  if (t.some(fila => fila.some(v => !v)) || choques(t, n).size) return;
+  ganado = true;
+  const estrellas = Math.max(1, 3 - errores - pistas);
+  progreso.total += estrellas;
+  progreso.ganados[modo.id] = (progreso.ganados[modo.id] || 0) + 1;
+  guardar(); pintarModos();
+  feedback("ok", "🎉", `¡Sudoku resuelto! ${"⭐".repeat(estrellas)}`);
+  const r = RANAS[Math.floor(Math.random() * n)];
+  decir(`${elogio()} ¡Todas las ranitas en su lugar! ¿Sabías que la ${r.n}… ${r.dato}`);
+  $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse");
+}
+
+// 💡 Pista con explicación del razonamiento
+$("pistaBtn").addEventListener("click", () => {
+  if (ganado) return;
+  feedback("");
+  // Primero: ¿hay alguna rana en un lugar equivocado?
+  for (let f = 0; f < n; f++) for (let c = 0; c < n; c++) {
+    if (!dado[f][c] && t[f][c] && t[f][c] !== sol[f][c]) {
+      pistas++;
+      pintarTablero({ [`${f},${c}`]: "pista" });
+      $("explica").hidden = false;
+      $("explica").textContent = `💡 La ${rana(t[f][c]).n} de la casilla marcada no va ahí. Quitala con la esponja 🧽 y pensá otra vez.`;
+      decir($("explica").textContent.replace("💡 ", ""));
+      return;
+    }
+  }
+  const p = pista(t, n, sol);
+  if (!p) return;
+  pistas++;
+  t[p.f][p.c] = p.v;
+  const nombre = rana(p.v).n;
+  const porque = {
+    sola: `En la casilla marcada solo cabe la ${nombre}: las otras ranas ya están en su fila, su columna o su cuadro.`,
+    fila: `En esta fila, la ${nombre} solo cabe en la casilla marcada: en las demás ya hay otra rana o se repetiría.`,
+    columna: `En esta columna, la ${nombre} solo cabe en la casilla marcada.`,
+    cuadro: `En este cuadro, la ${nombre} solo cabe en la casilla marcada.`,
+    revelar: `Aquí va la ${nombre}.`,
+  }[p.porque];
+  pintarTablero({ [`${p.f},${p.c}`]: "pista" });
+  $("explica").hidden = false; $("explica").textContent = `💡 ${porque}`;
+  sonido("tap"); decir(porque);
+  revisarFin();
+});
+
+$("reiniciarBtn").addEventListener("click", () => {
+  if (ganado) return;
+  t = t.map((fila, f) => fila.map((v, c) => dado[f][c] ? v : 0));
+  $("explica").hidden = true; feedback(""); sonido("tap"); pintarTablero();
+  decir("Listo, empezamos de nuevo este tablero.");
+});
+$("nuevoBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+$("nextBtn").addEventListener("click", () => nuevo());
+
+const repetir = lento => decir(`Cada fila, cada columna y cada cuadro tiene que tener las ${n} ranitas, sin repetir.`, lento ? { rate: LENTO } : undefined);
+alEmpezar(() => nuevo(modo), repetir);
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__sudoku = { get sol() { return sol; }, get t() { return t; }, get dado() { return dado; }, get n() { return n; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

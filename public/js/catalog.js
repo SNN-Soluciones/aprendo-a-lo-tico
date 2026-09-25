@@ -228,4 +228,13 @@ export const JUEGOS = [
     grados: [2, 3, 4, 5],
     url: "juegos/escudo.html",
   },
+  {
+    id: "armo-ingles",
+    titulo: "Armo en inglés",
+    descripcion: "Como Duolingo, pero tico: escuchá y armá oraciones en inglés, y traducí del español al inglés y al revés.",
+    emoji: "🦜",
+    materia: "ingles",
+    grados: [2, 3, 4, 5, 6],
+    url: "juegos/armo-ingles.html",
+  },
 ];

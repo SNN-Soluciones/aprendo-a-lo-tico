@@ -109,7 +109,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Vocabulario con imagen y audio (colores, animales, números, familia)
 - [x] Listen and tap
 - [ ] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
-- [ ] Frases simples
+- [x] 🦜 Armo en inglés: escuchar y armar, traducir al inglés y al español, con fichas trampa y repaso de las falladas (tipo Duolingo)
 
 ## 💻 Programación (sin servidor: todo corre en el navegador)
 

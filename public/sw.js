@@ -1,6 +1,6 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v16";
+const VERSION = "v18";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",
@@ -10,7 +10,7 @@ const SHELL = [
   "juegos/sumas-bloques.html", "juegos/animales-cr.html", "juegos/provincias.html", "juegos/listen-tap.html",
   "juegos/contar.html", "juegos/colores-figuras.html", "juegos/sonido-inicial.html", "juegos/trazos.html",
   "juegos/perezoso.html", "js/perezoso.js", "juegos/repeti-decidi.html", "js/decidi.js",
-  "juegos/jaguar.html", "js/detective.js", "juegos/sudoku-ranas.html", "js/sudoku.js", "js/ranas-svg.js", "juegos/gato.html", "js/gato.js", "juegos/dato-opinion.html", "js/datos.js", "juegos/escudo.html", "js/escudo.js", "juegos/simbolos.html", "js/simbolos.js", "js/simbolos-svg.js", "img/escudo.webp", "juegos/planta.html", "js/planta.js", "juegos/oraciones.html", "js/oraciones.js", "juegos/tablas.html", "js/tablas.js", "juegos/lapa.html", "js/lapa.js", "vendor/blockly/blockly_compressed.js", "vendor/blockly/msg/es.js",
+  "juegos/jaguar.html", "js/detective.js", "juegos/sudoku-ranas.html", "js/sudoku.js", "js/ranas-svg.js", "juegos/gato.html", "js/gato.js", "juegos/dato-opinion.html", "js/datos.js", "juegos/armo-ingles.html", "js/frases-en.js", "juegos/escudo.html", "js/escudo.js", "juegos/simbolos.html", "js/simbolos.js", "js/simbolos-svg.js", "img/escudo.webp", "img/yiguirro.webp", "img/guanacaste.webp", "img/venado.webp", "img/manati.webp", "img/esferas.webp", "img/guaria.webp", "img/carreta.webp", "img/antorcha.webp", "img/marimba.webp", "juegos/planta.html", "js/planta.js", "juegos/oraciones.html", "js/oraciones.js", "juegos/tablas.html", "js/tablas.js", "juegos/lapa.html", "js/lapa.js", "vendor/blockly/blockly_compressed.js", "vendor/blockly/msg/es.js",
   "vendor/blockly/media/1x1.gif", "vendor/blockly/media/click.mp3", "vendor/blockly/media/delete-icon.svg", "vendor/blockly/media/delete.mp3", "vendor/blockly/media/disconnect.mp3", "vendor/blockly/media/drop.mp3", "vendor/blockly/media/dropdown-arrow.svg", "vendor/blockly/media/foldout-icon.svg", "vendor/blockly/media/handclosed.cur", "vendor/blockly/media/handdelete.cur", "vendor/blockly/media/handopen.cur", "vendor/blockly/media/pilcrow.png", "vendor/blockly/media/quote0.png", "vendor/blockly/media/quote1.png", "vendor/blockly/media/resize-handle.svg", "vendor/blockly/media/sprites.svg",
 ];
 

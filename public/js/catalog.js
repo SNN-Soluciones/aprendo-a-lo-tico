@@ -156,4 +156,13 @@ export const JUEGOS = [
     grados: [1, 2, 3, 4, 5, 6],
     url: "juegos/jaguar.html",
   },
+  {
+    id: "sudoku-ranas",
+    titulo: "Sudoku de ranitas",
+    descripcion: "Poné las ranitas de colores de Costa Rica sin repetir en filas, columnas ni cuadros. De 4×4 a 6×6.",
+    emoji: "🐸",
+    materia: "logica",
+    grados: [1, 2, 3, 4, 5, 6],
+    url: "juegos/sudoku-ranas.html",
+  },
 ];

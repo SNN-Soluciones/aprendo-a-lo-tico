@@ -126,7 +126,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [x] 🐆 El jaguar detective: 18 casos en 4 etapas (pistas, pistas con NO, libreta de doble entrada, casos con «o» y «si… entonces»), con 🐞 pistas trampa
 - [ ] 🐆 Más casos y libretas de 4 × 4
-- [ ] 🧩 Sudoku de animales ticos (4×4 y 6×6)
+- [x] 🐸 Sudoku de ranitas de Costa Rica (4×4 y 6×6, 5 dificultades, pistas que explican el razonamiento)
+- [ ] 🐸 Sudoku: modo con números o letras para 6°, y sudoku del día
 - [ ] 📰 ¿Dato u opinión? (detectar noticias falsas)
 - [ ] ♟️ Estrategia contra el jaguar (quitar piedras, tres en línea)
 - [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)

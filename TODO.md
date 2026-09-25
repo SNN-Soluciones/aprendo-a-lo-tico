@@ -130,7 +130,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Generadores de datos, opiniones y mensajes para «¿Dato u opinión?»
 - [x] Casos al azar del jaguar detective
 - [x] Niveles al azar en «Llevá al perezoso» (mapas con verificador) y «Repetí y decidí» (pasillos, escaleras, cuadrados y ríos de tamaño al azar)
-- [ ] Niveles al azar en «La lapa que dibuja»
+- [x] Retos al azar en «La lapa que dibuja» (polígonos, estrella, rectángulo, escalera y flor de cuadrados)
 - [x] Más vocabulario en «Listen and tap» (10 temas)
 - [ ] Más animales en «Animales de Costa Rica»
 - [ ] «Reto del día»: el mismo reto para todos ese día (semilla con la fecha)

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Armo en inglés</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #8E5BD9; }
+  .ancho { width: min(96vw, 560px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos .est { font-size: .75rem; letter-spacing: -1px; }
+
+  .barra { margin-top: 10px; height: 18px; border: 3px solid var(--rim); border-radius: 999px; background: var(--face); overflow: hidden; }
+  .barra div { height: 100%; width: 0; background: var(--ok); border-radius: 999px; transition: width .4s; }
+
+  /* La lapa con su globito */
+  .dice { margin-top: 12px; display: flex; align-items: flex-end; gap: 8px; }
+  .dice .lapa { font-size: 3.4rem; line-height: 1; flex: none; }
+  .globo { position: relative; flex: 1; background: var(--face); color: var(--ink); border: 3px solid var(--rim); border-radius: 18px; padding: 10px 14px;
+    font-size: 1.35rem; font-weight: 800; line-height: 1.3; text-align: left; box-shadow: 0 4px 0 var(--rim); border-radius: 18px 18px 18px 4px; }
+  .globo small { display: block; font-size: .8rem; color: var(--materia); }
+  .globo.escuchar { text-align: center; font-size: 2.6rem; background: #EFE4FF; cursor: pointer; }
+  .globo.escuchar small { font-size: .85rem; }
+
+  .renglon { margin-top: 12px; min-height: 104px; border-top: 3px solid #C9B6EC; border-bottom: 3px solid #C9B6EC; padding: 8px 0;
+    display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start;
+    background-image: linear-gradient(transparent 46px, #C9B6EC 46px, #C9B6EC 48px, transparent 48px); background-size: 100% 50px; }
+  .fichas { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; min-height: 52px; }
+  .ficha { font-size: 1.3rem; padding: 2px 14px; border-radius: 14px; border-width: 3px; box-shadow: 0 4px 0 var(--rim); background: var(--face); }
+  .ficha.hueco { visibility: hidden; }
+  .renglon .ficha { background: #F6F0FF; }
+
+  #comprobarBtn { margin-top: 14px; width: 100%; font-size: 1.35rem; background: var(--ok); color: #fff; border-color: #1D6B3A; box-shadow: 0 5px 0 #1D6B3A; }
+  #comprobarBtn:disabled { background: #D5DDE5; color: #7C8B99; border-color: #9DB3C9; box-shadow: 0 5px 0 #9DB3C9; opacity: 1; }
+
+  .resultado { margin-top: 14px; border-radius: 18px; padding: 10px 14px; font-weight: 800; border: 3px solid; }
+  .resultado.bien { background: #D7FFE3; border-color: var(--ok); color: #16582E; }
+  .resultado.mal { background: #FFE3E0; border-color: var(--bad); color: #8A1F18; }
+  .resultado h2 { margin: 0 0 4px; font-size: 1.35rem; }
+  .resultado p { margin: 2px 0; font-size: 1.05rem; }
+  .resultado button { margin-top: 10px; width: 100%; font-size: 1.3rem; color: #fff; }
+  .resultado.bien button { background: var(--ok); border-color: #1D6B3A; box-shadow: 0 5px 0 #1D6B3A; }
+  .resultado.mal button { background: var(--bad); border-color: #8A1F18; box-shadow: 0 5px 0 #8A1F18; }
+  .resultado.bien button.oirFrase, .resultado.mal button.oirFrase { width: auto; margin: 0; background: none; border: none; box-shadow: none; padding: 0 4px; font-size: 1.2rem; color: inherit; }
+
+  .resumen { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 16px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .resumen .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .resumen p { margin: 6px 0; font-weight: 700; }
+  .resumen .botones { display: flex; gap: 8px; margin-top: 10px; }
+  .resumen .botones button { flex: 1; font-size: 1.1rem; padding: 8px 4px; }
+  .resumen .botones .sig { background: var(--btn); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🦜🇺🇸🇨🇷</div>
+  <h1>Armo en inglés</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Escuchá a la lapa, armá oraciones en inglés y traducí del inglés al español y al revés. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Etapas"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="barra ancho" aria-hidden="true"><div id="barra"></div></div>
+<div id="juego" class="ancho">
+  <div class="dice"><span class="lapa" aria-hidden="true">🦜</span><div class="globo" id="globo" aria-live="polite"></div></div>
+  <div class="renglon" id="renglon" aria-label="Tu respuesta"></div>
+  <div class="fichas" id="fichas" aria-label="Palabras"></div>
+  <button id="comprobarBtn" disabled>Comprobar</button>
+  <div class="resultado" id="resultado" hidden aria-live="polite"></div>
+</div>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, alEmpezar } from "../js/prepa.js";
+import { ETAPAS, PREGUNTAS, fichas, esCorrecta, ronda, estrellasDe } from "../js/frases-en.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "armo-ingles";
+const BIEN_EN = ["Great job!", "Awesome!", "Excellent!", "Well done!", "Perfect!"];
+
+let mejores = {};
+try { mejores = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(mejores)); } catch (_) {} };
+
+let etapa = ETAPAS[0], cola = [], hechas = 0, primeras = 0, falladas = new Set(), f = null, todas = [], puestas = [], listo = false;
+const texto = (fr, lengua) => (lengua === "en" ? fr.en : fr.es);
+/** Lee un texto con la voz del idioma que corresponde ("en" o "es"). */
+const leer = (t, lengua, op = {}) => decir(t, lengua === "en" ? { lang: "en", ...op } : op);
+
+// ---------- Pintar ----------
+function pintarModos() {
+  $("modos").innerHTML = ETAPAS.map(e => {
+    const n = mejores[e.id] || 0;
+    return `<button data-etapa="${e.id}" aria-pressed="${e === etapa}">${e.emoji} ${e.nombre}${n ? ` <span class="est">${"⭐".repeat(n)}</span>` : ""}</button>`;
+  }).join("");
+  $("stars").textContent = "⭐ " + Object.values(mejores).reduce((a, b) => a + b, 0);
+}
+function pintarFichas() {
+  const ids = new Set(puestas.map(x => x.id));
+  $("renglon").innerHTML = puestas.map((x, i) => `<button class="ficha" data-puesta="${i}">${x.w}</button>`).join("");
+  // Las fichas usadas dejan su hueco, como en Duolingo, para que no se muevan las demás
+  $("fichas").innerHTML = todas.map(x => `<button class="ficha ${ids.has(x.id) ? "hueco" : ""}" data-id="${x.id}" ${ids.has(x.id) ? 'tabindex="-1" aria-hidden="true"' : ""}>${x.w}</button>`).join("");
+  $("comprobarBtn").disabled = !puestas.length || listo;
+}
+const pintarBarra = () => { $("barra").style.width = (hechas / PREGUNTAS) * 100 + "%"; };
+
+// ---------- Preguntas ----------
+function decirPregunta(lento = false) {
+  const op = lento ? { rate: LENTO } : {};
+  if (etapa.id === "escuchar") return leer(f.en, "en", op);
+  return leer(texto(f, etapa.de), etapa.de, op);
+}
+
+function mostrar() {
+  listo = false; puestas = [];
+  f = cola[0];
+  todas = fichas(f, etapa.a);
+  $("juego").hidden = false; $("resumen").hidden = true; $("resultado").hidden = true;
+  $("comprobarBtn").hidden = false;
+  if (etapa.id === "escuchar") {
+    $("globo").className = "globo escuchar";
+    $("globo").innerHTML = `🔊<small>Tocá para escuchar otra vez</small>`;
+    instruccion("👂 <b>Escuchá</b> y armá la oración en inglés.", "Escuchá y armá la oración en inglés.").then(() => decirPregunta());
+  } else {
+    $("globo").className = "globo";
+    $("globo").innerHTML = `<small>${etapa.de === "es" ? "🇨🇷 En español" : "🇺🇸 In English"}</small>${texto(f, etapa.de)}`;
+    const voz = etapa.a === "en" ? "Escribí esto en inglés." : "Escribí esto en español.";
+    instruccion(etapa.a === "en" ? "✍️ Escribí esto en <b>inglés</b>." : "✍️ Escribí esto en <b>español</b>.", voz).then(() => decirPregunta());
+  }
+  pintarFichas(); pintarBarra();
+}
+
+// ---------- Armar ----------
+$("fichas").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.classList.contains("hueco")) return;
+  const x = todas.find(t => t.id === Number(b.dataset.id));
+  puestas.push(x);
+  sonido("tap");
+  leer(x.w, etapa.a); // dice la palabra en su idioma
+  pintarFichas();
+});
+$("renglon").addEventListener("click", e => {
+  const b = e.target.closest("[data-puesta]");
+  if (!b || listo) return;
+  sonido("tap");
+  puestas.splice(Number(b.dataset.puesta), 1);
+  pintarFichas();
+});
+$("globo").addEventListener("click", () => { if (!listo) decirPregunta(); });
+
+// ---------- Comprobar ----------
+$("comprobarBtn").addEventListener("click", () => {
+  if (listo || !puestas.length) return;
+  listo = true;
+  const ok = esCorrecta(puestas.map(x => x.w), f, etapa.a);
+  const correcta = texto(f, etapa.a);
+  // Qué significa: en «escuchar» se muestra en español; en las traducciones, la frase original
+  const significa = etapa.id === "escuchar" ? f.es : texto(f, etapa.de);
+  const repaso = falladas.has(f);
+  cola.shift();
+  if (!repaso) hechas++;
+  if (ok) { if (!repaso) primeras++; sonido("ok"); }
+  else {
+    sonido("mal");
+    if (!repaso) { falladas.add(f); cola.push(f); } // se repite una vez al final
+  }
+  pintarBarra(); pintarFichas();
+  $("comprobarBtn").hidden = true;
+  $("resultado").hidden = false;
+  $("resultado").className = "resultado " + (ok ? "bien" : "mal");
+  $("resultado").innerHTML = ok
+    ? `<h2>🎉 ${elogio()}</h2><p>${correcta} <button class="oirFrase" id="oirFrase" aria-label="Escuchar">🔊</button></p><p>💬 ${significa}</p><button id="contBtn">Continuar</button>`
+    : `<h2>😅 Respuesta correcta:</h2><p>${correcta} <button class="oirFrase" id="oirFrase" aria-label="Escuchar">🔊</button></p><p>💬 ${significa}</p><button id="contBtn">Continuar</button>`;
+  const decirCorrecta = () => leer(correcta, etapa.a, { cola: true });
+  if (ok && etapa.a === "en") leer(BIEN_EN[Math.floor(Math.random() * BIEN_EN.length)] + " " + correcta, "en", { cola: true });
+  else if (ok) decir(`${elogio()} ${correcta}`, { cola: true });
+  else decir("La respuesta correcta es:", { cola: true }).then(decirCorrecta);
+  $("oirFrase").addEventListener("click", () => leer(correcta, etapa.a));
+  $("contBtn").addEventListener("click", () => { sonido("tap"); cola.length ? mostrar() : terminar(); });
+});
+
+// ---------- Rondas ----------
+function empezar(e = etapa) {
+  etapa = e; cola = ronda(); hechas = 0; primeras = 0; falladas = new Set();
+  pintarModos(); mostrar();
+}
+
+function terminar() {
+  const n = estrellasDe(primeras, PREGUNTAS);
+  if (n > (mejores[etapa.id] || 0)) { mejores[etapa.id] = n; guardar(); }
+  const siguiente = ETAPAS[ETAPAS.indexOf(etapa) + 1];
+  $("juego").hidden = true; $("barra").style.width = "100%";
+  const [msgEs, msgEn] = [["¡Seguí practicando!", "Practice makes perfect!"], ["¡Bien! Seguí practicando.", "Good!"], ["¡Muy bien!", "Very good!"], ["¡Excelente!", "Your English is great!"]][n];
+  const msg = `${msgEs} ${msgEn}`;
+  $("resumen").hidden = false;
+  $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
+    <p>${primeras} de ${PREGUNTAS} a la primera</p><p>${msg}</p>
+    <div class="botones"><button id="otraBtn">🔄 Otra ronda</button>${siguiente && n >= 2 ? `<button class="sig" id="sigEtapaBtn">${siguiente.emoji} Siguiente etapa</button>` : ""}</div>`;
+  pintarModos();
+  instruccion(`<b>${etapa.nombre}</b> terminada`, msgEs).then(() => leer(msgEn, "en", { cola: true }));
+  if (n) sonido("ok");
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
+  $("sigEtapaBtn")?.addEventListener("click", () => { sonido("tap"); empezar(siguiente); });
+}
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-etapa]");
+  if (!b) return;
+  sonido("tap"); empezar(ETAPAS.find(x => x.id === b.dataset.etapa));
+});
+
+const repetir = lento => ($("resumen").hidden ? decirPregunta(lento) : decir("Tocá otra ronda o elegí una etapa arriba.", lento ? { rate: LENTO } : undefined));
+alEmpezar(() => empezar(), repetir);
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__ingles = { get f() { return f; }, get etapa() { return etapa.id; }, get todas() { return todas; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

@@ -25,6 +25,11 @@
   .casos .etapa { flex: none; align-self: center; font-weight: 800; font-size: .8rem; color: var(--page-ink); opacity: .8; padding: 0 2px 0 8px; white-space: nowrap; }
   .casos .etapa:first-child { padding-left: 0; }
 
+  .azar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 2px; }
+  .azar .rotulo { font-weight: 800; font-size: .85rem; color: var(--page-ink); }
+  .azar button { padding: 1px 10px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); background: #EFE4FF; }
+  .azar button[aria-pressed="true"] { background: var(--btn); }
+
   .instr .txt { text-align: left; font-size: clamp(1rem, 4.2vw, 1.15rem); font-weight: 700; }
   .instr .titulo { display: block; font-size: clamp(1.1rem, 4.8vw, 1.35rem); font-weight: 800; color: var(--materia); }
 
@@ -91,6 +96,13 @@
   <div class="casos" id="casos" role="group" aria-label="Caso"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
+<div class="azar ancho" id="azar" role="group" aria-label="Casos nuevos al azar">
+  <span class="rotulo">🎲 Caso nuevo:</span>
+  <button data-azar="facil" aria-pressed="false">Fácil</button>
+  <button data-azar="medio" aria-pressed="false">Medio</button>
+  <button data-azar="dificil" aria-pressed="false">Difícil</button>
+  <button data-azar="libreta" aria-pressed="false">📋 Libreta</button>
+</div>
 
 <div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar el caso">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
 
@@ -120,14 +132,14 @@
 <script type="module">
 import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { ANIMALES, CASOS, ETAPAS, descartadoPor, pistaQueFalla } from "../js/detective.js";
+import { ANIMALES, CASOS, ETAPAS, descartadoPor, pistaQueFalla, casoAlAzar, libretaAlAzar } from "../js/detective.js";
 
 const $ = id => document.getElementById(id);
 const A = id => ANIMALES[id];
 const nombreCon = id => `${A(id).art} ${A(id).n}`;
 const mayus = t => t.charAt(0).toUpperCase() + t.slice(1);
 
-let k = 0, caso = null, vistas = 0, tachados = new Set(), acusando = false, fallos = 0, resuelto = false;
+let k = 0, azar = null, caso = null, vistas = 0, tachados = new Set(), acusando = false, fallos = 0, resuelto = false;
 let libreta = {}; // "fila|col" → "si" | "no"
 let progreso = {};
 try { progreso = JSON.parse(localStorage.getItem("detective-progreso")) || {}; } catch (_) {}
@@ -138,9 +150,10 @@ const etapaDe = c => ETAPAS.find(e => e.id === c.etapa);
 function pintarCasos() {
   $("casos").innerHTML = CASOS.map((c, i) =>
     (i === 0 || CASOS[i - 1].etapa !== c.etapa ? `<span class="etapa">${etapaDe(c).emoji} ${etapaDe(c).nombre}</span>` : "")
-    + `<button data-k="${i}" class="${c.trampa !== undefined ? "bug" : ""}" aria-pressed="${i === k}" aria-label="Caso ${i + 1}: ${c.titulo}">${c.trampa !== undefined ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[c.id] || 0)}</small></button>`).join("");
+    + `<button data-k="${i}" class="${c.trampa !== undefined ? "bug" : ""}" aria-pressed="${i === k && !azar}" aria-label="Caso ${i + 1}: ${c.titulo}">${c.trampa !== undefined ? "🐞" : i + 1}<small>${"⭐".repeat(progreso[c.id] || 0)}</small></button>`).join("");
   $("stars").textContent = `⭐ ${Object.values(progreso).reduce((a, b) => a + b, 0)}`;
-  $("casos").querySelector(`[data-k="${k}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+  if (!azar) $("casos").querySelector(`[data-k="${k}"]`)?.scrollIntoView({ block: "nearest", inline: "center" });
+  document.querySelectorAll("#azar [data-azar]").forEach(b => b.setAttribute("aria-pressed", b.dataset.azar === azar ? "true" : "false"));
 }
 
 function pintarPistas(nueva = -1, culpables = []) {
@@ -171,8 +184,12 @@ function pintarLibreta(malas = []) {
 }
 
 // ---------- Casos ----------
-function cargar(i) {
-  k = i; caso = CASOS[k];
+function cargar(i) { k = i; azar = null; iniciar(CASOS[k]); }
+/** 🎲 Caso nuevo al azar: "facil" | "medio" | "dificil" | "libreta" */
+function cargarAzar(d) { azar = d; iniciar(d === "libreta" ? libretaAlAzar() : casoAlAzar(d)); }
+
+function iniciar(c) {
+  caso = c;
   vistas = 1; tachados = new Set(); acusando = false; fallos = 0; resuelto = false; libreta = {};
   const esLibreta = caso.tipo === "libreta";
   $("zonaSospechosos").hidden = esLibreta; $("zonaLibreta").hidden = !esLibreta;
@@ -186,12 +203,16 @@ function cargar(i) {
   const como = esLibreta
     ? "Tocá una casilla para marcar ✓ (sí fue) y otra vez para marcar ✗ (no fue)."
     : "Tachá a los que no pueden ser.";
-  instruccion(`<span class="titulo">🐆 Caso ${k + 1}: ${caso.titulo}</span>${caso.historia}`,
+  instruccion(`<span class="titulo">${azar ? "🎲" : `🐆 Caso ${k + 1}:`} ${caso.titulo}</span>${caso.historia}`,
     `${caso.titulo}. ${caso.historia} ${como} Primera pista: ${caso.pistas[0].txt}`);
 }
 $("casos").addEventListener("click", e => {
   const b = e.target.closest("[data-k]");
   if (b) { sonido("tap"); cargar(Number(b.dataset.k)); }
+});
+$("azar").addEventListener("click", e => {
+  const b = e.target.closest("[data-azar]");
+  if (b) { sonido("tap"); cargarAzar(b.dataset.azar); }
 });
 
 $("otraBtn").addEventListener("click", () => {
@@ -323,18 +344,20 @@ function preguntarTrampa(base, vio) {
 
 function ganar(estrellas, titulo, extra = "") {
   resuelto = true;
-  progreso[caso.id] = Math.max(progreso[caso.id] || 0, estrellas);
+  // Los casos al azar suman estrellas cada vez; los fijos guardan la mejor
+  if (caso.azar) progreso.azar = (progreso.azar || 0) + estrellas;
+  else progreso[caso.id] = Math.max(progreso[caso.id] || 0, estrellas);
   guardar(); pintarCasos();
   feedback("ok", "🎉", `${titulo} ${"⭐".repeat(estrellas)}`);
   const cierre = fallos === 0 ? "¡Resuelto al primer intento!" : "¡Resuelto! La próxima, revisá bien cada pista antes de acusar.";
   decir(`${extra || elogio()} ${cierre}`);
-  if (k < CASOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
+  if (azar || k < CASOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
   else decir("¡Resolviste todos los casos! Sos un detective de verdad, como el jaguar.", { cola: true });
 }
 
 // ↺ limpia el tablero, pero recuerda los intentos fallidos (así no se "borran" para sacar 3 ⭐)
-$("reiniciarBtn").addEventListener("click", () => { const f = resuelto ? 0 : fallos; sonido("tap"); cargar(k); fallos = f; });
-$("nextBtn").addEventListener("click", () => cargar(Math.min(k + 1, CASOS.length - 1)));
+$("reiniciarBtn").addEventListener("click", () => { const f = resuelto ? 0 : fallos; sonido("tap"); if (azar) iniciar(caso); else cargar(k); fallos = f; });
+$("nextBtn").addEventListener("click", () => (azar ? cargarAzar(azar) : cargar(Math.min(k + 1, CASOS.length - 1))));
 
 // 🔊 lee el caso con las pistas que ya se vieron (🐢 más despacio)
 const leerCaso = lento => caso && decir(`${caso.historia} ${caso.pistas.slice(0, vistas).map((q, i) => `Pista ${i + 1}: ${q.txt}`).join(" ")}`, lento ? { rate: LENTO } : undefined);
@@ -342,6 +365,8 @@ const primero = CASOS.findIndex(c => !progreso[c.id]);
 k = primero === -1 ? 0 : primero;
 alEmpezar(() => cargar(k), leerCaso);
 pintarCasos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__jaguar = { get caso() { return caso; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

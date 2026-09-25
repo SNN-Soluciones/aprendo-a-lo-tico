@@ -1,6 +1,6 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v18";
+const VERSION = "v19";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",

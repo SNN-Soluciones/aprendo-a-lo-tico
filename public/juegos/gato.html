@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gato contra el jaguar</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; --x: #E53935; --o: #1E6FD9; }
+  .ancho { width: min(96vw, 460px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .95rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+
+  .marcador { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .marcador div { background: var(--face); border: 3px solid var(--rim); border-radius: 16px; text-align: center; padding: 4px 2px; font-weight: 800; line-height: 1.1; }
+  .marcador .n { font-size: 1.8rem; display: block; }
+  .marcador .turno { outline: 4px solid var(--btn); outline-offset: 2px; }
+
+  .turnoTxt { margin-top: 8px; text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--page-ink); min-height: 1.6rem; }
+
+  .tablero { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; background: var(--rim); padding: 8px; border-radius: 22px; position: relative; }
+  .casilla { aspect-ratio: 1; border: none; border-radius: 16px; background: #FFFDF6; box-shadow: none; padding: 12%; }
+  .casilla:active { transform: scale(.96); box-shadow: none; }
+  .casilla:disabled { opacity: 1; cursor: default; }
+  .casilla svg { width: 100%; height: 100%; display: block; overflow: visible; }
+  .casilla .trazo { fill: none; stroke-width: 13; stroke-linecap: round; stroke-dasharray: 150; stroke-dashoffset: 150; animation: trazar .35s ease-out forwards; }
+  .casilla .trazo.b { animation-delay: .15s; }
+  @keyframes trazar { to { stroke-dashoffset: 0; } }
+  .casilla.gana { background: #FFF1B8; animation: pulse .8s ease-in-out 3; }
+  .casilla.consejo { background: #DDF4FF; outline: 5px dashed var(--o); outline-offset: -8px; }
+  .casilla.peligro { background: #FFE3E0; }
+  .pensando { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 3.4rem; pointer-events: none; animation: pulse .8s ease-in-out infinite; }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.1rem; padding: 6px 0; border-radius: 16px; flex: 1; }
+  #nuevaBtn.pulse { animation: pulse 1s ease-in-out infinite; background: var(--btn); }
+  .explica { margin-top: 10px; background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 700; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .casilla .trazo { animation: none; stroke-dashoffset: 0; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">❌⭕🐆</div>
+  <h1>Gato contra el jaguar</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Hacé tres en línea antes que el jaguar: en fila, en columna o en diagonal. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Contra quién jugar">
+    <button data-modo="facil" aria-pressed="true">🐆 Fácil</button>
+    <button data-modo="medio" aria-pressed="false">🐆 Medio</button>
+    <button data-modo="dificil" aria-pressed="false">🐆 Difícil</button>
+    <button data-modo="dos" aria-pressed="false">👫 2 jugadores</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="marcador ancho" id="marcador"></div>
+<div class="turnoTxt ancho" id="turnoTxt" aria-live="polite"></div>
+<div class="tablero ancho" id="tablero" role="grid" aria-label="Tablero del gato"></div>
+
+<div class="acciones ancho">
+  <button id="consejoBtn" aria-label="Pedir un consejo">💡 Consejo</button>
+  <button id="nuevaBtn" aria-label="Otra partida">🔄 Otra partida</button>
+</div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+
+<script type="module">
+import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { resultado, jugadaJaguar, consejo, paraGanar, otro } from "../js/gato.js";
+
+const $ = id => document.getElementById(id);
+const DIBUJO = {
+  X: `<svg viewBox="0 0 100 100" aria-hidden="true"><path class="trazo" d="M20 20 L80 80" stroke="var(--x)"/><path class="trazo b" d="M80 20 L20 80" stroke="var(--x)"/></svg>`,
+  O: `<svg viewBox="0 0 100 100" aria-hidden="true"><circle class="trazo" cx="50" cy="50" r="32" stroke="var(--o)" style="stroke-dasharray:210;stroke-dashoffset:210"/></svg>`,
+};
+const NOMBRE = { X: "equis", O: "círculo" };
+const ESTRELLAS = { facil: 1, medio: 2, dificil: 2 }; // contra el difícil, empatar ya es un logro
+
+let modo = "facil", t = Array(9).fill(null), turno = "X", empieza = "X", fin = false, pensando = false, usoConsejo = false;
+let marcador = { facil: [0, 0, 0], medio: [0, 0, 0], dificil: [0, 0, 0], dos: [0, 0, 0] }; // [gana X / vos, empates, gana O / jaguar]
+let progreso = { total: 0 };
+try { const g = JSON.parse(localStorage.getItem("gato-progreso")); if (g) { progreso = g.progreso || progreso; marcador = { ...marcador, ...g.marcador }; } } catch (_) {}
+const guardar = () => { try { localStorage.setItem("gato-progreso", JSON.stringify({ progreso, marcador })); } catch (_) {} };
+const vsJaguar = () => modo !== "dos";
+
+// ---------- Pintar ----------
+function pintarMarcador() {
+  const m = marcador[modo];
+  const [a, b] = vsJaguar() ? [["🧒", "Vos ❌"], ["🐆", "Jaguar ⭕"]] : [["❌", "Equis"], ["⭕", "Círculo"]];
+  $("marcador").innerHTML = `<div class="${!fin && turno === "X" ? "turno" : ""}">${a[0]} ${a[1]}<span class="n">${m[0]}</span></div>
+    <div>🤝 Empates<span class="n">${m[1]}</span></div>
+    <div class="${!fin && turno === "O" ? "turno" : ""}">${b[0]} ${b[1]}<span class="n">${m[2]}</span></div>`;
+  $("stars").textContent = `⭐ ${progreso.total}`;
+}
+
+function pintarTablero(marcas = {}, nueva = -1) {
+  $("tablero").innerHTML = t.map((v, i) =>
+    `<button class="casilla ${marcas[i] || ""}" data-i="${i}" ${v || fin || pensando ? "disabled" : ""} aria-label="Casilla ${i + 1}: ${v ? NOMBRE[v] : "vacía"}">${v ? DIBUJO[v] : ""}</button>`).join("")
+    + (pensando ? `<div class="pensando" aria-hidden="true">🐆💭</div>` : "");
+  // Las fichas que ya estaban no se vuelven a animar
+  $("tablero").querySelectorAll(".casilla").forEach((c, i) => { if (i !== nueva) c.querySelectorAll(".trazo").forEach(p => { p.style.animation = "none"; p.style.strokeDashoffset = 0; }); });
+}
+
+function pintarTurno() {
+  if (fin) return;
+  $("turnoTxt").textContent = vsJaguar()
+    ? (turno === "X" ? "👉 Te toca a vos (❌)" : "🐆 El jaguar está pensando…")
+    : `👉 Turno de ${turno === "X" ? "❌ equis" : "⭕ círculo"}`;
+}
+
+// ---------- Partidas ----------
+function nueva(voz = true) {
+  t = Array(9).fill(null); fin = false; pensando = false; usoConsejo = false;
+  turno = empieza;
+  $("explica").hidden = true; feedback(""); $("nuevaBtn").classList.remove("pulse");
+  pintarMarcador(); pintarTablero(); pintarTurno();
+  if (voz) {
+    const quien = vsJaguar() ? (turno === "X" ? "Empezás vos." : "Empieza el jaguar.") : `Empieza ${NOMBRE[turno]}.`;
+    instruccion(`<b>Hacé tres en línea</b>: en fila, en columna o en diagonal.`, `Hacé tres en línea: en fila, en columna o en diagonal. ${quien}`);
+  }
+  if (vsJaguar() && turno === "O") setTimeout(juegaJaguar, 700);
+}
+
+function poner(i) {
+  t[i] = turno;
+  sonido("tap");
+  const r = resultado(t);
+  if (r) return terminar(r, i);
+  turno = otro(turno);
+  pintarMarcador(); pintarTablero({}, i); pintarTurno();
+  if (vsJaguar() && turno === "O") setTimeout(juegaJaguar, 650);
+}
+
+function juegaJaguar() {
+  if (fin) return;
+  pensando = true; pintarTablero();
+  setTimeout(() => {
+    pensando = false;
+    poner(jugadaJaguar(t, "O", modo));
+  }, 450);
+}
+
+function terminar(r, ultima) {
+  fin = true;
+  const m = marcador[modo];
+  const marcas = {};
+  if (r.linea) r.linea.forEach(i => marcas[i] = "gana");
+  pintarTablero(marcas, ultima);
+  let ganadas = 0;
+  if (r.quien === "empate") {
+    m[1]++;
+    if (vsJaguar() && modo === "dificil") ganadas = ESTRELLAS.dificil;
+    feedback("almost", "🤝", "¡Empate!");
+    decir(vsJaguar() && modo === "dificil" ? "¡Empate contra el jaguar difícil! Eso es muy difícil de lograr. ¡Muy bien pensado!" : "¡Empate! Nadie hizo tres en línea.");
+  } else if (r.quien === "X") {
+    m[0]++;
+    if (vsJaguar()) { ganadas = ESTRELLAS[modo]; feedback("ok", "🎉", "¡Le ganaste al jaguar!"); decir(`${elogio()} ¡Le ganaste al jaguar!`); }
+    else { feedback("ok", "🎉", "¡Ganó equis!"); decir("¡Ganó equis! Tres en línea."); }
+  } else {
+    m[2]++;
+    if (vsJaguar()) { feedback("bad", "🐆", "Ganó el jaguar"); decir("¡Ganó el jaguar! La próxima, fijate si el jaguar ya tiene dos en línea y tapale el camino."); }
+    else { feedback("ok", "🎉", "¡Ganó círculo!"); decir("¡Ganó círculo! Tres en línea."); }
+  }
+  if (ganadas && !usoConsejo) progreso.total += ganadas;
+  else if (ganadas) progreso.total += 1; // con consejo, un poquito menos
+  guardar();
+  $("turnoTxt").textContent = "";
+  pintarMarcador();
+  empieza = otro(empieza); // la próxima empieza el otro
+  $("nuevaBtn").classList.add("pulse");
+}
+
+$("tablero").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || fin || pensando || (vsJaguar() && turno !== "X")) return;
+  const i = Number(b.dataset.i);
+  if (t[i]) return;
+  $("explica").hidden = true;
+  poner(i);
+});
+
+// 💡 Consejo: marca una casilla y explica por qué
+$("consejoBtn").addEventListener("click", () => {
+  if (fin || pensando || (vsJaguar() && turno !== "X")) return;
+  usoConsejo = true;
+  const c = consejo(t, turno);
+  const rival = vsJaguar() ? "el jaguar" : NOMBRE[otro(turno)];
+  const txt = {
+    ganar: "¡Podés ganar ya! Poné tu ficha en la casilla marcada y hacés tres en línea.",
+    bloquear: `¡Cuidado! ${rival[0].toUpperCase() + rival.slice(1)} tiene dos en línea y puede ganar en la casilla marcada. ¡Tapale el camino!`,
+    doble: "¡Truco de campeón! En la casilla marcada armás dos caminos para ganar a la vez, y no te los pueden tapar los dos.",
+    centro: "El centro es la casilla más poderosa: forma parte de cuatro líneas.",
+    esquina: "Las esquinas son buenas: cada una forma parte de tres líneas.",
+    mejor: "Esta es una buena casilla para no dejarle el camino libre a tu rival.",
+  }[c.tipo];
+  const marcas = { [c.casilla]: "consejo" };
+  if (c.tipo === "bloquear") marcas[c.casilla] = "consejo peligro";
+  pintarTablero(marcas);
+  $("explica").hidden = false; $("explica").textContent = `💡 ${txt}`;
+  sonido("tap"); decir(txt);
+});
+
+$("nuevaBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b || pensando) return;
+  modo = b.dataset.modo;
+  document.querySelectorAll("#modos button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  empieza = "X"; sonido("tap");
+  nueva(false);
+  const txt = { facil: "Jaguar fácil: a veces se equivoca.", medio: "Jaguar medio: si puede ganar, gana, y si vos podés ganar, te bloquea.",
+    dificil: "Jaguar difícil: juega perfecto. No se le puede ganar, ¡pero sí empatarle!", dos: "Dos jugadores: uno juega con equis y el otro con círculo, en el mismo celular." }[modo];
+  instruccion(`<b>${b.textContent}</b>: ${txt}`, `${txt} ${vsJaguar() ? "Empezás vos." : "Empieza equis."}`);
+});
+
+const repetir = lento => decir("Hacé tres en línea: en fila, en columna o en diagonal. Si tu rival tiene dos en línea, ¡tapale el camino!", lento ? { rate: LENTO } : undefined);
+alEmpezar(() => nueva(), repetir);
+pintarMarcador();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__gato = { get t() { return t; }, get turno() { return turno; }, get fin() { return fin; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

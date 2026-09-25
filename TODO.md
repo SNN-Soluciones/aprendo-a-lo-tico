@@ -129,7 +129,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🐸 Sudoku de ranitas de Costa Rica (4×4 y 6×6, 5 dificultades, pistas que explican el razonamiento)
 - [ ] 🐸 Sudoku: modo con números o letras para 6°, y sudoku del día
 - [ ] 📰 ¿Dato u opinión? (detectar noticias falsas)
-- [ ] ♟️ Estrategia contra el jaguar (quitar piedras, tres en línea)
+- [x] ❌⭕ Gato contra el jaguar (fácil, medio, difícil que nunca pierde, 2 jugadores, consejos que explican)
+- [ ] ♟️ Estrategia contra el jaguar: quitar piedras (Nim) y cuatro en línea
 - [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)
 
 ## 👨‍👩‍👧 Perfiles y progreso (local)

@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estrategia contra el jaguar</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; --yo: #E53935; --jag: #F2B800; }
+  .ancho { width: min(96vw, 520px); }
+  .modos, .niveles { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button, .niveles button { padding: 3px 10px; font-size: .92rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"], .niveles button[aria-pressed="true"] { background: var(--btn); }
+  .niveles { margin-top: 8px; justify-content: center; }
+  .est { font-size: .72rem; letter-spacing: -1px; }
+
+  .marcador { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .marcador div { background: var(--face); border: 3px solid var(--rim); border-radius: 16px; text-align: center; padding: 4px 2px; font-weight: 800; line-height: 1.1; color: var(--ink); }
+  .marcador .n { font-size: 1.7rem; display: block; }
+  .marcador .turno { outline: 4px solid var(--btn); outline-offset: 2px; }
+  .turnoTxt { margin-top: 8px; text-align: center; font-size: 1.2rem; font-weight: 800; color: var(--page-ink); min-height: 1.6rem; }
+
+  /* 🥭 Mangos y 🧺 canastas */
+  .mesa { margin-top: 8px; background: #8B5A2B; border: 4px solid #5C3A1A; border-radius: 18px; padding: 10px; }
+  .fila-mangos { display: flex; flex-wrap: wrap; gap: 4px; justify-content: center; background: #F4E1C1; border-radius: 12px; padding: 8px; min-height: 60px; }
+  .mango { font-size: 2rem; line-height: 1; transition: opacity .4s, transform .4s; }
+  .mango.fuera { opacity: 0; transform: translateY(-20px) scale(.5); }
+  .mango.jaguar { filter: drop-shadow(0 0 5px #FFB300); }
+  .cuantos { text-align: center; color: #fff; font-weight: 800; margin-top: 6px; font-size: 1.1rem; }
+  .quitar { margin-top: 10px; display: flex; gap: 8px; }
+  .quitar button { flex: 1; font-size: 1.25rem; padding: 8px 0; border-radius: 16px; }
+  .canastas { display: flex; gap: 10px; justify-content: center; align-items: flex-end; }
+  .canasta { flex: 1; max-width: 110px; display: flex; flex-direction: column-reverse; align-items: center; gap: 2px; background: #F4E1C1; border-radius: 12px 12px 26px 26px; border-bottom: 8px solid #A0522D; padding: 6px 4px; min-height: 90px; }
+  .canasta button.mango { background: none; border: none; box-shadow: none; padding: 0; font-size: 1.9rem; }
+  .canasta button.mango:active { transform: scale(.9); }
+  .canasta button.mango.marcado { filter: drop-shadow(0 0 5px #E53935) brightness(1.1); }
+  .canasta .rot { order: -1; font-weight: 800; color: #5C3A1A; font-size: .9rem; }
+  .ayuda-canasta { text-align: center; color: #fff; font-weight: 700; font-size: .95rem; margin-top: 6px; }
+
+  /* 🔴 Cuatro en línea */
+  .cuatro { margin-top: 8px; background: #1E6FD9; border-radius: 18px; padding: 8px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; border: 4px solid #0F4A99; position: relative; }
+  .hueco { aspect-ratio: 1; border-radius: 50%; background: #D8ECFF; border: none; padding: 0; box-shadow: inset 0 3px 0 rgba(0,0,0,.18); }
+  .hueco:active { transform: none; }
+  .hueco.j1 { background: var(--yo); }
+  .hueco.j2 { background: var(--jag); }
+  .hueco.nueva { animation: caer .35s ease-in; }
+  @keyframes caer { from { transform: translateY(-260%); } }
+  .hueco.gana { outline: 4px solid #fff; outline-offset: -4px; animation: pulse .8s ease-in-out 3; }
+  .hueco.consejo { box-shadow: 0 0 0 4px #fff inset; }
+  .cuatro.bloqueado .hueco { cursor: default; }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.05rem; padding: 6px 0; border-radius: 16px; flex: 1; }
+  #nuevaBtn.pulse { animation: pulse 1s ease-in-out infinite; background: var(--btn); }
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 700; }
+  [hidden] { display: none !important; }
+  @media (prefers-reduced-motion: reduce) { .hueco.nueva { animation: none; } .mango { transition: none; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🐆🥭🔴</div>
+  <h1>Estrategia contra el jaguar</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Juegos para pensar antes de jugar: quitá mangos sin dejarle el último al jaguar, o hacé cuatro en línea. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Juego">
+    <button data-modo="mangos" aria-pressed="true">🥭 Los mangos</button>
+    <button data-modo="canastas2" aria-pressed="false">🧺 2 canastas</button>
+    <button data-modo="canastas3" aria-pressed="false">🧺 3 canastas</button>
+    <button data-modo="cuatro" aria-pressed="false">🔴 Cuatro en línea</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+<div class="niveles ancho" id="niveles" role="group" aria-label="Contra quién"></div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="marcador ancho" id="marcador"></div>
+<div class="turnoTxt ancho" id="turnoTxt" aria-live="polite"></div>
+<div class="ancho" id="tablero"></div>
+
+<div class="acciones ancho">
+  <button id="consejoBtn">💡 Consejo</button>
+  <button id="nuevaBtn">🔄 Otra partida</button>
+</div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
+import { jaguarMangos, consejoMangos, jaguarNim, ganadoraNim, canastasIniciales,
+  vacio, soltar, ganador, jaguarCuatro, consejoCuatro, FILAS, COLS } from "../js/estrategia.js";
+
+const $ = id => document.getElementById(id);
+const CLAVE = "estrategia";
+const NIVELES = [["facil", "🐆 Fácil"], ["medio", "🐆 Medio"], ["dificil", "🐆 Difícil"], ["dos", "👫 2 jugadores"]];
+const ESTRELLAS = { facil: 1, medio: 2, dificil: 3 };
+const REGLAS = {
+  mangos: ["🥭 Por turnos, cada uno quita <b>1, 2 o 3 mangos</b>. ¡Gana el que se lleva el <b>último</b>!", "Por turnos, cada uno quita uno, dos o tres mangos. Gana el que se lleva el último mango."],
+  canastas2: ["🧺 Por turnos, sacá <b>los mangos que querás</b> de <b>una sola canasta</b>. ¡Gana el que se lleva el último!", "Por turnos, sacá los mangos que querás, pero de una sola canasta. Gana el que se lleva el último mango."],
+  canastas3: ["🧺 Tres canastas: sacá <b>los que querás</b> de <b>una sola canasta</b>. ¡Gana el que se lleva el último!", "Ahora hay tres canastas. Sacá los mangos que querás de una sola canasta. Gana el que se lleva el último mango."],
+  cuatro: ["🔴 Soltá fichas por arriba. ¡Hacé <b>4 en línea</b>: acostadas, paradas o en diagonal!", "Soltá tus fichas por arriba de las columnas. Gana el primero que haga cuatro en línea: acostadas, paradas o en diagonal."],
+};
+
+let prog = { estrellas: {}, marcador: {} };
+try { prog = { ...prog, ...JSON.parse(localStorage.getItem(CLAVE)) }; } catch (_) {}
+const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(prog)); } catch (_) {} };
+
+let modo = "mangos", nivel = "facil", turno = 1, empieza = 1, fin = false, pensando = false, usoConsejo = false;
+let mangos = 0, pilas = [], marcado = null, t = vacio(), ultima = null, lineaGana = [], consejoCol = -1;
+const vsJaguar = () => nivel !== "dos";
+const clave = () => `${modo}-${nivel}`;
+const nombres = () => vsJaguar() ? ["🧒 Vos", "🐆 Jaguar"] : ["🔴 Jugador 1", "🟡 Jugador 2"];
+
+// ---------- Pintar ----------
+function pintarMenus() {
+  document.querySelectorAll("#modos button").forEach(b => b.setAttribute("aria-pressed", b.dataset.modo === modo ? "true" : "false"));
+  $("niveles").innerHTML = NIVELES.map(([id, n]) => { const s = prog.estrellas[`${modo}-${id}`] || 0; return `<button data-nivel="${id}" aria-pressed="${id === nivel}">${n}${s ? ` <span class="est">${"⭐".repeat(s)}</span>` : ""}</button>`; }).join("");
+  $("stars").textContent = "⭐ " + Object.values(prog.estrellas).reduce((a, b) => a + b, 0);
+}
+function pintarMarcador() {
+  const m = prog.marcador[clave()] || [0, 0], [a, b] = nombres();
+  $("marcador").innerHTML = `<div class="${!fin && turno === 1 ? "turno" : ""}">${a}<span class="n">${m[0]}</span></div>
+    <div>${modo === "cuatro" ? "🤝 Empates" : "🥭 Quedan"}<span class="n">${modo === "cuatro" ? m[2] || 0 : modo === "mangos" ? mangos : pilas.reduce((x, y) => x + y, 0)}</span></div>
+    <div class="${!fin && turno === 2 ? "turno" : ""}">${b}<span class="n">${m[1]}</span></div>`;
+}
+function pintarTurno() {
+  if (fin) return;
+  const [a, b] = nombres();
+  $("turnoTxt").textContent = pensando ? "🐆 El jaguar está pensando…" : `👉 Turno de ${turno === 1 ? a : b}`;
+}
+function pintarTablero(sacados = []) {
+  const bloquear = fin || pensando || (vsJaguar() && turno === 2);
+  if (modo === "mangos") {
+    $("tablero").innerHTML = `<div class="mesa"><div class="fila-mangos">${Array.from({ length: mangos + sacados.length }, (_, i) =>
+      `<span class="mango ${i >= mangos ? "sale" : ""}">🥭</span>`).join("")}</div><div class="cuantos">Quedan ${mangos} ${mangos === 1 ? "mango" : "mangos"}</div></div>
+      <div class="quitar">${[1, 2, 3].map(k => `<button data-quitar="${k}" ${bloquear || k > mangos ? "disabled" : ""}>Quitar ${k}</button>`).join("")}</div>`;
+    // animación: los que se acaban de sacar aparecen y se van
+    requestAnimationFrame(() => requestAnimationFrame(() => $("tablero").querySelectorAll(".mango.sale").forEach(m => m.classList.add("fuera"))));
+  } else if (modo.startsWith("canastas")) {
+    $("tablero").innerHTML = `<div class="mesa"><div class="canastas">${pilas.map((p, i) =>
+      `<div class="canasta"><span class="rot">${["A", "B", "C"][i]} · ${p}</span>${Array.from({ length: p }, (_, k) =>
+        `<button class="mango ${marcado && marcado[0] === i && k >= p - marcado[1] ? "marcado" : ""}" data-c="${i}" data-k="${k}" ${bloquear ? "disabled" : ""} aria-label="Canasta ${["A", "B", "C"][i]}, mango ${k + 1}">🥭</button>`).join("")}</div>`).join("")}</div>
+      <div class="ayuda-canasta">👆 Tocá un mango: te llevás ese y todos los de arriba.</div></div>`;
+  } else {
+    let html = "";
+    for (let f = 0; f < FILAS; f++) for (let c = 0; c < COLS; c++) {
+      const v = t[f][c], nueva = ultima && ultima[0] === f && ultima[1] === c, gana = lineaGana.some(([a, b]) => a === f && b === c);
+      html += `<button class="hueco ${v ? "j" + v : ""} ${nueva ? "nueva" : ""} ${gana ? "gana" : ""} ${!v && c === consejoCol && f === filaLibre(c) ? "consejo" : ""}" data-col="${c}" aria-label="Columna ${c + 1}${v ? (v === 1 ? ", rojo" : ", amarillo") : ""}"></button>`;
+    }
+    $("tablero").innerHTML = `<div class="cuatro ${bloquear ? "bloqueado" : ""}">${html}</div>`;
+  }
+}
+const filaLibre = c => { for (let f = FILAS - 1; f >= 0; f--) if (!t[f][c]) return f; return -1; };
+const pintar = sacados => { pintarMarcador(); pintarTurno(); pintarTablero(sacados); };
+
+// ---------- Partidas ----------
+function nueva(voz = true) {
+  fin = false; pensando = false; usoConsejo = false; marcado = null; ultima = null; lineaGana = []; consejoCol = -1;
+  turno = empieza;
+  if (modo === "mangos") mangos = 10 + Math.floor(Math.random() * 12);
+  else if (modo === "canastas2") pilas = canastasIniciales(2);
+  else if (modo === "canastas3") pilas = canastasIniciales(3);
+  else t = vacio();
+  $("explica").hidden = true; feedback(""); $("nuevaBtn").classList.remove("pulse");
+  pintar();
+  if (voz) {
+    const [html, v] = REGLAS[modo];
+    const quien = vsJaguar() ? (turno === 1 ? "Empezás vos." : "Empieza el jaguar.") : `Empieza el jugador ${turno}.`;
+    instruccion(html, `${v} ${quien}`);
+  }
+  if (vsJaguar() && turno === 2) setTimeout(juegaJaguar, 900);
+}
+
+function despues(sacados) {
+  const termino = modo === "cuatro" ? ganador(t) : (modo === "mangos" ? mangos === 0 : pilas.every(p => !p)) ? { quien: turno } : null;
+  if (termino) return terminar(termino, sacados);
+  turno = 3 - turno;
+  pintar(sacados);
+  if (vsJaguar() && turno === 2) setTimeout(juegaJaguar, 700);
+}
+
+function juegaJaguar() {
+  if (fin) return;
+  pensando = true; pintarTurno(); pintarTablero();
+  setTimeout(() => {
+    pensando = false;
+    if (modo === "mangos") {
+      const k = jaguarMangos(mangos, nivel);
+      mangos -= k; sonido("tap");
+      decir(`El jaguar quitó ${k}. Quedan ${mangos}.`);
+      despues(Array(k).fill(0));
+    } else if (modo.startsWith("canastas")) {
+      const [i, k] = jaguarNim(pilas, nivel);
+      pilas = pilas.map((p, j) => (j === i ? p - k : p)); sonido("tap");
+      decir(`El jaguar sacó ${k} de la canasta ${["A", "B", "C"][i]}.`);
+      despues();
+    } else {
+      const c = jaguarCuatro(t, 2, nivel);
+      const r = soltar(t, c, 2); t = r.t; ultima = [r.f, c]; sonido("tap");
+      despues();
+    }
+  }, modo === "cuatro" && nivel === "dificil" ? 300 : 600);
+}
+
+function terminar(r, sacados) {
+  fin = true;
+  const m = prog.marcador[clave()] || [0, 0, 0];
+  if (r.linea) lineaGana = r.linea;
+  let ganadas = 0;
+  if (r.quien === 0) { m[2] = (m[2] || 0) + 1; feedback("almost", "🤝", "¡Empate!"); decir("¡Empate! Nadie hizo cuatro en línea."); if (vsJaguar() && nivel === "dificil") ganadas = 2; }
+  else if (r.quien === 1) {
+    m[0]++;
+    if (vsJaguar()) { ganadas = ESTRELLAS[nivel]; feedback("ok", "🎉", "¡Le ganaste al jaguar!"); decir(`${elogio()} ¡Le ganaste al jaguar!`); }
+    else { feedback("ok", "🎉", "¡Ganó el jugador 1!"); decir("¡Ganó el jugador uno!"); }
+  } else {
+    m[1]++;
+    if (vsJaguar()) {
+      feedback("bad", "🐆", "Ganó el jaguar");
+      decir(modo === "mangos" ? "¡Ganó el jaguar! Pista: fijate en los números 4, 8, 12… ¿Qué pasa si le dejás al jaguar uno de esos?"
+        : modo === "canastas2" ? "¡Ganó el jaguar! Pista: ¿qué pasa si dejás las dos canastas iguales?"
+        : modo === "cuatro" ? "¡Ganó el jaguar! La próxima, fijate si el jaguar tiene tres en línea y tapale el camino." : "¡Ganó el jaguar! Usá el consejo para descubrir su truco.");
+    } else { feedback("ok", "🎉", "¡Ganó el jugador 2!"); decir("¡Ganó el jugador dos!"); }
+  }
+  prog.marcador[clave()] = m;
+  if (ganadas) {
+    const s = usoConsejo ? Math.min(ganadas, 1) : ganadas;
+    prog.estrellas[clave()] = Math.max(prog.estrellas[clave()] || 0, s);
+  }
+  guardar(); pintarMenus();
+  $("turnoTxt").textContent = "";
+  pintarMarcador(); pintarTablero(sacados);
+  empieza = 3 - empieza;
+  $("nuevaBtn").classList.add("pulse");
+}
+
+// ---------- Jugadas del niño ----------
+$("tablero").addEventListener("click", e => {
+  if (fin || pensando || (vsJaguar() && turno === 2)) return;
+  const q = e.target.closest("[data-quitar]");
+  if (q && modo === "mangos") {
+    const k = Number(q.dataset.quitar);
+    if (k > mangos) return;
+    mangos -= k; sonido("tap"); $("explica").hidden = true;
+    return despues(Array(k).fill(0));
+  }
+  const m = e.target.closest("[data-c]");
+  if (m && modo.startsWith("canastas")) {
+    const i = Number(m.dataset.c), k = pilas[i] - Number(m.dataset.k);    // ese mango y todos los de arriba
+    pilas = pilas.map((p, j) => (j === i ? p - k : p)); marcado = null; sonido("tap"); $("explica").hidden = true;
+    decir(`Sacaste ${k} de la canasta ${["A", "B", "C"][i]}.`);
+    return despues();
+  }
+  const h = e.target.closest("[data-col]");
+  if (h && modo === "cuatro") {
+    const c = Number(h.dataset.col), r = soltar(t, c, turno);
+    if (!r) return;
+    t = r.t; ultima = [r.f, c]; consejoCol = -1; sonido("tap"); $("explica").hidden = true;
+    despues();
+  }
+});
+
+// 💡 Consejo: marca la jugada y explica el truco
+$("consejoBtn").addEventListener("click", () => {
+  if (fin || pensando || (vsJaguar() && turno === 2)) return;
+  usoConsejo = true;
+  let txt;
+  if (modo === "mangos") {
+    const c = consejoMangos(mangos);
+    txt = c.gana
+      ? `Quitá ${c.quitar}. Así le dejás al jaguar ${mangos - c.quitar}, que es de la tabla del 4 (4, 8, 12, 16, 20). Después, quite lo que quite, vos completás 4 entre los dos.`
+      : `Uy, quedan ${mangos}: es de la tabla del 4. Ahora no hay jugada segura: quitá 1 y esperá que el jaguar se equivoque.`;
+  } else if (modo.startsWith("canastas")) {
+    const g = ganadoraNim(pilas);
+    if (!g) txt = "Ahora no hay jugada segura. Sacá poquitos y esperá que el jaguar se equivoque.";
+    else {
+      marcado = g;
+      txt = modo === "canastas2"
+        ? `Sacá ${g[1]} de la canasta ${["A", "B"][g[0]]} para dejar las dos canastas iguales. Después, copiá lo que haga el jaguar en la otra canasta.`
+        : `Sacá ${g[1]} de la canasta ${["A", "B", "C"][g[0]]} (los mangos marcados). Esa jugada deja al jaguar sin ninguna jugada segura.`;
+    }
+  } else {
+    const c = consejoCuatro(t, turno);
+    consejoCol = c.col;
+    txt = { ganar: "¡Podés ganar ya! Soltá la ficha en la columna marcada.", bloquear: "¡Cuidado! Tu rival tiene tres en línea: tapale el camino en la columna marcada.",
+      centro: "La columna del centro es la más poderosa: ahí caben más líneas de cuatro.", mejor: "Probá en la columna marcada: te deja buenas líneas y no le regala nada a tu rival." }[c.tipo];
+  }
+  pintarTablero();
+  $("explica").hidden = false; $("explica").textContent = "💡 " + txt;
+  sonido("tap"); decir(txt);
+});
+
+$("nuevaBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b || pensando) return;
+  sonido("tap"); modo = b.dataset.modo; empieza = 1; pintarMenus(); nueva();
+});
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-nivel]");
+  if (!b || pensando) return;
+  sonido("tap"); nivel = b.dataset.nivel; empieza = 1; pintarMenus(); nueva();
+});
+
+const repetir = lento => decir(REGLAS[modo][1], lento ? { rate: LENTO } : undefined);
+alEmpezar(() => nueva(), repetir);
+pintarMenus(); pintarMarcador();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__estrategia = { get mangos() { return mangos; }, get pilas() { return pilas; }, get t() { return t; }, get turno() { return turno; }, get fin() { return fin; }, get pensando() { return pensando; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

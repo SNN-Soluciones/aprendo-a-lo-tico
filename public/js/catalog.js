@@ -282,4 +282,13 @@ export const JUEGOS = [
     grados: [1, 2, 3, 4],
     url: "juegos/estados.html",
   },
+  {
+    id: "estrategia",
+    titulo: "Estrategia contra el jaguar",
+    descripcion: "Los mangos, las canastas y cuatro en línea: pensá antes de jugar y descubrí el truco para ganarle al jaguar.",
+    emoji: "♟️",
+    materia: "logica",
+    grados: [1, 2, 3, 4, 5, 6],
+    url: "juegos/estrategia.html",
+  },
 ];

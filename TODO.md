@@ -152,7 +152,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🐸 Sudoku: modo con números o letras para 6°, y sudoku del día
 - [x] 📰 ¿Dato u opinión? (4 etapas: clasificar, palabra pista, verdadero/falso y detector de noticias con señales de alerta)
 - [x] ❌⭕ Gato contra el jaguar (fácil, medio, difícil que nunca pierde, 2 jugadores, consejos que explican)
-- [ ] ♟️ Estrategia contra el jaguar: quitar piedras (Nim) y cuatro en línea
+- [x] ♟️ Estrategia contra el jaguar: los mangos (de 1 a 3), 2 y 3 canastas (Nim) y cuatro en línea, con consejos que enseñan el truco
 - [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)
 
 ## 👨‍👩‍👧 Perfiles y progreso (local)

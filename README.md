@@ -29,6 +29,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🐸 Sudoku de ranitas | Pensamiento lógico | 1° a 6° | `public/juegos/sudoku-ranas.html` |
 | ❌ Gato contra el jaguar | Pensamiento lógico | Prepa a 6° | `public/juegos/gato.html` |
 | 📰 ¿Dato u opinión? | Pensamiento lógico | 3° a 6° | `public/juegos/dato-opinion.html` |
+| ♟️ Estrategia contra el jaguar | Pensamiento lógico | 1° a 6° | `public/juegos/estrategia.html` |
 | 🦜 Armo en inglés | Inglés | 2° a 6° | `public/juegos/armo-ingles.html` |
 | 🛡️ El escudo nacional | Estudios Sociales | 2° a 5° | `public/juegos/escudo.html` |
 | ✖️ Tablas en la feria | Matemáticas | 2° a 4° | `public/juegos/tablas.html` |
@@ -92,6 +93,7 @@ aprendo-a-lo-tico/
 │   ├── examen.html         # 📝 Preparate para el examen: materia, grado y temas → examen de práctica
 │   ├── js/examen-temas.js  # 📝 Temas del examen por materia y grado (preguntas al azar)
 │   ├── css/quiz.css        # ❓ Estilos de esos juegos
+│   ├── js/estrategia.js   # ♟️ Mangos, canastas (Nim) y cuatro en línea: jugadas del jaguar y consejos
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet

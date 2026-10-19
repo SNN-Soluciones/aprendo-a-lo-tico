@@ -444,4 +444,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/bus.html",
   },
+  {
+    id: "fracciones",
+    titulo: "Fracciones con pizza y sandía",
+    descripcion: "Pintá, compará y sumá pedazos de pizza, sandía y chocolate: de ½ a simplificar y números mixtos.",
+    emoji: "🍕",
+    materia: "mate",
+    grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/fracciones.html",
+  },
 ];

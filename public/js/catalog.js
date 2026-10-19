@@ -717,4 +717,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/medidas.html",
   },
+  {
+    id: "marimba",
+    titulo: "La marimba",
+    descripcion: "El instrumento nacional: repetí melodías, descubrí si la nota sube como pajarito o baja como sapo, si dos melodías son iguales, el ritmo del tambor, y tocá canciones siguiendo las lucecitas.",
+    emoji: "🎶",
+    materia: "logica",
+    grados: [0, 1, 2, 3, 4, 5, 6],
+    edad: [3, 12],
+    leer: "no",
+    escalera: true,
+    url: "juegos/marimba.html",
+  },
 ];

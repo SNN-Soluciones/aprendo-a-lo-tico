@@ -468,4 +468,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/historia.html",
   },
+  {
+    id: "graficos",
+    titulo: "Encuesta en la escuela",
+    descripcion: "Pictogramas, gráficos de barras, tabla de conteo, moda, promedio y probabilidad con una bolsa de confites.",
+    emoji: "📊",
+    materia: "mate",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/graficos.html",
+  },
 ];

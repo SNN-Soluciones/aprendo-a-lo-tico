@@ -480,4 +480,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/graficos.html",
   },
+  {
+    id: "cadenas",
+    titulo: "¿Quién se come a quién?",
+    descripcion: "Cadenas alimenticias de Costa Rica: herbívoros y carnívoros, productores y consumidores, armá la cadena y leé redes del bosque y del mar.",
+    emoji: "🔗",
+    materia: "ciencias",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/cadenas.html",
+  },
 ];

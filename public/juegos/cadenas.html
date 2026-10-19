@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Quién se come a quién?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #2FA85A; }
+  .levels button { font-size: .95rem; padding: 3px 10px; }
+  .instr .txt { font-size: clamp(1rem, 4.4vw, 1.2rem); }
+  .tarjeta { font-size: clamp(1.1rem, 5vw, 1.3rem); }
+  .tarjeta small { margin-top: 2px; }
+
+  /* Una cadena dibujada: fichas con flechas (también va dentro de la explicación) */
+  .cadena { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 3px 4px; margin: 0 0 8px; }
+  .ficha { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 54px; max-width: 86px;
+    background: #F2FBF5; border: 3px solid var(--rim); border-radius: 12px; padding: 1px 4px; color: var(--ink); }
+  .ficha .fe { font-size: 1.6rem; line-height: 1.1; }
+  .ficha .fn { font-size: .68rem; font-weight: 800; line-height: 1.05; text-align: center; }
+  .ficha.marcada { background: var(--btn); }
+  .cadena .fl { font-size: 1.05rem; font-weight: 800; color: var(--materia); }
+  .explica .cadena { margin: 6px 0 0; }
+
+  /* Armar la cadena */
+  .armar { margin-top: 10px; }
+  .ranuras { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px; min-height: 64px;
+    background: var(--face); border: 4px solid var(--rim); border-radius: 18px; padding: 8px 6px; }
+  .ranuras .vacia { min-width: 54px; height: 52px; border: 3px dashed var(--soft); border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: var(--soft); font-size: 1.3rem; }
+  .ranuras .vacia.sigue { border-color: var(--materia); color: var(--materia); }
+  .ranuras .fl { font-size: 1.05rem; font-weight: 800; color: var(--materia); }
+  .ranuras .ficha.nueva { animation: pop .4s ease-out; }
+  .piezas { margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .piezas button { border-radius: 18px; padding: 6px 4px; display: flex; flex-direction: column; align-items: center; line-height: 1.05; }
+  .piezas button .fe { font-size: 2rem; line-height: 1.15; }
+  .piezas button .fn { font-size: .8rem; }
+  .piezas button.puesta { visibility: hidden; }
+  .piezas button.wrong { opacity: .4; }
+
+  /* Red alimentaria */
+  .red { margin-top: 10px; }
+  .red svg { width: 100%; height: auto; display: block; background: #F7FFF9; border: 4px solid var(--rim); border-radius: 18px; }
+  .red .flechas line { stroke: #1F3A5F; stroke-width: 2.5; }
+  .red marker path { fill: #1F3A5F; }
+  .red .nodo circle { fill: #fff; stroke: #1F3A5F; stroke-width: 3; }
+  .red .nodo.marca circle { fill: #FFC83D; }
+  .red .nodo .e { font-size: 24px; text-anchor: middle; }
+  .red .nodo .n { font-size: 11px; font-weight: 800; text-anchor: middle; fill: #1F3A5F; stroke: #F7FFF9; stroke-width: 3px; paint-order: stroke; font-family: "Baloo 2", system-ui, sans-serif; }
+
+  .opciones button .fe { font-size: 1.8rem; display: block; line-height: 1.1; }
+  .bottom button { font-size: 1.8rem; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🌿🐛🐸🐍</div>
+  <h1>¿Quién se come a quién?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Cadenas alimenticias de Costa Rica: herbívoros y carnívoros, productores y consumidores, y qué pasa si falta un eslabón. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="dieta">🥕🥩 Dieta</button>
+    <button data-nivel="cadenas">🔗 Cadenas</button>
+    <button data-nivel="papeles">🏷️ Papeles</button>
+    <button data-nivel="sipasa">❓ ¿Y si…?</button>
+    <button data-nivel="redes">🕸️ Redes</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tarjeta ancho" id="tarjeta" aria-live="polite"></div>
+<div class="red ancho" id="red" hidden></div>
+<div class="opciones ancho" id="opciones"></div>
+<div class="armar ancho" id="armar" hidden>
+  <div class="ranuras" id="ranuras" aria-label="Tu cadena"></div>
+  <div class="piezas" id="piezas"></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda, barajar } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { SERES, ESCALONES, pregunta, cadenaHTML, redSVG, conArt, objeto, may, delEco } from "../js/cadenas.js";
+
+const $ = id => document.getElementById(id);
+
+// Modos a mano (para la maestra o el papá): cada uno rota entre sus escalones
+const MANUAL = { dieta: [0, 1, 2], cadenas: [3, 4, 7], papeles: [5, 6], sipasa: [8, 9], redes: [10, 11] };
+const esc = escalera("cadenas", { escalones: ESCALONES.length,
+  inicio: edad => edad === null || edad <= 7 ? 0 : edad === 8 ? 1 : edad === 9 ? 3 : edad === 10 ? 5 : edad === 11 ? 6 : 7 });
+const stars = estrellas("cadenas-stars");
+
+let manual = null, q = null, fallos = 0, listo = false, pos = 0, ultima = "";
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(botonCorrecto()), repetir: () => decir(q?.voz || "") });
+
+const botonCorrecto = () => q.tipo === "armar"
+  ? $("piezas").querySelector(`[data-p="${q.cadena[pos]}"]:not(.puesta)`)
+  : $("opciones").querySelector(`[data-id="${q.correcta}"]`);
+
+function nuevo() {
+  const i = esc.activa ? esc.nivel : barajar(MANUAL[manual])[0];
+  // Que no salga la misma pregunta dos veces seguidas
+  for (let k = 0; k < 10; k++) { q = pregunta(i); if (q.html !== ultima) break; }
+  ultima = q.html;
+  fallos = 0; listo = false; pos = 0;
+  feedback(""); $("explica").hidden = true; $("nextBtn").classList.remove("pulse");
+  $("tarjeta").innerHTML = q.html;
+  $("red").hidden = !q.red;
+  if (q.red) $("red").innerHTML = redSVG(q.red, q.marca);
+  const armar = q.tipo === "armar";
+  $("armar").hidden = !armar; $("opciones").hidden = armar;
+  if (armar) pintarArmar();
+  else {
+    $("opciones").style.gridTemplateColumns = `repeat(${q.cols || Math.min(q.opciones.length, 3)}, 1fr)`;
+    $("opciones").innerHTML = q.opciones.map(o => `<button data-id="${o.id}">${o.html}</button>`).join("");
+  }
+  instruccion(`🔗 ${ESCALONES[q.escalon].nombre}`, q.voz);
+  ayuda.empezar();
+}
+
+// ---------- Opciones ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled) return;
+  const o = q.opciones.find(x => x.id === b.dataset.id);
+  if (o.id === String(q.correcta)) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    ganar();
+  } else {
+    fallos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    feedback("bad", "🤔", "No es");
+    decir(o.mal || "Fijate bien y probá otra vez.");
+    if (fallos >= 2) senalar(botonCorrecto());
+  }
+});
+
+// ---------- Armar la cadena ----------
+function pintarArmar(nueva = -1) {
+  const n = q.cadena.length;
+  $("ranuras").innerHTML = q.cadena.map((id, i) => (i ? `<span class="fl" aria-hidden="true">➜</span>` : "")
+    + (i < pos ? `<span class="ficha${i === nueva ? " nueva" : ""}"><span class="fe">${SERES[id].e}</span><span class="fn">${SERES[id].n}</span></span>`
+      : `<span class="vacia${i === pos ? " sigue" : ""}">${i === pos ? "?" : ""}</span>`)).join("");
+  if (nueva < 0) $("piezas").innerHTML = q.piezas.map(id => `<button data-p="${id}" aria-label="${SERES[id].n}"><span class="fe">${SERES[id].e}</span><span class="fn">${SERES[id].n}</span></button>`).join("");
+  $("ranuras").setAttribute("aria-label", `Tu cadena: ${q.cadena.slice(0, pos).map(id => SERES[id].n).join(", ") || "vacía"}. Faltan ${n - pos}.`);
+}
+
+$("piezas").addEventListener("click", e => {
+  const b = e.target.closest("[data-p]");
+  if (!b || listo || b.disabled || b.classList.contains("puesta")) return;
+  const id = b.dataset.p, toca = q.cadena[pos];
+  if (id === toca) {
+    b.classList.remove("senal"); b.classList.add("puesta");
+    pos++;
+    sonido("tap");
+    pintarArmar(pos - 1);
+    feedback("");
+    if (pos === q.cadena.length) {
+      $("piezas").querySelectorAll("button").forEach(x => { x.disabled = true; });
+      ganar();
+    } else hablar(SERES[id].n);
+    return;
+  }
+  fallos++;
+  b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope");
+  let txt;
+  if (id === q.sobra) {
+    b.classList.add("wrong"); b.disabled = true;
+    txt = `${may(conArt(id))} no es de esta cadena ${delEco(q.eco)}. ¡Ese sobra!`;
+  } else if (toca === "sol") txt = "Empezá por el sol: de ahí viene la energía.";
+  else if (pos === 0 || SERES[toca].tipo === "productor") txt = q.cadena[0] === "sol" && pos === 1
+    ? "Después del sol va la planta: con su luz hace su propio alimento."
+    : "Empezá por la planta: es el productor, hace su propio alimento.";
+  else txt = `Todavía no. ¿Quién se come ${objeto(q.cadena[pos - 1])}?`;
+  feedback(id === q.sobra ? "almost" : "bad", "🤔", id === q.sobra ? "¡Sobra!" : "No es");
+  decir(txt);
+  if (fallos >= 2) senalar(botonCorrecto());
+});
+
+// ---------- Al acertar ----------
+function ganar() {
+  listo = true;
+  ayuda.parar();
+  const limpio = fallos === 0 && !ayuda.usada;
+  const bien = limpio ? elogio() : "¡Ahora sí!";
+  if (limpio) stars.sumar();
+  feedback(limpio ? "ok" : "almost", limpio ? "🎉" : "🤏", bien);
+  const cadena = q.tipo === "armar" ? cadenaHTML(q.cadena) : "";
+  $("explica").hidden = false;
+  $("explica").innerHTML = `${q.explica}${cadena}`;
+  decir(`${bien} ${q.explica.replace(/<div class="cadena">[\s\S]*<\/div>/, "").replace(/<[^>]+>/g, " ")}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: q.tipo === "armar" ? 0 : q.opciones.length });
+  $("nextBtn").classList.add("pulse");
+}
+
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+niveles(v => { manual = v === "auto" ? null : v; esc.activa = v === "auto"; ultima = ""; nuevo(); });
+alEmpezar(nuevo, lento => decir(q?.voz || "", lento ? { rate: LENTO } : undefined));
+
+if (new URLSearchParams(location.search).has("prueba")) window.__cadenas = { get q() { return q; }, get pos() { return pos; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

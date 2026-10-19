@@ -23,16 +23,17 @@ const CSS_STICKER = `
   position: absolute; left: 50%; top: calc(22% + clamp(5rem, 22vw, 6rem)); transform: translateX(-50%);
   display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 18px 6px;
   background: #FFFFFF; border: 4px solid #1F3A5F; border-radius: 24px; box-shadow: 0 5px 0 #1F3A5F;
-  animation: sticker-nuevo 3.4s ease-out forwards;
+  animation: sticker-nuevo 2.6s ease-in-out forwards;
 }
 .subio .sticker-nuevo .stk-emoji { font-size: 4.4rem; line-height: 1.05; }
 .subio .sticker-nuevo .stk-svg svg { width: 5.2rem; height: 5.2rem; display: block; }
 .subio .sticker-nuevo b { font-size: 1.15rem; color: #1F3A5F; white-space: nowrap; }
+/* Aparece en el centro y después vuela chiquitito hacia arriba (a su álbum), para no tapar la ronda siguiente */
 @keyframes sticker-nuevo {
-  0%, 12% { transform: translateX(-50%) scale(.2) rotate(-20deg); opacity: 0; }
-  24% { transform: translateX(-50%) scale(1.15) rotate(6deg); opacity: 1; }
-  32%, 85% { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; }
-  100% { transform: translateX(-50%) scale(1); opacity: 0; }
+  0%, 10% { transform: translateX(-50%) scale(.2) rotate(-20deg); opacity: 0; }
+  22% { transform: translateX(-50%) scale(1.15) rotate(6deg); opacity: 1; }
+  30%, 62% { transform: translateX(-50%) scale(1) rotate(0); opacity: 1; }
+  100% { transform: translateX(-50%) translate(36vw, -34vh) scale(.25); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .subio .cartel, .subio .sticker-nuevo { animation: none !important; }
@@ -109,7 +110,7 @@ export function escalera(juego, { escalones, meta = META, inicio = () => 0, el =
     d.innerHTML = `<span class="cartel">🪜 ¡Subiste!</span>${s ? `<span class="sticker-nuevo">${dibujo(s)}<b>¡Sticker nuevo!</b></span>` : ""}${
       Array.from({ length: 14 }, (_, i) => `<i style="--x:${(i * 37) % 100}%;--d:${(i % 5) * 0.12}s">${["⭐", "🎉", "🍃", "✨"][i % 4]}</i>`).join("")}`;
     document.body.appendChild(d);
-    setTimeout(() => d.remove(), s ? 3600 : 2600);
+    setTimeout(() => d.remove(), s ? 2800 : 2600);
   }
 
   pintar();

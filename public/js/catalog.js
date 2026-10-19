@@ -516,4 +516,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/area.html",
   },
+  {
+    id: "rumbos",
+    titulo: "Direcciones a lo tico",
+    descripcion: "Norte, sur, este y oeste; «200 metros al este de la iglesia»; letra y número en el mapa; paralelos, meridianos, latitud y longitud.",
+    emoji: "🧭",
+    materia: "sociales",
+    grados: [1, 2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/rumbos.html",
+  },
 ];

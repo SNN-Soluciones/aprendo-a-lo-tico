@@ -648,4 +648,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/emociones.html",
   },
+  {
+    id: "paisajes",
+    titulo: "Volcanes, ríos y regiones",
+    descripcion: "Encontrá en el mapa volcanes, parques nacionales, ríos, golfos y cordilleras de Costa Rica, y conocé sus seis regiones.",
+    emoji: "🌋",
+    materia: "sociales",
+    grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/paisajes.html",
+  },
 ];

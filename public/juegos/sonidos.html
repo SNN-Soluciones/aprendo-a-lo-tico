@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Quién hace así?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2FA85A; }
+  .opciones { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 12px; margin-top: 14px; }
+  .opciones button {
+    border-radius: 26px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: clamp(3.2rem, 17vw, 4.6rem); line-height: 1.05; min-height: 120px;
+  }
+  .opciones button .pal { font-size: 1rem; font-weight: 700; opacity: .75; }
+  .opciones.seis button { font-size: clamp(2.6rem, 13vw, 3.6rem); min-height: 100px; }
+  .opciones button.son { background: var(--c); font-size: clamp(2.8rem, 14vw, 3.8rem); }
+  .opciones button.dicho { outline: 5px solid var(--materia); outline-offset: 3px; transform: scale(1.06); }
+  .instr .txt .faltan { display: block; font-size: clamp(2rem, 10vw, 2.6rem); line-height: 1.1; letter-spacing: .1em; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🐮🐶🐸</div>
+  <h1>¿Quién hace así?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Escuchá el sonido y tocá al animal que hace así.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="finca" aria-label="Animales de la finca">🐄</button>
+    <button data-nivel="bosque" aria-label="Animales del bosque">🌳</button>
+    <button data-nivel="reves" aria-label="Al revés: ¿cómo hace?">🔊</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+
+const $ = id => document.getElementById(id);
+
+// 🐮 Animales y su sonido. No hay archivos de audio: la voz del teléfono lee la onomatopeya.
+// Se usan formas que las voces en español leen como sílabas (vocales repetidas o sílabas dobladas, entre ¡!),
+// y nunca consonantes solas como «Grrr», «Bzzz» o «Sss», que algunas voces deletrean letra por letra.
+// grupo: los del mismo grupo suenan o se ven parecido; solo salen juntos en el escalón de «parecidos».
+const ANIMALES = [
+  // 🏡 La casa y la finca
+  { id: "vaca", e: "🐄", n: "vaca", f: true, son: "¡Muuu!", dato: "¡La vaca hace muuu y nos da leche!" },
+  { id: "perro", e: "🐶", n: "perro", f: false, son: "¡Guau, guau!", dato: "¡El perro hace guau guau y cuida la casa!" },
+  { id: "gato", e: "🐱", n: "gato", f: false, son: "¡Miau!", dato: "¡El gato hace miau y le encanta dormir al sol!" },
+  { id: "pato", e: "🦆", n: "pato", f: false, son: "¡Cuac, cuac!", dato: "¡El pato hace cuac cuac y nada en la laguna!" },
+  { id: "gallo", e: "🐓", n: "gallo", f: false, son: "¡Kikirikí!", dato: "¡El gallo canta kikirikí cuando sale el sol!", grupo: "gallinero" },
+  { id: "chancho", e: "🐷", n: "chancho", f: false, son: "¡Oinc, oinc!", dato: "¡El chancho hace oinc oinc y se revuelca en el barro!" },
+  { id: "oveja", e: "🐑", n: "oveja", f: true, son: "¡Beee, beee!", dato: "¡La oveja hace bee y su lana nos abriga!" },
+  { id: "pollito", e: "🐥", n: "pollito", f: false, son: "¡Pío, pío!", dato: "¡El pollito hace pío pío y sigue a su mamá gallina!", grupo: "pajarito" },
+  { id: "caballo", e: "🐴", n: "caballo", f: false, son: "¡Hiii, hiii!", dato: "¡El caballo hace hiii y corre muy rápido!" },
+  { id: "gallina", e: "🐔", n: "gallina", f: true, son: "¡Coc, coc, coc!", dato: "¡La gallina hace coc coc y pone huevos!", grupo: "gallinero" },
+  // 🌳 El bosque de Costa Rica
+  { id: "mono", e: "🐒", n: "mono congo", f: false, son: "¡Uh, uh, ah, ah!", dato: "¡El mono congo grita tan fuerte que se oye en todo el bosque!" },
+  { id: "yiguirro", e: "🐦", n: "yigüirro", f: false, son: "¡Fiu, fiu, fiu!", dato: "¡El yigüirro canta cuando empiezan las lluvias! Es el ave nacional de Costa Rica.", grupo: "pajarito" },
+  { id: "lapa", e: "🦜", n: "lapa", f: true, son: "¡Craaa, craaa!", dato: "¡La lapa roja grita craaa y vuela en pareja!" },
+  { id: "rana", e: "🐸", n: "rana", f: true, son: "¡Croac, croac!", dato: "¡La rana canta croac croac cuando llueve!" },
+  { id: "grillo", e: "🦗", n: "grillo", f: false, son: "¡Cri, cri, cri!", dato: "¡El grillo canta cri cri de noche!" },
+  { id: "abeja", e: "🐝", n: "abeja", f: true, son: "¡Zum, zum, zum!", dato: "¡La abeja vuela de flor en flor y hace miel!" },
+];
+const POR_ID = Object.fromEntries(ANIMALES.map(a => [a.id, a]));
+const CONOCIDOS = ["vaca", "perro", "gato", "pato", "gallo", "chancho"].map(id => POR_ID[id]);
+const FINCA = ANIMALES.slice(0, 10);
+const BOSQUE = ANIMALES.slice(10);
+
+// 🪜 De a poquito. modo: "oir" = se oye el sonido y se toca al animal;
+// "reves" = se ve el animal y se toca su sonido 🔊; "dos" = se oyen dos sonidos seguidos y se tocan los dos.
+const ESCALONES = [
+  { modo: "oir", ops: 2, metas: CONOCIDOS, otros: CONOCIDOS },          // 1. dos animales muy conocidos y muy distintos
+  { modo: "oir", ops: 3, metas: CONOCIDOS, otros: CONOCIDOS },          // 2. tres
+  { modo: "oir", ops: 3, metas: FINCA, otros: FINCA },                  // 3. toda la finca (oveja, pollito, caballo, gallina)
+  { modo: "oir", ops: 4, metas: FINCA, otros: FINCA },                  // 4. cuatro de la finca
+  { modo: "oir", ops: 3, metas: BOSQUE, otros: ANIMALES },              // 5. animales del bosque tico
+  { modo: "oir", ops: 4, metas: ANIMALES, otros: ANIMALES, parecidos: true }, // 6. con parecidos: pollito y yigüirro, gallo y gallina
+  { modo: "reves", ops: 2, metas: FINCA, otros: FINCA },                // 7. al revés: ¿cómo hace la vaca? dos sonidos
+  { modo: "reves", ops: 3, metas: ANIMALES, otros: ANIMALES },          // 8. al revés con tres sonidos
+  { modo: "dos", ops: 4, metas: FINCA, otros: FINCA },                  // 9. dos sonidos seguidos: tocá a los dos
+  { modo: "dos", ops: 6, metas: ANIMALES, otros: ANIMALES },            // 10. dos sonidos entre seis animales
+];
+// Niveles a mano (para el papá o la maestra): qué escalón usan
+const MANUAL = { finca: 3, bosque: 5, reves: 7 };
+const COLORES = ["#FFE08A", "#BFE3FF", "#FFC9DE"];
+
+const esc = escalera("sonidos", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : 3 });
+const stars = estrellas("sonidos-stars");
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(botonDe(faltan()[0])), repetir: () => presentar(false) });
+
+let manual = "finca", cfg = ESCALONES[0], meta = null, metas = [], encontrados = new Set(), opciones = [];
+let fallos = 0, listo = false, turno = 0, ultimo = null;
+
+const grupo = a => a.grupo || a.id;
+const art = a => a.f ? "la" : "el";
+const Art = a => a.f ? "La" : "El";
+const del = a => a.f ? "de la" : "del";
+const lo = a => a.f ? "la" : "lo";
+const faltan = () => metas.filter(m => !encontrados.has(m));
+const botonDe = a => $("opciones").querySelector(`[data-i="${opciones.indexOf(a)}"]`);
+const pausa = ms => new Promise(r => setTimeout(r, ms));
+
+/** Completa con animales de otros grupos (que no suenen ni se vean parecido). */
+function completar(ops, cuantos, otros) {
+  const usados = new Set(ops.map(grupo));
+  for (const a of barajar(otros)) {
+    if (ops.length >= cuantos) break;
+    if (ops.includes(a) || usados.has(grupo(a))) continue;
+    ops.push(a); usados.add(grupo(a));
+  }
+  return ops;
+}
+
+function nuevo() {
+  cfg = esc.activa ? ESCALONES[esc.nivel] : ESCALONES[MANUAL[manual]];
+  fallos = 0; listo = false; encontrados = new Set();
+  if (cfg.modo === "dos") {
+    metas = completar([], 2, cfg.metas);
+    meta = metas[0];
+    opciones = barajar(completar([...metas], cfg.ops, cfg.otros));
+  } else {
+    // En el escalón de parecidos, la mitad de las veces sale uno que tiene un parecido
+    let pool = cfg.metas;
+    if (cfg.parecidos && Math.random() < 0.5) pool = pool.filter(a => a.grupo);
+    do meta = azar(pool); while (meta === ultimo && pool.length > 1);
+    metas = [meta];
+    const ops = [meta];
+    const parecido = cfg.parecidos && cfg.otros.find(a => a !== meta && a.grupo && a.grupo === meta.grupo);
+    if (parecido) ops.push(parecido);
+    opciones = barajar(completar(ops, cfg.ops, cfg.otros));
+  }
+  ultimo = meta;
+
+  const n = opciones.length;
+  $("opciones").style.setProperty("--cols", n === 3 || n === 6 ? 3 : 2);
+  $("opciones").classList.toggle("seis", n > 4);
+  $("opciones").innerHTML = opciones.map((o, i) => cfg.modo === "reves"
+    ? `<button data-i="${i}" class="son" style="--c:${COLORES[i]}" aria-label="Sonido ${i + 1}">🔊</button>`
+    : `<button data-i="${i}" aria-label="${o.n}"><span aria-hidden="true">${o.e}</span><span class="pal">${o.n}</span></button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  presentar();
+  ayuda.empezar();
+}
+
+const instrDos = () => `<span class="big" aria-hidden="true">👂</span> ¿Quiénes son?<span class="faltan" aria-hidden="true">${metas.map(m => encontrados.has(m) ? m.e : "❓").join(" ")}</span>`;
+
+/** Dice la instrucción (🔊 repite y 🐢 la dice despacio). Si el niño toca algo, deja de hablar. */
+async function presentar(lento = false) {
+  const t = ++turno;
+  const op = lento ? { rate: LENTO } : undefined;
+  if (cfg.modo === "oir") {
+    await instruccion(`<span class="big" aria-hidden="true">👂</span> ¿Quién hace así?`, `¿Quién hace así? ... ${meta.son}`, lento);
+  } else if (cfg.modo === "dos") {
+    const f = faltan();
+    await instruccion(instrDos(), f.length === 2
+      ? `Escuchá a dos animales. ${f[0].son} ... ${f[1].son} ... Tocá a los dos.`
+      : `Falta uno. Escuchá: ${f[0].son}`, lento);
+  } else {
+    // Al revés: se dice cada sonido mientras su botón se ilumina
+    await instruccion(`<span class="big" aria-hidden="true">${meta.e}</span> ¿Cómo hace ${art(meta)} ${meta.n}?`, `¿Cómo hace ${art(meta)} ${meta.n}? Escuchá.`, lento);
+    const btns = $("opciones").querySelectorAll("button");
+    for (let i = 0; i < opciones.length; i++) {
+      if (t !== turno) return;
+      if (btns[i].disabled) continue;
+      btns[i].classList.add("dicho");
+      await hablar(opciones[i].son, op);
+      btns[i].classList.remove("dicho");
+      await pausa(250);
+    }
+    if (t === turno) hablar(`¿Cuál es el sonido ${del(meta)} ${meta.n}?`, op);
+  }
+}
+
+function acerto(b) {
+  listo = true;
+  ayuda.parar();
+  b.classList.remove("senal");
+  b.classList.add("right");
+  $("opciones").querySelectorAll("button").forEach(x => { if (!x.classList.contains("right")) x.disabled = true; });
+  if (cfg.modo === "dos") $("instr").innerHTML = instrDos();
+  const limpio = fallos === 0 && !ayuda.usada;
+  const suena = cfg.modo === "reves" ? `${meta.son} ` : "";
+  const frase = cfg.modo === "dos" ? `¡Eran ${art(metas[0])} ${metas[0].n} y ${art(metas[1])} ${metas[1].n}!` : meta.dato;
+  if (limpio) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${suena}${bien} ${frase}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`${suena}¡Ahora sí! ${frase}`); }
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: cfg.modo === "dos" ? 0 : opciones.length });
+  $("nextBtn").classList.add("pulse");
+}
+
+function fallo(b, o) {
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  const f = faltan();
+  const queHace = cfg.modo === "reves" ? `${o.son} Ese es el sonido ${del(o)} ${o.n}.` : `${Art(o)} ${o.n} hace ${o.son}`;
+  if (fallos >= 2) {
+    // Al segundo error se le señala la respuesta
+    senalar(botonDe(f[0]));
+    feedback("bad", "🙈", "No es");
+    decir(cfg.modo === "reves"
+      ? `${queHace} Mirá, este es el ${del(meta)} ${meta.n}: ${meta.son} Tocalo.`
+      : `${queHace} Mirá: ${f[0].f ? "esta es" : "este es"} ${art(f[0])} ${f[0].n}. ${f[0].son} Toca${lo(f[0])}.`);
+  } else if (cfg.parecidos && grupo(o) === grupo(meta)) {
+    feedback("almost", "🤏", "¡Casi!");
+    decir(`¡Casi! ${queHace} Escuchá otra vez: ${meta.son}`);
+  } else {
+    feedback("bad", "🙈", "No es");
+    decir(cfg.modo === "reves" ? `${queHace} Probá otro.` : `${queHace} Escuchá otra vez: ${f.map(m => m.son).join(" ... ")}`);
+  }
+}
+
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled) return;
+  turno++; // deja de presentar los sonidos
+  $("opciones").querySelectorAll(".dicho").forEach(x => x.classList.remove("dicho"));
+  const o = opciones[Number(b.dataset.i)];
+  if (cfg.modo === "dos") {
+    if (!metas.includes(o)) return fallo(b, o);
+    encontrados.add(o);
+    if (!faltan().length) return acerto(b);
+    b.classList.remove("senal"); b.classList.add("right"); b.disabled = true;
+    $("instr").innerHTML = instrDos();
+    feedback("ok", o.e, "¡Uno!");
+    decir(`${o.son} ¡Sí! ${Art(o)} ${o.n}. Falta uno: ${faltan()[0].son}`);
+    return;
+  }
+  if (o === meta) acerto(b); else fallo(b, o);
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = v;
+  ultimo = null; nuevo();
+});
+alEmpezar(nuevo, presentar);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__sonidos = {
+  get cfg() { return cfg; }, get meta() { return meta; }, get metas() { return metas; }, get opciones() { return opciones; },
+  get nivel() { return esc.nivel; }, ANIMALES, ESCALONES,
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

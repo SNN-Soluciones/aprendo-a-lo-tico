@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Dónde está?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; }
+  .tablero {
+    display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: var(--gap, 12px); margin-top: 14px;
+  }
+  .tablero button {
+    border-radius: 22px; padding: 4px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+    font-size: var(--tam, 4rem); line-height: 1; font-weight: 400;
+  }
+  .tablero.chico button { border-width: 3px; border-radius: 16px; box-shadow: 0 3px 0 var(--rim); }
+  .tablero button.wrong { opacity: .45; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🔍🦆🍌</div>
+  <h1>¿Dónde está?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Escuchá qué hay que buscar y tocalo.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="2" aria-label="Cuatro dibujos">4</button>
+    <button data-nivel="7" aria-label="Nueve dibujos">9</button>
+    <button data-nivel="11" aria-label="Dieciséis dibujos">16</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap tablero" id="tablero"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { elogio } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+
+const $ = id => document.getElementById(id);
+
+// Dibujos por grupo: [emoji, nombre, femenino]. Los del mismo grupo se parecen (más difícil distinguirlos).
+const GRUPOS = {
+  granja: [["🐶", "perro"], ["🐱", "gato"], ["🐮", "vaca", 1], ["🐴", "caballo"], ["🐷", "chancho"], ["🐔", "gallina", 1],
+    ["🐥", "pollito"], ["🐰", "conejo"], ["🐭", "ratón"], ["🐑", "oveja", 1]],
+  agua: [["🐟", "pez"], ["🐙", "pulpo"], ["🐳", "ballena", 1], ["🐬", "delfín"], ["🐢", "tortuga", 1], ["🦀", "cangrejo"],
+    ["🦈", "tiburón"], ["🐸", "rana", 1], ["🦆", "pato"]],
+  selva: [["🐒", "mono"], ["🦁", "león"], ["🐯", "tigre"], ["🐘", "elefante"], ["🦒", "jirafa", 1], ["🐻", "oso"],
+    ["🦜", "lora", 1], ["🦉", "búho"], ["🦥", "perezoso"], ["🐊", "cocodrilo"], ["🐍", "serpiente", 1], ["🦝", "mapache"], ["🦊", "zorro"]],
+  bichos: [["🦋", "mariposa", 1], ["🐝", "abeja", 1], ["🐌", "caracol"], ["🐜", "hormiga", 1], ["🕷️", "araña", 1], ["🐛", "gusano"], ["🦗", "grillo"]],
+  frutas: [["🍎", "manzana", 1], ["🍌", "banano"], ["🍇", "uvas", 2], ["🍉", "sandía", 1], ["🍓", "fresa", 1], ["🍍", "piña", 1],
+    ["🍊", "naranja", 1], ["🍋", "limón"], ["🥭", "mango"], ["🍐", "pera", 1], ["🍒", "cerezas", 2], ["🥥", "coco"]],
+  vehiculos: [["🚗", "carro"], ["🚌", "bus"], ["✈️", "avión"], ["⛵", "barco"], ["🚲", "bici", 1], ["🚂", "tren"],
+    ["🏍️", "moto", 1], ["🚁", "helicóptero"], ["🚀", "cohete"], ["🚚", "camión"]],
+  cosas: [["⚽", "bola", 1], ["🎈", "globo"], ["🎁", "regalo"], ["🏠", "casa", 1], ["☀️", "sol"], ["🌙", "luna", 1], ["⭐", "estrella", 1],
+    ["🌸", "flor", 1], ["🌳", "árbol"], ["⏰", "reloj"], ["🔑", "llave", 1], ["📖", "libro"], ["👟", "zapato"], ["👒", "sombrero"],
+    ["☂️", "sombrilla", 1], ["🔔", "campana", 1], ["✏️", "lápiz"]],
+};
+const ANIMALES = ["granja", "agua", "selva", "bichos"];
+const COSA = ([e, n, f], g) => ({ e, n, f: f === 1, pl: f === 2, g });
+const TODAS = Object.entries(GRUPOS).flatMap(([g, l]) => l.map(x => COSA(x, g)));
+const delGrupo = g => TODAS.filter(c => c.g === g);
+
+// 🪜 De a poquito: cuántos dibujos hay y si se parecen.
+//   mezcla: dibujos de grupos distintos (fácil de ver) · parecidos: todos del mismo grupo (animales con animales…)
+//   diferente: todos iguales menos uno («¿Cuál es diferente?»)
+const ESCALONES = [
+  { n: 2, tipo: "mezcla" },     //  1: dos dibujos muy distintos
+  { n: 3, tipo: "mezcla" },     //  2
+  { n: 4, tipo: "mezcla" },     //  3
+  { n: 4, tipo: "parecidos" },  //  4: cuatro del mismo grupo
+  { n: 6, tipo: "mezcla" },     //  5
+  { n: 6, tipo: "parecidos" },  //  6
+  { n: 9, tipo: "mezcla" },     //  7
+  { n: 9, tipo: "parecidos" },  //  8
+  { n: 9, tipo: "diferente" },  //  9: ocho iguales y uno distinto
+  { n: 12, tipo: "parecidos" }, // 10
+  { n: 16, tipo: "diferente" }, // 11
+  { n: 16, tipo: "parecidos" }, // 12: dieciséis animales (o cosas) para buscar uno
+];
+const COLS = { 2: 2, 3: 3, 4: 2, 6: 3, 9: 3, 12: 4, 16: 4 };
+const TAM = { 2: "clamp(4rem, 26vw, 6rem)", 3: "clamp(3.4rem, 18vw, 4.8rem)", 4: "clamp(3.4rem, 20vw, 5rem)", 6: "clamp(2.8rem, 15vw, 4rem)",
+  9: "clamp(2.6rem, 15vw, 3.8rem)", 12: "clamp(2.1rem, 11vw, 3rem)", 16: "clamp(1.9rem, 10.5vw, 2.8rem)" };
+
+const esc = escalera("buscar", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : edad === 6 ? 2 : 4 });
+const stars = estrellas("buscar-stars");
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(botonMeta()) });
+
+let manual = 0, paso = null, cosas = [], meta = null, fallos = 0, listo = false, ultimo = "";
+
+const art = (c, def = true) => c.pl ? (def ? "las" : "unas") : def ? (c.f ? "la" : "el") : (c.f ? "una" : "un");
+const conArt = (c, def = true) => `${art(c, def)} ${c.n}`;
+const ese = c => c.pl ? "Esas son" : c.f ? "Esa es" : "Ese es";
+const esta = c => c.pl ? "están" : "está";
+// gato → gatos, ratón → ratones, lápiz → lápices, flor → flores
+const plural = n => /[aeiouáéíóú]$/.test(n) ? n + "s"
+  : /z$/.test(n) ? n.slice(0, -1) + "ces"
+  : n.replace(/([áéíóú])([ns])$/, (_, v, c) => "aeiou"["áéíóú".indexOf(v)] + c) + "es";
+const botonMeta = () => $("tablero").querySelector(`[data-i="${cosas.indexOf(meta)}"]`);
+
+/** Dibujos del tablero: la meta y los demás, según el escalón. */
+function armar({ n, tipo }) {
+  if (tipo === "diferente") {
+    // Un grupo con al menos dos dibujos: uno se repite y el otro es el diferente
+    const g = azar(Object.keys(GRUPOS));
+    const [igual, distinto] = barajar(delGrupo(g));
+    meta = distinto;
+    return barajar([distinto, ...Array(n - 1).fill(igual)]);
+  }
+  let lista;
+  if (tipo === "parecidos") {
+    // Grupos con suficientes dibujos; si no alcanza, todos los animales juntos
+    const grupos = Object.keys(GRUPOS).filter(g => GRUPOS[g].length >= n);
+    lista = barajar(grupos.length && Math.random() < 0.7 ? delGrupo(azar(grupos)) : TODAS.filter(c => ANIMALES.includes(c.g))).slice(0, n);
+  } else {
+    // Mezcla: un dibujo de cada grupo mientras alcancen los grupos (así se ven bien distintos)
+    const grupos = barajar(Object.keys(GRUPOS));
+    lista = [];
+    while (lista.length < n) {
+      const g = grupos[lista.length % grupos.length];
+      const libre = barajar(delGrupo(g)).find(c => !lista.includes(c));
+      if (libre) lista.push(libre);
+    }
+  }
+  meta = azar(lista);
+  return barajar(lista);
+}
+
+function nuevo() {
+  paso = ESCALONES[esc.activa ? esc.nivel : manual];
+  // Que no se busque lo mismo dos veces seguidas
+  let intentos = 0;
+  do cosas = armar(paso); while (meta.e === ultimo && ++intentos < 20);
+  ultimo = meta.e;
+  fallos = 0; listo = false;
+
+  const t = $("tablero");
+  t.style.setProperty("--cols", COLS[paso.n]);
+  t.style.setProperty("--tam", TAM[paso.n]);
+  t.style.setProperty("--gap", paso.n >= 12 ? "7px" : paso.n >= 9 ? "9px" : "12px");
+  t.classList.toggle("chico", paso.n >= 9);
+  t.innerHTML = cosas.map((c, i) => `<button data-i="${i}" aria-label="${conArt(c, false)}">${c.e}</button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+
+  if (paso.tipo === "diferente") {
+    instruccion(`<span class="big">🔍</span> ¿Cuál es diferente?`, "¿Cuál es diferente? Todos son iguales, menos uno. Buscalo y tocalo.");
+  } else {
+    instruccion(`<span class="big">${meta.e}</span> ¿Dónde ${esta(meta)}?`, `¿Dónde ${esta(meta)} ${conArt(meta)}? Tocá ${conArt(meta)}.`);
+  }
+  ayuda.empezar();
+}
+
+// ¿El dibujo tocado está pegadito a la meta? (arriba, abajo, al lado o en diagonal)
+function cerquita(i) {
+  const cols = COLS[paso.n], j = cosas.indexOf(meta);
+  return Math.abs((i % cols) - (j % cols)) <= 1 && Math.abs(Math.floor(i / cols) - Math.floor(j / cols)) <= 1;
+}
+
+$("tablero").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled) return;
+  const i = Number(b.dataset.i), c = cosas[i];
+  if (c === meta) {
+    listo = true;
+    ayuda.parar();
+    b.classList.remove("senal");
+    b.classList.add("right");
+    $("tablero").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    const otro = cosas.find(x => x !== meta);
+    const frase = paso.tipo === "diferente"
+      ? `${ese(meta)} ${conArt(meta, false)}. Los otros son ${otro.pl ? otro.n : `todos ${plural(otro.n)}`}.`
+      : `¡Ahí ${esta(meta)} ${conArt(meta)}!`;
+    if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+    else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones: cosas.length });
+    $("nextBtn").classList.add("pulse");
+  } else {
+    fallos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    const busca = paso.tipo === "diferente" ? "Buscá el que es diferente" : `Buscá ${conArt(meta)}`;
+    const cerca = paso.n >= 6 && cerquita(i);
+    if (cerca) { feedback("almost", "🤏", "¡Casi! Está cerquita"); decir(`¡Casi! ${ese(c)} ${conArt(c, false)}. ${busca}: está muy cerquita.`); }
+    else { feedback("bad", "🙈", "No es"); decir(`${ese(c)} ${conArt(c, false)}. ${busca}.`); }
+    if (fallos >= 2) {
+      // Segunda vez: se le muestra dónde está, sin regaños
+      senalar(botonMeta());
+      decir(`Mirá, ¡aquí ${esta(meta)}! Tocá${paso.tipo === "diferente" ? " el diferente" : ` ${conArt(meta)}`}.`, { cola: true });
+    }
+  }
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = Number(v);
+  ultimo = ""; nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__buscar = { get meta() { return meta; }, get cosas() { return cosas; }, get paso() { return paso; }, esc };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

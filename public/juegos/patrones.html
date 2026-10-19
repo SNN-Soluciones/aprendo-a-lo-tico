@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Qué sigue?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  /* La tira del patrón: una fila de casillas que se achica según cuántas hay */
+  .tira {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 14px 8px; display: grid; grid-template-columns: repeat(var(--n, 6), 1fr); gap: 4px; align-items: center;
+  }
+  .celda {
+    aspect-ratio: 1; border-radius: 14px; display: flex; align-items: center; justify-content: center;
+    font-size: min(calc(min(96vw, 620px) / var(--n, 6) * .6), 3.2rem); line-height: 1; transition: transform .15s;
+  }
+  .celda.dicho { background: #FFF1C2; transform: scale(1.15); }
+  .celda.hueco { border: 3px dashed var(--materia); background: #EAF3FF; color: var(--materia); font-weight: 800; }
+  .celda.hueco.actual { animation: pulse 1s ease-in-out infinite; }
+  .celda.hueco.dicho { background: #FFF1C2; }
+  .celda.lleno { border-style: solid; border-color: var(--ok); background: #C9F2D6; animation: pop .45s ease-out; }
+  .bola { width: 82%; aspect-ratio: 1; border-radius: 50%; border: 3px solid var(--rim); display: block; }
+
+  .opciones { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 12px; margin-top: 14px; }
+  .opciones button {
+    border-radius: 24px; padding: 8px 4px; aspect-ratio: 1 / .85; display: flex; align-items: center; justify-content: center;
+    font-size: clamp(2.6rem, 14vw, 4rem); line-height: 1;
+  }
+  .opciones .bola { width: min(60%, 74px); border-width: 4px; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🔴🔵🔴❓</div>
+  <h1>¿Qué sigue?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Escuchá la fila de dibujos y tocá el que sigue.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="1" aria-label="Fácil: de dos en dos">🔴🔵</button>
+    <button data-nivel="7" aria-label="Medio: patrones más largos">🔴🔴🔵</button>
+    <button data-nivel="10" aria-label="Difícil: qué falta y los dos que siguen">❓❓</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap tira" id="tira"></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, ronda } from "../js/patrones.js";
+
+const $ = id => document.getElementById(id);
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+// 🪜 Los escalones están en js/patrones.js (de 🔴🔵 entre dos opciones a completar los dos que siguen)
+const esc = escalera("patrones", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : edad === 6 ? 2 : 4 });
+let manual = 1;  // escalón que escogió el papá (índice), cuando no está en 🪜
+let r = null, cual = 0, fallos = 0, malos = 0, listo = false, ultimo = "", turno = 0;
+const stars = estrellas("patrones-stars");
+const opcionCorrecta = () => $("opciones").querySelector(`[data-id="${r.respuestas[cual].id}"]`);
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(opcionCorrecta()), repetir: () => presentar(false) });
+
+const dibujo = x => x.c ? `<span class="bola" style="background:${x.c}"></span>` : `<span aria-hidden="true">${x.e}</span>`;
+const conArt = x => `${x.art} ${x.n}`;
+const PREGUNTA = { sigue: "¿Qué sigue?", falta: "¿Qué falta?", dos: "¿Qué siguen?" };
+
+function nuevo() {
+  const e = ESCALONES[esc.activa ? esc.nivel : manual];
+  // Que no salga la misma tira dos veces seguidas
+  do r = ronda(e); while (r.secuencia.map(x => x ? x.id : "?").join() === ultimo);
+  ultimo = r.secuencia.map(x => x ? x.id : "?").join();
+  cual = 0; fallos = 0; malos = 0; listo = false;
+  pintarTira();
+  $("opciones").style.setProperty("--n", r.opciones.length);
+  $("opciones").innerHTML = r.opciones.map(o => `<button data-id="${o.id}" aria-label="${o.n}">${dibujo(o)}</button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  ayuda.empezar();
+  presentar(false);
+}
+
+function pintarTira() {
+  $("tira").style.setProperty("--n", r.secuencia.length);
+  $("tira").innerHTML = r.secuencia.map((x, i) => {
+    if (x) return `<div class="celda" data-i="${i}">${dibujo(x)}</div>`;
+    const k = r.huecos.indexOf(i);
+    if (k < cual) return `<div class="celda hueco lleno" data-i="${i}">${dibujo(r.respuestas[k])}</div>`;
+    return `<div class="celda hueco${k === cual && !listo ? " actual" : ""}" data-i="${i}" aria-label="hueco">?</div>`;
+  }).join("");
+}
+
+// Lee la tira casilla por casilla, iluminando cada una. Con ritmo = true la lee de unidad en unidad
+// («rojo, azul… rojo, azul…») para que se oiga cómo se repite.
+async function leerTira(lento = false, ritmo = false) {
+  const t = ++turno, op = lento ? { rate: LENTO } : undefined;
+  const celdas = [...$("tira").children];
+  const nombre = i => { const x = r.secuencia[i]; if (x) return x.n; const k = r.huecos.indexOf(i); return k < cual ? r.respuestas[k].n : "¿?"; };
+  const u = r.unidad.length;
+  const grupos = ritmo
+    ? Array.from({ length: Math.ceil(celdas.length / u) }, (_, g) => celdas.map((_, i) => i).filter(i => Math.floor(i / u) === g))
+    : celdas.map((_, i) => [i]);
+  $("oir").classList.add("hablando");
+  for (const g of grupos) {
+    if (t !== turno) break;
+    g.forEach(i => celdas[i].classList.add("dicho"));
+    // El hueco no se nombra: se deja una pausita para que el niño piense
+    const texto = g.map(i => nombre(i)).filter(x => x !== "¿?").join(", ");
+    await Promise.all([texto ? hablar(texto, op) : Promise.resolve(), esperar(texto ? 300 : 650)]);
+    g.forEach(i => celdas[i].classList.remove("dicho"));
+  }
+  $("oir").classList.remove("hablando");
+  return t === turno;
+}
+
+async function presentar(lento = false) {
+  const p = PREGUNTA[r.modo];
+  const t = ++turno;
+  const voz = { sigue: "¿Qué sigue? Escuchá:", falta: "¿Qué falta? Escuchá:", dos: "¿Qué siguen? Son dos. Escuchá:" }[r.modo];
+  await instruccion(`<span class="big">🧩</span> ${p}`, voz, lento);
+  if (t !== turno) return;
+  if (await leerTira(lento)) await decir(r.modo === "dos" && cual === 1 ? "¿Y después?" : p, lento ? { rate: LENTO } : undefined);
+}
+
+$("opciones").addEventListener("click", async e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled) return;
+  turno++; // deja de leer la tira
+  $("tira").querySelectorAll(".dicho").forEach(x => x.classList.remove("dicho"));
+  const meta = r.respuestas[cual];
+  if (b.dataset.id === meta.id) {
+    b.classList.remove("senal");
+    sonido("tap");
+    cual++;
+    if (cual < r.respuestas.length) {
+      // Modo «dos»: falta el segundo hueco; las opciones vuelven a estar todas
+      malos = 0;
+      pintarTira();
+      $("opciones").querySelectorAll("button").forEach(x => { x.disabled = false; x.classList.remove("wrong", "nope", "senal"); });
+      feedback("ok", "👍", "¡Bien! ¿Y después?");
+      decir(`¡Bien! ${meta.n}. ¿Y después?`);
+      return;
+    }
+    listo = true;
+    ayuda.parar();
+    pintarTira();
+    b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    const frase = r.modo === "falta" ? `Faltaba ${conArt(meta)}.`
+      : r.modo === "dos" ? `Siguen ${conArt(r.respuestas[0])} y ${conArt(meta)}.`
+      : `Sigue ${conArt(meta)}.`;
+    if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+    else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones: r.opciones.length });
+    $("nextBtn").classList.add("pulse");
+  } else {
+    fallos++; malos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    const x = r.opciones.find(o => o.id === b.dataset.id);
+    // ¡Casi! = es de la fila pero no va ahí · No es = no está en la fila
+    const deLaFila = r.items.some(o => o.id === x.id);
+    if (deLaFila) feedback("almost", "🤏", "¡Casi!");
+    else feedback("bad", "🙈", "No es");
+    if (malos >= 2) {
+      senalar(opcionCorrecta());
+      decir(`Mirá, es ${conArt(meta)}. Tocalo.`);
+      return;
+    }
+    // Al primer error: se vuelve a leer la tira marcando el ritmo
+    const t = turno;
+    await decir(deLaFila ? `¡Casi! Escuchá el ritmo:` : `Ese no está en la fila. Escuchá el ritmo:`);
+    if (t !== turno || listo) return;
+    if (await leerTira(false, true)) decir(PREGUNTA[r.modo === "dos" && cual === 1 ? "sigue" : r.modo]);
+  }
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = Number(v);
+  ultimo = ""; nuevo();
+});
+alEmpezar(nuevo, presentar);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__patrones = { get ronda() { return r; }, get cual() { return cual; }, get esc() { return esc; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

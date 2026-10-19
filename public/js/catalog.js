@@ -729,4 +729,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/marimba.html",
   },
+  {
+    id: "geometria",
+    titulo: "Geometría: figuras, ángulos y cuerpos",
+    descripcion: "Figuras y sus lados, líneas, rectas paralelas y perpendiculares, ángulos y el transportador, simetría, triángulos, cuadriláteros, la circunferencia y los cuerpos sólidos.",
+    emoji: "📐",
+    materia: "mate",
+    grados: [1, 2, 3, 4, 5, 6],
+    edad: [6, 12],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/geometria.html",
+  },
 ];

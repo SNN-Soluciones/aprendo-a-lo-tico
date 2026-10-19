@@ -182,6 +182,14 @@ body.con-perfil .hero h1 { font-size: clamp(2rem, 9vw, 3.2rem); }
 .perfil[aria-pressed="true"] { background: var(--btn); }
 .perfil.otro { opacity: .75; }
 .perfil-info { margin: 0; font-weight: 700; color: var(--page-ink); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.progreso { margin-top: 8px; background: var(--face); border: 3px solid var(--rim); border-radius: 16px; padding: 4px 12px; }
+.progreso summary { cursor: pointer; font-weight: 800; padding: 4px 0; }
+.progreso ul { list-style: none; margin: 4px 0 0; padding: 0; display: grid; gap: 6px; }
+.progreso li { display: grid; grid-template-columns: 1fr 90px auto; gap: 8px; align-items: center; font-weight: 700; }
+.progreso li a { text-decoration: none; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.progreso li small { font-weight: 800; white-space: nowrap; }
+.barra-prog { height: 12px; border-radius: 6px; background: #E3EAF1; overflow: hidden; border: 2px solid var(--rim); }
+.barra-prog i { display: block; height: 100%; background: var(--ok); }
 .mini {
   font: inherit; font-weight: 800; font-size: .9rem; cursor: pointer; color: var(--ink);
   border: 3px solid var(--rim); border-radius: 999px; background: var(--face); padding: 0 10px; box-shadow: 0 2px 0 var(--rim);

@@ -110,7 +110,7 @@ export function escalera(juego, { escalones, meta = META, inicio = () => 0, el =
       } else {
         e.nuevo = false;
       }
-      escribir(juego, e);
+      escribir(juego, { ...e, de: escalones }); // «de»: cuántos escalones tiene, para el progreso en el inicio
       pintar();
       if (paso === "sube") celebrar();
       return paso;

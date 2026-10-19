@@ -52,6 +52,11 @@ export function borrarPerfil(id) {
   try { localStorage.removeItem(`alt-escalera-${id}`); } catch (_) {}
 }
 
+/** 📈 En qué escalón va un perfil en cada juego con escalera: { juego: { n, de } } (n empieza en 0). */
+export function progresoDe(id) {
+  try { return JSON.parse(localStorage.getItem(`alt-escalera-${id}`) || "{}"); } catch (_) { return {}; }
+}
+
 /** Grados que suelen tener los niños de esa edad (0 = Preparatoria). En Costa Rica se entra a 1° con 6 años y medio. */
 export function gradosParaEdad(edad) {
   if (edad <= 5) return [0];

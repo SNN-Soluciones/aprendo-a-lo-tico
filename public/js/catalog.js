@@ -492,4 +492,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/cadenas.html",
   },
+  {
+    id: "acentos",
+    titulo: "¿Dónde suena más fuerte?",
+    descripcion: "Separá en sílabas, encontrá la que suena más fuerte, clasificá agudas, graves y esdrújulas, y aprendé cuándo llevan tilde.",
+    emoji: "✍️",
+    materia: "espanol",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/acentos.html",
+  },
 ];

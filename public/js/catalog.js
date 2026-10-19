@@ -681,4 +681,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/alcancia.html",
   },
+  {
+    id: "leo",
+    titulo: "Leo y miro",
+    descripcion: "Después de Sílabas mágicas: leé palabras, frases y oraciones, tocá cada palabra para oírla y mostrá que entendiste: el dibujo que va, sí o no, y preguntas.",
+    emoji: "📖",
+    materia: "espanol",
+    grados: [0, 1, 2],
+    edad: [5, 8],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/leo.html",
+  },
 ];

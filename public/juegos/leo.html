@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Leo y miro</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; --s1: #E8574A; --s2: #2F7FD1; }
+  [hidden] { display: none !important; }
+  .levels button { font-size: 1rem; }
+  /* Letra grande, en minúscula de imprenta, como en Sílabas mágicas */
+  .letra { font-family: "Baloo 2", "Comic Sans MS", system-ui, sans-serif; text-transform: none; }
+
+  .escena {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 10px 8px; min-height: 110px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  }
+  .escena .dibujo { font-size: clamp(4rem, 22vw, 5.6rem); line-height: 1; text-align: center; }
+
+  /* Lo que se lee: sílabas o palabras que se tocan para oírlas */
+  .huecos, .oracion { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .ficha {
+    font-size: clamp(2.4rem, 13vw, 3.4rem); line-height: 1.1; min-width: 1.4em; padding: 2px 10px;
+    border-radius: 18px; text-align: center; color: var(--ink);
+  }
+  .ficha.s1 { color: var(--s1); }
+  .ficha.s2 { color: var(--s2); }
+  .oracion .ficha { font-size: clamp(1.8rem, 9vw, 2.4rem); padding: 0 8px; color: var(--ink); }
+  .escena.larga .oracion .ficha { font-size: clamp(1.35rem, 6.6vw, 1.8rem); border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .escena.larga .oracion { gap: 4px; }
+  .escena.larga .oracion + .oracion { border-top: 2px dashed var(--soft); padding-top: 8px; width: 100%; }
+  .ficha.leida { background: #FFF1C2; }
+  .escena.solito .ficha { box-shadow: none; border-color: var(--soft); }
+
+  .opciones { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 12px; margin-top: 14px; }
+  .opciones button { border-radius: 24px; padding: 8px 2px; line-height: 1.1; }
+  .opciones button.dib { font-size: clamp(3.2rem, 17vw, 4.4rem); }
+  .opciones button.esc2 { font-size: clamp(2.2rem, 11vw, 3rem); letter-spacing: -2px; }
+  .opciones button.grupo { font-size: clamp(1.7rem, 8.5vw, 2.3rem); min-height: 96px; letter-spacing: -1px; overflow-wrap: anywhere; }
+  .opciones button.sino { font-size: clamp(1.6rem, 8vw, 2.1rem); display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 2px; }
+  .opciones button.sino .e { font-size: clamp(2.6rem, 13vw, 3.4rem); }
+  /* Del dibujo a la palabra: cada palabra con su 🔊 al lado */
+  .opciones.lista { grid-template-columns: 1fr; gap: 10px; }
+  .fila { display: flex; gap: 10px; align-items: stretch; }
+  .fila .pal { flex: 1; font-size: clamp(2.2rem, 11vw, 3rem); color: var(--materia); }
+  .fila .oirpal { flex: none; font-size: 1.6rem; padding: 4px 14px; background: #E8F2FF; }
+  .fila .oirpal.oida { background: #FFF1C2; }
+
+  #pistaBtn { background: #FFF6DA; font-size: 1.8rem; padding: 4px 22px; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">📖👀</div>
+  <h1>Leo y miro</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Leé palabras, frases y oraciones, y tocá el dibujo que va. Tocá cada palabra para oírla.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="oir" aria-label="Oír y tocar">👂</button>
+    <button data-nivel="palabras" class="letra" aria-label="Palabras">sapo</button>
+    <button data-nivel="oraciones" aria-label="Oraciones">📝</button>
+    <button data-nivel="preguntas" aria-label="Preguntas">🤔</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap escena" id="escena"></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="pistaBtn" aria-label="Ayuda: oír todo lo que dice" hidden>💡</button><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, ronda, inicioPorEdad, limpia } from "../js/leo.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("leo", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("leo-stars");
+
+// Modos a mano (papá o maestra): cada uno toma escalones al azar de su grupo
+const MANUAL = { oir: [0, 1], palabras: [2, 3, 4, 5, 6, 7, 9], oraciones: [8, 10, 11], preguntas: [12, 13, 14] };
+let manual = null;
+
+let r = null, num = 0, fallos = 0, listo = false, malos = new Set(), usoPista = false, antes = "";
+let piezas = []; // lo que se puede tocar para oír: sílabas o palabras, en orden
+
+const cap = t => t.charAt(0).toUpperCase() + t.slice(1);
+const ese = o => `${o.a === "la" ? "Esa es" : "Ese es"} ${o.dicho}`;
+const leyendo = () => !["oir", "elegir"].includes(r.tipo);
+
+function el(tag, clase, texto) {
+  const x = document.createElement(tag);
+  if (clase) x.className = clase;
+  if (texto !== undefined) x.textContent = texto;
+  return x;
+}
+
+function nuevo() {
+  num++;
+  const i = esc.activa ? esc.nivel : azar(MANUAL[manual]);
+  r = ronda(i, Math.random, antes);
+  antes = r.clave;
+  fallos = 0; listo = false; malos = new Set(); usoPista = false;
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  pintar();
+  presentar();
+  ayuda.empezar();
+}
+
+// ---------- Pintar ----------
+function pintar() {
+  const escena = $("escena"), op = $("opciones");
+  escena.replaceChildren();
+  escena.className = `wrap escena${r.lineas.length > 1 ? " larga" : ""}${r.voz ? "" : " solito"}`;
+  if (r.dibujo) escena.append(el("div", "dibujo", r.dibujo));
+  piezas = [];
+  const pieza = (txt, clase) => {
+    const k = piezas.length;
+    piezas.push(txt);
+    const b = el("button", `ficha letra ${clase}`, txt);
+    b.dataset.p = k;
+    b.setAttribute("aria-label", r.voz ? `Escuchar ${limpia(txt)}` : limpia(txt));
+    return b;
+  };
+  if (r.piezas.length) {
+    const fila = el("div", "huecos");
+    r.piezas.forEach((s, k) => fila.append(pieza(s, `s${(k % 2) + 1}`)));
+    escena.append(fila);
+  }
+  for (const linea of r.lineas) {
+    const fila = el("div", "oracion");
+    linea.forEach(w => fila.append(pieza(w, "")));
+    escena.append(fila);
+  }
+  escena.hidden = !escena.children.length;
+
+  op.replaceChildren();
+  op.className = "wrap opciones";
+  if (r.tipo === "elegir") {
+    op.classList.add("lista");
+    r.opciones.forEach((o, i) => {
+      const fila = el("div", "fila");
+      const b = el("button", "pal letra", o.t);
+      b.dataset.i = i;
+      const oir = el("button", "oirpal", "🔊");
+      oir.dataset.o = i;
+      oir.setAttribute("aria-label", `Escuchar ${o.t}`);
+      fila.append(b, oir);
+      op.append(fila);
+    });
+  } else {
+    op.style.setProperty("--n", r.opciones.length === 4 ? 2 : r.opciones.length);
+    r.opciones.forEach((o, i) => {
+      let b;
+      if (r.tipo === "sino") {
+        b = el("button", "sino");
+        b.append(el("span", "e", o.e), el("span", "", o.t));
+        b.setAttribute("aria-label", o.t);
+      } else {
+        const clase = o.n ? "grupo" : r.tipo === "oracion" ? "esc2" : "dib";
+        b = el("button", clase, o.e);
+        b.setAttribute("aria-label", o.t || o.id);
+      }
+      b.dataset.i = i;
+      op.append(b);
+    });
+  }
+  $("pistaBtn").hidden = !leyendo() || listo;
+}
+
+// ---------- Decir la consigna (sin decir lo que hay que leer) ----------
+function textos() {
+  const p = r.palabra;
+  if (r.tipo === "oir") return { html: `<span class="big">👂</span> Escuchá y tocá el dibujo`, voz: `Tocá ${p.a} ${p.t}... ${p.t}.` };
+  if (r.tipo === "leer") return { html: `<span class="big">📖</span> Leé y tocá el dibujo`, voz: "Leé la palabra. Tocá cada sílaba para oírla, y después tocá su dibujo." };
+  if (r.tipo === "elegir") return { html: `<span class="big">🖼️</span> ¿Cuál palabra es?`, voz: "Mirá el dibujo. ¿Cuál palabra dice lo que ves? Si querés, tocá el parlante para oír una palabra." };
+  const solito = r.voz ? "" : "Ahora leé solito, con los ojos. ";
+  const oirlas = r.voz ? " Tocá cada palabra para oírla." : "";
+  const foco = r.voz ? "" : " Si necesitás ayuda, tocá el foco.";
+  const t = {
+    frase: [`📖`, "Leé y tocá el dibujo", `Leé.${oirlas} Después tocá su dibujo.`],
+    oracion: [`📖`, "Leé la oración", `Leé la oración.${oirlas} Después tocá el dibujo que va con ella.`],
+    hacer: [`🫵`, "Leé y hacé lo que dice", `Leé y hacé lo que dice.${oirlas}`],
+    sino: [`🤔`, "¿Es cierto?", `Leé la oración.${oirlas} ¿Es cierto? Tocá sí o no.`],
+    pregunta: [`🤔`, "Leé y respondé", `Leé las dos oraciones y la pregunta.${oirlas} Después tocá la respuesta.`],
+  }[r.tipo];
+  return { html: `<span class="big">${t[0]}</span> ${r.voz ? "" : "Solito: "}${t[1]}`, voz: `${solito}${t[2]}${foco}` };
+}
+const presentar = (lento = false) => { const t = textos(); return instruccion(t.html, t.voz, lento); };
+
+// ---------- Ayuda si se queda pegado: señalar la respuesta ----------
+const correcta = () => $("opciones").querySelector(`[data-i="${r.opciones.findIndex(o => o.id === r.meta)}"]`);
+const ayuda = ayudaSiSeQueda({ repetir: () => presentar(), senalar: () => senalar(correcta()) });
+
+// ---------- Respuestas ----------
+function bien(b) {
+  listo = true; ayuda.parar();
+  const yo = num;
+  b.classList.remove("senal");
+  b.classList.add("right");
+  $("opciones").querySelectorAll("button").forEach(x => { if (x !== b && !x.classList.contains("oirpal")) x.disabled = true; });
+  $("pistaBtn").hidden = true;
+  const limpio = fallos === 0 && !ayuda.usada && !usoPista;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); decir(`${elogio()} ${r.dicho}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${r.dicho}`); }
+  esc.resultado({ fallos, ayuda: ayuda.usada || usoPista, opciones: r.opciones.length });
+  if (yo === num) $("nextBtn").classList.add("pulse");
+}
+
+function porQue(o) {
+  const otraVez = r.voz ? "Leé otra vez: tocá cada palabra." : "Leé otra vez, despacito.";
+  if (r.tipo === "oir") return `${ese(o)}. Escuchá: ${r.meta}.`;
+  if (r.tipo === "leer") return `${ese(o)}. Leé otra vez: tocá cada sílaba.`;
+  if (r.tipo === "frase") return `${ese(o)}. ${otraVez}`;
+  if (r.tipo === "elegir") return `Esa palabra dice ${o.t}. Mirá el dibujo otra vez.`;
+  if (r.tipo === "oracion") return `Ese dibujo no va con la oración. ${otraVez}`;
+  if (r.tipo === "hacer") return `${o.dicho}. ${otraVez}`;
+  return otraVez;
+}
+
+function mal(b, o) {
+  // Tocar otra vez lo mismo que ya estaba mal no cuenta como otro error
+  if (!malos.has(o.id)) { malos.add(o.id); fallos++; }
+  b.disabled = true;
+  b.classList.add("wrong", "nope");
+  setTimeout(() => b.classList.remove("nope"), 400);
+  feedback(fallos === 1 ? "almost" : "bad", fallos === 1 ? "🤏" : "🙈", fallos === 1 ? "¡Casi!" : "No es");
+  decir(porQue(o));
+  // Al 2.º error se le señala lo que va (si sigue siendo la misma ronda)
+  const yo = num;
+  if (fallos >= 2) setTimeout(() => { if (!listo && yo === num) senalar(correcta()); }, 300);
+}
+
+$("opciones").addEventListener("click", e => {
+  if (!r) return;
+  const oir = e.target.closest("[data-o]");
+  if (oir) {
+    // 🔊 de una palabra: no es error, pero oír la de la respuesta antes de contestar es ayuda
+    const o = r.opciones[Number(oir.dataset.o)];
+    sonido("tap"); hablar(o.t);
+    oir.classList.add("oida");
+    if (!listo && o.id === r.meta) usoPista = true;
+    return;
+  }
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled) return;
+  const o = r.opciones[Number(b.dataset.i)];
+  if (o.id === r.meta) bien(b);
+  else mal(b, o);
+});
+
+// Tocar una sílaba o palabra para oírla («leé solito»: no suena hasta que contesta)
+$("escena").addEventListener("click", e => {
+  const b = e.target.closest("[data-p]");
+  if (!b || !r) return;
+  b.classList.add("leida");
+  b.classList.remove("senal");
+  sonido("tap");
+  if (r.voz || listo) hablar(limpia(piezas[Number(b.dataset.p)]));
+});
+
+// 💡: dice todo lo que hay que leer, y cuenta como ayuda
+$("pistaBtn").addEventListener("click", () => {
+  if (!r || listo) return;
+  usoPista = true;
+  sonido("tap");
+  decir(r.lectura);
+});
+
+$("nextBtn").addEventListener("click", () => {
+  // Pasar a otra después de equivocarse (o de pedir ayuda) cuenta como ronda difícil
+  if (r && !listo && (fallos > 0 || usoPista || ayuda.usada)) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
+niveles(v => {
+  esc.activa = v === "auto";
+  manual = v === "auto" ? null : v;
+  antes = ""; nuevo();
+});
+alEmpezar(nuevo, lento => presentar(lento));
+
+if (new URLSearchParams(location.search).has("prueba")) window.__leo = { get r() { return r; }, get nivel() { return esc.nivel; }, get activa() { return esc.activa; }, get fallos() { return fallos; }, get usoPista() { return usoPista; }, get ayudaUsada() { return ayuda.usada; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

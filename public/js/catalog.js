@@ -504,4 +504,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/acentos.html",
   },
+  {
+    id: "area",
+    titulo: "Perímetro y área en la finca",
+    descripcion: "El perímetro es la cerca y el área es lo de adentro: contá cuadritos, pintá corrales, usá fórmulas y resolvé problemas con colones.",
+    emoji: "📐",
+    materia: "mate",
+    grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/area.html",
+  },
 ];

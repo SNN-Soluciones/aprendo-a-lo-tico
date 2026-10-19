@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Perímetro y área en la finca</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .ancho { width: min(96vw, 540px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 2px 7px; font-size: .84rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .instr .titulo { font-size: clamp(1.05rem, 4.6vw, 1.3rem); color: var(--materia); }
+
+  .tarjeta { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 10px 12px; box-shadow: 0 5px 0 var(--rim); }
+  .preg { margin: 0 0 6px; font-size: clamp(1.1rem, 4.8vw, 1.3rem); font-weight: 800; line-height: 1.3; text-align: center; }
+  .preg small { display: block; font-size: .85rem; font-weight: 700; opacity: .75; }
+  .dib { display: block; width: 100%; max-height: 31vh; margin: 0 auto; overflow: visible; }
+  .dib text { font-family: "Baloo 2", system-ui, sans-serif; font-weight: 800; paint-order: stroke; stroke: #fff; stroke-width: 1.4px; stroke-linejoin: round; }
+  .dib .celda { cursor: pointer; }
+  .cuenta { margin-top: 8px; text-align: center; font-size: 1.35rem; font-weight: 800; color: var(--page-ink); }
+
+  .opciones { margin-top: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .opciones button { font-size: 1.35rem; padding: 10px 4px; border-radius: 18px; line-height: 1.1; }
+  .opciones button.wrong { background: #FFE3E0; }
+
+  .respuesta { margin-top: 10px; text-align: center; }
+  .respuesta .caja { display: inline-flex; align-items: baseline; gap: 6px; min-width: 6em; justify-content: center; border: 4px solid var(--rim); background: var(--face); color: var(--ink); border-radius: 16px; padding: 0 14px; font-size: 1.8rem; font-weight: 800; }
+  .respuesta .caja .ph { opacity: .35; }
+  .respuesta .caja small { font-size: 1.2rem; }
+  .respuesta .caja.ok { background: #CFF5DC; border-color: var(--ok); }
+  .respuesta .caja.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .teclado { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .teclado button { font-size: 1.45rem; padding: 0; height: 46px; border-radius: 14px; }
+  .teclado .ok { background: var(--btn); }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { flex: 1; font-size: 1.2rem; padding: 6px 0; border-radius: 16px; }
+  #listoBtn { flex: 2; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 12px; font-weight: 700; line-height: 1.35; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🐄📐🌱</div>
+  <h1>Perímetro y área en la finca</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>El perímetro es el borde (lo que mide la cerca) y el área es lo de adentro (los cuadritos). ¡Ayudá en la finca! Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Qué practicar"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tarjeta ancho" id="tarjeta"><p class="preg" id="preg" aria-live="polite"></p><div id="dibujo"></div><div class="cuenta" id="cuenta" hidden></div></div>
+
+<div class="ancho" id="zonaOpciones" hidden><div class="opciones" id="opciones"></div></div>
+<div class="ancho" id="zonaEscribir" hidden>
+  <div class="respuesta"><span class="caja" id="caja"></span></div>
+  <div class="teclado" id="teclado">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="borrar" aria-label="Borrar">⌫</button><button data-k="0">0</button><button data-k="ok" class="ok" aria-label="Revisar">✔️</button>
+  </div>
+</div>
+<div class="ancho" id="zonaPintar" hidden>
+  <div class="acciones"><button id="limpiarBtn">🧽 Borrar</button><button id="listoBtn">✔️ Listo</button></div>
+</div>
+
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, ronda, inicioPorEdad, revisarPintado, bordes, colones, azar } from "../js/area.js";
+
+const $ = id => document.getElementById(id);
+
+// Modos a mano (para el papá o la maestra): cada ronda sale de uno de estos escalones
+const MODOS = [
+  { id: "contar", nombre: "🔢 Contar", esc: [0, 1, 2, 3, 4] },
+  { id: "formulas", nombre: "✖️ Fórmulas", esc: [5, 6, 7] },
+  { id: "figuras", nombre: "🔺 Figuras", esc: [8, 10, 11, 12] },
+  { id: "problemas", nombre: "🐄 Problemas", esc: [9, 13] },
+];
+
+const esc = escalera("area", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("area-stars");
+let modo = "auto", nivel = 0, r = null, fallos = 0, listo = false, tecleado = "", pintadas = new Set(), ayudaDada = false, conEjemplo = false;
+
+const ayuda = ayudaSiSeQueda({
+  espera: 20000, // los grandes piensan un rato antes de tocar
+  senalar: () => {
+    if (listo) return;
+    if (r.tipo === "pintar") { conEjemplo = true; pintarDibujo(); decir(`Te ayudo: este corral de puntitos sirve. Pintalo.`); return; }
+    if (r.tipo === "escribir") { $("explica").hidden = false; $("explica").innerHTML = `💡 ${r.pista}`; decir(r.pista); return; }
+    senalar($("opciones").querySelector(`[data-v="${r.respuesta}"]`));
+  },
+});
+
+// ---------- Voz: los símbolos se leen como palabras ----------
+const paraVoz = html => html.replace(/<[^>]+>/g, " ")
+  .replace(/(\d) (?=\d{3}\b)/g, "$1")
+  .replace(/₡\s?(\d+)/g, "$1 colones")
+  .replace(/(\d)\s?cm²/g, "$1 centímetros cuadrados").replace(/(\d)\s?m²/g, "$1 metros cuadrados")
+  .replace(/(\d)\s?cm\b/g, "$1 centímetros").replace(/(\d)\s?m\b/g, "$1 metros")
+  .replace(/×/g, " por ").replace(/÷/g, " entre ").replace(/−/g, " menos ").replace(/=/g, " es igual a ")
+  .replace(/\s+/g, " ").trim();
+const conUnidad = v => typeof v !== "number" ? v : r.prefijo === "₡" ? colones(v) : `${v} ${r.sufijo || ""}`.trim();
+
+// ---------- Dibujos (SVG) ----------
+const S = 10; // un cuadrito
+const C = { pasto: "#BDE8A5", pasto2: "#8FD16F", azul: "#A9D2FF", cerca: "#8D5B3A", rejilla: "#CBD6E2", naranja: "#F29A1F", tinta: "#1F3A5F", pared: "#F6E7C8", puerta: "#B07A4A" };
+const txt = (x, y, t, { size = 4.2, ancla = "middle", color = C.tinta } = {}) =>
+  `<text x="${x}" y="${y}" font-size="${size}" text-anchor="${ancla}" dominant-baseline="central" fill="${color}">${t}</text>`;
+const linea = (x1, y1, x2, y2, color, ancho, extra = "") => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${ancho}" stroke-linecap="round" ${extra}/>`;
+const svg = (vb, cuerpo) => `<svg class="dib" viewBox="${vb}" role="img" aria-hidden="true">${cuerpo}</svg>`;
+
+/** Borde de un grupo de cuadritos: la cerca, y si se marca el perímetro, en naranja con cada metro numerado. */
+function cerca(celdas, marcarPerimetro, desde = 0) {
+  const bs = bordes(celdas);
+  return bs.map((b, i) => linea(b.x1 * S, b.y1 * S, b.x2 * S, b.y2 * S, marcarPerimetro ? C.naranja : C.cerca, marcarPerimetro ? 2 : 1.5)
+    + (marcarPerimetro ? txt((b.x1 + b.x2) / 2 * S + b.nx * 3.2, (b.y1 + b.y2) / 2 * S + b.ny * 3.2, desde + i + 1, { size: 3.4, color: "#B85C00" }) : "")).join("");
+}
+const numerar = (celdas, desde = 0) => celdas.slice().sort((a, b) => a[1] - b[1] || a[0] - b[0])
+  .map(([x, y], i) => txt(x * S + S / 2, y * S + S / 2, desde + i + 1, { size: 4 })).join("");
+
+function dibCeldas(f, marcar) {
+  const tocable = r.tipo === "pintar" && !listo;
+  const figura = r.tipo === "pintar" ? [...pintadas].map(k => k.split(",").map(Number)) : f.celdas;
+  let s = "";
+  for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++)
+    s += `<rect ${tocable ? `class="celda" data-c="${x},${y}"` : ""} x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#fff" stroke="${C.rejilla}" stroke-width=".6"/>`;
+  if (marcar === "partes" && f.ele) {
+    const { x, y, W, H, cw, ch } = f.ele;
+    s += `<rect x="${x * S}" y="${y * S}" width="${(W - cw) * S}" height="${ch * S}" fill="${C.pasto2}" opacity=".85"/>`
+      + `<rect x="${x * S}" y="${(y + ch) * S}" width="${W * S}" height="${(H - ch) * S}" fill="${C.pasto}" opacity=".85"/>`;
+  } else {
+    s += figura.map(([x, y]) => `<rect ${tocable ? `class="celda" data-c="${x},${y}"` : ""} x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="${C.pasto}" stroke="${C.rejilla}" stroke-width=".4"/>`).join("");
+  }
+  if (conEjemplo && r.ejemplo) s += bordes(r.ejemplo).map(b => linea(b.x1 * S, b.y1 * S, b.x2 * S, b.y2 * S, C.tinta, 1, `stroke-dasharray="1.6 1.6" pointer-events="none"`)).join("");
+  if (figura.length) s += `<g pointer-events="none">${cerca(figura, marcar === "perimetro")}</g>`;
+  if (marcar === "area") s += `<g pointer-events="none">${numerar(figura)}</g>`;
+  if (marcar === "partes" && f.ele) {
+    const { x, y, W, H, cw, ch } = f.ele;
+    s += linea(x * S, (y + ch) * S, (x + W - cw) * S, (y + ch) * S, C.tinta, 1, `stroke-dasharray="2 1.5"`)
+      + txt((x + (W - cw) / 2) * S, (y + ch / 2) * S, (W - cw) * ch, { size: 6 }) + txt((x + W / 2) * S, (y + ch + (H - ch) / 2) * S, W * (H - ch), { size: 6 });
+  }
+  return svg(`-4 -4 ${f.w * S + 8} ${f.h * S + 8}`, s);
+}
+
+function dibDos(f, marcar) {
+  let s = "";
+  for (let y = 0; y < f.h; y++) for (let x = 0; x < f.w; x++) s += `<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#fff" stroke="${C.rejilla}" stroke-width=".6"/>`;
+  s += f.a.map(([x, y]) => `<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="${C.pasto}"/>`).join("");
+  s += f.b.map(([x, y]) => `<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="${C.azul}"/>`).join("");
+  s += cerca(f.a, marcar === "perimetro") + cerca(f.b, marcar === "perimetro");
+  if (marcar === "area") s += numerar(f.a) + numerar(f.b);
+  return svg(`-4 -4 ${f.w * S + 8} ${f.h * S + 8}`, s);
+}
+
+// Figuras con medidas: a escala dentro de una caja de 100 × 64
+function escala(ancho, alto) { const k = Math.min(100 / ancho, 64 / alto); return { k, ox: 20, oy: 8 }; }
+function dibRect(f, marcar) {
+  const { largo: l, ancho: a } = f, { k, ox, oy } = escala(l, a), w = l * k, h = a * k, u = r.unidad;
+  let s = `<rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="${C.pasto}"/>`;
+  if (marcar === "area" && l <= 20 && a <= 15) {
+    for (let i = 1; i < l; i++) s += linea(ox + i * k, oy, ox + i * k, oy + h, "#fff", .5);
+    for (let j = 1; j < a; j++) s += linea(ox, oy + j * k, ox + w, oy + j * k, "#fff", .5);
+  }
+  const marca = marcar === "perimetro";
+  s += `<rect x="${ox}" y="${oy}" width="${w}" height="${h}" fill="none" stroke="${marca ? C.naranja : C.cerca}" stroke-width="${marca ? 2.4 : 1.6}"/>`;
+  s += txt(ox + w / 2, oy + h + 6, `${l} ${u}`, { size: 6 }) + txt(ox + w + 3, oy + h / 2, `${a} ${u}`, { size: 6, ancla: "start" });
+  if (marca) s += txt(ox + w / 2, oy - 4.5, `${l} ${u}`, { size: 6, color: "#B85C00" }) + txt(ox - 3, oy + h / 2, `${a} ${u}`, { size: 6, ancla: "end", color: "#B85C00" });
+  return svg(`0 0 140 ${h + oy + 14}`, s);
+}
+function dibEle(f, marcar) {
+  const { W, H, cw, ch } = f, { k, ox, oy } = escala(W, H), u = r.unidad;
+  const X = v => ox + v * k, Y = v => oy + v * k, marca = marcar === "perimetro";
+  const pts = [[0, 0], [W - cw, 0], [W - cw, ch], [W, ch], [W, H], [0, H]].map(([x, y]) => `${X(x)},${Y(y)}`).join(" ");
+  let s = `<polygon points="${pts}" fill="${C.pasto}"/>`;
+  if (marcar === "partes") {
+    s += `<rect x="${X(0)}" y="${Y(0)}" width="${(W - cw) * k}" height="${ch * k}" fill="${C.pasto2}"/>`
+      + linea(X(0), Y(ch), X(W - cw), Y(ch), C.tinta, 1, `stroke-dasharray="2.5 2"`)
+      + txt(X((W - cw) / 2), Y(ch / 2), (W - cw) * ch, { size: 6 }) + txt(X(W / 2), Y(ch + (H - ch) / 2), W * (H - ch), { size: 6 });
+  }
+  s += `<polygon points="${pts}" fill="none" stroke="${marca ? C.naranja : C.cerca}" stroke-width="${marca ? 2.4 : 1.6}" stroke-linejoin="round"/>`;
+  const col = marca ? "#B85C00" : C.tinta;
+  s += txt(X(W / 2), Y(H) + 6, `${W} ${u}`, { size: 5.4, color: col }) + txt(X(0) - 3, Y(H / 2), `${H} ${u}`, { size: 5.4, ancla: "end", color: col })
+    + txt(X((W - cw) / 2), Y(0) - 4.5, `${W - cw} ${u}`, { size: 5.4, color: col }) + txt(X(W - cw) + 2.5, Y(ch / 2), `${ch} ${u}`, { size: 5.4, ancla: "start", color: col })
+    + txt(X(W - cw / 2), Y(ch) - 4.5, `${cw} ${u}`, { size: 5.4, color: col }) + txt(X(W) + 2.5, Y(ch + (H - ch) / 2), `${H - ch} ${u}`, { size: 5.4, ancla: "start", color: col });
+  return svg(`0 0 140 ${H * k + oy + 14}`, s);
+}
+function dibTri(f, marcar) {
+  const { base: b, altura: h } = f;
+  if (f.cuadricula) {
+    const w = b + 2, hh = h + 2;
+    let s = "";
+    for (let y = 0; y < hh; y++) for (let x = 0; x < w; x++) s += `<rect x="${x * S}" y="${y * S}" width="${S}" height="${S}" fill="#fff" stroke="${C.rejilla}" stroke-width=".6"/>`;
+    if (marcar === "mitad") s += `<polygon points="${S},${S} ${(b + 1) * S},${S} ${(b + 1) * S},${(h + 1) * S}" fill="#E4ECF4"/>`
+      + `<rect x="${S}" y="${S}" width="${b * S}" height="${h * S}" fill="none" stroke="${C.tinta}" stroke-width="1" stroke-dasharray="2 1.5"/>`;
+    s += `<polygon points="${S},${S} ${S},${(h + 1) * S} ${(b + 1) * S},${(h + 1) * S}" fill="${C.pasto}" fill-opacity=".9" stroke="${C.cerca}" stroke-width="1.6" stroke-linejoin="round"/>`;
+    s += txt((1 + b / 2) * S, (h + 1) * S + 4.5, `base ${b}`, { size: 4 }) + txt(S - 2, (1 + h / 2) * S, `altura ${h}`, { size: 4, ancla: "end" });
+    return svg(`-22 -4 ${w * S + 26} ${hh * S + 8}`, s);
+  }
+  const { k, ox, oy } = escala(b, h), u = r.unidad, X = v => ox + v * k, Y = v => oy + v * k, cima = b * 0.3;
+  let s = "";
+  if (marcar === "mitad") s += `<rect x="${X(0)}" y="${Y(0)}" width="${b * k}" height="${h * k}" fill="#E4ECF4" stroke="${C.tinta}" stroke-width=".8" stroke-dasharray="2 1.5"/>`;
+  s += `<polygon points="${X(cima)},${Y(0)} ${X(0)},${Y(h)} ${X(b)},${Y(h)}" fill="${C.pasto}" stroke="${C.cerca}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  s += linea(X(cima), Y(0), X(cima), Y(h), C.tinta, .9, `stroke-dasharray="2 1.5"`)
+    + `<rect x="${X(cima)}" y="${Y(h) - 3.5}" width="3.5" height="3.5" fill="none" stroke="${C.tinta}" stroke-width=".7"/>`;
+  s += txt(X(b / 2), Y(h) + 6, `${b} ${u}`, { size: 6 }) + txt(X(cima) + 2.5, Y(h * 0.45), `${h} ${u}`, { size: 6, ancla: "start" });
+  return svg(`0 0 140 ${h * k + oy + 14}`, s);
+}
+function dibPared(f) {
+  const { largo: l, alto: a, puerta } = f, { k, ox, oy } = escala(l, a), X = v => ox + v * k, Y = v => oy + v * k;
+  let s = `<rect x="${X(0)}" y="${Y(0)}" width="${l * k}" height="${a * k}" fill="${C.pared}" stroke="${C.cerca}" stroke-width="1.6"/>`;
+  s += `<rect x="${X(1)}" y="${Y(a - puerta.h)}" width="${puerta.w * k}" height="${puerta.h * k}" fill="${C.puerta}" stroke="${C.cerca}" stroke-width="1"/>`
+    + `<circle cx="${X(1 + puerta.w) - 2.5}" cy="${Y(a - 1)}" r="1" fill="#F6E7C8"/>`;
+  s += txt(X(l / 2), Y(a) + 6, `${l} m`, { size: 6 }) + txt(X(l) + 3, Y(a / 2), `${a} m`, { size: 6, ancla: "start" })
+    + txt(X(1 + puerta.w / 2), Y(a - puerta.h) - 4, `1 m`, { size: 4.6 }) + txt(X(1) - 2, Y(a - puerta.h / 2), `2 m`, { size: 4.6, ancla: "end" });
+  return svg(`0 0 140 ${a * k + oy + 14}`, s);
+}
+
+function dibujo(marcar = null) {
+  const f = r.fig;
+  return { celdas: dibCeldas, dos: dibDos, rect: dibRect, ele: dibEle, tri: dibTri, pared: dibPared }[f.tipo](f, marcar);
+}
+const pintarDibujo = (marcar = null) => { $("dibujo").innerHTML = dibujo(marcar); };
+
+// ---------- Rondas ----------
+function nuevo() {
+  nivel = modo === "auto" ? esc.nivel : azar(MODOS.find(m => m.id === modo).esc);
+  r = ronda(nivel);
+  fallos = 0; listo = false; tecleado = ""; pintadas = new Set(); ayudaDada = false; conEjemplo = false;
+  $("preg").innerHTML = r.texto;
+  pintarDibujo();
+  $("zonaOpciones").hidden = !["opciones", "comparar"].includes(r.tipo);
+  $("zonaEscribir").hidden = r.tipo !== "escribir";
+  $("zonaPintar").hidden = r.tipo !== "pintar";
+  $("cuenta").hidden = r.tipo !== "pintar";
+  if (r.tipo === "comparar") {
+    $("opciones").innerHTML = [["verde", "🟩 El verde"], ["azul", "🟦 El azul"], ["igual", "= Igual"]]
+      .map(([v, t]) => `<button data-v="${v}">${t}</button>`).join("");
+  } else if (r.tipo === "opciones") {
+    $("opciones").innerHTML = r.opciones.map(v => `<button data-v="${v}">${conUnidad(v)}</button>`).join("");
+  }
+  pintarCaja(); pintarCuenta();
+  feedback(""); $("explica").hidden = true;
+  $("nextBtn").classList.remove("pulse");
+  instruccion(`<span class="titulo">📐 ${ESCALONES[nivel].nombre}</span>`, r.voz);
+  ayuda.empezar();
+}
+
+function pintarCaja(estado = "") {
+  const pre = r.prefijo ? `<small>${r.prefijo}</small>` : "", suf = r.sufijo ? `<small>${r.sufijo}</small>` : "";
+  const num = tecleado ? tecleado.replace(/\B(?=(\d{3})+(?!\d))/g, " ") : `<span class="ph">?</span>`;
+  $("caja").className = "caja" + (estado ? " " + estado : "");
+  $("caja").innerHTML = `${pre}${num}${suf}`;
+}
+function pintarCuenta() {
+  if (r.tipo !== "pintar") return;
+  const cel = [...pintadas].map(k => k.split(",").map(Number)), res = revisarPintado(cel, r.meta);
+  $("cuenta").textContent = `🟩 ${res.area} m²` + (r.meta.perimetro !== undefined ? ` · 🧱 ${cel.length ? res.perimetro : 0} m de cerca` : "");
+}
+
+function terminar(bien) {
+  listo = true; ayuda.parar();
+  const limpio = bien && fallos === 0 && !ayuda.usada && !ayudaDada;
+  let explica = r.explica;
+  if (r.tipo === "pintar") {
+    const cel = [...pintadas].map(k => k.split(",").map(Number)), res = revisarPintado(cel, r.meta);
+    explica = `Tu corral tiene <b>${res.area} m²</b> de área (los cuadritos de adentro) y necesita <b>${res.perimetro} m</b> de cerca (el borde, el perímetro).`;
+  }
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); }
+  else if (bien) feedback("almost", "🤏", "¡Ahora sí!");
+  else feedback("almost", "🤔", `Era ${r.tipo === "comparar" ? { verde: "el verde", azul: "el azul", igual: "igual" }[r.respuesta] : conUnidad(r.respuesta)}`);
+  pintarDibujo(r.marcar);
+  $("explica").hidden = false; $("explica").innerHTML = `💡 ${explica}`;
+  const inicio = limpio ? elogio() : bien ? "¡Ahora sí!" : "";
+  decir(`${inicio} ${paraVoz(explica)}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada || ayudaDada, opciones: r.opciones ? r.opciones.length : 0 });
+  $("nextBtn").classList.add("pulse");
+}
+
+/** Primer error: decir por qué (la confusión de siempre, o una pista) y dejar probar otra vez. Segundo: se muestra. */
+function equivocado(v) {
+  fallos++;
+  if (fallos >= 2) return terminar(false);
+  const conf = (r.confusiones || []).find(c => c.v === v);
+  let msg;
+  if (conf) { feedback("almost", "🤏", "¡Casi!"); msg = `¡Casi! ${conf.msg}`; }
+  else if (typeof v === "number" && Math.abs(v - r.respuesta) <= Math.max(2, r.respuesta * 0.05)) { feedback("almost", "🤏", "¡Casi!"); msg = `¡Casi! Está cerquita. ${r.pista}`; }
+  else { feedback("bad", "🙈", "No es"); msg = `No es ${typeof v === "number" ? conUnidad(v) : v}. ${r.pista}`; }
+  $("explica").hidden = false; $("explica").innerHTML = `💡 ${msg.replace(/^¡Casi! /, "")}`;
+  decir(`${paraVoz(msg)} Probá otra vez.`);
+}
+
+// Opciones
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]");
+  if (!b || listo || b.disabled) return;
+  const v = r.tipo === "comparar" ? b.dataset.v : Number(b.dataset.v);
+  if (v === r.respuesta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    return terminar(true);
+  }
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  equivocado(r.tipo === "comparar" ? (v === "igual" ? "igual" : `el ${v}`) : v);
+  if (listo) {
+    const ok = $("opciones").querySelector(`[data-v="${r.respuesta}"]`);
+    ok.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; });
+  }
+});
+
+// Teclado
+function tecla(k) {
+  if (listo || r.tipo !== "escribir") return;
+  if (k === "borrar") tecleado = tecleado.slice(0, -1);
+  else if (k === "ok") {
+    if (!tecleado) { decir("Primero escribí el número con el teclado."); return; }
+    const v = Number(tecleado);
+    if (v === r.respuesta) { pintarCaja("ok"); return terminar(true); }
+    pintarCaja("mal");
+    equivocado(v);
+    if (listo) { tecleado = String(r.respuesta); pintarCaja("ok"); }
+    else { tecleado = ""; setTimeout(() => { if (!listo) pintarCaja(); }, 600); }
+    return;
+  } else if (tecleado.length < 7) tecleado = (tecleado === "0" ? "" : tecleado) + k;
+  sonido("tap");
+  pintarCaja();
+}
+$("teclado").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) tecla(b.dataset.k); });
+addEventListener("keydown", e => {
+  if ($("zonaEscribir").hidden || $("start").hidden === false) return;
+  if (/^\d$/.test(e.key)) tecla(e.key);
+  else if (e.key === "Backspace") tecla("borrar");
+  else if (e.key === "Enter") { e.preventDefault(); tecla("ok"); }
+});
+
+// Pintar el corral
+$("dibujo").addEventListener("click", e => {
+  const c = e.target.closest("[data-c]");
+  if (!c || listo || r.tipo !== "pintar") return;
+  const k = c.dataset.c;
+  if (pintadas.has(k)) pintadas.delete(k); else pintadas.add(k);
+  sonido("tap");
+  pintarDibujo(); pintarCuenta();
+});
+$("limpiarBtn").addEventListener("click", () => { if (listo) return; pintadas = new Set(); sonido("tap"); pintarDibujo(); pintarCuenta(); });
+$("listoBtn").addEventListener("click", () => {
+  if (listo || r.tipo !== "pintar") return;
+  const cel = [...pintadas].map(k => k.split(",").map(Number));
+  if (!cel.length) { decir("Primero tocá los cuadritos para pintar el corral."); return; }
+  const res = revisarPintado(cel, r.meta);
+  if (res.ok) return terminar(true);
+  fallos++;
+  let msg;
+  if (!res.junto) msg = "Un corral va todo junto: hay cuadritos sueltos. Pegalos por un lado.";
+  else if (res.area < r.meta.area) msg = `Tu corral tiene ${res.area} m². Te ${r.meta.area - res.area === 1 ? "falta 1 cuadrito" : `faltan ${r.meta.area - res.area} cuadritos`}.`;
+  else if (res.area > r.meta.area) msg = `Tu corral tiene ${res.area} m². Te ${res.area - r.meta.area === 1 ? "sobra 1 cuadrito" : `sobran ${res.area - r.meta.area} cuadritos`}.`;
+  else msg = `El área está bien, ${res.area} m², pero usa ${res.perimetro} m de cerca y tienen que ser ${r.meta.perimetro} m. `
+    + (res.perimetro > r.meta.perimetro ? "Hacelo más apretadito, más parecido a un cuadrado." : "Hacelo más estirado, más largo y delgadito.");
+  const casi = res.junto && Math.abs(res.area - r.meta.area) <= 1;
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", casi ? "¡Casi!" : "No es");
+  $("explica").hidden = false; $("explica").innerHTML = `💡 ${msg}`;
+  if (fallos >= 2 && !conEjemplo) {
+    conEjemplo = true; ayudaDada = true; pintarDibujo();
+    decir(`${msg} Te ayudo: el corral de puntitos sirve. Pintalo así.`);
+  } else decir(msg);
+});
+
+// ---------- Modos ----------
+function pintarModos() {
+  $("modos").innerHTML = `<button data-m="auto" aria-pressed="${modo === "auto"}" aria-label="De a poquito: sube solo">🪜</button>`
+    + MODOS.map(m => `<button data-m="${m.id}" aria-pressed="${modo === m.id}">${m.nombre}</button>`).join("");
+}
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]");
+  if (!b) return;
+  modo = b.dataset.m; esc.activa = modo === "auto";
+  sonido("tap"); pintarModos(); nuevo();
+});
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+
+pintarModos();
+alEmpezar(nuevo);
+if (new URLSearchParams(location.search).has("prueba")) window.__area = { get r() { return r; }, get nivel() { return esc.nivel; }, get modo() { return modo; }, get listo() { return listo; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

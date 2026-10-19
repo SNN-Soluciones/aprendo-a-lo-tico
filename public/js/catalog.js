@@ -432,4 +432,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/porcentajes.html",
   },
+  {
+    id: "bus",
+    titulo: "¿A qué hora llega el bus?",
+    descripcion: "Viajá en bus por Costa Rica: leé el reloj, calculá a qué hora llega, cuánto duró el viaje y qué bus te sirve.",
+    emoji: "🚌",
+    materia: "mate",
+    grados: [2, 3, 4, 5],
+    edad: [7, 11],
+    leer: "si",
+    escalera: true,
+    url: "juegos/bus.html",
+  },
 ];

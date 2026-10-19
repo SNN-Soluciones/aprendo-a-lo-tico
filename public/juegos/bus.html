@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿A qué hora llega el bus?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .tarjeta { font-size: 1.2rem; }
+  .ruta { display: inline-block; margin-bottom: 8px; padding: 2px 12px; border-radius: 999px; background: #E4F0FF; color: #1E5AA8; font-size: 1rem; }
+  .reloj { display: block; margin: 0 auto 4px; }
+  .reloj .nums text { font: 800 9.5px "Baloo 2", system-ui, sans-serif; fill: #1F3A5F; text-anchor: middle; }
+
+  /* Sale · Viaje · Llega */
+  .horas { display: flex; justify-content: center; gap: 8px; margin: 2px 0 10px; }
+  .hito { flex: 1; max-width: 9.5rem; display: flex; flex-direction: column; align-items: center; font-size: .85rem; line-height: 1.1;
+    background: #F5F9FF; border: 3px solid var(--rim); border-radius: 14px; padding: 4px 2px 6px; }
+  .hito b { font-size: 1.35rem; line-height: 1.15; white-space: nowrap; }
+  .hito b small { display: block; font-size: .75rem; line-height: 1; }
+  .hito.pide { background: #FFF6DA; border-style: dashed; }
+  .hito.pide b { color: var(--materia); }
+
+  /* Línea de tiempo (las etiquetas van en data-t para que la voz no las lea) */
+  .linea { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 2px; margin: 2px 0 8px; }
+  .linea [data-t]::after { content: attr(data-t); }
+  .linea .hl { background: #fff; border: 3px solid var(--rim); border-radius: 10px; padding: 0 7px; font-size: 1.05rem; font-weight: 800; color: var(--ink); white-space: nowrap; }
+  .linea .hl.fin { background: #CFF5DC; border-color: var(--ok); }
+  .linea .sl { display: flex; flex-direction: column; align-items: center; font-size: .8rem; font-weight: 800; color: var(--materia); line-height: 1; padding: 0 2px; white-space: nowrap; }
+  .linea .sl::before { content: "→"; font-size: 1.3rem; line-height: .9; }
+
+  /* Tabla de salidas */
+  .tabla { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 0 auto 6px; max-width: 22rem; font-size: 1rem; }
+  .tabla span { background: #fff; border: 2px solid var(--rim); border-radius: 8px; padding: 1px 2px; white-space: nowrap; }
+  .tabla .cab { grid-column: 1 / -1; background: var(--rim); color: #fff; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🚌🕒</div>
+  <h1>¿A qué hora llega el bus?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Viajá en bus por Costa Rica: leé el reloj, calculá a qué hora llega, cuánto duró el viaje y qué bus te sirve. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo de juego"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="avance ancho" id="avance" aria-hidden="true"></div>
+<div id="juego" class="ancho">
+  <div class="tarjeta" id="tarjeta" aria-live="polite"></div>
+  <div class="opciones" id="opciones"></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Siguiente ➡️</button>
+<div class="resumen ancho" id="resumen" hidden></div>
+
+<script type="module">
+import { montarQuiz } from "../js/quiz.js";
+import { ESCALONES, MODOS, pregunta, inicio } from "../js/bus.js";
+
+const RONDA = 8;
+montarQuiz({
+  clave: "bus",
+  textos: { fin3: "¡Excelente! Ya podés viajar en bus por todo el país sin perder ninguno." },
+  // 🪜 De a poquito: pregunta por pregunta, del reloj a los horarios
+  escalera: { id: "bus", escalones: ESCALONES.map((e, i) => ({ nombre: e.nombre, instr: e.instr, pregunta: () => pregunta(i) })), inicio },
+  // Modos a mano: rondas de 8 preguntas de un mismo tema
+  modos: MODOS.map(m => ({
+    id: m.id, nombre: m.nombre, instr: m.instr,
+    preguntas: () => Array.from({ length: RONDA }, (_, k) => pregunta(m.escalones[k % m.escalones.length])),
+  })),
+});
+if (new URLSearchParams(location.search).has("prueba")) window.__bus = window.__quiz;
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

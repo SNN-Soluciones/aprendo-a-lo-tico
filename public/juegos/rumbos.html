@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Direcciones a lo tico</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #F29A1F; }
+  .ancho { width: min(96vw, 520px); }
+  .levels button { font-size: 1.25rem; padding: 2px 10px; }
+  .instr .txt { text-align: left; font-size: clamp(1.02rem, 4.4vw, 1.25rem); font-weight: 800; line-height: 1.25; }
+
+  .escena { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .carta { background: var(--face); border: 4px solid var(--rim); border-radius: 22px; padding: 8px; box-shadow: 0 5px 0 var(--rim); }
+
+  /* 🗺️ El pueblo: cada cuadrito es una cuadra de 100 m; las calles son la separación gris */
+  .mapa-caja { position: relative; display: grid; width: min(94vw, 430px); }
+  .mapa-caja.con-coords { grid-template-columns: 22px 1fr; grid-template-rows: 24px auto; }
+  .mapa-caja .letras { grid-column: 2; display: grid; grid-template-columns: repeat(var(--cols), 1fr); padding: 0 7px; }
+  .mapa-caja .numeros { grid-column: 1; grid-row: 2; display: grid; grid-template-rows: repeat(var(--rows), 1fr); padding: 7px 0; }
+  .mapa-caja .letras span, .mapa-caja .numeros span { display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--page-ink); font-size: 1.05rem; }
+  .mapa {
+    position: relative; display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 6px; padding: 3px;
+    background: #A9B4C0; border: 4px solid var(--rim); border-radius: 14px;
+  }
+  .con-coords .mapa { grid-column: 2; grid-row: 2; }
+  .celda {
+    aspect-ratio: 1; border: 0; box-shadow: none; border-radius: 8px; padding: 0; background: #DDF1D5; color: var(--ink);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; line-height: 1; min-width: 0;
+    font-size: clamp(1.25rem, 6.4vw, 2rem);
+  }
+  .celda:active { transform: scale(.94); box-shadow: none; }
+  .celda.lugar { background: #fff; }
+  .celda .nm { font-size: clamp(.46rem, 2.2vw, .68rem); font-weight: 800; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; }
+  .celda.casa .e { font-size: .62em; opacity: .5; }
+  .celda.ref { outline: 4px solid #2F7FD1; outline-offset: -3px; }
+  .celda.marcar { outline: 4px dashed var(--materia); outline-offset: -3px; }
+  .celda.right, .celda.wrong { box-shadow: none !important; }
+  .trazo { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+  .trazo polyline { fill: none; stroke: #2F7FD1; stroke-width: .13; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: trazar 1.6s ease-in-out forwards; opacity: .85; }
+  .trazo circle { fill: #2F7FD1; }
+  @keyframes trazar { to { stroke-dashoffset: 0; } }
+  .brujula {
+    position: absolute; top: -12px; right: -8px; z-index: 2; width: 38px; height: 38px; border-radius: 50%;
+    background: var(--btn); border: 3px solid var(--rim); display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-weight: 800; font-size: .8rem; line-height: .9; color: var(--ink); pointer-events: none;
+  }
+  .con-coords .brujula { top: -6px; right: -10px; }
+
+  /* 🧭 Rosa de los vientos */
+  .rosa { width: min(58vw, 230px); display: block; }
+  .rosa.chica { width: min(44vw, 180px); }
+  .rosa .brazo { cursor: pointer; outline: none; }
+  .rosa .osc { fill: #1F3A5F; } .rosa .cla { fill: #9DB3C9; }
+  .rosa .inter .osc { fill: #557391; } .rosa .inter .cla { fill: #D3E0EC; }
+  .rosa .toque { fill: transparent; }
+  .rosa .centro { fill: var(--btn); stroke: #1F3A5F; stroke-width: 3; }
+  .rosa text { font-family: inherit; font-weight: 800; font-size: 19px; fill: #1F3A5F; text-anchor: middle; dominant-baseline: central; pointer-events: none; }
+  .rosa .brazo:focus-visible .cla { fill: #FFE08A; }
+  .rosa .brazo.right .osc, .rosa .brazo.right .cla { fill: var(--ok); }
+  .rosa .brazo.wrong .osc, .rosa .brazo.wrong .cla { fill: var(--bad); }
+
+  /* 🌎 Globo y 🌐 cuadrícula de latitud y longitud */
+  .globo { width: min(70vw, 270px); display: block; }
+  .globo .mar { fill: #BFE3F5; stroke: #1F3A5F; stroke-width: 3; }
+  .globo .ver { fill: none; stroke: #1F3A5F; stroke-width: 2; }
+  .globo .hit { fill: none; stroke: transparent; stroke-width: 18; pointer-events: stroke; cursor: pointer; }
+  .globo .sin-toque, .globo .sin-toque * { pointer-events: none; }
+  .globo .ecuador.color .ver { stroke: #E53935; stroke-width: 3.5; }
+  .globo .greenwich.color .ver { stroke: #1E6FD9; stroke-width: 3.5; }
+  .globo .zona { fill: transparent; cursor: pointer; }
+  .globo .zona.right { fill: rgba(47, 168, 90, .45); }
+  .globo .zona.wrong { fill: rgba(217, 68, 58, .35); }
+  .globo .linea.right .ver { stroke: var(--ok); stroke-width: 6; }
+  .globo .linea.wrong .ver { stroke: var(--bad); stroke-width: 5; }
+  .globo [data-t]:focus { outline: none; }
+  .globo .linea:focus-visible .ver { stroke: #FFB300; stroke-width: 6; }
+  .globo .zona:focus-visible { fill: rgba(255, 179, 0, .35); }
+  .globo text, .malla text { font-family: inherit; font-weight: 800; fill: #1F3A5F; pointer-events: none; }
+  .globo .cr { fill: #E53935; stroke: #fff; stroke-width: 2; }
+  .malla { width: min(92vw, 380px); display: block; }
+  .malla .lin { stroke: #9DB3C9; stroke-width: 1.5; }
+  .malla .ecu { stroke: #E53935; stroke-width: 3; }
+  .malla .gre { stroke: #1E6FD9; stroke-width: 3; }
+  .malla .punto { cursor: pointer; outline: none; }
+  .malla .punto circle { fill: var(--btn); stroke: #1F3A5F; stroke-width: 2.5; }
+  .malla .punto text { font-size: 14px; text-anchor: middle; dominant-baseline: central; }
+  .malla .punto.marcado circle { fill: var(--materia); }
+  .malla .punto.right circle { fill: var(--ok); }
+  .malla .punto.wrong circle { fill: var(--bad); }
+  /* Señalar dentro de un dibujo SVG: brilla en vez de la manito */
+  svg .senal { outline: none !important; animation: brillo .9s ease-in-out infinite !important; }
+  svg .senal .cla, svg .senal .osc, svg .senal circle, svg.globo .zona.senal { fill: #FFC83D !important; }
+  svg .senal .ver { stroke: #FFB300 !important; stroke-width: 6 !important; }
+  @keyframes brillo { 50% { opacity: .45; } }
+
+  .sol-escena { font-size: clamp(3.4rem, 18vw, 4.6rem); line-height: 1.1; padding: 4px 18px; }
+
+  .opciones { margin-top: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .opciones.largas { grid-template-columns: 1fr; }
+  .opciones button { font-size: 1.15rem; padding: 10px 8px; border-radius: 18px; line-height: 1.2; }
+  .opciones.largas button { text-align: left; font-size: 1.05rem; }
+  .escribir { margin-top: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; }
+  .escribir input {
+    width: min(46vw, 180px); font: inherit; font-size: 1.9rem; font-weight: 800; text-align: center; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 16px; padding: 2px 10px; background: #fff;
+  }
+  .escribir input.ok { background: #CFF5DC; border-color: var(--ok); }
+  .escribir input.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .escribir .sufijo { font-size: 1.5rem; font-weight: 800; color: var(--page-ink); }
+  .escribir button { font-size: 1.6rem; padding: 4px 18px; background: var(--btn); }
+  .explica { margin-top: 8px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.35; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🧭🗺️</div>
+  <h1>Direcciones a lo tico</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Norte, sur, este y oeste; «200 metros al este de la iglesia»; letra y número en el mapa; paralelos y meridianos. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" id="niveles" role="group" aria-label="Tema"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="escena ancho" id="escena"></div>
+<div class="opciones ancho" id="opciones" hidden></div>
+<form class="escribir ancho" id="escribir" hidden novalidate>
+  <input id="respuesta" inputmode="numeric" autocomplete="off" aria-label="Tu respuesta en metros">
+  <span class="sufijo" id="sufijo">m</span>
+  <button type="submit" aria-label="Revisar">✔️</button>
+</form>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import {
+  DIRS, OCHO, PRINCIPALES, PISTA, vecinas, ESCALONES, GRUPOS, inicioPorEdad, pregunta, lugarEn, posDe, lugar, nom, al, coord,
+  LETRAS, LATS, LONS, coordTxt,
+} from "../js/rumbos.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("rumbos", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("rumbos-stars");
+let manual = null, q = null, fallos = 0, listo = false;
+const ayuda = ayudaSiSeQueda({ senalar: () => mostrarRespuesta() });
+
+$("niveles").innerHTML = `<button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>`
+  + GRUPOS.map(g => `<button data-nivel="${g.id}" aria-label="${g.nombre}">${g.emoji}</button>`).join("");
+
+// ---------- Dibujos ----------
+function rosaSVG({ puntas, etiquetas }, chica = false) {
+  const C = 100, brazos = puntas === 8 ? OCHO : PRINCIPALES;
+  const orden = [...brazos].sort((a, b) => (DIRS[a].ang % 90 === 0) - (DIRS[b].ang % 90 === 0)); // los intermedios abajo
+  const g = orden.map(d => {
+    const principal = DIRS[d].ang % 90 === 0, largo = principal ? 80 : 54, ancho = principal ? 15 : 11, a = DIRS[d].ang;
+    const rad = (a - 90) * Math.PI / 180, en = r => [C + Math.cos(rad) * r, C + Math.sin(rad) * r];
+    const [tx, ty] = en(largo - 16), [lx, ly] = en(largo + 13);
+    return `<g class="brazo${principal ? "" : " inter"}" data-dir="${d}" role="button" tabindex="0" aria-label="${DIRS[d].n}">
+      <g transform="rotate(${a} ${C} ${C})"><polygon class="osc" points="${C},${C - largo} ${C},${C} ${C - ancho},${C - ancho}"/><polygon class="cla" points="${C},${C - largo} ${C + ancho},${C - ancho} ${C},${C}"/></g>
+      <circle class="toque" cx="${tx}" cy="${ty}" r="${principal ? 24 : 18}"/>
+      ${etiquetas.includes(d) ? `<text x="${lx}" y="${ly}">${d}</text>` : ""}
+    </g>`;
+  }).join("");
+  return `<svg class="rosa${chica ? " chica" : ""}" viewBox="-14 -14 228 228" role="group" aria-label="Rosa de los vientos">${g}<circle class="centro" cx="${C}" cy="${C}" r="9"/></svg>`;
+}
+
+function mapaHTML(v) {
+  const m = v.mapa, marcar = new Set((v.marcar || []).map(p => p.join(","))), ref = v.ref?.join(",");
+  let celdas = "";
+  for (let y = 0; y < m.rows; y++) for (let x = 0; x < m.cols; x++) {
+    const L = lugarEn(m, x, y), k = `${x},${y}`, casa = m.celdas[y][x] === "casa";
+    const cls = ["celda", L ? "lugar" : casa ? "casa" : "lote", k === ref ? "ref" : "", marcar.has(k) ? "marcar" : ""].join(" ");
+    const nombre = L ? L.n : casa ? "casas" : "lote vacío";
+    celdas += `<button class="${cls}" data-c="${k}" aria-label="${nombre}${v.coords ? `, ${coord(x, y)}` : ""}">${
+      L ? `<span class="e" aria-hidden="true">${L.e}</span><span class="nm">${L.corto}</span>` : casa ? `<span class="e" aria-hidden="true">🏠</span>` : ""}</button>`;
+  }
+  return `<div class="mapa-caja${v.coords ? " con-coords" : ""}" style="--cols:${m.cols};--rows:${m.rows}">
+    ${v.coords ? `<div class="letras" aria-hidden="true">${Array.from({ length: m.cols }, (_, i) => `<span>${LETRAS[i]}</span>`).join("")}</div>
+      <div class="numeros" aria-hidden="true">${Array.from({ length: m.rows }, (_, i) => `<span>${i + 1}</span>`).join("")}</div>` : ""}
+    <div class="mapa" id="mapa">${celdas}<svg class="trazo" id="trazo" viewBox="0 0 ${m.cols} ${m.rows}" aria-hidden="true"></svg></div>
+    <div class="brujula" aria-hidden="true">N<span>⬆</span></div>
+  </div>`;
+}
+
+function dibujarCamino() {
+  const pts = q?.vista.camino, t = $("trazo");
+  if (!pts || !t || t.childElementCount) return;
+  const p = pts.map(([x, y]) => `${x + 0.5},${y + 0.5}`).join(" ");
+  t.innerHTML = `<polyline points="${p}" pathLength="1"/><circle cx="${pts[0][0] + 0.5}" cy="${pts[0][1] + 0.5}" r=".13"/>`;
+}
+
+// Nombres de lo que se puede tocar en el globo (para el teclado y el lector de pantalla)
+const NOMBRE_GLOBO = { ecuador: "El ecuador", greenwich: "El meridiano de Greenwich", paralelo: "Un paralelo", meridiano: "Un meridiano",
+  hn: "Hemisferio norte", hs: "Hemisferio sur", he: "Hemisferio oriental (este)", ho: "Hemisferio occidental (oeste)" };
+const tocable = t => `role="button" tabindex="0" aria-label="${NOMBRE_GLOBO[t]}"`;
+
+/** tocar: el niño contesta tocando el globo (las líneas, o las mitades si hay `zonas`). */
+function globoSVG({ zonas, etiquetas, cr }, tocar = false) {
+  const C = 130, R = 100, rad = g => g * Math.PI / 180;
+  const linea = (t, d, extra = "") => `<g class="linea ${t} ${extra}${zonas ? " sin-toque" : ""}" data-t="${t}"${tocar && !zonas ? ` ${tocable(t)}` : ""}><path class="ver" d="${d}"/><path class="hit" d="${d}"/></g>`;
+  const zona = (t, d) => `<path class="zona" data-t="${t}"${tocar ? ` ${tocable(t)}` : ""} d="${d}"/>`;
+  const par = [-60, -30, 30, 60].map(f => { const y = C - R * Math.sin(rad(f)), w = R * Math.cos(rad(f)); return linea("paralelo", `M${C - w},${y} H${C + w}`); }).join("");
+  const mer = [-60, -30, 30, 60].map(l => linea("meridiano", `M${C},${C - R} A${R * Math.abs(Math.sin(rad(l)))},${R} 0 0 ${l > 0 ? 1 : 0} ${C},${C + R}`)).join("");
+  const zon = zonas === "ns"
+    ? zona("hn", `M${C - R},${C} A${R},${R} 0 0 1 ${C + R},${C} Z`) + zona("hs", `M${C - R},${C} A${R},${R} 0 0 0 ${C + R},${C} Z`)
+    : zonas === "eo" ? zona("ho", `M${C},${C - R} A${R},${R} 0 0 0 ${C},${C + R} Z`) + zona("he", `M${C},${C - R} A${R},${R} 0 0 1 ${C},${C + R} Z`) : "";
+  // Costa Rica: unos 10° norte y 84° oeste; con el meridiano de Greenwich en el centro queda casi en la orilla izquierda
+  const crx = C + R * Math.cos(rad(10)) * Math.sin(rad(-84)), cry = C - R * Math.sin(rad(10));
+  return `<svg class="globo" viewBox="0 0 260 260" role="group" aria-label="La Tierra con paralelos y meridianos">
+    <circle class="mar" cx="${C}" cy="${C}" r="${R}"/>${zon}${par}${mer}
+    ${linea("ecuador", `M${C - R},${C} H${C + R}`, etiquetas ? "color" : "")}${linea("greenwich", `M${C},${C - R} V${C + R}`, etiquetas ? "color" : "")}
+    <text x="${C}" y="${C - R - 13}" text-anchor="middle" font-size="16">N</text><text x="${C}" y="${C + R + 15}" text-anchor="middle" font-size="16">S</text>
+    <text x="${C - R - 14}" y="${C + 5}" text-anchor="middle" font-size="16">O</text><text x="${C + R + 14}" y="${C + 5}" text-anchor="middle" font-size="16">E</text>
+    ${etiquetas ? `<text x="${C + R - 6}" y="${C - 6}" text-anchor="end" font-size="12" style="fill:#C62828">Ecuador 0°</text>
+      <text x="${C + 5}" y="${C + R - 16}" font-size="12" style="fill:#1557B0">Greenwich 0°</text>` : ""}
+    ${cr ? `<circle class="cr" cx="${crx}" cy="${cry}" r="6"/><text x="${crx + 10}" y="${cry - 9}" font-size="12">Costa Rica</text>` : ""}
+  </svg>`;
+}
+
+function mallaSVG({ puntos, marcar }) {
+  const x0 = 50, y0 = 34, sx = 40, sy = 38;
+  const X = lon => x0 + LONS.indexOf(lon) * sx, Y = lat => y0 + LATS.indexOf(lat) * sy;
+  const W = x0 + (LONS.length - 1) * sx + 22, H = y0 + (LATS.length - 1) * sy + 18;
+  const txt = (v, p, n) => (v === 0 ? "0°" : `${Math.abs(v)}°${v > 0 ? p : n}`);
+  const vert = LONS.map(l => `<line class="${l === 0 ? "gre" : "lin"}" x1="${X(l)}" y1="${y0 - 6}" x2="${X(l)}" y2="${H - 10}"/><text x="${X(l)}" y="${y0 - 16}" text-anchor="middle" font-size="11">${txt(l, "E", "O")}</text>`).join("");
+  const hor = LATS.map(l => `<line class="${l === 0 ? "ecu" : "lin"}" x1="${x0 - 6}" y1="${Y(l)}" x2="${W - 12}" y2="${Y(l)}"/><text x="${x0 - 10}" y="${Y(l) + 4}" text-anchor="end" font-size="11">${txt(l, "N", "S")}</text>`).join("");
+  const pts = puntos.map(p => `<g class="punto${p.id === marcar ? " marcado" : ""}" data-p="${p.id}" role="button" tabindex="0" aria-label="Punto ${p.id}"><circle cx="${X(p.lon)}" cy="${Y(p.lat)}" r="13"/><text x="${X(p.lon)}" y="${Y(p.lat)}">${p.id}</text></g>`).join("");
+  return `<svg class="malla" viewBox="0 0 ${W} ${H}" role="group" aria-label="Cuadrícula de latitud y longitud">${vert}${hor}
+    <text x="${W - 12}" y="${Y(0) - 6}" text-anchor="end" font-size="11" style="fill:#C62828">Ecuador</text>
+    <text x="${X(0) + 4}" y="${H - 12}" font-size="11" style="fill:#1557B0">Greenwich</text>${pts}</svg>`;
+}
+
+// ---------- Rondas ----------
+function nuevo() {
+  const i = esc.activa ? esc.nivel : azar(ESCALONES.map((e, k) => (e.grupo === manual ? k : -1)).filter(k => k >= 0));
+  q = pregunta(i);
+  fallos = 0; listo = false;
+  const v = q.vista;
+  let html = "";
+  if (v.mapa) html += mapaHTML(v);
+  if (v.rosa) html += `<div class="carta">${rosaSVG(v.rosa, !!v.mapa)}</div>`;
+  if (v.sol) html += `<div class="carta sol-escena" aria-hidden="true">${v.sol}</div>`;
+  if (v.globo) html += `<div class="carta">${globoSVG(v.globo, q.responder === "globo")}</div>`;
+  if (v.malla) html += `<div class="carta">${mallaSVG(v.malla)}</div>`;
+  $("escena").innerHTML = html;
+  $("opciones").hidden = q.responder !== "opcion";
+  if (q.responder === "opcion") {
+    const largas = q.opciones.some(o => o.txt.length > 16);
+    $("opciones").classList.toggle("largas", largas);
+    $("opciones").innerHTML = q.opciones.map(o => `<button data-id="${o.id}">${o.txt}</button>`).join("");
+  }
+  $("escribir").hidden = q.responder !== "escribir";
+  if (q.responder === "escribir") { $("respuesta").value = ""; $("respuesta").className = ""; $("respuesta").disabled = false; $("sufijo").textContent = q.sufijo || ""; }
+  $("explica").hidden = true; feedback("");
+  $("nextBtn").classList.remove("pulse");
+  instruccion(q.texto, q.voz);
+  ayuda.empezar();
+}
+
+// El elemento de la respuesta correcta (para señalarlo)
+function elCorrecto() {
+  if (q.responder === "mapa") return document.querySelector(`.celda[data-c="${q.respuesta}"]`);
+  if (q.responder === "rosa") return document.querySelector(`.brazo[data-dir="${q.respuesta}"]`);
+  if (q.responder === "opcion") return $("opciones").querySelector(`[data-id="${q.respuesta}"]`);
+  if (q.responder === "malla") return document.querySelector(`.punto[data-p="${q.respuesta}"]`);
+  if (q.responder === "globo") return document.querySelector(`[data-t="${q.respuesta[0]}"]`);
+  return null;
+}
+function mostrarRespuesta() {
+  if (listo) return;
+  if (q.responder === "escribir") { dibujarCamino(); feedback("almost", "👀", "Mirá el camino y contá las cuadras"); return; }
+  senalar(elCorrecto());
+}
+
+// Qué decir cuando se equivoca: qué fue lo que tocó y una pista (sin regañar)
+function pistaMala(valor) {
+  const m = q.vista.mapa;
+  if (q.responder === "rosa") return { casi: vecinas(valor, q.respuesta) && q.vista.rosa.puntas === 8, txt: `Ese es el ${DIRS[valor].n}. ${PISTA[q.respuesta]}` };
+  if (q.responder === "mapa") {
+    const [x, y] = valor.split(",").map(Number), [rx, ry] = q.respuesta.split(",").map(Number), L = lugarEn(m, x, y);
+    const que = L ? `Ahí está ${nom(L)}.` : m.celdas[y][x] === "casa" ? "Ahí hay casas." : "Ese lote está vacío.";
+    const casi = Math.abs(x - rx) + Math.abs(y - ry) === 1;
+    let pista = "";
+    if (q.escalon === "vecino") { const d = q.datos.tramos[0].d; pista = `Al ${DIRS[d].n} es ${DIRS[d].lado} en el mapa: buscá la cuadra pegada a ${nom(lugar(q.datos.ref))}.`; }
+    else if (q.datos.tramos) pista = `Salí ${q.datos.ref ? `de ${nom(lugar(q.datos.ref))}` : ""} y contá las cuadras de una en una: ${q.datos.tramos.map(p => `${p.k} al ${DIRS[p.d].n}`).join(", ")}.`;
+    else if (q.datos.coord) pista = `Buscá la letra ${q.datos.coord[0]} arriba y bajá hasta la fila ${q.datos.coord.slice(1)}.`;
+    return { casi, txt: `${casi ? "¡Casi! Estás a una cuadra. " : ""}${que} ${pista}` };
+  }
+  if (q.responder === "opcion") {
+    const o = q.opciones.find(x => x.id === valor);
+    if (q.escalon === "dar") {
+      const [x, y] = posDe(m, q.datos.ref), fin = o.tramos.reduce(([a, b], p) => [a + DIRS[p.d].dx * p.k, b + DIRS[p.d].dy * p.k], [x, y]);
+      const L = lugarEn(m, ...fin), bien = q.opciones.find(x => x.id === q.respuesta).tramos;
+      const casi = o.tramos.filter((p, i) => p.d === bien[i].d && p.k === bien[i].k).length === 1;
+      const dest = lugar(q.datos.dest);
+      return { casi, txt: `Con esa dirección no se llega ${al(dest)}${L ? `: se llega ${al(L)}` : ""}. Seguí el camino con el dedo en el mapa.` };
+    }
+    if (q.escalon === "cuadros") return { casi: o.txt[0] === q.respuesta[0] || o.txt.slice(1) === q.respuesta.slice(1), txt: `${o.txt} es la columna ${o.txt[0]} y la fila ${o.txt.slice(1)}. Primero la letra (arriba) y después el número (al lado).` };
+    if (q.escalon === "latlon") return { casi: false, txt: `Fijate si el punto está arriba (norte) o abajo (sur) del ecuador, y a la izquierda (oeste) o a la derecha (este) de Greenwich.` };
+    if (q.escalon === "sol") return { casi: false, txt: "Acordate: el sol sale por el este y se pone por el oeste. Con el brazo derecho hacia donde sale el sol, al frente queda el norte." };
+    return { casi: false, txt: "Mirá bien el dibujo de la Tierra y pensalo otra vez." };
+  }
+  if (q.responder === "malla") {
+    const P = q.vista.malla.puntos.find(p => p.id === valor);
+    return { casi: P.lat === q.datos.lat || P.lon === q.datos.lon, txt: `Ese es el punto ${P.id}: ${coordTxt(P.lat, P.lon)}. Primero buscá la latitud (norte o sur del ecuador) y después la longitud (este u oeste de Greenwich).` };
+  }
+  if (q.responder === "globo") {
+    const QUE = { ecuador: "Ese es el ecuador.", greenwich: "Ese es el meridiano de Greenwich.", paralelo: "Ese es un paralelo.", meridiano: "Ese es un meridiano.",
+      hn: "Ese es el hemisferio norte.", hs: "Ese es el hemisferio sur.", he: "Ese es el hemisferio oriental (este).", ho: "Ese es el hemisferio occidental (oeste)." };
+    return { casi: false, txt: `${QUE[valor]} Los paralelos van de lado a lado; los meridianos, de polo a polo.` };
+  }
+  return { casi: false, txt: "" };
+}
+
+function contestar(valor, el) {
+  if (listo || !q) return;
+  // Un segundo toque sobre lo mismo que ya estaba mal (los chiquitos tocan dos veces) no es otro error
+  if (el?.classList.contains("wrong")) return;
+  const ok = q.responder === "globo" ? q.respuesta.includes(valor) : String(valor) === String(q.respuesta);
+  if (ok) {
+    listo = true;
+    ayuda.parar();
+    if (el) { el.classList.remove("senal"); el.classList.add("right"); }
+    document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+    dibujarCamino();
+    const limpio = fallos === 0 && !ayuda.usada, bien = elogio();
+    if (limpio) { stars.sumar(); feedback("ok", "🎉", bien); } else feedback("almost", "🤏", "¡Ahora sí!");
+    $("explica").hidden = false; $("explica").innerHTML = q.explica;
+    decir(`${limpio ? bien : "¡Ahora sí!"} ${q.explica}`);
+    const opciones = q.responder === "rosa" ? q.vista.rosa.puntas : q.responder === "opcion" ? q.opciones.length
+      : q.responder === "malla" ? q.vista.malla.puntos.length : q.responder === "mapa" ? q.vista.mapa.cols * q.vista.mapa.rows : 0;
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones });
+    $("nextBtn").classList.add("pulse");
+    return;
+  }
+  fallos++;
+  if (el) { el.classList.add("wrong", "nope"); setTimeout(() => el.classList.remove("nope"), 400); }
+  const { casi, txt } = q.responder === "escribir" ? escritoMal(Number(valor)) : pistaMala(valor);
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "No es");
+  decir(txt);
+  if (fallos >= 2) setTimeout(mostrarRespuesta, 300);
+}
+
+function escritoMal(n) {
+  const diff = Math.abs(n - q.respuesta);
+  if (diff === 100) return { casi: true, txt: "¡Casi! Te sobró o te faltó una cuadra. Contalas otra vez." };
+  if (n && n === q.respuesta / 100) return { casi: true, txt: `¡Casi! Son ${n} cuadras, pero la pregunta es en metros: cada cuadra mide 100.` };
+  return { casi: false, txt: "Contá cuántas cuadras hay al este u oeste, y cuántas al norte o sur. Después multiplicá por 100." };
+}
+
+// Toques
+$("escena").addEventListener("click", e => {
+  const c = e.target.closest(".celda");
+  if (c && q.responder === "mapa") { sonido("tap"); return contestar(c.dataset.c, c); }
+  const b = e.target.closest(".brazo");
+  if (b && q.responder === "rosa") { sonido("tap"); return contestar(b.dataset.dir, b); }
+  const p = e.target.closest(".punto");
+  if (p && q.responder === "malla") { sonido("tap"); return contestar(p.dataset.p, p); }
+  const t = e.target.closest("[data-t]");
+  if (t && q.responder === "globo") { sonido("tap"); return contestar(t.dataset.t, t); }
+  if (c && !listo) { const L = lugarEn(q.vista.mapa, ...c.dataset.c.split(",").map(Number)); if (L) decir(L.n); }
+});
+$("escena").addEventListener("keydown", e => {
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".brazo, .punto, [data-t]")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+});
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled) return;
+  sonido("tap");
+  const ok = b.dataset.id === q.respuesta;
+  if (!ok) b.disabled = true;
+  contestar(b.dataset.id, b);
+});
+$("escribir").addEventListener("submit", e => {
+  e.preventDefault();
+  if (listo) return;
+  const dado = $("respuesta").value.replace(/[^\d]/g, "");
+  if (!dado) return;
+  const ok = Number(dado) === q.respuesta;
+  $("respuesta").className = ok ? "ok" : "mal";
+  if (ok) $("respuesta").disabled = true;
+  contestar(Number(dado), null);
+});
+
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+niveles(v => { manual = v === "auto" ? null : v; esc.activa = v === "auto"; nuevo(); });
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__rumbos = { get q() { return q; }, get nivel() { return esc.nivel; }, get activa() { return esc.activa; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Qué es? Clases de palabras</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; }
+  .ancho { width: min(96vw, 560px); }
+  .levels button { min-width: 40px; padding: 3px 8px; }
+  .nivel-nombre { margin-top: 8px; text-align: center; font-weight: 800; font-size: .95rem; color: var(--page-ink); opacity: .85; }
+
+  .tarjeta { margin-top: 8px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px 10px; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .tarjeta:empty { display: none; }
+  .palabra { font-size: clamp(2.4rem, 12vw, 3.4rem); font-weight: 800; color: var(--materia); line-height: 1.1; }
+  .frase { font-size: clamp(1.35rem, 6vw, 1.8rem); font-weight: 800; line-height: 1.3; }
+  .hueco { color: var(--materia); border-bottom: 4px dashed var(--materia); padding: 0 8px; }
+
+  /* Oración: cada palabra es un botón */
+  .oracion { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px 6px; }
+  .oracion .w { font-size: clamp(1.15rem, 5.2vw, 1.5rem); padding: 3px 10px; border-radius: 14px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .oracion .w:disabled { opacity: 1; }
+  .oracion .w.tenue:disabled { opacity: .55; }
+  .oracion .punto { font-size: 1.6rem; font-weight: 800; margin-left: -4px; }
+  .oracion .quieta { font-size: clamp(1.15rem, 5.2vw, 1.5rem); font-weight: 800; padding: 3px 2px; }
+  /* Corte: espacios para tocar entre las palabras */
+  .gap { width: 30px; height: 46px; padding: 0; border: 3px dashed var(--soft); border-radius: 10px; box-shadow: none; background: transparent; font-size: .95rem; color: var(--soft); }
+  .gap:active { transform: none; box-shadow: none; }
+  .gap.wrong { border-color: var(--bad); color: var(--bad); }
+  .gap.tijera { border: none; font-size: 1.6rem; width: auto; color: var(--ink); background: none; }
+  /* Sujeto y predicado ya marcados */
+  .parte { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 8px 6px; align-items: center; padding: 18px 8px 8px; border-radius: 16px; position: relative; }
+  .parte.suj { background: #E4F0FF; }
+  .parte.pred { background: #E2F7E9; }
+  .parte .et { position: absolute; top: 1px; left: 10px; font-size: .72rem; font-weight: 800; letter-spacing: .03em; text-transform: uppercase; color: #1F3A5F; opacity: .8; }
+  .faltan { margin: 8px 0 0; font-weight: 800; color: var(--materia); }
+
+  .canastas, .elegir { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(var(--n, 2), 1fr); }
+  .canastas button { border-radius: 22px; padding: 10px 4px 8px; display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+  .canastas .ce { font-size: 2.4rem; line-height: 1.15; }
+  .canastas b { font-size: 1.15rem; }
+  .canastas small { font-size: .8rem; font-weight: 700; opacity: .75; }
+  .elegir button { font-size: 1.25rem; padding: 10px 8px; border-radius: 18px; line-height: 1.2; }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.35; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">📦🏃🎨</div>
+  <h1>¿Qué es?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Sustantivos, verbos, adjetivos y más: escogé la canasta, tocá la palabra o cortá la oración. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo" title="De a poquito">🪜</button>
+    <button data-nivel="canastas" aria-label="Sustantivo, verbo o adjetivo" title="Sustantivo, verbo o adjetivo">📦</button>
+    <button data-nivel="oraciones" aria-label="Tocar en la oración" title="Tocar en la oración">👆</button>
+    <button data-nivel="propios" aria-label="Propios, género y número" title="Propios, género y número">🔤</button>
+    <button data-nivel="concordancia" aria-label="Concordancia, artículos y pronombres" title="Concordancia, artículos y pronombres">🤝</button>
+    <button data-nivel="adverbios" aria-label="Adverbios de tiempo y de lugar" title="Adverbios">⏰</button>
+    <button data-nivel="sujeto" aria-label="Sujeto y predicado" title="Sujeto y predicado">✂️</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="nivel-nombre ancho" id="nivelNombre"></div>
+<div class="tarjeta ancho" id="tarjeta" aria-live="polite"></div>
+<div class="ancho" id="respuestas"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra">➡️</button></div>
+
+<script type="module">
+import { elogio, hablar } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, ronda, opcionesDe } from "../js/palabras.js";
+
+const $ = id => document.getElementById(id);
+const mayus = t => t.charAt(0).toUpperCase() + t.slice(1);
+const sinTildes = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "");
+const texto = html => new DOMParser().parseFromString(html, "text/html").body.textContent;
+
+// Modos a mano (papá o maestra): cada uno toma escalones al azar de su grupo
+const GRUPOS = {
+  canastas: { nombre: "📦 Sustantivo, verbo o adjetivo", e: [0, 1, 2] },
+  oraciones: { nombre: "👆 En la oración", e: [3, 4, 5] },
+  propios: { nombre: "🔤 Propios, género y número", e: [6, 7] },
+  concordancia: { nombre: "🤝 Concordancia, artículos y pronombres", e: [8, 9] },
+  adverbios: { nombre: "⏰ Adverbios de tiempo y de lugar", e: [10] },
+  sujeto: { nombre: "✂️ Sujeto y predicado", e: [11, 12] },
+};
+const CANASTA = {
+  s: ["📦", "Sustantivo", "nombra"], v: ["🏃", "Verbo", "acción"], a: ["🎨", "Adjetivo", "cómo es"],
+  tiempo: ["⏰", "De tiempo", "cuándo"], lugar: ["📍", "De lugar", "dónde"],
+  definido: ["👉", "Definido", "el, la, los, las"], indefinido: ["✋", "Indefinido", "un, una, unos, unas"],
+};
+
+// 🪜 Por edad: 7 años empieza con las canastas; los más grandes, más arriba (sin exagerar)
+const esc = escalera("palabras", { escalones: ESCALONES.length,
+  inicio: edad => edad === null || edad <= 7 ? 0 : edad === 8 ? 2 : edad === 9 ? 3 : edad === 10 ? 6 : edad === 11 ? 8 : 10 });
+const stars = estrellas("palabras-stars");
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(botonCorrecto()), espera: 14000 });
+
+let grupo = null, r = null, fallos = 0, listo = false, hallados = new Set(), ultimo = "";
+
+// ---------- Pintar ----------
+const cara = (x, i) => i === 0 && !x.propio ? mayus(x.t) : x.t; // la primera palabra con mayúscula
+const chip = (x, i) => `<button class="w" data-i="${i}">${cara(x, i)}</button>`;
+
+function pintarOracion() {
+  const toks = r.tokens;
+  if (r.tipo === "corte") {
+    return `<div class="oracion">${toks.map((x, i) => (i ? `<button class="gap" data-g="${i}" aria-label="Cortar antes de «${x.t}»">✂️</button>` : "")
+      + `<span class="quieta">${cara(x, i)}${i === toks.length - 1 ? "." : ""}</span>`).join("")}</div>`;
+  }
+  if (r.marcarPartes) {
+    const k = r.marcarPartes;
+    return `<div class="oracion"><span class="parte suj"><span class="et">sujeto</span>${toks.slice(0, k).map((x, i) => chip(x, i)).join("")}</span>`
+      + `<span class="parte pred"><span class="et">predicado</span>${toks.slice(k).map((x, j) => chip(x, j + k)).join("")}<span class="punto">.</span></span></div>`;
+  }
+  return `<div class="oracion">${toks.map(chip).join("")}<span class="punto">.</span></div>`
+    + (r.todos && r.correctas.length > 1 ? `<p class="faltan" id="faltan">Faltan ${r.correctas.length}</p>` : "");
+}
+
+function pintar() {
+  if (r.tipo === "canasta") {
+    $("tarjeta").innerHTML = `<span class="palabra">${r.palabra}</span>`;
+    $("respuestas").innerHTML = `<div class="canastas" style="--n:${r.canastas.length}">${r.canastas.map(c => {
+      const [e, n, q] = CANASTA[c];
+      return `<button data-c="${c}"><span class="ce" aria-hidden="true">${e}</span><b>${n}</b><small>${q}</small></button>`;
+    }).join("")}</div>`;
+  } else if (r.tipo === "elegir") {
+    $("tarjeta").innerHTML = r.html;
+    const largas = r.opciones.some(o => o.html.length > 12);
+    const n = largas ? 1 : r.opciones.length === 3 ? 3 : 2;
+    $("respuestas").innerHTML = `<div class="elegir" style="--n:${n}">${r.opciones.map((o, i) => `<button data-o="${i}">${o.html}</button>`).join("")}</div>`;
+  } else {
+    $("tarjeta").innerHTML = pintarOracion();
+    $("respuestas").innerHTML = "";
+  }
+}
+
+/** El botón de la respuesta correcta (o de una que falta, si hay que tocar varias). */
+function botonCorrecto() {
+  if (!r || listo) return null;
+  if (r.tipo === "canasta") return $("respuestas").querySelector(`[data-c="${r.correcta}"]`);
+  if (r.tipo === "elegir") return $("respuestas").querySelector(`[data-o="${r.opciones.findIndex(o => o.id === r.correcta)}"]`);
+  if (r.tipo === "corte") return $("tarjeta").querySelector(`[data-g="${r.corte}"]`);
+  const falta = r.correctas.find(i => !hallados.has(i));
+  return $("tarjeta").querySelector(`[data-i="${falta}"]`);
+}
+
+// ---------- Rondas ----------
+function nuevo() {
+  const i = esc.activa ? esc.nivel : GRUPOS[grupo].e[Math.floor(Math.random() * GRUPOS[grupo].e.length)];
+  // que no salga lo mismo dos veces seguidas
+  let clave, n = 0;
+  do { r = ronda(i); clave = r.palabra || r.tokens?.map(x => x.t).join(" ") || r.html + r.correcta; } while (clave === ultimo && ++n < 10);
+  ultimo = clave;
+  fallos = 0; listo = false; hallados = new Set();
+  $("nivelNombre").textContent = esc.activa ? `🪜 Escalón ${i + 1}: ${ESCALONES[i].nombre}` : `${[...GRUPOS[grupo].nombre][0]} ${ESCALONES[i].nombre}`;
+  $("explica").hidden = true;
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  pintar();
+  instruccion(r.instr, r.voz);
+  ayuda.empezar();
+}
+
+function ganar(btn) {
+  listo = true;
+  ayuda.parar();
+  btn?.classList.remove("senal");
+  btn?.classList.add("right");
+  document.querySelectorAll("#tarjeta button, #respuestas button").forEach(x => { x.disabled = true; x.classList.remove("senal"); });
+  const limpio = fallos === 0 && !ayuda.usada;
+  const bien = limpio ? elogio() : "¡Ahora sí!";
+  if (limpio) stars.sumar();
+  feedback(limpio ? "ok" : "almost", limpio ? "🎉" : "🤏", bien);
+  if (r.tipo === "corte") {
+    // Se muestra la oración partida: sujeto ✂️ predicado
+    const k = r.corte, cara2 = (x, i) => `<span class="quieta">${cara(x, i)}</span>`;
+    $("tarjeta").innerHTML = `<div class="oracion"><span class="parte suj"><span class="et">sujeto</span>${r.tokens.slice(0, k).map(cara2).join(" ")}</span>`
+      + `<span class="gap tijera" aria-hidden="true">✂️</span><span class="parte pred"><span class="et">predicado</span>${r.tokens.slice(k).map((x, j) => cara2(x, j + k)).join(" ")}<span class="punto">.</span></span></div>`;
+  }
+  $("explica").hidden = false; $("explica").textContent = r.bien;
+  decir(`${bien} ${texto(r.bien)}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: opcionesDe(r) });
+  $("nextBtn").classList.add("pulse");
+}
+
+function fallar(btn, por, casi = false) {
+  fallos++;
+  btn.classList.add("wrong", "nope"); btn.disabled = true;
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "No es");
+  $("explica").hidden = false; $("explica").textContent = por;
+  decir(`${casi ? "¡Casi! " : ""}${por}`);
+  if (fallos >= 2) senalar(botonCorrecto());
+}
+
+$("respuestas").addEventListener("click", e => {
+  if (!r || listo) return;
+  const c = e.target.closest("[data-c]"), o = e.target.closest("[data-o]");
+  if (c && !c.disabled) {
+    if (c.dataset.c === r.correcta) ganar(c);
+    else fallar(c, r.por[c.dataset.c]);
+  } else if (o && !o.disabled) {
+    const op = r.opciones[Number(o.dataset.o)];
+    if (op.id === r.correcta) ganar(o);
+    // ¡Casi! si solo le falla una tilde (tamáles, arboles)
+    else fallar(o, op.por, sinTildes(op.html) === sinTildes(r.correcta));
+  }
+});
+
+$("tarjeta").addEventListener("click", e => {
+  if (!r || listo) return;
+  const g = e.target.closest("[data-g]");
+  if (g && !g.disabled) {
+    const i = Number(g.dataset.g);
+    if (i === r.corte) ganar(g);
+    else fallar(g, r.mal(i), Math.abs(i - r.corte) === 1);
+    return;
+  }
+  const b = e.target.closest("[data-i]");
+  if (!b || b.disabled) return;
+  const i = Number(b.dataset.i);
+  if (r.correctas.includes(i)) {
+    hallados.add(i);
+    if (hallados.size === r.correctas.length) return ganar(b);
+    // Hay que tocar varias: esta queda marcada y se dice cuántas faltan
+    b.classList.remove("senal"); b.classList.add("right"); b.disabled = true;
+    const faltan = r.correctas.length - hallados.size;
+    if ($("faltan")) $("faltan").textContent = faltan === 1 ? "Falta 1" : `Faltan ${faltan}`;
+    feedback("ok", "👍", `¡Bien! ${faltan === 1 ? "Falta una" : `Faltan ${faltan}`}`);
+    hablar(`¡Bien! ${faltan === 1 ? "Falta una." : `Faltan ${faltan}.`}`);
+  } else {
+    // En el núcleo, tocar otra palabra de la parte correcta es «casi»
+    const casi = r.marcarPartes && (r.correctas[0] < r.marcarPartes) === (i < r.marcarPartes);
+    fallar(b, `${r.por[i]} ${r.busca}`, casi);
+  }
+});
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") grupo = v;
+  nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__palabras = { get r() { return r; }, get nivel() { return esc.nivel; }, get activa() { return esc.activa; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

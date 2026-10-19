@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Encuesta en la escuela</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .ancho { width: min(96vw, 540px); }
+  .modos { display: flex; gap: 6px; flex-wrap: wrap; }
+  .modos button { padding: 3px 10px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos button.auto { font-size: 1.15rem; }
+  .instr .txt { font-size: clamp(1.05rem, 4.6vw, 1.3rem); }
+
+  /* Tarjeta del gráfico */
+  .grafico { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 8px 10px 10px; box-shadow: 0 5px 0 var(--rim); }
+  .grafico h3 { margin: 0 0 6px; font-size: 1rem; line-height: 1.2; text-align: center; }
+  .grafico .nivel { display: block; font-size: .75rem; font-weight: 700; opacity: .6; text-align: center; }
+
+  /* Pictograma */
+  .pfila { display: flex; align-items: center; gap: 6px; padding: 3px 4px; border-bottom: 2px dashed #DDE6EF; border-radius: 10px; }
+  .pfila:last-of-type { border-bottom: none; }
+  .pfila.resalta { background: #FFF1C2; outline: 3px solid var(--btn); }
+  .pcat { flex: none; width: 74px; font-weight: 800; font-size: .9rem; line-height: 1.05; text-align: right; }
+  .piconos { display: flex; flex-wrap: wrap; gap: 1px; font-size: clamp(1.45rem, 6.6vw, 1.9rem); line-height: 1.15; }
+  .ico { position: relative; display: inline-block; }
+  .ico.medio > span { display: inline-block; clip-path: inset(0 50% 0 0); }
+  .ico i { position: absolute; right: -2px; bottom: -4px; font-style: normal; font-size: .62rem; font-weight: 800; background: var(--materia); color: #fff; border-radius: 8px; padding: 0 4px; line-height: 1.3; }
+  .clave { margin-top: 6px; text-align: center; font-weight: 800; font-size: .95rem; background: #EEF5FF; border-radius: 12px; padding: 2px 8px; }
+  .clave .ico { font-size: 1.3rem; vertical-align: middle; }
+
+  /* Barras (SVG) */
+  .barras { display: block; width: 100%; height: auto; }
+  .barras text { font-family: "Baloo 2", system-ui, sans-serif; fill: var(--ink); }
+  .barras .eje { stroke: var(--rim); stroke-width: 2.5; }
+  .barras .raya { stroke: #D5DFEA; stroke-width: 1.5; }
+  .barras .num { font-size: 13px; font-weight: 800; }
+  .barras .nombre { font-size: 11px; font-weight: 800; }
+  .barras .barra { stroke: var(--rim); stroke-width: 2; }
+  .barras .barra.resalta { stroke: #FFB300; stroke-width: 5; }
+  .barras .barra.mala { stroke: var(--bad); stroke-width: 5; stroke-dasharray: 6 4; }
+  .barras .guia { stroke: var(--bad); stroke-width: 2.5; stroke-dasharray: 5 4; }
+  .barras .fantasma { fill: none; stroke: var(--ok); stroke-width: 3; stroke-dasharray: 5 4; }
+  .barras .toque { fill: transparent; cursor: pointer; }
+  .barras .toque:hover { fill: rgba(47, 127, 209, .12); }
+  .barras .toque:focus { outline: none; }
+  .barras .toque:focus-visible { fill: rgba(47, 127, 209, .22); stroke: #2F7FD1; stroke-width: 3; }
+
+  /* Tabla de conteo (palitos) */
+  .conteo { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+  .conteo td { padding: 2px 6px; border-bottom: 2px dashed #DDE6EF; font-weight: 800; }
+  .conteo td:first-child { width: 1%; white-space: nowrap; }
+  .palitos line { stroke: var(--ink); stroke-width: 3; stroke-linecap: round; }
+
+  /* Bolsa de confites */
+  .bolsa { margin: 4px auto 0; max-width: 300px; background: #F7E9D2; border: 4px solid #B98A52; border-radius: 26px 26px 40px 40px; padding: 18px 12px 14px; position: relative; }
+  .bolsa::before { content: ""; position: absolute; left: 30%; right: 30%; top: -10px; height: 14px; border: 4px solid #B98A52; border-bottom: none; border-radius: 12px 12px 0 0; background: #F7E9D2; }
+  .confites { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .confite { width: 30px; height: 30px; border-radius: 50%; background: var(--c); border: 3px solid rgba(0, 0, 0, .25); display: inline-block; box-shadow: inset -4px -4px 0 rgba(0, 0, 0, .12), inset 3px 3px 0 rgba(255, 255, 255, .45); }
+  .confite.marca { outline: 4px solid var(--btn); outline-offset: 2px; }
+  .confite.grande { width: 36px; height: 36px; display: block; margin: 0 auto 2px; }
+
+  /* Lista de datos */
+  .datos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .dato { border: 3px solid var(--rim); border-radius: 14px; text-align: center; padding: 2px 4px; background: #F6FAFF; }
+  .dato small { display: block; font-size: .78rem; font-weight: 700; opacity: .8; }
+  .dato b { font-size: 1.5rem; line-height: 1.1; }
+  .dato.resalta { background: #FFF1C2; border-color: #FFB300; }
+  .unidad { text-align: center; font-weight: 700; font-size: .9rem; margin-top: 4px; opacity: .8; }
+
+  /* Respuestas */
+  .opciones { margin-top: 12px; display: grid; gap: 10px; }
+  .opciones button { font-size: 1.05rem; padding: 8px 4px; border-radius: 18px; line-height: 1.15; }
+  .opciones button b { display: block; font-size: 1.8rem; line-height: 1.1; }
+  .opciones button.right { background: #CFF5DC; }
+  .opciones button.wrong { background: #FFE3E0; }
+  .frac { display: inline-flex; flex-direction: column; align-items: center; font-size: 1.6rem; line-height: 1.05; font-weight: 800; }
+  .frac span:first-child { border-bottom: 3px solid currentColor; padding: 0 6px; }
+
+  .escribe { margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 800; color: var(--page-ink); }
+  .escribe .caja { min-width: 3.2em; text-align: center; font-size: 2.2rem; border: 4px solid var(--rim); background: var(--face); color: var(--ink); border-radius: 16px; padding: 0 10px; line-height: 1.25; }
+  .escribe .caja.ok { background: #CFF5DC; border-color: var(--ok); }
+  .escribe .caja.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .escribe .sufijo { font-size: 1.15rem; }
+  .teclado { margin-top: 10px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .teclado button { font-size: 1.6rem; padding: 3px 0; border-radius: 16px; }
+  .teclado .ok { background: var(--btn); }
+  #revisarBtn { margin-top: 10px; width: 100%; font-size: 1.25rem; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 12px; font-weight: 700; }
+  .explica.pista { background: #EEF5FF; color: #173A63; border-color: var(--materia); }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">📊🎲</div>
+  <h1>Encuesta en la escuela</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Pictogramas, gráficos de barras, moda, promedio y probabilidad con confites. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo de juego"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="grafico ancho" id="grafico"></div>
+<div class="ancho" id="respuesta"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra pregunta" hidden>➡️</button></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, COLORES_BARRAS, CONFITES, generar, inicioPorEdad } from "../js/graficos.js";
+
+const $ = id => document.getElementById(id);
+const may = t => t.charAt(0).toUpperCase() + t.slice(1);
+// Texto para la voz: el navegador saca el texto del HTML (sin ejecutar nada)
+const sinEtiquetas = t => new DOMParser().parseFromString(t, "text/html").body.textContent || "";
+
+// Modos a mano (para el papá o la maestra): escogen al azar entre sus escalones
+const MODOS = [
+  { id: "picto", nombre: "🖼️ Pictogramas", escalones: ["picto-cual", "picto-cuantos", "picto-2", "picto-5"] },
+  { id: "barras", nombre: "📊 Barras", escalones: ["barras-cual", "barras-cuantos", "armar", "barras-comparar", "barras-escala"] },
+  { id: "datos", nombre: "🧮 Moda y promedio", escalones: ["moda-rango", "promedio"] },
+  { id: "azar", nombre: "🎲 Probabilidad", escalones: ["prob-seguro", "prob-mas", "prob-fraccion"] },
+];
+
+const esc = escalera("graficos", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("graficos-stars");
+const ayuda = ayudaSiSeQueda({ senalar: () => mostrarPista(false), espera: 15000 });
+
+let modo = "auto", q = null, nivel = 0, fallos = 0, listo = false, escrito = "", armado = [], pista = null, fantasma = false;
+
+function pintarModos() {
+  $("modos").innerHTML = `<button class="auto" data-modo="auto" aria-pressed="${modo === "auto"}" aria-label="De a poquito: sube solo">🪜</button>`
+    + MODOS.map(m => `<button data-modo="${m.id}" aria-pressed="${modo === m.id}">${m.nombre}</button>`).join("");
+}
+
+// ---------- Dibujos ----------
+function pictograma(g) {
+  const conValor = !!pista?.valoresIconos, res = pista?.resaltar || [];
+  const filas = g.cats.map((c, i) => {
+    const n = Math.floor(g.valores[i] / g.escala), medio = g.valores[i] % g.escala !== 0;
+    const ico = (extra = "", valor = g.escala) => `<span class="ico${extra}">${extra ? `<span>${c.e}</span>` : c.e}${conValor && res.includes(i) ? `<i>${valor}</i>` : ""}</span>`;
+    return `<div class="pfila${res.includes(i) ? " resalta" : ""}"><span class="pcat">${may(c.n)}</span><span class="piconos" aria-label="${may(c.n)}">${
+      Array.from({ length: n }, () => ico()).join("")}${medio ? ico(" medio", g.escala / 2) : ""}</span></div>`;
+  }).join("");
+  const est = g.escala === 1 ? "1 estudiante" : `${g.escala} estudiantes`;
+  return `${filas}<div class="clave">Cada dibujo = ${est}${g.escala === 2 ? ` · medio dibujo = 1` : ""}</div>`;
+}
+
+/** Gráfico de barras en SVG. editable: se puede tocar para armarlo. */
+function barras(g, valores = g.valores, editable = false) {
+  const W = 340, H = 258, L = 34, B = 50, T = 12, R = 6;
+  const alto = H - B - T, ancho = W - L - R;
+  const y = v => T + alto - (v / g.max) * alto;
+  const paso = ancho / g.cats.length, bw = Math.min(54, paso * 0.58);
+  const xb = i => L + paso * i + (paso - bw) / 2;
+  const res = pista?.resaltar || [], guias = pista?.guias || [], malas = pista?.malas || [];
+  let s = `<svg class="barras" viewBox="0 0 ${W} ${H}" role="${editable ? "group" : "img"}" aria-label="Gráfico de barras">`;
+  for (let v = 0; v <= g.max; v += g.escala) {
+    s += `<line class="${v ? "raya" : "eje"}" x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}"/>`;
+    s += `<text class="num" x="${L - 6}" y="${y(v) + 4.5}" text-anchor="end">${v}</text>`;
+  }
+  s += `<line class="eje" x1="${L}" y1="${T - 4}" x2="${L}" y2="${y(0)}"/>`;
+  g.cats.forEach((c, i) => {
+    const v = valores[i], x = xb(i);
+    if (v > 0) s += `<rect class="barra${res.includes(i) ? " resalta" : ""}${malas.includes(i) ? " mala" : ""}" x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" rx="4" fill="${COLORES_BARRAS[i % COLORES_BARRAS.length]}"/>`;
+    if (editable && fantasma) s += `<rect class="fantasma" x="${x - 3}" y="${y(g.valores[i])}" width="${bw + 6}" height="${y(0) - y(g.valores[i])}" rx="5"/>`;
+    if (guias.includes(i)) s += `<line class="guia" x1="${L}" y1="${y(v)}" x2="${x + bw}" y2="${y(v)}"/>`;
+    s += `<text x="${x + bw / 2}" y="${H - B + 26}" text-anchor="middle" font-size="22">${c.e}</text>`;
+    s += `<text class="nombre" x="${x + bw / 2}" y="${H - B + 44}" text-anchor="middle">${may(c.n)}</text>`;
+    // Zonas para tocar: cada rayita de la columna
+    if (editable) for (let k = 1; k <= g.max; k++)
+      s += `<rect class="toque" data-c="${i}" data-v="${k}" tabindex="0" role="button" aria-label="${may(c.n)}: hasta el ${k}" x="${L + paso * i + 2}" y="${y(k) - (y(k - 1) - y(k)) / 2}" width="${paso - 4}" height="${y(k - 1) - y(k)}"><title>${may(c.n)}: ${k}</title></rect>`;
+  });
+  return s + "</svg>";
+}
+
+function palitos(n) {
+  const grupos = Math.floor(n / 5), resto = n % 5;
+  let x = 4, out = "";
+  for (let k = 0; k < grupos; k++) {
+    for (let j = 0; j < 4; j++) out += `<line x1="${x + j * 7}" y1="3" x2="${x + j * 7}" y2="25"/>`;
+    out += `<line x1="${x - 4}" y1="22" x2="${x + 25}" y2="6"/>`;
+    x += 38;
+  }
+  for (let j = 0; j < resto; j++) out += `<line x1="${x + j * 7}" y1="3" x2="${x + j * 7}" y2="25"/>`;
+  const w = x + resto * 7 + 4;
+  return `<svg class="palitos" viewBox="0 0 ${w} 28" width="${w}" height="28" role="img" aria-label="${n} palitos">${out}</svg>`;
+}
+
+function bolsa(g) {
+  const marca = pista?.colores || [];
+  const todos = Object.entries(g.bolsa).flatMap(([id, n]) => Array(n).fill(id));
+  // Revueltos, pero siempre igual dentro de la misma pregunta
+  const orden = q.ordenBolsa || (q.ordenBolsa = todos.map(() => Math.random()));
+  const revueltos = todos.map((id, k) => [orden[k], id]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
+  return `<div class="bolsa"><div class="confites">${revueltos.map(id => {
+    const c = CONFITES.find(x => x.id === id);
+    return `<span class="confite${marca.includes(id) ? " marca" : ""}" style="--c:${c.c}" title="${c.n}"></span>`;
+  }).join("")}</div></div><div class="unidad">${todos.length} confites en la bolsa</div>`;
+}
+
+function datos(g) {
+  const res = pista?.datos || [];
+  return `<div class="datos">${g.filas.map((f, k) => `<div class="dato${res.includes(k) ? " resalta" : ""}"><small>${f}</small><b>${g.valores[k]}</b></div>`).join("")}</div>
+    <div class="unidad">(en ${g.unidad})</div>`;
+}
+
+function pintarGrafico() {
+  const g = q.grafico;
+  let cuerpo = "";
+  if (g.clase === "picto") cuerpo = pictograma(g);
+  else if (g.clase === "barras") cuerpo = barras(g);
+  else if (g.clase === "armar") cuerpo = `<table class="conteo">${g.cats.map((c, i) => `<tr><td>${c.e} ${may(c.n)}</td><td>${palitos(g.valores[i])}</td></tr>`).join("")}</table>${barras(g, armado, !listo)}`;
+  else if (g.clase === "bolsa") cuerpo = bolsa(g);
+  else cuerpo = datos(g);
+  $("grafico").innerHTML = `<span class="nivel">${modo === "auto" ? `🪜 ${nivel + 1} · ` : ""}${ESCALONES[nivel].nombre}</span><h3>${q.titulo}</h3>${cuerpo}`;
+}
+
+function pintarRespuesta() {
+  if (q.forma === "opciones") {
+    $("respuesta").innerHTML = `<div class="opciones" id="opciones" style="grid-template-columns:repeat(${q.cols || Math.min(q.opciones.length, 3)}, 1fr)">${
+      q.opciones.map(o => `<button data-id="${o.id}" aria-label="${o.voz}">${o.html}</button>`).join("")}</div>`;
+  } else if (q.forma === "numero") {
+    $("respuesta").innerHTML = `<div class="escribe"><span class="caja" id="caja" aria-live="polite">&nbsp;</span><span class="sufijo">${q.sufijo || ""}</span></div>
+      <div class="teclado" id="teclado">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(k => `<button data-k="${k}">${k}</button>`).join("")}
+        <button data-k="borrar" aria-label="Borrar">⌫</button><button data-k="0">0</button><button data-k="ok" class="ok" aria-label="Revisar">✔️</button></div>`;
+  } else {
+    $("respuesta").innerHTML = `<button id="revisarBtn">✔️ Revisar el gráfico</button>`;
+  }
+}
+
+// ---------- Rondas ----------
+const indice = id => ESCALONES.findIndex(e => e.id === id);
+function nueva() {
+  if (modo === "auto") nivel = esc.nivel;
+  else { const ids = MODOS.find(m => m.id === modo).escalones; nivel = indice(ids[Math.floor(Math.random() * ids.length)]); }
+  q = generar(nivel);
+  fallos = 0; listo = false; escrito = ""; pista = null; fantasma = false;
+  armado = q.forma === "armar" ? q.grafico.valores.map(() => 0) : [];
+  pintarGrafico(); pintarRespuesta();
+  feedback(""); $("explica").hidden = true; $("explica").classList.remove("pista");
+  $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
+  instruccion(q.pregunta, q.voz);
+  ayuda.empezar();
+}
+
+/** Primera ayuda: se marca en el dibujo dónde fijarse y se dice cómo leerlo. */
+function mostrarPista(conVoz = true) {
+  if (listo || !q) return;
+  pista = { ...q.pista };
+  pintarGrafico();
+  $("explica").hidden = false; $("explica").classList.add("pista");
+  $("explica").innerHTML = `💡 ${q.pista.texto}`;
+  if (conVoz) decir(q.pista.texto, { cola: true });
+}
+
+function ganar() {
+  listo = true;
+  ayuda.parar();
+  const bien = fallos === 0 ? elogio() : "¡Ahora sí!";
+  if (fallos === 0) { stars.sumar(); feedback("ok", "🎉", bien); }
+  else feedback("almost", "🤏", bien);
+  terminar(bien);
+}
+
+/** Muestra la explicación y anota la ronda en la escalera. */
+function terminar(inicio) {
+  listo = true;
+  if (q.forma === "armar") pintarGrafico();
+  // Se esconden el teclado y el botón de revisar, así la explicación queda a la vista
+  $("teclado")?.setAttribute("hidden", ""); $("revisarBtn")?.setAttribute("hidden", "");
+  $("explica").hidden = false; $("explica").classList.remove("pista");
+  $("explica").innerHTML = `✏️ ${q.explica}`;
+  decir(`${inicio} ${sinEtiquetas(q.explica)}`);
+  esc.resultado({ fallos, opciones: q.forma === "opciones" ? q.opciones.length : 0 });
+  $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse");
+}
+
+// Opciones
+$("respuesta").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled) return;
+  if (b.dataset.id === String(q.correcta)) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    return ganar();
+  }
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  const cerca = (q.tipo.endsWith("-cual")) && Math.abs(q.grafico.valores[Number(b.dataset.id)] - q.grafico.valores[Number(q.correcta)]) <= 1;
+  const correcto = $("opciones").querySelector(`[data-id="${q.correcta}"]`);
+  const quedan = [...$("opciones").querySelectorAll("button:not(:disabled)")];
+  if (fallos >= 2 || quedan.length === 1) {
+    feedback("bad", "🙈", "No es");
+    senalar(correcto);
+    $("explica").hidden = false; $("explica").classList.remove("pista");
+    $("explica").innerHTML = `✏️ ${q.explica}`;
+    decir(`Mirá: ${sinEtiquetas(q.explica)} Tocá la respuesta correcta.`);
+    return;
+  }
+  feedback(cerca ? "almost" : "bad", cerca ? "🤏" : "🙈", cerca ? "¡Casi!" : "No es");
+  pista = { ...q.pista }; pintarGrafico();
+  $("explica").hidden = false; $("explica").classList.add("pista"); $("explica").innerHTML = `💡 ${q.pista.texto}`;
+  decir(`${cerca ? "¡Casi!" : "No es."} ${q.pista.texto} Probá otra vez.`);
+});
+
+// Teclado de números
+$("respuesta").addEventListener("click", e => {
+  const b = e.target.closest("[data-k]");
+  if (!b || listo) return;
+  const k = b.dataset.k;
+  if (k === "borrar") escrito = escrito.slice(0, -1);
+  else if (k === "ok") return revisarNumero();
+  else if (escrito.length < 4) escrito = (escrito === "0" ? "" : escrito) + k;
+  sonido("tap");
+  $("caja").className = "caja";
+  $("caja").textContent = escrito || "\u00a0";
+});
+
+function revisarNumero() {
+  if (!escrito) { decir("Escribí tu respuesta con los números y tocá el visto bueno."); return; }
+  const v = Number(escrito);
+  if (v === q.respuesta) { $("caja").className = "caja ok"; return ganar(); }
+  fallos++;
+  const dif = Math.abs(v - q.respuesta);
+  const cerca = dif <= Math.max(1, (q.grafico.escala || 1) / 2) || (q.tipo.endsWith("-total") && dif <= 2);
+  $("caja").className = "caja mal";
+  if (fallos >= 2) {
+    feedback("bad", "🙈", "No es");
+    $("caja").textContent = q.respuesta; $("caja").className = "caja ok";
+    return terminar(`No es ${v}. Era ${q.respuesta}.`);
+  }
+  feedback(cerca ? "almost" : "bad", cerca ? "🤏" : "🙈", cerca ? "¡Casi!" : "No es");
+  pista = { ...q.pista }; pintarGrafico();
+  $("explica").hidden = false; $("explica").classList.add("pista"); $("explica").innerHTML = `💡 ${q.pista.texto}`;
+  decir(`${cerca ? "¡Casi!" : `No es ${v}.`} ${q.pista.texto} Probá otra vez.`);
+  escrito = "";
+  setTimeout(() => { if (!listo && !escrito) { $("caja").className = "caja"; $("caja").textContent = "\u00a0"; } }, 900);
+}
+
+// Armar el gráfico: tocar en la columna hasta dónde llega la barra
+$("grafico").addEventListener("click", e => {
+  const r = e.target.closest(".toque");
+  if (!r || listo || q.forma !== "armar") return;
+  const i = Number(r.dataset.c), v = Number(r.dataset.v);
+  armado[i] = v;
+  sonido("tap");
+  if (pista?.malas) pista.malas = pista.malas.filter(x => x !== i);
+  pintarGrafico();
+});
+// Con el teclado: Enter o Espacio ponen la barra; ↑ y ↓ suben y bajan por la columna
+$("grafico").addEventListener("keydown", e => {
+  const r = e.target.closest(".toque");
+  if (!r) return;
+  const c = r.dataset.c, v = Number(r.dataset.v);
+  const enfocar = k => $("grafico").querySelector(`.toque[data-c="${c}"][data-v="${k}"]`)?.focus();
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    r.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    enfocar(v); // el gráfico se vuelve a dibujar: el foco se queda donde estaba
+  } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    e.preventDefault();
+    enfocar(v + (e.key === "ArrowUp" ? 1 : -1));
+  }
+});
+$("respuesta").addEventListener("click", e => {
+  if (!e.target.closest("#revisarBtn") || listo) return;
+  const malas = q.grafico.valores.map((v, i) => (armado[i] === v ? -1 : i)).filter(i => i >= 0);
+  if (!malas.length) return ganar();
+  fallos++;
+  if (fallos >= 2) fantasma = true; // a la segunda, se ve hasta dónde tiene que llegar cada barra
+  pista = { malas };
+  pintarGrafico();
+  const c = q.grafico.cats[malas[0]], v = q.grafico.valores[malas[0]];
+  const txt = `La barra ${c.art ? (c.art === "el" ? "del " : "de la ") + c.n : `de «${c.n}»`} no coincide con la tabla: tiene ${v} ${v === 1 ? "palito" : "palitos"}, ${armado[malas[0]] ? `y tu barra llega hasta el ${armado[malas[0]]}` : "y todavía no le pusiste barra"}.`;
+  feedback(malas.length === 1 ? "almost" : "bad", malas.length === 1 ? "🤏" : "🙈", malas.length === 1 ? "¡Casi!" : "Revisá las barras");
+  $("explica").hidden = false; $("explica").classList.add("pista");
+  $("explica").innerHTML = `💡 ${txt}${fantasma ? " La rayita verde muestra hasta dónde llega cada barra." : ""}`;
+  decir(`${txt}${fantasma ? " La rayita verde te muestra hasta dónde llega." : ""}`);
+});
+
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  modo = b.dataset.modo;
+  esc.activa = modo === "auto";
+  sonido("tap"); pintarModos(); nueva();
+});
+
+const repetir = lento => q && decir(q.voz, lento ? { rate: LENTO } : undefined);
+pintarModos();
+alEmpezar(nueva, repetir);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__graficos = { get q() { return q; }, get nivel() { return nivel; }, get escalon() { return esc.nivel; }, get armado() { return armado; }, get listo() { return listo; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

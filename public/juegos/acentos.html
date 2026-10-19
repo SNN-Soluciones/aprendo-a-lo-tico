@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Dónde suena más fuerte?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; }
+  .levels button { padding: 2px 9px; line-height: 1.05; }
+  .levels button small { display: block; font-size: .62rem; font-weight: 800; }
+  .instr .txt { font-size: clamp(1.05rem, 4.6vw, 1.35rem); }
+
+  .tablero {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px; box-shadow: 0 5px 0 var(--rim);
+    padding: 14px 8px; min-height: 120px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  }
+  .tablero .ayudita { font-size: .9rem; font-weight: 700; opacity: .75; text-align: center; }
+
+  /* ✂️ Cortar: letras con rendijas para tocar entre ellas */
+  .palabra { display: flex; justify-content: center; align-items: stretch; --tam: 2.6rem; }
+  .palabra .l { font-size: var(--tam); font-weight: 800; line-height: 1.25; color: var(--ink); padding: 0 1px; }
+  .palabra .corte {
+    position: relative; width: 18px; min-width: 18px; padding: 0; margin: 0; border: none; box-shadow: none; background: none; border-radius: 8px;
+  }
+  .palabra .corte:active { transform: none; box-shadow: none; background: #FFF1C2; }
+  .palabra .corte::after {
+    content: ""; position: absolute; left: 50%; top: 18%; bottom: 18%; width: 2px; transform: translateX(-50%);
+    background: repeating-linear-gradient(to bottom, #B8C6D6 0 4px, transparent 4px 8px);
+  }
+  .palabra .corte[aria-pressed="true"]::after { width: 6px; top: 6%; bottom: 6%; background: var(--rim); border-radius: 3px; }
+  .palabra .corte.mal[aria-pressed="true"]::after { background: var(--bad); }
+  .palabra .corte.solucion::after { width: 6px; top: 6%; bottom: 6%; background: var(--ok); border-radius: 3px; }
+  .palabra .corte.senal { outline-offset: 0; }
+
+  /* 💪 Sílaba fuerte: una sílaba en cada botón */
+  .silabas { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .silabas button { font-size: clamp(1.7rem, 8vw, 2.4rem); padding: 4px 14px; border-radius: 18px; min-width: 64px; }
+
+  /* 🏷️ Clasificar: cajitas con el nombre de cada sílaba contando desde el final */
+  .cajas { display: flex; gap: 6px; justify-content: center; width: 100%; }
+  .cajas span { flex: 0 1 auto; min-width: 54px; text-align: center; background: #EEF3F8; border: 3px solid var(--rim); border-radius: 14px; padding: 2px 6px 4px; }
+  .cajas b { display: block; font-size: clamp(1.5rem, 7vw, 2.1rem); line-height: 1.15; }
+  .cajas small { display: block; font-size: .62rem; font-weight: 800; opacity: .75; line-height: 1.05; }
+  .cajas .fuerte { background: var(--btn); }
+  .cajas .fuerte b { text-decoration: underline 4px var(--materia); text-underline-offset: 4px; }
+
+  /* ✍️ Tilde: se tocan las vocales */
+  .palabra.tilde { gap: 2px; flex-wrap: wrap; }
+  .palabra.tilde button.v { font-size: var(--tam); line-height: 1.1; padding: 0 6px; border-radius: 12px; border-width: 3px; min-width: 0; }
+
+  .opciones { display: grid; gap: 10px; margin-top: 12px; grid-template-columns: repeat(var(--n, 2), 1fr); }
+  .opciones button { border-radius: 18px; padding: 8px 4px; font-size: 1.15rem; line-height: 1.1; }
+  .opciones button small { display: block; font-size: .78rem; font-weight: 700; opacity: .8; }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.3; }
+  .explica[hidden], #revisarBtn[hidden] { display: none; }
+  #revisarBtn { margin-top: 10px; width: 100%; font-size: 1.3rem; background: var(--materia); color: #fff; border-radius: 18px; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">✍️🗣️</div>
+  <h1>¿Dónde suena más fuerte?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Sílabas, la sílaba que suena más fuerte, agudas, graves y esdrújulas, y cuándo llevan tilde. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="2" aria-label="Separar en sílabas">✂️<small>Sílabas</small></button>
+    <button data-nivel="4" aria-label="La sílaba fuerte">💪<small>Fuerte</small></button>
+    <button data-nivel="7" aria-label="Agudas, graves y esdrújulas">🏷️<small>Tipo</small></button>
+    <button data-nivel="11" aria-label="¿Lleva tilde?">✍️<small>Tilde</small></button>
+    <button data-nivel="12" aria-label="Hiato">🎵<small>Hiato</small></button>
+    <button data-nivel="13" aria-label="Sobresdrújulas">🧗<small>Sobres</small></button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap tablero" id="tablero" aria-live="polite"></div>
+<button id="revisarBtn" class="wrap" hidden>✔️ Revisar</button>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap explica" id="explica" hidden></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra palabra">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, TIPOS, POSICIONES, ronda, marcada, separada, porQueTilde, porQueTipo, porQueSilabas } from "../js/acentos.js";
+
+const $ = id => document.getElementById(id);
+
+// 🪜 Escalones en js/acentos.js: de separar «ma-no» hasta hiatos y sobresdrújulas
+const esc = escalera("acentos", { escalones: ESCALONES.length,
+  inicio: edad => edad === null || edad <= 7 ? 0 : edad === 8 ? 1 : edad === 9 ? 3 : edad === 10 ? 5 : edad === 11 ? 7 : 8 });
+const stars = estrellas("acentos-stars");
+
+let manual = 2, escalon = null, r = null, fallos = 0, listo = false, ultima = "", cortes = new Set();
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(objetivo()), espera: 14000 });
+
+const tam = n => n <= 6 ? "clamp(2.2rem, 11vw, 3rem)" : n <= 8 ? "clamp(1.9rem, 8.6vw, 2.5rem)" : "clamp(1.7rem, 7.4vw, 2.2rem)";
+const VOCALES = "aeiouáéíóúü";
+const opcionesDe = () => r.tipo === "tonica" ? r.p.n : r.tipo === "clasificar" ? r.opciones.length
+  : r.tipo === "tilde" ? [...r.p.sinTilde].filter(c => VOCALES.includes(c.toLowerCase())).length + 1 : 0;
+
+// El botón de la respuesta correcta (para señalarlo como ayuda)
+function objetivo() {
+  if (r.tipo === "cortar") {
+    const falta = r.respuesta.find(k => !cortes.has(k));
+    return falta !== undefined ? $("tablero").querySelector(`.corte[data-k="${falta}"]`) : $("revisarBtn");
+  }
+  if (r.tipo === "tonica") return $("tablero").querySelector(`[data-s="${r.respuesta}"]`);
+  if (r.tipo === "clasificar") return $("opciones").querySelector(`[data-t="${r.respuesta}"]`);
+  return r.respuesta >= 0 ? $("tablero").querySelector(`[data-i="${r.respuesta}"]`) : $("opciones").querySelector(`[data-t="no"]`);
+}
+
+// ---------- Rondas ----------
+function nuevo() {
+  escalon = ESCALONES[esc.activa ? esc.nivel : manual];
+  r = ronda(escalon, Math.random, ultima);
+  ultima = r.p.palabra;
+  fallos = 0; listo = false; cortes = new Set();
+  $("explica").hidden = true; feedback("");
+  $("nextBtn").classList.remove("pulse");
+  pintar();
+  const w = r.p.palabra;
+  if (r.tipo === "cortar") instruccion("✂️ Separá en sílabas", `Separá en sílabas: ${w}. Tocá entre las letras donde se corta, y después tocá revisar.`);
+  else if (r.tipo === "tonica") instruccion("💪 ¿Qué sílaba suena más fuerte?", `¿Qué sílaba suena más fuerte? ${w}... ${w}.`);
+  else if (r.tipo === "clasificar") {
+    const ops = r.opciones.map(id => TIPOS.find(t => t.id === id).nombre.toLowerCase());
+    const lista = `${ops.slice(0, -1).join(", ")} o ${ops[ops.length - 1]}`;
+    instruccion(`🏷️ ¿Es ${lista}?`, `${w}. ¿Es ${lista}?`);
+  } else instruccion("✍️ ¿Le falta la tilde?", `Escuchá: ${w}. ¿Le falta la tilde? Tocá la vocal que la lleva, o «No lleva tilde».`);
+  ayuda.empezar();
+}
+
+function pintar() {
+  const p = r.p;
+  $("revisarBtn").hidden = r.tipo !== "cortar";
+  $("opciones").innerHTML = "";
+  if (r.tipo === "cortar") {
+    const letras = [...p.palabra];
+    $("tablero").innerHTML = `<div class="palabra" style="--tam:${tam(letras.length)}">${letras.map((c, i) =>
+      (i ? `<button class="corte" data-k="${i}" aria-pressed="false" aria-label="Cortar entre ${letras[i - 1]} y ${c}"></button>` : "") + `<span class="l">${c}</span>`).join("")}</div>
+      <div class="ayudita">Tocá entre las letras para cortar</div>`;
+  } else if (r.tipo === "tonica") {
+    $("tablero").innerHTML = `<div class="silabas">${p.silabas.map((s, i) => `<button data-s="${i}">${s}</button>`).join("")}</div>
+      <div class="ayudita">${p.silabas.join("-")}</div>`;
+  } else if (r.tipo === "clasificar") {
+    $("tablero").innerHTML = `<div class="cajas">${p.silabas.map((s, i) => {
+      const desdeFinal = p.n - 1 - i;
+      return `<span class="${r.marcada && i === p.tonica ? "fuerte" : ""}"><b>${s}</b><small>${desdeFinal <= 3 ? POSICIONES[desdeFinal] : "&nbsp;"}</small></span>`;
+    }).join("")}</div><div class="ayudita">${r.marcada ? "La amarilla es la que suena más fuerte" : "Escuchá con 🔊 cuál suena más fuerte"}</div>`;
+    $("opciones").style.setProperty("--n", r.opciones.length === 4 ? 2 : r.opciones.length);
+    $("opciones").innerHTML = r.opciones.map(id => { const t = TIPOS.find(x => x.id === id); return `<button data-t="${id}">${t.nombre}<small>fuerte ${t.donde}</small></button>`; }).join("");
+  } else {
+    const letras = [...p.sinTilde];
+    $("tablero").innerHTML = `<div class="palabra tilde" style="--tam:${tam(letras.length)}">${letras.map((c, i) =>
+      VOCALES.includes(c.toLowerCase()) ? `<button class="v" data-i="${i}" aria-label="Tilde en la ${c.toLowerCase()}">${c}</button>` : `<span class="l">${c}</span>`).join("")}</div>
+      <div class="ayudita">Tocá la vocal que lleva la tilde</div>`;
+    $("opciones").style.setProperty("--n", 1);
+    $("opciones").innerHTML = `<button data-t="no">🚫 No lleva tilde</button>`;
+  }
+}
+
+// ---------- Contestar ----------
+function explicar(texto) { $("explica").hidden = false; $("explica").textContent = texto; }
+
+function acierto(el, texto) {
+  listo = true;
+  ayuda.parar();
+  $("tablero").querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  $("opciones").querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  el?.classList.add("right");
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); const bien = elogio(); feedback("ok", "🎉", bien); decir(`${bien} ${texto}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${texto}`); }
+  explicar(texto);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: opcionesDe() });
+  $("nextBtn").classList.add("pulse");
+}
+
+/** Error: la primera vez, una pista; la segunda, se señala la respuesta y se explica. */
+function error(el, casi, pista, explicacion) {
+  fallos++;
+  if (el) { el.classList.add("wrong", "nope"); el.disabled = true; }
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", casi ? "¡Casi!" : "No es");
+  if (fallos >= 2) {
+    senalar(objetivo());
+    explicar(explicacion);
+    decir(`${pista} ${explicacion}`);
+  } else decir(pista);
+}
+
+// ✂️ Cortar
+$("tablero").addEventListener("click", e => {
+  if (listo) return;
+  const c = e.target.closest(".corte");
+  if (c) {
+    const k = Number(c.dataset.k);
+    if (cortes.has(k)) cortes.delete(k); else cortes.add(k);
+    c.setAttribute("aria-pressed", String(cortes.has(k)));
+    c.classList.remove("mal");
+    sonido("tap");
+    return;
+  }
+  const s = e.target.closest("[data-s]");
+  if (s && !s.disabled) return tonica(s);
+  const v = e.target.closest("[data-i]");
+  if (v && !v.disabled) return tilde(v, Number(v.dataset.i));
+});
+
+$("revisarBtn").addEventListener("click", () => {
+  if (listo || r.tipo !== "cortar") return;
+  const bien = new Set(r.respuesta);
+  const sobran = [...cortes].filter(k => !bien.has(k)), faltan = r.respuesta.filter(k => !cortes.has(k));
+  if (!sobran.length && !faltan.length) {
+    $("tablero").querySelectorAll(".corte").forEach(x => { if (bien.has(Number(x.dataset.k))) x.classList.add("solucion"); });
+    return acierto(null, porQueSilabas(r.p));
+  }
+  sobran.forEach(k => $("tablero").querySelector(`.corte[data-k="${k}"]`).classList.add("mal"));
+  const casi = sobran.length + faltan.length === 1;
+  const pista = sobran.length && faltan.length ? "Hay cortes que no van y falta alguno. Decí la palabra despacio, golpe por golpe."
+    : sobran.length ? `${sobran.length === 1 ? "Te sobra un corte: está en rojo" : "Te sobran cortes: están en rojo"}. Decí la palabra despacio, golpe por golpe.`
+    : `${faltan.length === 1 ? "Te falta un corte" : `Te faltan ${faltan.length} cortes`}. Decí la palabra despacio, golpe por golpe.`;
+  fallos++;
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", casi ? "¡Casi!" : "No es");
+  if (fallos >= 2) {
+    // Se muestra cómo se separa y se pasa a la siguiente
+    $("tablero").querySelectorAll(".corte").forEach(x => {
+      const k = Number(x.dataset.k), si = bien.has(k);
+      x.setAttribute("aria-pressed", "false"); x.classList.remove("mal"); x.classList.toggle("solucion", si);
+    });
+    listo = true; ayuda.parar();
+    const texto = porQueSilabas(r.p);
+    explicar(texto); decir(`${pista} ${texto}`);
+    esc.resultado({ fallos, ayuda: ayuda.usada });
+    $("nextBtn").classList.add("pulse");
+  } else decir(pista);
+});
+
+// 💪 Sílaba fuerte
+function tonica(b) {
+  const i = Number(b.dataset.s), p = r.p;
+  if (i === r.respuesta) return acierto(b, `En ${p.palabra} suena más fuerte ${p.silabas[p.tonica].toLowerCase()}: ${separada(p)}.`);
+  error(b, false, `Esa no es la que suena más fuerte. Escuchá otra vez: ${p.palabra}... ${p.palabra}.`,
+    `Suena más fuerte ${p.silabas[p.tonica].toLowerCase()}: ${separada(p)}.`);
+}
+
+// 🏷️ Clasificar y «No lleva tilde»
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-t]");
+  if (!b || listo || b.disabled) return;
+  if (r.tipo === "tilde") return tilde(b, -1);
+  const p = r.p;
+  if (b.dataset.t === r.respuesta) return acierto(b, porQueTipo(p));
+  const fuerte = p.silabas[p.tonica].toLowerCase();
+  const pista = r.marcada ? `Fijate: la que suena más fuerte es ${fuerte}. ¿Cuál es, contando desde el final?`
+    : `Escuchá bien: ${p.palabra}. Buscá la sílaba que suena más fuerte y contá desde el final.`;
+  error(b, false, pista, porQueTipo(p));
+});
+
+// ✍️ Tilde: i = letra tocada, o -1 si tocó «No lleva tilde»
+function tilde(b, i) {
+  const p = r.p, porque = porQueTilde(p, { hiatos: !!escalon.hiatos });
+  if (i === r.respuesta) {
+    if (i >= 0) b.textContent = p.palabra[i];
+    return acierto(b, porque);
+  }
+  // ¡Casi! = tocó una vocal de la sílaba que suena fuerte, pero no la que lleva la tilde
+  let inicio = 0;
+  p.silabas.slice(0, p.tonica).forEach(s => { inicio += s.length; });
+  const enLaFuerte = i >= inicio && i < inicio + p.silabas[p.tonica].length;
+  let pista;
+  if (r.respuesta < 0) pista = `Escuchá: ${p.palabra}. Pensá qué tipo de palabra es y en qué termina: ¿de verdad le hace falta?`;
+  else if (i < 0) pista = `Escuchá bien: ${p.palabra}. ¿Qué sílaba suena más fuerte? Y fijate en cómo termina.`;
+  else if (enLaFuerte) pista = "¡Esa es la sílaba que suena fuerte! Pero la tilde va en otra vocal de esa sílaba.";
+  else pista = `Esa vocal no suena fuerte. Escuchá otra vez: ${p.palabra}.`;
+  error(b, i >= 0 && enLaFuerte, pista, porque);
+}
+
+$("nextBtn").addEventListener("click", () => {
+  // Saltarse una ronda después de equivocarse cuenta como ronda difícil: si no, saltar evitaría bajar de escalón
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = Number(v);
+  ultima = ""; nuevo();
+});
+alEmpezar(nuevo, lento => {
+  const w = r?.p.palabra || "";
+  const op = lento ? { rate: LENTO } : undefined;
+  if (!r) return;
+  if (r.tipo === "cortar") decir(`Separá en sílabas: ${w}.`, op);
+  else if (r.tipo === "tonica" || r.tipo === "clasificar") decir(`${w}... ${w}.`, op);
+  else decir(`${w}. ¿Le falta la tilde?`, op);
+});
+
+if (new URLSearchParams(location.search).has("prueba")) window.__acentos = { get r() { return r; }, get nivel() { return esc.nivel; }, get activa() { return esc.activa; }, get escalon() { return escalon; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

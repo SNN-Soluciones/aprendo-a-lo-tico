@@ -1,12 +1,25 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v23";
+const VERSION = "v24";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",
   "css/base.css", "css/prepa.css", "js/home.js", "js/catalog.js", "js/config.js", "js/voz.js", "js/prepa.js",
   "js/perfil.js", "js/escalera.js", "juegos/buscar.html", "juegos/patrones.html", "js/patrones.js", "juegos/parejas.html",
   "juegos/tamanos.html", "juegos/sonidos.html", "juegos/clasificar.html",
+  "juegos/repartir.html", "js/repartir.js",
+  "juegos/cuentos.html", "js/cuentos.js",
+  "juegos/palabras.html", "js/palabras.js",
+  "juegos/cuerpo.html", "js/cuerpo.js",
+  "juegos/rumbos.html", "js/rumbos.js",
+  "juegos/area.html", "js/area.js",
+  "juegos/acentos.html", "js/acentos.js",
+  "juegos/cadenas.html", "js/cadenas.js",
+  "juegos/graficos.html", "js/graficos.js",
+  "juegos/historia.html", "js/historia.js",
+  "juegos/fracciones.html", "js/fracciones.js",
+  "juegos/bus.html", "js/bus.js",
+  "juegos/porcentajes.html", "js/porcentajes.js",
   "manifest.webmanifest", "icons/icon.svg", "icons/icon-192.png", "icons/icon-512.png",
   "juegos/reloj.html", "juegos/restas-bloques.html", "juegos/pulperia.html",
   "juegos/sumas-bloques.html", "juegos/animales-cr.html", "juegos/provincias.html", "juegos/listen-tap.html",

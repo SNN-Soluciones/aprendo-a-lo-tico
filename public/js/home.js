@@ -1,6 +1,6 @@
 import { MATERIAS, GRADOS, JUEGOS } from "./catalog.js";
 import { retoDelDia, hecho } from "./reto-dia.js";
-import { AVATARES, EDADES, LECTURA, perfiles, perfilActivo, usarPerfil, guardarPerfil, borrarPerfil, gradosParaEdad, juegosPara } from "./perfil.js";
+import { AVATARES, EDADES, LECTURA, perfiles, perfilActivo, usarPerfil, guardarPerfil, borrarPerfil, gradosParaEdad, juegosPara, progresoDe } from "./perfil.js";
 import { hablar, sonido } from "./voz.js";
 
 // 🏠 Inicio: menú principal con categorías (#), página de cada categoría (#c/<id>) y menú ☰.
@@ -54,7 +54,22 @@ function pintarQuien() {
   $("#quien").innerHTML = `<div class="perfiles" role="group" aria-label="¿Quién juega?">${lista.map(p =>
     `<button class="perfil" data-p="${p.id}" aria-pressed="${p.id === activo?.id}"><span class="av" aria-hidden="true">${p.avatar}</span><span class="pn">${nombreDe(p)}</span></button>`).join("")}
     <button class="perfil otro" data-accion="nuevo"><span class="av" aria-hidden="true">➕</span><span class="pn">Otro</span></button></div>
-    ${activo ? `<p class="perfil-info">${activo.edad} años · ${lee.emoji} ${lee.nombre} <button class="mini" data-accion="editar">✏️ Cambiar</button></p>` : ""}`;
+    ${activo ? `<p class="perfil-info">${activo.edad} años · ${lee.emoji} ${lee.nombre} <button class="mini" data-accion="editar">✏️ Cambiar</button></p>${pintarProgreso(activo)}` : ""}`;
+}
+
+// 📈 Para el papá o la maestra: en qué escalón va en cada juego que ya jugó
+function pintarProgreso(p) {
+  const prog = progresoDe(p.id);
+  const filas = JUEGOS.filter(j => prog[j.id]).map(j => {
+    const { n = 0, de } = prog[j.id], pct = de ? Math.round(((n + 1) / de) * 100) : 0;
+    return `<li><a href="${j.url}"><span aria-hidden="true">${j.emoji}</span> ${j.titulo}</a>
+      <span class="barra-prog" role="img" aria-label="Escalón ${n + 1}${de ? ` de ${de}` : ""}"><i style="width:${pct}%"></i></span>
+      <small>🪜 ${n + 1}${de ? ` de ${de}` : ""}</small></li>`;
+  });
+  if (!filas.length) return "";
+  return `<details class="progreso"><summary>📈 Cómo va ${p.nombre ? escapar(p.nombre) : "en cada juego"}</summary>
+    <ul>${filas.join("")}</ul>
+    <p class="privado">Cada juego sube de escalón cuando acierta seguido y baja si le cuesta. Si un escalón le queda difícil, tocá el nivel a mano en el juego.</p></details>`;
 }
 
 function pintarEditor(primeraVez) {
@@ -129,6 +144,11 @@ const tarjetaGrande = j => {
     <button class="sug-oir" data-oir="${j.id}" aria-label="Escuchar: ${j.titulo}">🔊</button>
   </div>`;
 };
+// Si son muchos (los grandes tienen decenas), se agrupan por materia, cada grupo con los más justos a su edad primero
+const agrupados = lista => lista.length <= 10 ? lista.map(tarjetaGrande).join("") : MATERIAS.map(m => {
+  const de = lista.filter(j => j.materia === m.id);
+  return de.length ? `<h3 class="sug-materia" style="--mat:${m.color}"><span aria-hidden="true">${m.emoji}</span> ${m.nombre}</h3>${de.map(tarjetaGrande).join("")}` : "";
+}).join("");
 function pintarSugeridos() {
   const p = perfilActivo();
   $("#sugeridos").hidden = !p || !!editando;
@@ -137,11 +157,11 @@ function pintarSugeridos() {
   $("#sugTitulo").innerHTML = `<span aria-hidden="true">${p.avatar}</span> Juegos para ${p.nombre ? escapar(p.nombre) : "vos"}`;
   $("#sugNota").textContent = p.lee === "no"
     ? "Para jugar escuchando y mirando, sin leer. 🔊 dice el nombre de cada juego. 🪜 = sube de nivel solito, de a poquito."
-    : "Los de más arriba le quedan mejor a su edad. 🪜 = sube de nivel solito, de a poquito.";
-  $("#sugLista").innerHTML = juegos.map(tarjetaGrande).join("") || `<p class="sug-nota">Todavía no hay juegos para esta edad. ¡Pronto!</p>`;
+    : `${juegos.length > 10 ? "Por materia; en cada una, primero los que mejor le quedan a su edad." : "Los de más arriba le quedan mejor a su edad."} 🪜 = sube de nivel solito, de a poquito.`;
+  $("#sugLista").innerHTML = agrupados(juegos) || `<p class="sug-nota">Todavía no hay juegos para esta edad. ¡Pronto!</p>`;
   $("#conAyuda").hidden = !conAyuda.length;
   $("#conAyudaTitulo").textContent = `📖 Con un adulto que le lea (${conAyuda.length})`;
-  $("#conAyudaLista").innerHTML = conAyuda.map(tarjetaGrande).join("");
+  $("#conAyudaLista").innerHTML = agrupados(conAyuda);
 }
 $("#sugeridos").addEventListener("click", e => {
   const b = e.target.closest("[data-oir]");

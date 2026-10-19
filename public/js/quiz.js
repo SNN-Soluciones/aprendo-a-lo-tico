@@ -7,8 +7,13 @@
 // Una pregunta es:
 //   { html, voz, opciones: [{ id, html, voz? }], correcta: id, explica, cols? }
 //   html: lo que se ve en la tarjeta · voz: lo que se lee (🔊 lo repite) · explica: se muestra y se lee al contestar
+// o, para escribir la respuesta (un número, una palabra) en vez de escoger:
+//   { html, voz, escribir: { respuesta, numero?, sufijo?, revisar? }, explica }
+//   respuesta: texto o lista de textos aceptados · numero: teclado de números · sufijo: lo que va después («min», «cm²»)
+//   revisar(texto): si se da, decide si está bien (por ejemplo, para aceptar 0,5 y 1/2)
 import { elogio, sonido, LENTO } from "./voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "./prepa.js";
+import { escalera as crearEscalera } from "./escalera.js";
 
 const $ = id => document.getElementById(id);
 
@@ -19,23 +24,52 @@ export function barajar(arr, rnd = Math.random) {
 }
 export const estrellasDe = (bien, total) => { const p = bien / total; return p >= 0.9 ? 3 : p >= 0.7 ? 2 : p >= 0.5 ? 1 : 0; };
 
+/** Para comparar respuestas escritas: sin mayúsculas ni espacios (los miles van con espacio), y la coma decimal vale como punto. */
+export const normalizar = t => String(t).trim().toLowerCase().replace(/\s+/g, "").replace(/,/g, ".");
+/**
+ * ¿La respuesta escrita vale? Con `numero`, se comparan como números (0,750 = 0.75 = ,75),
+ * y también se acepta el punto de miles cuando se escribió así (1.500 por 1500).
+ */
+export function igual(respuesta, dado, numero = false) {
+  const a = normalizar(respuesta), b = normalizar(dado);
+  if (a === b) return true;
+  if (!numero || !b || !isFinite(Number(a))) return false;
+  const leidos = [Number(b)];
+  if (/^\d{1,3}(\.\d{3})+$/.test(b)) leidos.push(Number(b.replace(/\./g, "")));
+  return leidos.some(x => x === Number(a));
+}
+const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+
 /**
  * @param {object} op
  * @param {string} op.clave            dónde se guardan las estrellas
  * @param {Array}  op.modos            [{ id, nombre, instr, preguntas: () => [pregunta] }]
  * @param {object} [op.textos]         { fin3, fin2, fin1, fin0 } mensajes del resumen
  * @param {Function} [op.leerOpcion]   cómo se lee una opción al elegirla (por ejemplo, en inglés)
+ * @param {object} [op.escalera]       🪜 De a poquito (opcional): agrega un modo 🪜 (el primero) que va pregunta por pregunta
+ *                                     en el escalón que le toca, y sube o baja con js/escalera.js.
+ *                                     { id, escalones: [{ nombre, instr?, pregunta: () => pregunta }], inicio?: edad => n, meta? }
  */
-export function montarQuiz({ clave, modos, textos = {}, leerOpcion }) {
+export function montarQuiz({ clave, modos, textos = {}, leerOpcion, escalera: conf }) {
   let mejores = {};
   try { mejores = JSON.parse(localStorage.getItem(clave)) || {}; } catch (_) {}
   const guardar = () => { try { localStorage.setItem(clave, JSON.stringify(mejores)); } catch (_) {} };
+
+  let esc = null;
+  if (conf) {
+    if (!$("escalera")) $("stars").insertAdjacentHTML("beforebegin", `<div class="escalera" id="escalera"></div>`);
+    esc = crearEscalera(conf.id, { escalones: conf.escalones.length, inicio: conf.inicio, meta: conf.meta });
+    const escalon = () => conf.escalones[esc.nivel];
+    const auto = { id: "auto", nombre: "🪜", auto: true, preguntas: () => [escalon().pregunta()], get instr() { return escalon().instr || escalon().nombre; } };
+    modos = [auto, ...modos];
+  }
 
   let modo = modos[0], preguntas = [], k = 0, bien = 0, resultados = [], listo = false;
   const q = () => preguntas[k];
 
   function pintarModos() {
     $("modos").innerHTML = modos.map(m => {
+      if (m.auto) return `<button data-modo="${m.id}" aria-pressed="${m === modo}" aria-label="De a poquito: sube solo">${m.nombre}</button>`;
       const n = mejores[m.id] || 0;
       return `<button data-modo="${m.id}" aria-pressed="${m === modo}">${m.nombre}${n ? ` <span class="est">${"⭐".repeat(n)}</span>` : ""}</button>`;
     }).join("");
@@ -52,38 +86,72 @@ export function montarQuiz({ clave, modos, textos = {}, leerOpcion }) {
     $("juego").hidden = false; $("resumen").hidden = true;
     $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
     $("tarjeta").innerHTML = p.html;
-    $("opciones").style.gridTemplateColumns = `repeat(${p.cols || Math.min(p.opciones.length, 3)}, 1fr)`;
-    $("opciones").innerHTML = p.opciones.map(o => `<button data-id="${o.id}">${o.html}</button>`).join("");
+    $("avance").hidden = !!modo.auto;
+    if (p.escribir) {
+      const w = p.escribir;
+      $("opciones").style.gridTemplateColumns = "1fr";
+      $("opciones").innerHTML = `<form class="escribir" novalidate>
+        <input id="respuesta" autocomplete="off" aria-label="Tu respuesta" ${w.numero ? `inputmode="decimal"` : `autocapitalize="off" spellcheck="false"`}>
+        ${w.sufijo ? `<span class="sufijo">${w.sufijo}</span>` : ""}<button type="submit">✔️</button></form>`;
+      setTimeout(() => $("respuesta")?.focus({ preventScroll: true }), 50);
+    } else {
+      $("opciones").style.gridTemplateColumns = `repeat(${p.cols || Math.min(p.opciones.length, 3)}, 1fr)`;
+      $("opciones").innerHTML = p.opciones.map(o => `<button data-id="${o.id}">${o.html}</button>`).join("");
+    }
     pintarAvance();
     instruccion(modo.instr, p.voz);
+  }
+
+  function contestar(ok, opcion) {
+    listo = true;
+    const p = q();
+    bien += ok ? 1 : 0; resultados.push(ok);
+    if (modo.auto) {
+      // En un quiz no hay segundo intento: fallar cuenta como ronda difícil (dos seguidas bajan un escalón)
+      esc.resultado({ fallos: ok ? 0 : 2 });
+      if (ok) { mejores.auto = (mejores.auto || 0) + 1; guardar(); pintarModos(); }
+    }
+    pintarAvance();
+    feedback(ok ? "ok" : "bad", ok ? "🎉" : "🤔", ok ? elogio() : "¡Casi!");
+    $("explica").hidden = false; $("explica").innerHTML = p.explica;
+    const texto = p.explica.replace(/<[^>]+>/g, "");
+    if (leerOpcion && ok && opcion) leerOpcion(opcion).then(() => decir(texto, { cola: true }));
+    else decir(`${ok ? elogio() : ""} ${texto}`);
+    $("sigBtn").hidden = false;
+    $("sigBtn").textContent = modo.auto || k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
   }
 
   $("opciones").addEventListener("click", e => {
     const b = e.target.closest("[data-id]");
     if (!b || listo) return;
-    listo = true;
     const p = q(), ok = b.dataset.id === String(p.correcta);
     $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; if (x.dataset.id === String(p.correcta)) x.classList.add("right"); });
     if (!ok) b.classList.add("wrong");
-    bien += ok ? 1 : 0; resultados.push(ok);
-    pintarAvance();
-    feedback(ok ? "ok" : "bad", ok ? "🎉" : "🤔", ok ? elogio() : "¡Casi!");
-    $("explica").hidden = false; $("explica").innerHTML = p.explica;
-    const texto = p.explica.replace(/<[^>]+>/g, "");
-    const opcion = p.opciones.find(o => o.id === b.dataset.id);
-    if (leerOpcion && ok) leerOpcion(opcion).then(() => decir(texto, { cola: true }));
-    else decir(`${ok ? elogio() : ""} ${texto}`);
-    $("sigBtn").hidden = false;
-    $("sigBtn").textContent = k + 1 < preguntas.length ? "Siguiente ➡️" : "Ver resultado 🏁";
+    contestar(ok, p.opciones.find(o => o.id === b.dataset.id));
+  });
+
+  // Respuesta escrita
+  $("opciones").addEventListener("submit", e => {
+    e.preventDefault();
+    const p = q(), campo = $("respuesta");
+    if (listo || !p.escribir || !campo.value.trim()) return;
+    const w = p.escribir, dado = campo.value;
+    const ok = w.revisar ? w.revisar(dado) : [].concat(w.respuesta).some(r => igual(r, dado, w.numero));
+    campo.disabled = true; campo.closest("form").querySelector("button").disabled = true;
+    campo.classList.add(ok ? "right" : "wrong");
+    if (!ok) campo.insertAdjacentHTML("afterend", `<span class="era">✔️ ${escapar([].concat(w.respuesta)[0])}${w.sufijo ? " " + w.sufijo : ""}</span>`);
+    contestar(ok);
   });
 
   $("sigBtn").addEventListener("click", () => {
     sonido("tap"); k++;
-    if (k < preguntas.length) mostrar(); else terminar();
+    if (modo.auto) { preguntas.push(modo.preguntas()[0]); mostrar(); }
+    else if (k < preguntas.length) mostrar(); else terminar();
   });
 
   function empezar(m = modo) {
     modo = m; preguntas = m.preguntas(); k = 0; bien = 0; resultados = [];
+    if (esc) esc.activa = !!m.auto;
     pintarModos(); mostrar();
   }
 
@@ -115,5 +183,5 @@ export function montarQuiz({ clave, modos, textos = {}, leerOpcion }) {
   alEmpezar(() => empezar(), repetir);
   pintarModos();
 
-  if (new URLSearchParams(location.search).has("prueba")) window.__quiz = { get q() { return q(); }, get modo() { return modo.id; } };
+  if (new URLSearchParams(location.search).has("prueba")) window.__quiz = { get q() { return q(); }, get modo() { return modo.id; }, get nivel() { return esc?.nivel; } };
 }

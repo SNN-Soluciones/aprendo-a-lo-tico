@@ -540,4 +540,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/cuerpo.html",
   },
+  {
+    id: "palabras",
+    titulo: "¿Qué es? Clases de palabras",
+    descripcion: "Sustantivo, verbo o adjetivo: canastas, oraciones ticas, concordancia, pronombres, adverbios y sujeto y predicado.",
+    emoji: "📦",
+    materia: "espanol",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/palabras.html",
+  },
 ];

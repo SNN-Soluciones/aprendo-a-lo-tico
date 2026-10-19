@@ -48,15 +48,29 @@ const elegir = (arr, rnd) => arr[Math.floor(rnd() * arr.length)];
 
 /**
  * Jugada del jaguar.
- *   facil:   a veces aprovecha para ganar, pero casi siempre juega al azar
- *   medio:   gana si puede, bloquea si tiene que hacerlo, si no prefiere el centro y las esquinas
- *   dificil: juega perfecto (nunca pierde)
+ *   muyfacil: juega al azar y casi nunca aprovecha para ganar (para los chiquitos)
+ *   facil:    a veces aprovecha para ganar, pero casi siempre juega al azar
+ *   regular:  casi siempre gana si puede y muchas veces bloquea; si no, juega al azar
+ *   medio:    gana si puede, bloquea si tiene que hacerlo, si no prefiere el centro y las esquinas
+ *   astuto:   más o menos la mitad de las veces juega perfecto; las otras, como el medio
+ *   dificil:  juega perfecto (nunca pierde)
  */
+export const NIVELES_JAGUAR = ["muyfacil", "facil", "regular", "medio", "astuto", "dificil"];
 export function jugadaJaguar(t, s, nivel, rnd = Math.random) {
   const lib = libres(t);
-  if (nivel === "dificil") return elegir(mejores(t, s), rnd);
+  if (nivel === "dificil" || (nivel === "astuto" && rnd() < 0.55)) return elegir(mejores(t, s), rnd);
   const gana = paraGanar(t, s), bloquea = paraGanar(t, otro(s));
-  if (nivel === "medio") {
+  if (nivel === "muyfacil") {
+    // Evita ganar: si todas las casillas le dan la victoria, no le queda otra
+    const sinGanar = lib.filter(i => { const g = [...t]; g[i] = s; return !resultado(g)?.linea; });
+    return elegir(sinGanar.length && rnd() < 0.9 ? sinGanar : lib, rnd);
+  }
+  if (nivel === "regular") {
+    if (gana >= 0 && rnd() < 0.8) return gana;
+    if (bloquea >= 0 && rnd() < 0.6) return bloquea;
+    return elegir(lib, rnd);
+  }
+  if (nivel === "medio" || nivel === "astuto") {
     if (gana >= 0) return gana;
     if (bloquea >= 0) return bloquea;
     if (t[4] === null) return 4;

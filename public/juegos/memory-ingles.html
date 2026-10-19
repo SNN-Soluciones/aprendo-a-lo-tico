@@ -48,6 +48,7 @@
 
 <div class="wrap top ancho">
   <div class="modos" id="modos" role="group" aria-label="Tema"></div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -62,8 +63,9 @@
 
 <script type="module">
 import { sonido, LENTO } from "../js/voz.js";
-import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { TEMAS, NIVELES, mazo, sonPareja, estrellasMemoria } from "../js/memory-en.js";
+import { decir, instruccion, feedback, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { TEMAS, NIVELES, ESCALONES, mazo, sonPareja, estrellasMemoria, fallosMemoria } from "../js/memory-en.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 const CLAVE = "memory-en";
@@ -74,32 +76,77 @@ let prog = {};
 try { prog = JSON.parse(localStorage.getItem(CLAVE)) || {}; } catch (_) {}
 const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(prog)); } catch (_) {} };
 
-let tema = TEMAS[0], nivel = NIVELES[0], cartas = [], abiertas = [], hechas = 0, intentos = 0, ocupado = false;
+// 🪜 De a poquito por defecto (ESCALONES en js/memory-en.js); los temas y las parejas a mano son para el papá o la maestra
+const esc = escalera("memory-ingles", { escalones: ESCALONES.length, meta: 2,
+  inicio: edad => edad === null || edad <= 6 ? 0 : edad === 7 ? 1 : edad === 8 ? 2 : edad === 9 ? 3 : 4 });
+let auto = true, tema = TEMAS[0], nivel = NIVELES[0], parejas = 4, cartas = [], abiertas = [], hechas = 0, intentos = 0, ocupado = false;
+let turno = 0, seguidos = 0, vistas = new Set(), ayudado = false, listo = false;
+const carta = n => $("tablero").querySelector(`[data-n="${n}"]`);
+const hecha = n => carta(n)?.classList.contains("hecha");
 
 function pintarMenus() {
   const est = (t, n) => prog[`${t}-${n}`] || 0;
-  $("modos").innerHTML = TEMAS.map(t => {
+  $("modos").innerHTML = `<button data-tema="auto" aria-pressed="${auto}" aria-label="De a poquito: sube solo">🪜</button>` + TEMAS.map(t => {
     const s = Math.max(0, ...NIVELES.map(n => est(t.id, n.id)));
-    return `<button data-tema="${t.id}" aria-pressed="${t === tema}">${t.nombre}${s ? ` <span class="est">${"⭐".repeat(s)}</span>` : ""}</button>`;
+    return `<button data-tema="${t.id}" aria-pressed="${!auto && t === tema}">${t.nombre}${s ? ` <span class="est">${"⭐".repeat(s)}</span>` : ""}</button>`;
   }).join("");
+  $("niveles").hidden = auto;
   $("niveles").innerHTML = NIVELES.map(n => `<button data-nivel="${n.id}" aria-pressed="${n === nivel}">${n.nombre}${est(tema.id, n.id) ? ` <span class="est">${"⭐".repeat(est(tema.id, n.id))}</span>` : ""}</button>`).join("");
   $("stars").textContent = "⭐ " + Object.values(prog).reduce((a, b) => a + b, 0);
 }
-const pintarMarcas = () => { $("marcas").textContent = `✅ ${hechas} of ${nivel.parejas} pairs · 🔄 ${intentos}`; };
+const pintarMarcas = () => { $("marcas").textContent = `✅ ${hechas} of ${parejas} pairs · 🔄 ${intentos}`; };
+
+// 🤝 Una pareja que ya vio (las dos cartas) y no ha encontrado; si tiene una carta abierta, la otra de esa
+function parejaConocida() {
+  const quedan = cartas.filter(c => vistas.has(c.n) && !hecha(c.n));
+  if (abiertas[0]) {
+    const otra = quedan.find(c => c.en === abiertas[0].c.en && c.n !== abiertas[0].c.n);
+    if (otra) return [otra];
+  }
+  for (const c of quedan) {
+    const otra = quedan.find(x => x.en === c.en && x.n !== c.n);
+    if (otra) return [c, otra];
+  }
+  return null;
+}
+function ayudar() {
+  const par = parejaConocida();
+  if (!par) return false;
+  ayudado = true; seguidos = 0;
+  par.forEach(c => senalar(carta(c.n)));
+  decir(par.length === 1 ? "Te ayudo: ¡la otra está aquí!" : "Te ayudo: ¡fijate en estas dos!");
+  return true;
+}
+// Si se queda sin tocar: se repite la instrucción y después se señala una pareja que ya vio
+const ayuda = ayudaSiSeQueda({ senalar: () => { if (!ocupado && !listo) ayudar(); } });
 
 function empezar() {
-  cartas = mazo(tema.id, nivel.parejas); abiertas = []; hechas = 0; intentos = 0; ocupado = false;
+  turno++;
+  if (auto) {
+    // Escalera: un tema del escalón (otro que el de antes, si se puede) y sus parejas
+    const e = ESCALONES[esc.nivel], opciones = e.temas.filter(id => e.temas.length === 1 || id !== tema.id);
+    const id = opciones[Math.floor(Math.random() * opciones.length)]; // se escoge una vez (no dentro del find)
+    tema = TEMAS.find(t => t.id === id);
+    parejas = e.parejas;
+  } else parejas = nivel.parejas;
+  esc.activa = auto;
+  cartas = mazo(tema.id, parejas); abiertas = []; hechas = 0; intentos = 0; ocupado = false;
+  seguidos = 0; vistas = new Set(); ayudado = false; listo = false;
   $("tablero").hidden = false; $("resumen").hidden = true; $("detalle").hidden = true; feedback("");
   $("tablero").innerHTML = cartas.map(c => `<button class="carta" data-n="${c.n}" aria-label="Card ${c.n + 1}">
     <span class="in"><span class="cara dorso">❓</span><span class="cara frente">${c.cara === "dibujo" ? `<span class="e">${c.e}</span>` : `<b>${c.en}</b>`}</span></span></button>`).join("");
   pintarMenus(); pintarMarcas();
+  $("tablero").style.gridTemplateColumns = `repeat(${cartas.length <= 6 ? 3 : 4}, 1fr)`;
   instruccion(`🧠 Encontrá cada <b>dibujo</b> con su palabra en <b>inglés</b>.`, "Tocá dos cartas. Encontrá cada dibujo con su palabra en inglés.");
+  ayuda.empezar();
 }
 
 $("tablero").addEventListener("click", e => {
   const b = e.target.closest(".carta");
   if (!b || ocupado || b.classList.contains("abierta") || b.classList.contains("hecha")) return;
   const c = cartas[Number(b.dataset.n)];
+  b.classList.remove("senal");
+  vistas.add(c.n);
   b.classList.add("abierta"); sonido("tap");
   if (c.cara === "palabra") en(c.en);           // la palabra se escucha en inglés
   abiertas.push({ c, b });
@@ -107,32 +154,46 @@ $("tablero").addEventListener("click", e => {
   intentos++;
   const [x, y] = abiertas; abiertas = [];
   if (sonPareja(x.c, y.c)) {
-    hechas++;
-    [x.b, y.b].forEach(el => { el.classList.remove("abierta"); el.classList.add("hecha"); });
+    hechas++; seguidos = 0;
+    [x.b, y.b].forEach(el => { el.classList.remove("abierta", "senal"); el.classList.add("hecha"); });
     feedback("ok", "🎉", BIEN[Math.floor(Math.random() * BIEN.length)]);
     $("detalle").hidden = false; $("detalle").textContent = `${x.c.e} ${x.c.en} = ${x.c.es}`;
     en(x.c.en, { cola: true });
     pintarMarcas();
-    if (hechas === nivel.parejas) setTimeout(fin, 900);
+    if (hechas === parejas) { listo = true; ayuda.parar(); const t = turno; setTimeout(() => { if (t === turno) fin(); }, 900); }
   } else {
-    ocupado = true;
+    ocupado = true; seguidos++;
+    const t = turno;
     [x.b, y.b].forEach(el => el.classList.add("nope"));
-    setTimeout(() => { [x.b, y.b].forEach(el => el.classList.remove("abierta", "nope")); ocupado = false; }, 1100);
+    setTimeout(() => {
+      if (t !== turno) return; // ya es otro tablero
+      [x.b, y.b].forEach(el => el.classList.remove("abierta", "nope")); ocupado = false;
+      if (seguidos >= 3) ayudar(); // tres intentos seguidos sin pareja: se le señala una que ya vio
+    }, 1100);
     pintarMarcas();
   }
 });
 
 function fin() {
-  const n = estrellasMemoria(intentos, nivel.parejas), clave = `${tema.id}-${nivel.id}`;
-  if (n > (prog[clave] || 0)) { prog[clave] = n; guardar(); }
+  let n = estrellasMemoria(intentos, parejas);
+  if (auto) {
+    // Escalera: cuenta el tablero entero (los intentos de más, con tolerancia) y si hubo que ayudarle
+    const fallos = fallosMemoria(intentos, parejas);
+    if (ayudado) n = Math.min(n, 2);
+    prog.auto = (prog.auto || 0) + n; guardar();
+    esc.resultado({ fallos, ayuda: ayudado });
+  } else {
+    const clave = `${tema.id}-${nivel.id}`;
+    if (n > (prog[clave] || 0)) { prog[clave] = n; guardar(); }
+  }
   pintarMenus();
-  const sig = NIVELES[NIVELES.indexOf(nivel) + 1];
+  const sig = auto ? null : NIVELES[NIVELES.indexOf(nivel) + 1];
   const [msgEs, msgEn] = n === 3 ? ["¡Qué memoria!", "Excellent!"] : n === 2 ? ["¡Muy bien!", "Very good!"] : ["¡Lo lograste!", "Good job!"];
   $("tablero").hidden = true; $("detalle").hidden = true; feedback("");
   $("resumen").hidden = false;
   $("resumen").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n) + "☆".repeat(3 - n)}</div>
-    <p>${nivel.parejas} pairs · ${intentos} tries</p><p>${msgEs} ${msgEn}</p>
-    <div class="botones"><button id="otraBtn">🔄 Otra vez</button>${sig ? `<button class="sig" id="sigBtn2">${sig.nombre} ➡️</button>` : ""}</div>`;
+    <p>${parejas} pairs · ${intentos} tries</p><p>${msgEs} ${msgEn}</p>
+    <div class="botones"><button id="otraBtn">${auto ? "🪜 ¡Otro tablero! ➡️" : "🔄 Otra vez"}</button>${sig ? `<button class="sig" id="sigBtn2">${sig.nombre} ➡️</button>` : ""}</div>`;
   instruccion("<b>¡Terminaste!</b>", msgEs).then(() => en(msgEn, { cola: true }));
   sonido("ok");
   $("otraBtn").addEventListener("click", () => { sonido("tap"); empezar(); });
@@ -142,7 +203,10 @@ function fin() {
 $("modos").addEventListener("click", e => {
   const b = e.target.closest("[data-tema]");
   if (!b) return;
-  sonido("tap"); tema = TEMAS.find(t => t.id === b.dataset.tema); nivel = NIVELES[0]; empezar();
+  sonido("tap");
+  auto = b.dataset.tema === "auto";
+  if (!auto) { tema = TEMAS.find(t => t.id === b.dataset.tema); nivel = NIVELES[0]; }
+  empezar();
 });
 $("niveles").addEventListener("click", e => {
   const b = e.target.closest("[data-nivel]");
@@ -154,7 +218,7 @@ const repetir = lento => decir("Tocá dos cartas. Encontrá cada dibujo con su p
 alEmpezar(() => empezar(), repetir);
 pintarMenus();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__memory = { get cartas() { return cartas; } };
+if (new URLSearchParams(location.search).has("prueba")) window.__memory = { get cartas() { return cartas; }, get nivel() { return esc.nivel; }, get estado() { return { hechas, intentos, parejas, ayudado, listo, ocupado, tema: tema.id }; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

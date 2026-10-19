@@ -99,6 +99,7 @@ export const JUEGOS = [
     grados: [1, 2, 3, 4],
     edad: [5, 10],
     leer: "no",
+    escalera: true,
     url: "juegos/listen-tap.html",
   },
   {
@@ -146,6 +147,7 @@ export const JUEGOS = [
     grados: [0, 1],
     edad: [4, 7],
     leer: "no",
+    escalera: true,
     url: "juegos/trazos.html",
   },
   {
@@ -214,6 +216,7 @@ export const JUEGOS = [
     grados: [0, 1, 2, 3, 4, 5, 6],
     edad: [4, 12],
     leer: "no",
+    escalera: true,
     url: "juegos/gato.html",
   },
   {
@@ -302,6 +305,7 @@ export const JUEGOS = [
     grados: [1, 2, 3, 4],
     edad: [6, 10],
     leer: "poco",
+    escalera: true,
     url: "juegos/memory-ingles.html",
   },
   {

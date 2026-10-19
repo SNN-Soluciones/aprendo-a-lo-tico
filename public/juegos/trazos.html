@@ -24,6 +24,9 @@
   .herr button { font-size: 2rem; padding: 2px 22px; }
   .herr #listoBtn { background: #C9F2D6; }
   .pizarra.gano { animation: pulse .6s ease-in-out 2; }
+  /* 👆 El dedito que muestra el camino de la letra */
+  .dedo { position: absolute; left: 0; top: 0; font-size: 2.6rem; line-height: 1; pointer-events: none; transform: translate(-30%, -10%); z-index: 2; }
+  .dedo[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -38,10 +41,12 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-nivel="vocales" aria-pressed="true">A e i</button>
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="vocales">A e i</button>
     <button data-nivel="numeros">1 2 3</button>
     <button data-nivel="letras">m p s</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -50,6 +55,7 @@
   <canvas id="guia" aria-hidden="true"></canvas>
   <canvas id="tinta" aria-label="Pizarra para trazar con el dedo"></canvas>
   <div class="ayuda" id="ayuda" aria-hidden="true"></div>
+  <div class="dedo" id="dedo" aria-hidden="true" hidden>👆</div>
 </div>
 <div class="herr">
   <button id="borrarBtn" aria-label="Borrar">🧽</button>
@@ -60,7 +66,8 @@
 
 <script type="module">
 import { elogio } from "../js/voz.js";
-import { decir, instruccion, feedback, estrellas, niveles, alEmpezar } from "../js/prepa.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 
@@ -87,13 +94,34 @@ const SETS = {
   ],
 };
 
+// 🪜 De a poquito: primero las vocales grandes con el puntito de inicio y mucha tolerancia;
+// después números y consonantes, y al final todo revuelto y más exigente.
+// tol = [cuánto de la letra hay que cubrir, cuánto del trazo tiene que quedar dentro de la letra]
+const VOC_MAY = SETS.vocales.filter(x => x.ch === x.ch.toUpperCase());
+const VOC_MIN = SETS.vocales.filter(x => x.ch !== x.ch.toUpperCase());
+const NUM_1_5 = SETS.numeros.filter(x => x.n >= 1 && x.n <= 5);
+const NUM_6_0 = SETS.numeros.filter(x => x.n > 5 || x.n === 0);
+const ESCALONES = [
+  { lista: VOC_MAY, tol: [0.6, 0.75], punto: true },                               // 1. A E I O U, con puntito de inicio
+  { lista: VOC_MIN, tol: [0.62, 0.78], punto: true },                              // 2. a e i o u
+  { lista: NUM_1_5, tol: [0.65, 0.8], punto: true },                               // 3. 1 al 5
+  { lista: NUM_6_0, tol: [0.68, 0.82], punto: true },                              // 4. 6 al 9 y el 0
+  { lista: SETS.letras.slice(0, 3), tol: [0.7, 0.84], punto: true },               // 5. m p s
+  { lista: SETS.letras.slice(3), tol: [0.72, 0.85] },                              // 6. l t n d
+  { lista: [...SETS.vocales, ...SETS.numeros], tol: [0.74, 0.86] },               // 7. vocales y números revueltos
+  { lista: [...SETS.vocales, ...SETS.numeros, ...SETS.letras], tol: [0.76, 0.88] }, // 8. todo revuelto, más exigente
+];
+const TOL_MANUAL = [0.72, 0.85];
+const esc = escalera("trazos", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 5 ? 0 : edad === 6 ? 2 : 4 });
+
 const S = 600;            // tamaño interno de la pizarra
 const Q = 0.2;            // escala de las máscaras para evaluar (120×120)
 const FONT = '"Baloo 2", "Trebuchet MS", system-ui, sans-serif';
 const TINTA = 34;         // grosor del trazo del niño
 const COLOR_TINTA = "#E8574A";
 
-let nivel = "vocales", idx = 0, item = null, trazos = [], actual = null, listo = false, fallos = 0;
+let nivel = "auto", idx = 0, item = null, trazos = [], actual = null, listo = false, fallos = 0;
+let tol = TOL_MANUAL, conPunto = false, mostroCamino = false, ronda = 0;
 let geo = null;           // posición y tamaño de la letra
 const stars = estrellas("trazos-stars");
 
@@ -126,7 +154,7 @@ function letra(ctx, modo, extra = 0) {
   if (modo === "stroke") { ctx.lineWidth = extra; ctx.lineJoin = "round"; ctx.strokeText(item.ch, x, y); }
 }
 
-function pintarGuia(faltantes) {
+function pintarGuia(faltantes, punto = conPunto) {
   gctx.clearRect(0, 0, S, S);
   // renglón
   gctx.strokeStyle = "#DCE6EF"; gctx.lineWidth = 3; gctx.setLineDash([]);
@@ -138,6 +166,12 @@ function pintarGuia(faltantes) {
   if (faltantes) {
     gctx.fillStyle = "rgba(255, 200, 61, .85)";
     faltantes.forEach(([x, y]) => gctx.fillRect(x / Q - 2.5, y / Q - 2.5, 1 / Q + 5, 1 / Q + 5));
+  }
+  // 🟢 Puntito de inicio: arriba de la letra, que es por donde se empieza a escribir
+  if (punto && geo.inicio) {
+    const [x, y] = geo.inicio;
+    gctx.fillStyle = "#2FA85A"; gctx.strokeStyle = "#FFFFFF"; gctx.lineWidth = 5;
+    gctx.beginPath(); gctx.arc(x, y, 20, 0, Math.PI * 2); gctx.fill(); gctx.stroke();
   }
 }
 
@@ -186,6 +220,52 @@ function evaluar(ts = trazos) {
   return { cobertura: total ? cubiertos / total : 0, precision: puntos ? dentro / puntos : 0, faltantes };
 }
 
+// ---------- 👆 El camino de la letra ----------
+// Puntos de la letra en orden de «vecino más cercano», empezando arriba: así el dedito
+// recorre la letra como un lápiz (baja por una pata, da la vuelta a la o…).
+function caminoDeLetra() {
+  const { m, n } = mascara(x => letra(x, "fill"));
+  const pts = [];
+  for (let y = 0; y < n; y += 3) for (let x = 0; x < n; x += 3) if (m[y * n + x]) pts.push([x, y]);
+  if (!pts.length) return [];
+  let i = pts.reduce((b, p, k) => (p[1] < pts[b][1] || (p[1] === pts[b][1] && p[0] < pts[b][0]) ? k : b), 0);
+  const camino = [], usado = new Uint8Array(pts.length);
+  for (let k = 0; k < pts.length; k++) {
+    usado[i] = 1; camino.push([pts[i][0] / Q, pts[i][1] / Q]);
+    let mejor = -1, dist = Infinity;
+    for (let j = 0; j < pts.length; j++) if (!usado[j]) { const d = (pts[j][0] - pts[i][0]) ** 2 + (pts[j][1] - pts[i][1]) ** 2; if (d < dist) { dist = d; mejor = j; } }
+    if (mejor < 0) break;
+    i = mejor;
+  }
+  return camino;
+}
+
+/** El dedito recorre la letra dejando un rastro amarillo (cuenta como ayuda para la escalera). */
+function mostrarCamino() {
+  if (listo || !geo) return;
+  mostroCamino = true;
+  const camino = caminoDeLetra(), esta = ronda, dedo = $("dedo");
+  if (!camino.length) return;
+  pintarGuia(null, true);
+  feedback("", "👆", "Mirá el dedito");
+  decir(`Mirá el dedito: empezá en el puntito verde y seguí ${item.d}.`);
+  dedo.hidden = false;
+  const t0 = performance.now(), dura = 2600;
+  const paso = ahora => {
+    if (esta !== ronda || listo) { dedo.hidden = true; return; } // cambió la ronda: el dedito se va
+    // (el reloj de requestAnimationFrame puede venir un poquito antes que t0)
+    const k = Math.max(0, Math.min(camino.length - 1, Math.floor(((ahora - t0) / dura) * camino.length)));
+    gctx.fillStyle = "rgba(255, 200, 61, .9)";
+    for (let j = Math.max(0, k - 4); j <= k; j++) { gctx.beginPath(); gctx.arc(camino[j][0], camino[j][1], 9, 0, Math.PI * 2); gctx.fill(); }
+    dedo.style.left = `${(camino[k][0] / S) * 100}%`; dedo.style.top = `${(camino[k][1] / S) * 100}%`;
+    if (k < camino.length - 1) requestAnimationFrame(paso);
+    else setTimeout(() => { if (esta === ronda) dedo.hidden = true; }, 600);
+  };
+  requestAnimationFrame(paso);
+}
+// Si se queda sin trazar: primero se repite la instrucción y después el dedito muestra el camino
+const ayuda = ayudaSiSeQueda({ senalar: mostrarCamino });
+
 // ---------- Dedo ----------
 function punto(e) {
   const r = tinta.getBoundingClientRect();
@@ -208,18 +288,22 @@ const soltar = () => {
   actual = null;
   // Si ya quedó bien, se celebra solo (sin tener que tocar ✅)
   const r = evaluar();
-  if (r.cobertura >= 0.72 && r.precision >= 0.85) ganar();
+  if (r.cobertura >= tol[0] && r.precision >= tol[1]) ganar();
 };
 tinta.addEventListener("pointerup", soltar);
 tinta.addEventListener("pointercancel", soltar);
 
 function ganar() {
   listo = true;
-  pintarGuia();
+  ayuda.parar();
+  $("dedo").hidden = true;
+  pintarGuia(null, false);
   $("pizarra").classList.remove("gano"); void $("pizarra").offsetWidth; $("pizarra").classList.add("gano");
   const frase = `¡Trazaste ${item.d}!`;
-  if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+  const conAyuda = ayuda.usada || mostroCamino;
+  if (fallos === 0 && !conAyuda) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
   else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+  esc.resultado({ fallos, ayuda: conAyuda });
   $("nextBtn").classList.add("pulse");
 }
 
@@ -227,12 +311,12 @@ $("listoBtn").addEventListener("click", () => {
   if (listo) return;
   if (!trazos.length) { decir(`Pasá el dedo por encima de ${item.d}.`); return; }
   const r = evaluar();
-  if (r.cobertura >= 0.72 && r.precision >= 0.85) return ganar();
+  if (r.cobertura >= tol[0] && r.precision >= tol[1]) return ganar();
   fallos++;
-  if (r.precision < 0.7) {
+  if (r.precision < tol[1] - 0.15) {
     feedback("bad", "🙈", "Te saliste");
     decir("Uy, te saliste mucho de la letra. Borrá y probá otra vez, despacito.");
-  } else if (r.cobertura >= 0.45) {
+  } else if (r.cobertura >= tol[0] - 0.27) {
     pintarGuia(r.faltantes);
     feedback("almost", "🤏", "¡Casi!");
     decir("¡Casi! Te faltó el pedacito amarillo.");
@@ -241,19 +325,33 @@ $("listoBtn").addEventListener("click", () => {
     feedback("bad", "🙈", "Falta");
     decir("Todavía falta. Seguí por la parte amarilla.");
   }
+  // Al segundo intento que no sale, el dedito le enseña el camino (la voz lo dice después de la pista)
+  if (fallos === 2) setTimeout(() => { if (!listo && fallos === 2) { trazos = []; pintarTinta(); mostrarCamino(); } }, 2200);
 });
 
 $("borrarBtn").addEventListener("click", () => {
   if (listo) return;
-  trazos = []; pintarTinta(); pintarGuia(); feedback("");
+  trazos = []; pintarTinta(); pintarGuia(null, conPunto || mostroCamino); feedback("");
 });
 
 // ---------- Rondas ----------
 function nuevo() {
-  const lista = SETS[nivel];
-  item = lista[idx % lista.length]; idx++;
+  ronda++;
+  if (nivel === "auto") {
+    // Escalera: una al azar del escalón (sin repetir la de antes)
+    const e = ESCALONES[esc.nivel], antes = item;
+    tol = e.tol; conPunto = !!e.punto;
+    do item = e.lista[Math.floor(Math.random() * e.lista.length)]; while (item === antes && e.lista.length > 1);
+  } else {
+    const lista = SETS[nivel];
+    tol = TOL_MANUAL; conPunto = false;
+    item = lista[idx % lista.length]; idx++;
+  }
   geo = medir(item.ch);
-  trazos = []; actual = null; listo = false; fallos = 0;
+  const camino = caminoDeLetra();
+  geo.inicio = camino[0] || null;
+  trazos = []; actual = null; listo = false; fallos = 0; mostroCamino = false;
+  $("dedo").hidden = true;
   pintarGuia(); pintarTinta();
   feedback("");
   $("nextBtn").classList.remove("pulse");
@@ -264,16 +362,21 @@ function nuevo() {
     $("ayuda").innerHTML = item.n ? `<small style="font-size:1.4rem;letter-spacing:-2px">${"🍎".repeat(item.n)}</small>` : "";
     instruccion(`Trazá <b>${item.ch}</b>`, `Trazá ${item.d}.`);
   }
+  ayuda.empezar();
 }
 
-$("nextBtn").addEventListener("click", nuevo);
-niveles(v => { nivel = v; idx = 0; nuevo(); });
+$("nextBtn").addEventListener("click", () => {
+  // Pasar a otra después de que no le salió cuenta como ronda difícil (si no, saltar evitaría bajar)
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  nuevo();
+});
+niveles(v => { nivel = v; esc.activa = v === "auto"; idx = 0; nuevo(); });
 
 // Esperar la fuente (si hay internet) para que la letra tenga la forma redondita de Baloo
 const fuente = document.fonts ? Promise.race([document.fonts.load(`800 100px "Baloo 2"`), new Promise(r => setTimeout(r, 1500))]).catch(() => {}) : Promise.resolve();
 alEmpezar(() => fuente.then(nuevo));
 
-if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, get geo() { return geo; }, get item() { return item; }, S, Q };
+if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, caminoDeLetra, get geo() { return geo; }, get item() { return item; }, get tol() { return tol; }, get nivel() { return esc.nivel; }, S, Q };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

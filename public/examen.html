@@ -54,6 +54,10 @@
   .preg .ops button { font-size: 1rem; padding: 6px 8px; border-radius: 12px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); text-align: left; line-height: 1.2; }
   .preg .ops button[aria-pressed="true"] { background: #FFE9A8; outline: 3px solid var(--btn); }
   .preg input { margin-top: 8px; font: inherit; font-weight: 800; font-size: 1.3rem; width: 11em; max-width: 100%; padding: 4px 10px; border: 3px solid var(--rim); border-radius: 12px; color: var(--ink); }
+  /* 📖 Comprensión lectora: el texto va una vez, arriba de sus preguntas */
+  .lectura { margin-top: 10px; background: #FFFBEA; color: var(--ink); border: 3px dashed var(--rim); border-radius: 16px; padding: 10px 12px; font-weight: 600; font-size: 1.05rem; line-height: 1.45; }
+  .lectura b { font-size: 1.15rem; }
+  .lectura .leer { float: right; margin-left: 6px; padding: 0 6px; font-size: 1rem; border-width: 2px; box-shadow: none; }
   .barra-entregar { position: sticky; bottom: 0; margin-top: 16px; padding: 8px 0 calc(8px + env(safe-area-inset-bottom, 0px)); background: var(--bg); display: flex; gap: 8px; align-items: center; }
   .barra-entregar span { font-weight: 800; color: var(--page-ink); flex: 1; }
   #entregarBtn { font-size: 1.2rem; background: var(--ok); color: #fff; border-color: #1D6B3A; box-shadow: 0 4px 0 #1D6B3A; }
@@ -93,6 +97,7 @@
     #imprimir li { margin: 0 0 10px; font-size: 12pt; break-inside: avoid; }
     #imprimir .lineas { display: block; border-bottom: 1px solid #000; width: 45%; height: 18px; }
     #imprimir .opciones-p span { display: inline-block; margin-right: 18px; }
+    #imprimir .lectura { background: none; border: 1px solid #000; border-radius: 6px; padding: 6px 10px; margin: 4px 0 10px; font-size: 12pt; font-weight: 400; break-inside: avoid; }
     #imprimir .respuestas { break-before: page; }
   }
 </style>
@@ -155,6 +160,9 @@ const $ = id => document.getElementById(id);
 const GRADOS = [[1, "6–7 años"], [2, "7–8 años"], [3, "8–9 años"], [4, "9–10 años"], [5, "10–11 años"], [6, "11–12 años"]];
 const CANTIDADES = [3, 5, 10];
 const limpio = t => t.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+const soloTexto = html => new DOMParser().parseFromString(html, "text/html").body.textContent.replace(/\s+/g, " ").trim();
+/** La lectura va antes de la primera pregunta de su texto. */
+const lecturaAntes = (qs, qi) => (qs[qi].lectura && qs[qi].lectura !== qs[qi - 1]?.lectura ? qs[qi].lectura : "");
 
 let cfg = { nombre: "", grado: 3, materia: "mate", temas: [], porTema: 5 };
 try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem("examen-config")) }; } catch (_) {}
@@ -163,6 +171,8 @@ try { historial = JSON.parse(localStorage.getItem("examen-historial")) || []; } 
 const guardar = () => { try { localStorage.setItem("examen-config", JSON.stringify(cfg)); localStorage.setItem("examen-historial", JSON.stringify(historial.slice(0, 8))); } catch (_) {} };
 
 let secciones = [], respuestas = {}, avisado = false;
+// Lo que el niño escribe se muestra como texto, nunca como HTML
+const escaparTexto = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 const materia = () => MATERIAS_EXAMEN.find(m => m.id === cfg.materia);
 
 // ---------- 1️⃣ Armar ----------
@@ -202,15 +212,20 @@ function crear(temas) {
   $("config").hidden = true; $("resultado").hidden = true; $("examen").hidden = false;
   $("hojaTitulo").innerHTML = `<b>${m.emoji} Examen de ${m.nombre} · ${cfg.grado}°</b>${cfg.nombre ? `👤 ${cfg.nombre} · ` : ""}📅 ${new Date().toLocaleDateString("es-CR")}`;
   let k = 0;
-  $("secciones").innerHTML = secciones.map((s, si) => `<section class="seccion"><h3>Parte ${si + 1}: ${s.tema.emoji} ${s.tema.nombre}</h3>`
+  $("secciones").innerHTML = secciones.map((s, si) => {
+    // Con decimales, el teclado del celular tiene que traer la coma
+    const teclado = s.preguntas.some(q => q.tipo === "numero" && /[.,]/.test(q.correcta)) ? "decimal" : "numeric";
+    return `<section class="seccion"><h3>Parte ${si + 1}: ${s.tema.emoji} ${s.tema.nombre}</h3>`
     + s.preguntas.map((q, qi) => {
       k++;
-      const id = `${si}-${qi}`;
+      const id = `${si}-${qi}`, lect = lecturaAntes(s.preguntas, qi);
       const resp = q.tipo === "numero"
-        ? `<input type="text" inputmode="numeric" data-q="${id}" aria-label="Respuesta de la pregunta ${k}" autocomplete="off">`
+        ? `<input type="text" inputmode="${teclado}" data-q="${id}" aria-label="Respuesta de la pregunta ${k}" autocomplete="off">`
         : `<div class="ops">${q.opciones.map((o, oi) => `<button data-q="${id}" data-o="${oi}" aria-pressed="false">${o}</button>`).join("")}</div>`;
-      return `<div class="preg" id="p${id}"><div class="enunciado"><span class="num">${k}</span><span class="t">${q.texto}</span><button class="leer" data-leer="${id}" aria-label="Escuchar la pregunta">🔊</button></div>${resp}</div>`;
-    }).join("") + `</section>`).join("");
+      return `${lect ? `<div class="lectura"><button class="leer" data-lectura="${id}" aria-label="Escuchar la lectura">🔊</button>${lect}</div>` : ""}`
+        + `<div class="preg" id="p${id}"><div class="enunciado"><span class="num">${k}</span><span class="t">${q.texto}</span><button class="leer" data-leer="${id}" aria-label="Escuchar la pregunta">🔊</button></div>${resp}</div>`;
+    }).join("") + `</section>`;
+  }).join("");
   pintarCuenta();
   window.scrollTo(0, 0);
   decir(`Examen de ${m.nombre}. ${cfg.nombre ? `¡Mucha suerte, ${cfg.nombre}!` : "¡Mucha suerte!"} Leé cada pregunta con calma.`);
@@ -224,6 +239,8 @@ function pintarCuenta() {
   avisado = false;
 }
 $("secciones").addEventListener("click", e => {
+  const lect = e.target.closest("[data-lectura]");
+  if (lect) { decir(soloTexto(pregunta(lect.dataset.lectura).lectura)); return; }
   const leer = e.target.closest("[data-leer]");
   if (leer) { const q = pregunta(leer.dataset.leer); decir(limpio(q.texto) + (q.opciones ? ". Las opciones son: " + q.opciones.map(limpio).join(", ") : "")); return; }
   const b = e.target.closest("[data-o]");
@@ -264,7 +281,7 @@ function calificar() {
   const revision = filas.map(f => f.res.map(x => {
     k++;
     return `<div class="rev ${x.ok ? "bien" : ""}"><div class="q">${k}. ${x.q.texto}</div>
-      ${x.ok ? `<div class="ok">✅ ${x.q.correcta}</div>` : `<div class="tu">❌ Tu respuesta: ${x.tu ?? "(sin contestar)"}</div><div class="ok">✔️ Correcta: ${x.q.correcta}</div>`}
+      ${x.ok ? `<div class="ok">✅ ${x.q.correcta}</div>` : `<div class="tu">❌ Tu respuesta: ${x.tu == null || x.tu === "" ? "(sin contestar)" : x.q.tipo === "numero" ? escaparTexto(x.tu) : x.tu}</div><div class="ok">✔️ Correcta: ${x.q.correcta}</div>`}
       <div class="por">💡 ${x.q.explica}</div></div>`;
   }).join("")).join("");
   $("examen").hidden = true; $("resultado").hidden = false;
@@ -293,7 +310,12 @@ function imprimir() {
   let k = 0, r = 0;
   $("imprimir").innerHTML = `<h1>${m.emoji} Examen de ${m.nombre} · ${cfg.grado}°</h1>
     <div class="datos"><span>Nombre: ${cfg.nombre || "______________________"}</span><span>Fecha: ${new Date().toLocaleDateString("es-CR")}</span><span>Nota: ______</span></div>`
-    + secciones.map((s, si) => `<h2>Parte ${si + 1}: ${s.tema.nombre}</h2><ol start="${k + 1}">${s.preguntas.map(q => { k++; return `<li>${q.texto}${q.tipo === "numero" ? `<span class="lineas"></span>` : `<div class="opciones-p">${q.opciones.map(o => `<span>( ) ${o}</span>`).join("")}</div>`}</li>`; }).join("")}</ol>`).join("")
+    + secciones.map((s, si) => `<h2>Parte ${si + 1}: ${s.tema.nombre}</h2>${s.preguntas.map((q, qi) => {
+      // Una lista por cada texto de lectura (el texto va arriba de sus preguntas)
+      const lect = lecturaAntes(s.preguntas, qi), abrir = qi === 0 || lect ? `${qi ? "</ol>" : ""}${lect ? `<div class="lectura">${lect}</div>` : ""}<ol start="${k + 1}">` : "";
+      k++;
+      return `${abrir}<li>${q.texto}${q.tipo === "numero" ? `<span class="lineas"></span>` : `<div class="opciones-p">${q.opciones.map(o => `<span>( ) ${o}</span>`).join("")}</div>`}</li>`;
+    }).join("")}</ol>`).join("")
     + `<div class="respuestas"><h2>✔️ Respuestas</h2><ol>${secciones.flatMap(s => s.preguntas).map(q => { r++; return `<li>${q.correcta}</li>`; }).join("")}</ol></div>`;
   window.print();
 }

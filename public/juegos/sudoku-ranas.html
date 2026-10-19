@@ -71,6 +71,7 @@
 
 <div class="wrap top ancho">
   <div class="modos" id="modos" role="group" aria-label="Tamaño y dificultad"></div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -96,13 +97,25 @@
 import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
 import { RANAS, MODOS, caja, generar, choques, pista } from "../js/sudoku.js";
+import { escalera } from "../js/escalera.js";
 import { ranaSVG } from "../js/ranas-svg.js";
 
 const $ = id => document.getElementById(id);
 const rana = v => RANAS[v - 1];
 const dib = v => ranaSVG(rana(v).id, rana(v).n);
 
-let modo = MODOS[0], n = 4, dado = [], t = [], sol = [], elegida = 1, errores = 0, pistas = 0, ganado = false;
+// 🪜 De a poquito: 4 × 4 con 2 casillas vacías, después 3, 4… y al final los de 6 × 6.
+// Cada tablero resuelto sin errores ni pistas suma una hojita; con 2 se sube.
+const ESCALONES = [
+  { n: 4, vacias: 2 }, { n: 4, vacias: 3 }, { n: 4, vacias: 4 }, { n: 4, vacias: 6 }, { n: 4, vacias: 8 }, { n: 4, vacias: 10 },
+  { n: 6, vacias: 8 }, { n: 6, vacias: 14 }, { n: 6, vacias: 20 }, { n: 6, vacias: 24 },
+];
+const esc = escalera("sudoku-ranas", { escalones: ESCALONES.length, meta: 2,
+  inicio: edad => edad === null ? 3 : edad <= 5 ? 0 : edad === 6 ? 1 : edad === 7 ? 3 : edad <= 9 ? 5 : 7 });
+const AUTO = { id: "auto", nombre: "🪜", grados: "de a poquito" };
+const deEscalon = () => ({ ...AUTO, nombre: `🪜 Escalón ${esc.nivel + 1}`, ...ESCALONES[esc.nivel] });
+
+let modo = AUTO, n = 4, dado = [], t = [], sol = [], elegida = 1, errores = 0, pistas = 0, ganado = false;
 let progreso = { total: 0, ganados: {} };
 try { progreso = { ...progreso, ...JSON.parse(localStorage.getItem("sudoku-ranas")) }; } catch (_) {}
 const guardar = () => { try { localStorage.setItem("sudoku-ranas", JSON.stringify(progreso)); } catch (_) {} };
@@ -112,8 +125,8 @@ $("fichas").innerHTML = RANAS.map(r => `<div class="ficha"><div class="dib">${ra
 
 // ---------- Pintar ----------
 function pintarModos() {
-  $("modos").innerHTML = MODOS.map(m =>
-    `<button data-m="${m.id}" aria-pressed="${m.id === modo.id}">${m.nombre}<small>${progreso.ganados[m.id] ? `🐸×${progreso.ganados[m.id]}` : m.grados}</small></button>`).join("");
+  $("modos").innerHTML = [AUTO, ...MODOS].map(m =>
+    `<button data-m="${m.id}" aria-pressed="${m.id === modo.id}"${m === AUTO ? ` aria-label="De a poquito: sube solo"` : ""}>${m.nombre}<small>${progreso.ganados[m.id] ? `🐸×${progreso.ganados[m.id]}` : m.grados}</small></button>`).join("");
   $("stars").textContent = `⭐ ${progreso.total}`;
 }
 
@@ -139,6 +152,8 @@ function pintarPaleta() {
 
 // ---------- Tableros ----------
 function nuevo(m = modo) {
+  if (m.id === "auto") m = deEscalon();
+  esc.activa = m.id === "auto";
   modo = m; n = m.n;
   const g = generar(n, m.vacias, Date.now());
   dado = g.tablero.map(r => r.map(v => v > 0));
@@ -153,7 +168,7 @@ function nuevo(m = modo) {
 }
 $("modos").addEventListener("click", e => {
   const b = e.target.closest("[data-m]");
-  if (b) { sonido("tap"); nuevo(MODOS.find(m => m.id === b.dataset.m)); }
+  if (b) { sonido("tap"); nuevo([AUTO, ...MODOS].find(m => m.id === b.dataset.m)); }
 });
 
 $("paleta").addEventListener("click", e => {
@@ -204,6 +219,7 @@ function revisarFin() {
   progreso.total += estrellas;
   progreso.ganados[modo.id] = (progreso.ganados[modo.id] || 0) + 1;
   guardar(); pintarModos();
+  esc.resultado({ fallos: errores + pistas });
   feedback("ok", "🎉", `¡Sudoku resuelto! ${"⭐".repeat(estrellas)}`);
   const r = RANAS[Math.floor(Math.random() * n)];
   decir(`${elogio()} ¡Todas las ranitas en su lugar! ¿Sabías que la ${r.n}… ${r.dato}`);

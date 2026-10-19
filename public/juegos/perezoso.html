@@ -77,10 +77,14 @@
   .botonera { display: grid; grid-template-columns: repeat(4, 1fr) ; gap: 8px; margin-top: 10px; width: min(96vw, 460px); }
   .botonera .flecha { height: 64px; border-radius: 18px; border: 4px solid var(--rim); box-shadow: 0 4px 0 var(--rim); }
   .acciones { display: grid; grid-template-columns: 1fr 1fr 2fr; gap: 8px; margin-top: 8px; width: min(96vw, 460px); }
+  .acciones.con-pista { grid-template-columns: 1fr 1fr 1fr 2fr; }
   .acciones button { font-size: 1.8rem; padding: 4px 0; border-radius: 18px; }
   #playBtn { background: var(--ok); color: #fff; }
   #playBtn.pulse { animation: pulse 1s ease-in-out infinite; }
   #nextBtn { background: var(--btn); }
+  #pistaBtn { background: var(--btn); }
+  #pistaBtn[hidden] { display: none; }
+  #pistaBtn.pulse { animation: pulse 1s ease-in-out infinite; }
   #nextBtn.pulse { animation: pulse 1s ease-in-out infinite; }
 </style>
 </head>
@@ -110,9 +114,10 @@
   <button class="flecha abajo" data-dir="abajo" aria-label="Abajo"></button>
   <button class="flecha derecha" data-dir="derecha" aria-label="Derecha"></button>
 </div>
-<div class="acciones">
+<div class="acciones" id="acciones">
   <button id="borrarBtn" aria-label="Borrar la última flecha">⌫</button>
   <button id="limpiarBtn" aria-label="Borrar todo">🗑️</button>
+  <button id="pistaBtn" aria-label="Ayuda: poné una flecha" hidden>💡</button>
   <button id="playBtn" aria-label="Correr el programa">▶️</button>
 </div>
 <div class="wrap feedback" id="feedback" aria-live="polite"></div>
@@ -120,8 +125,8 @@
 
 <script type="module">
 import { hablar, elogio, sonido } from "../js/voz.js";
-import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { NIVELES, DIRS, leer, ejecutar, minimo, nivelAlAzar } from "../js/perezoso.js";
+import { decir, instruccion, feedback, alEmpezar, repetirInstruccion, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { NIVELES, DIRS, leer, ejecutar, minimo, nivelAlAzar, pista } from "../js/perezoso.js";
 import { desdeUrl, marcarHecho } from "../js/reto-dia.js";
 const dia = desdeUrl(); // 🎯 si se abrió como reto del día
 let delDia = false;
@@ -133,6 +138,12 @@ const PALABRA = { arriba: "arriba", derecha: "derecha", abajo: "abajo", izquierd
 
 let n = 0, nivel = null, azar = false, juego = null, programa = [], corriendo = false, ganado = false, intentos = 0;
 let mala = -1; // flecha que hizo chocar al perezoso (se queda roja hasta cambiar el programa)
+let conPista = false; // usó el 💡 en este nivel: ya no da 3 estrellas
+// 🤝 Si se queda sin tocar nada, se repite la instrucción; si ya está el 💡, se le señala
+const ayuda = ayudaSiSeQueda({
+  repetir: () => { if (!corriendo) repetirInstruccion(false); },
+  senalar: () => { if (!$("pistaBtn").hidden && !corriendo) senalar($("pistaBtn")); },
+});
 let progreso = {};
 // Guardado por id de nivel (no por número), así se pueden agregar niveles sin desordenar las estrellas
 try { progreso = JSON.parse(localStorage.getItem("perezoso-progreso-v2")) || {}; } catch (_) {}
@@ -185,9 +196,12 @@ function cargar(i, rnd = Math.random) {
   delDia = azar && rnd !== Math.random;
   if (!azar) n = i;
   nivel = azar ? nivelAlAzar(rnd) : NIVELES[n];
-  juego = leer(nivel); programa = [...(nivel.inicial || [])]; ganado = false; corriendo = false; intentos = 0; mala = -1;
+  juego = leer(nivel); programa = [...(nivel.inicial || [])]; ganado = false; corriendo = false; intentos = 0; mala = -1; conPista = false;
   pintarNiveles(); pintarTablero(); pintarPrograma(); feedback("");
   $("nextBtn").hidden = true; $("nextBtn").classList.remove("pulse");
+  mostrarPista(false);
+  $("playBtn").classList.remove("senal");
+  ayuda.empezar();
   const varias = juego.hojas.length > 1;
   instruccion(
     `${delDia ? "<b>🎯 Reto del día</b><br>" : ""}<span class="big">🦥</span> ➜ <span class="big">🍃</span>${varias ? ` ×${juego.hojas.length}` : ""}`,
@@ -241,6 +255,33 @@ $("limpiarBtn").addEventListener("click", () => {
   reiniciarSiHaceFalta(); programa = []; sonido("tap"); pintarPrograma();
 });
 
+// ---------- 💡 Pista: después de 2 intentos, pone la siguiente flecha de un camino más corto ----------
+function mostrarPista(si) {
+  $("pistaBtn").hidden = !si;
+  $("acciones").classList.toggle("con-pista", si);
+  if (!si) $("pistaBtn").classList.remove("pulse", "senal");
+}
+
+$("pistaBtn").addEventListener("click", () => {
+  if (corriendo || ganado) return;
+  $("pistaBtn").classList.remove("pulse", "senal");
+  reiniciarSiHaceFalta();
+  const q = pista(juego, programa);
+  conPista = true;
+  programa = q.programa;
+  sonido("tap");
+  pintarPrograma();
+  if (q.accion === "agrega") {
+    senalar($("programa").querySelector(`[data-i="${programa.length - 1}"]`));
+    decir(`Te ayudo con una flecha: ${PALABRA[q.flecha]}.`);
+  } else if (q.accion === "quita") {
+    decir(programa.length ? "Quité las flechas que se salían del camino. Seguí desde aquí." : "Quité las flechas que se salían del camino. Empecemos otra vez.");
+  } else {
+    senalar($("playBtn"));
+    decir("¡El camino ya está listo! Tocá el botón verde.");
+  }
+});
+
 // ---------- Correr ----------
 const esperar = ms => new Promise(r => setTimeout(r, ms));
 const MENSAJE_CHOQUE = {
@@ -253,6 +294,7 @@ $("playBtn").addEventListener("click", async () => {
   if (corriendo || ganado) return;
   if (!programa.length) { decir("Primero armá el camino con las flechas."); return; }
   corriendo = true; intentos++; mala = -1;
+  $("playBtn").classList.remove("senal");
   pintarTablero(); feedback(""); pintarPrograma(0);
   const r = ejecutar(juego, programa);
   await esperar(250);
@@ -279,7 +321,8 @@ function terminar(r) {
   if (r.resultado === "gano") {
     ganado = true;
     const min = minimo(juego);
-    const estrellas = programa.length <= min ? 3 : 2;
+    const estrellas = programa.length <= min && !conPista ? 3 : 2;
+    ayuda.parar(); mostrarPista(false);
     // Los niveles al azar suman estrellas cada vez; los fijos guardan la mejor
     if (azar) progreso.azar = (progreso.azar || 0) + estrellas;
     else progreso[nivel.id] = Math.max(progreso[nivel.id] || 0, estrellas);
@@ -287,7 +330,9 @@ function terminar(r) {
     guardar(); pintarNiveles();
     pintarPrograma();
     $("perezoso").classList.add("feliz");
-    const extra = estrellas === 3 ? "¡Y con el camino más corto!" : `Lo lograste con ${programa.length} flechas. ¿Podés hacerlo con ${min}?`;
+    const extra = estrellas === 3 ? "¡Y con el camino más corto!"
+      : conPista ? "¡Con una ayudita del foco! El siguiente, a ver si podés solo."
+      : `Lo lograste con ${programa.length} flechas. ¿Podés hacerlo con ${min}?`;
     feedback("ok", "🎉", `${"⭐".repeat(estrellas)}`);
     decir(`${elogio()} El perezoso ${juego.hojas.length > 1 ? "se comió todas las hojas" : "llegó a la hoja"}. ${extra}`);
     if (azar || n < NIVELES.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
@@ -309,6 +354,12 @@ function terminar(r) {
     decir("El perezoso no llegó a la hoja. Probá otro camino.");
   }
   pintarPrograma();
+  // Después de 2 intentos aparece el 💡 (la primera vez se ofrece con voz)
+  if (intentos >= 2 && $("pistaBtn").hidden) {
+    mostrarPista(true);
+    $("pistaBtn").classList.add("pulse");
+    hablar("Si querés ayuda, tocá el foco.", { cola: true });
+  }
 }
 
 $("nextBtn").addEventListener("click", () => cargar(azar ? "azar" : Math.min(n + 1, NIVELES.length - 1)));
@@ -319,7 +370,7 @@ n = primero === -1 ? 0 : primero;
 alEmpezar(() => (dia ? cargar("azar", dia.rnd) : cargar(n)));
 pintarNiveles();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__perezoso = { get programa() { return programa; }, get n() { return n; }, get nivel() { return nivel; } };
+if (new URLSearchParams(location.search).has("prueba")) window.__perezoso = { get programa() { return programa; }, get n() { return n; }, get nivel() { return nivel; }, get conPista() { return conPista; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

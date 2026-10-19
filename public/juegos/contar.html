@@ -33,7 +33,7 @@
   .cosa.luz { animation: luz .5s; }
   @keyframes luz { 50% { transform: scale(1.35); } }
 
-  .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  .opciones { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 12px; margin-top: 14px; }
   .opciones button { font-size: clamp(3rem, 16vw, 4.4rem); line-height: 1.1; border-radius: 24px; padding: 6px 0; color: var(--materia); }
 </style>
 </head>
@@ -49,10 +49,12 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-nivel="5" aria-pressed="true">1–5</button>
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="5">1–5</button>
     <button data-nivel="10">1–10</button>
     <button data-nivel="20">1–20</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -64,7 +66,8 @@
 
 <script type="module">
 import { hablar, elogio, sonido, numeroEnPalabras as enPalabras } from "../js/voz.js";
-import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 const COSAS = [
@@ -80,11 +83,25 @@ const COSAS = [
   { e: "🌺", s: "flor", p: "flores", f: true },
 ];
 
-let max = 5, n = 0, cosa = null, contadas = 0, fallos = 0, listo = false, ocupado = false, anterior = 0;
+// 🪜 De a poquito: hasta cuánto se cuenta y entre cuántos números se escoge
+const ESCALONES = [
+  { max: 3, ops: 2 }, { max: 4, ops: 3 }, { max: 5, ops: 3 }, { max: 6, ops: 3 }, { max: 7, ops: 3 },
+  { max: 8, ops: 3 }, { max: 10, ops: 3 }, { max: 12, ops: 3 }, { max: 15, ops: 3 }, { max: 20, ops: 3 },
+];
+const esc = escalera("contar", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : edad === 6 ? 2 : 4 });
+
+let max = 5, cuantas = 3, n = 0, cosa = null, contadas = 0, fallos = 0, listo = false, ocupado = false, anterior = 0;
 const stars = estrellas("contar-stars");
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar($("opciones").querySelector(`[data-v="${n}"]`)) });
 
 function nuevo() {
-  do n = 1 + Math.floor(Math.random() * max); while (n === anterior && max > 1);
+  let desde = 1;
+  if (esc.activa) {
+    ({ max, ops: cuantas } = ESCALONES[esc.nivel]);
+    // La mitad de las veces sale un número nuevo de este escalón; las demás, uno que ya conoce
+    if (esc.nivel > 0 && Math.random() < 0.5) desde = ESCALONES[esc.nivel - 1].max + 1;
+  } else cuantas = 3;
+  do n = desde + Math.floor(Math.random() * (max - desde + 1)); while (n === anterior && max > desde);
   anterior = n;
   cosa = azar(COSAS);
   contadas = 0; fallos = 0; listo = false; ocupado = false;
@@ -98,16 +115,18 @@ function nuevo() {
     Array.from({ length: c }, () => `<button class="cosa" data-k="${k++}" aria-label="${cosa.s}">${cosa.e}</button>`).join("")
   }</div>`).join("");
 
-  // Tres opciones: la correcta y dos cercanas
+  // La correcta y otras cercanas (2 o 3 en total)
   const ops = new Set([n]);
   const cerca = [n - 1, n + 1, n - 2, n + 2].filter(x => x >= 1 && x <= max);
-  barajar(cerca).forEach(x => ops.size < 3 && ops.add(x));
-  while (ops.size < 3) ops.add(1 + Math.floor(Math.random() * Math.max(max, 3)));
+  barajar(cerca).forEach(x => ops.size < cuantas && ops.add(x));
+  while (ops.size < cuantas) ops.add(1 + Math.floor(Math.random() * Math.max(max, cuantas)));
+  $("opciones").style.setProperty("--n", cuantas);
   $("opciones").innerHTML = barajar([...ops]).map(x => `<button data-v="${x}" aria-label="${enPalabras(x)}">${x}</button>`).join("");
 
   feedback("");
   $("nextBtn").classList.remove("pulse");
   instruccion(`<span class="big">${cosa.e}</span> ¿Cuántos hay?`, `¿Cuánt${cosa.f ? "as" : "os"} ${cosa.p} hay? Tocal${cosa.f ? "as" : "os"} para contarl${cosa.f ? "as" : "os"}.`);
+  ayuda.empezar();
 }
 
 // Tocar un dibujo lo cuenta en voz alta
@@ -144,11 +163,14 @@ $("opciones").addEventListener("click", async e => {
   const v = Number(b.dataset.v);
   if (v === n) {
     listo = true;
+    ayuda.parar();
+    b.classList.remove("senal");
     b.classList.add("right");
     $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
     const frase = n === 1 ? `Hay ${cosa.f ? "una" : "un"} ${cosa.s}.` : `Hay ${enPalabras(n)} ${cosa.p}.`;
-    if (fallos === 0) { stars.sumar(); feedback("ok", "🎉", frase); decir(`${elogio()} ${frase}`); }
+    if (fallos === 0 && !ayuda.usada) { stars.sumar(); feedback("ok", "🎉", frase); decir(`${elogio()} ${frase}`); }
     else { feedback("almost", "🤏", frase); decir(`¡Ahora sí! ${frase}`); }
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones: cuantas });
     $("nextBtn").classList.add("pulse");
   } else {
     fallos++;
@@ -161,11 +183,17 @@ $("opciones").addEventListener("click", async e => {
       await decir(`${noSon(v)}. Contemos juntos.`);
     }
     await contarJuntos();
+    // Después de contar juntos, si ya se equivocó dos veces, se le señala el número
+    if (fallos >= 2 && !listo) senalar($("opciones").querySelector(`[data-v="${n}"]`));
   }
 });
 
 $("nextBtn").addEventListener("click", nuevo);
-niveles(v => { max = Number(v); anterior = 0; nuevo(); });
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") max = Number(v);
+  anterior = 0; nuevo();
+});
 alEmpezar(nuevo);
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>

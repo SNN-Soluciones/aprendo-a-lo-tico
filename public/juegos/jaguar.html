@@ -29,6 +29,9 @@
   .azar .rotulo { font-weight: 800; font-size: .85rem; color: var(--page-ink); }
   .azar button { padding: 1px 10px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); background: #EFE4FF; }
   .azar button[aria-pressed="true"] { background: var(--btn); }
+  .azar button.paso { background: #DDF7E6; }
+  .azar button.paso[aria-pressed="true"] { background: var(--btn); }
+  .top .escalera { flex: none; }
 
   .instr .txt { text-align: left; font-size: clamp(1rem, 4.2vw, 1.15rem); font-weight: 700; }
   .instr .titulo { display: block; font-size: clamp(1.1rem, 4.8vw, 1.35rem); font-weight: 800; color: var(--materia); }
@@ -40,6 +43,17 @@
   .pista:last-of-type { border-bottom: none; }
   .pista .num { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--materia); color: #fff; display: flex; align-items: center; justify-content: center; font-size: .95rem; }
   .pista .txt { flex: 1; }
+  .pista[data-p] { cursor: pointer; }
+
+  /* 🖼️ Dibujo de cada pista: "!x" tachado como señal de prohibido, "@color" un círculo de color */
+  .ico { flex: none; display: inline-flex; align-items: center; gap: 3px; font-size: clamp(1.6rem, 7.5vw, 2rem); line-height: 1;
+    background: #fff; border: 3px solid #E9DDBF; border-radius: 14px; padding: 3px 6px; min-width: 52px; justify-content: center; }
+  .ico .pz { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 1.15em; height: 1.15em; }
+  .ico .pz small { font-size: .55em; font-weight: 800; margin-right: 1px; color: var(--ink); }
+  .ico .dot { width: .9em; height: .9em; border-radius: 50%; border: 2px solid var(--rim); display: block; }
+  .ico .no::after { content: ""; position: absolute; inset: -2px; border: 3px solid var(--bad); border-radius: 50%;
+    background: linear-gradient(135deg, transparent calc(50% - 2px), var(--bad) calc(50% - 2px) calc(50% + 2px), transparent calc(50% + 2px)); }
+  .ico .sep { font-size: .55em; font-weight: 800; color: var(--materia); }
   .pista button { flex: none; font-size: 1rem; padding: 0 8px; border-width: 2px; box-shadow: 0 2px 0 var(--rim); }
   .pista.nueva { animation: pop .45s ease-out; }
   .pista.culpable { background: #FFE3E0; border-radius: 10px; }
@@ -89,15 +103,17 @@
   <div class="big" aria-hidden="true">🐆🔍</div>
   <h1>El jaguar detective</h1>
   <button id="startBtn" aria-label="Empezar">▶️</button>
-  <p>Leé las pistas, tachá a los que no pueden ser y descubrí al culpable. Subile el volumen 🔊.</p>
+  <p>Escuchá (o leé) las pistas, tachá a los que no pueden ser y descubrí al culpable. Subile el volumen 🔊.</p>
 </div>
 
 <div class="wrap top ancho">
   <div class="casos" id="casos" role="group" aria-label="Caso"></div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 <div class="azar ancho" id="azar" role="group" aria-label="Casos nuevos al azar">
   <span class="rotulo">🎲 Caso nuevo:</span>
+  <button class="paso" data-azar="paso" aria-pressed="false" aria-label="Paso a paso: sube solo, de a poquito">🪜 Paso a paso</button>
   <button data-azar="facil" aria-pressed="false">Fácil</button>
   <button data-azar="medio" aria-pressed="false">Medio</button>
   <button data-azar="dificil" aria-pressed="false">Difícil</button>
@@ -131,9 +147,11 @@
 
 <script type="module">
 import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
-import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { ANIMALES, CASOS, ETAPAS, descartadoPor, pistaQueFalla, casoAlAzar, libretaAlAzar } from "../js/detective.js";
+import { decir, instruccion, feedback, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { ANIMALES, CASOS, ETAPAS, COLORES, PASOS, descartadoPor, pistaQueFalla, casoAlAzar, libretaAlAzar, casoDelPaso } from "../js/detective.js";
 import { desdeUrl, marcarHecho } from "../js/reto-dia.js";
+import { escalera } from "../js/escalera.js";
+import { perfilActivo } from "../js/perfil.js";
 const dia = desdeUrl(); // 🎯 si se abrió como reto del día
 
 const $ = id => document.getElementById(id);
@@ -142,12 +160,28 @@ const nombreCon = id => `${A(id).art} ${A(id).n}`;
 const mayus = t => t.charAt(0).toUpperCase() + t.slice(1);
 
 let k = 0, azar = null, caso = null, vistas = 0, tachados = new Set(), acusando = false, fallos = 0, resuelto = false;
+let senalado = null; // sospechoso que la ayuda está señalando 👆
 let libreta = {}; // "fila|col" → "si" | "no"
 let progreso = {};
 try { progreso = JSON.parse(localStorage.getItem("detective-progreso")) || {}; } catch (_) {}
 const guardar = () => { try { localStorage.setItem("detective-progreso", JSON.stringify(progreso)); } catch (_) {} };
 const etapaDe = c => ETAPAS.find(e => e.id === c.etapa);
 
+// 🪜 Paso a paso: la escalera solo cuenta en ese modo (no en los casos fijos ni en 🎲 fácil/medio/difícil)
+const esc = escalera("jaguar", { escalones: PASOS.length, meta: 3, inicio: edad => edad === null || edad <= 5 ? 0 : edad === 6 ? 1 : edad === 7 ? 2 : edad === 8 ? 3 : 5 });
+esc.activa = false;
+const perfil = perfilActivo();
+const pasoPorDefecto = !!perfil && (perfil.lee !== "si" || perfil.edad <= 7);
+
+// 🖼️ Dibujo de una pista (ver ICO en js/detective.js)
+const pieza = t => {
+  if (["o", "y", "→"].includes(t)) return `<span class="sep">${t}</span>`;
+  const conNo = t.startsWith("!"), x = conNo ? t.slice(1) : t;
+  const dentro = x.startsWith("@") ? `<span class="dot" style="background:${COLORES[x.slice(1)]}"></span>`
+    : /^\d/.test(x) ? `<small>${x[0]}</small>${x.slice(1)}` : x;
+  return `<span class="pz${conNo ? " no" : ""}">${dentro}</span>`;
+};
+const dibujo = q => q.ico?.length ? `<span class="ico" aria-hidden="true">${q.ico.map(pieza).join("")}</span>` : "";
 // ---------- Pintar ----------
 function pintarCasos() {
   $("casos").innerHTML = CASOS.map((c, i) =>
@@ -160,7 +194,7 @@ function pintarCasos() {
 
 function pintarPistas(nueva = -1, culpables = []) {
   $("pistas").innerHTML = caso.pistas.slice(0, vistas).map((q, i) =>
-    `<div class="pista${i === nueva ? " nueva" : ""}${culpables.includes(i) ? " culpable" : ""}"><span class="num">${i + 1}</span><span class="txt">${q.txt}</span><button data-leer="${i}" aria-label="Escuchar la pista ${i + 1}">🔊</button></div>`).join("");
+    `<div class="pista${i === nueva ? " nueva" : ""}${culpables.includes(i) ? " culpable" : ""}" data-p="${i}"><span class="num">${i + 1}</span>${dibujo(q)}<span class="txt">${q.txt}</span><button data-leer="${i}" aria-label="Escuchar la pista ${i + 1}">🔊</button></div>`).join("");
   $("cuenta").textContent = `${vistas} de ${caso.pistas.length}`;
   $("otraBtn").hidden = vistas >= caso.pistas.length;
   $("otraBtn").textContent = `🔍 Ver otra pista (quedan ${caso.pistas.length - vistas})`;
@@ -169,7 +203,7 @@ function pintarPistas(nueva = -1, culpables = []) {
 function pintarSospechosos() {
   $("sospechosos").classList.toggle("acusando", acusando);
   $("sospechosos").innerHTML = caso.sospechosos.map(id =>
-    `<button class="sospechoso${tachados.has(id) ? " tachado" : ""}" data-s="${id}" aria-label="${mayus(A(id).n)}${tachados.has(id) ? ", tachado" : ""}"><span class="e" aria-hidden="true">${A(id).e}</span><span class="n">${mayus(A(id).n)}</span></button>`).join("");
+    `<button class="sospechoso${tachados.has(id) ? " tachado" : ""}${id === senalado ? " senal" : ""}" data-s="${id}" aria-label="${mayus(A(id).n)}${tachados.has(id) ? ", tachado" : ""}"><span class="e" aria-hidden="true">${A(id).e}</span><span class="n">${mayus(A(id).n)}</span></button>`).join("");
   const vivos = caso.sospechosos.filter(id => !tachados.has(id));
   $("acusarBtn").classList.toggle("pulse", !resuelto && vivos.length === 1 && vistas >= caso.pistas.length);
 }
@@ -187,17 +221,19 @@ function pintarLibreta(malas = []) {
 
 // ---------- Casos ----------
 function cargar(i) { k = i; azar = null; iniciar(CASOS[k]); }
-/** 🎲 Caso nuevo al azar: "facil" | "medio" | "dificil" | "libreta" */
+/** 🎲 Caso nuevo al azar: "facil" | "medio" | "dificil" | "libreta", o "paso" (🪜 el escalón de la escalera) */
 function cargarAzar(d, rnd = Math.random, delDia = false) {
   azar = d;
-  const c = d === "libreta" ? libretaAlAzar(rnd) : casoAlAzar(d, rnd);
+  const c = d === "paso" ? casoDelPaso(esc.nivel, rnd) : d === "libreta" ? libretaAlAzar(rnd) : casoAlAzar(d, rnd);
   if (delDia) c.delDia = true;
   iniciar(c);
 }
 
 function iniciar(c) {
   caso = c;
-  vistas = 1; tachados = new Set(); acusando = false; fallos = 0; resuelto = false; libreta = {};
+  esc.activa = azar === "paso";
+  // En los primeros escalones se ven todas las pistas de una vez
+  vistas = caso.todas ? caso.pistas.length : 1; tachados = new Set(); acusando = false; fallos = 0; resuelto = false; libreta = {}; senalado = null;
   const esLibreta = caso.tipo === "libreta";
   $("zonaSospechosos").hidden = esLibreta; $("zonaLibreta").hidden = !esLibreta;
   $("acusarBtn").hidden = esLibreta; $("revisarBtn").hidden = !esLibreta;
@@ -210,8 +246,11 @@ function iniciar(c) {
   const como = esLibreta
     ? "Tocá una casilla para marcar ✓ (sí fue) y otra vez para marcar ✗ (no fue)."
     : "Tachá a los que no pueden ser.";
-  instruccion(`<span class="titulo">${azar ? (caso.delDia ? "🎯 Reto del día:" : "🎲") : `🐆 Caso ${k + 1}:`} ${caso.titulo}</span>${caso.historia}`,
-    `${caso.titulo}. ${caso.historia} ${como} Primera pista: ${caso.pistas[0].txt}`);
+  const lasPistas = vistas > 1 ? caso.pistas.map((q, i) => `Pista ${i + 1}: ${q.txt}`).join(" ") : `Primera pista: ${caso.pistas[0].txt}`;
+  instruccion(`<span class="titulo">${azar === "paso" ? "🪜" : azar ? (caso.delDia ? "🎯 Reto del día:" : "🎲") : `🐆 Caso ${k + 1}:`} ${caso.titulo}</span>${caso.historia}`,
+    `${caso.aviso ? caso.aviso + " " : ""}${caso.titulo}. ${caso.historia} ${como} ${lasPistas}`);
+  // 🤝 En paso a paso, si se queda pegado, se le ayuda a tachar
+  if (azar === "paso" && !esLibreta) ayuda.empezar(); else ayuda.parar();
 }
 $("casos").addEventListener("click", e => {
   const b = e.target.closest("[data-k]");
@@ -229,10 +268,36 @@ $("otraBtn").addEventListener("click", () => {
   if (caso.tipo === "sospechosos") pintarSospechosos();
   sonido("tap"); decir(`Pista ${vistas}: ${caso.pistas[vistas - 1].txt}`);
 });
+// Tocar una pista (el dibujo, el texto o 🔊) la lee en voz alta
 $("pistas").addEventListener("click", e => {
-  const b = e.target.closest("[data-leer]");
-  if (b) decir(caso.pistas[Number(b.dataset.leer)].txt);
+  const b = e.target.closest("[data-p]");
+  if (b) decir(caso.pistas[Number(b.dataset.p)].txt);
 });
+
+// 🤝 Ayuda de paso a paso: señala a un sospechoso que una pista descarta (o el botón que sigue)
+const laO = id => A(id).art === "la" ? "la" : "lo";
+function ayudarATachar() {
+  if (!caso || resuelto || caso.tipo !== "sospechosos") return;
+  if (tachados.has(caso.culpable)) {
+    senalado = caso.culpable; pintarSospechosos();
+    decir(`Mmm… tachaste ${nombreCon(caso.culpable)}. Revisá: ¿no cumple todas las pistas? Tocal${laO(caso.culpable) === "la" ? "a" : "o"} para destachar${laO(caso.culpable)}.`);
+    return;
+  }
+  const vivos = caso.sospechosos.filter(id => !tachados.has(id));
+  const sobra = vivos.find(id => id !== caso.culpable && descartadoPor(caso, id).some(i => i < vistas && i !== caso.trampa));
+  if (sobra) {
+    const i = descartadoPor(caso, sobra).filter(x => x < vistas && x !== caso.trampa)[0];
+    modoAcusar(false); // para que al tocarlo se tache, no se acuse
+    senalado = sobra; pintarSospechosos(); pintarPistas(-1, [i]);
+    decir(`Mirá ${nombreCon(sobra)}. La pista ${i + 1} dice: ${caso.pistas[i].txt} ${mayus(nombreCon(sobra))} no es así. ¡Tachal${laO(sobra) === "la" ? "a" : "o"}!`);
+  } else if (vivos.length === 1) {
+    if (acusando) { senalado = vivos[0]; pintarSospechosos(); decir(`¡Solo queda ${nombreCon(vivos[0])}! Tocal${laO(vivos[0]) === "la" ? "a" : "o"}.`); }
+    else { senalar($("acusarBtn")); decir("¡Solo queda uno! Tocá «¡Ya sé quién fue!» y después tocalo."); }
+  } else if (vistas < caso.pistas.length) {
+    senalar($("otraBtn")); decir("Mirá otra pista.");
+  }
+}
+const ayuda = ayudaSiSeQueda({ senalar: ayudarATachar, repetir: () => leerCaso(false), espera: 12000 });
 
 // ---------- Sospechosos: tachar y acusar ----------
 $("sospechosos").addEventListener("click", e => {
@@ -241,25 +306,30 @@ $("sospechosos").addEventListener("click", e => {
   const id = b.dataset.s;
   if (acusando) return acusar(id);
   if (tachados.has(id)) tachados.delete(id); else tachados.add(id);
+  if (id === senalado) senalado = null;
   sonido("tap"); hablar(`${mayus(A(id).n)}${tachados.has(id) ? ", tachado" : ""}`);
   pintarSospechosos();
 });
 
 $("acusarBtn").addEventListener("click", () => {
   if (resuelto) return;
-  acusando = !acusando;
-  $("acusarBtn").setAttribute("aria-pressed", acusando);
-  $("acusarBtn").textContent = acusando ? "👆 Tocá al culpable" : "🎯 ¡Ya sé quién fue!";
+  modoAcusar(!acusando);
+  $("acusarBtn").classList.remove("senal");
   sonido("tap");
   if (acusando) decir("¿Quién fue? Tocá al culpable.");
   pintarSospechosos();
 });
 
+function modoAcusar(si) {
+  acusando = si;
+  $("acusarBtn").setAttribute("aria-pressed", String(si));
+  $("acusarBtn").textContent = si ? "👆 Tocá al culpable" : "🎯 ¡Ya sé quién fue!";
+}
+
 function acusar(id) {
-  acusando = false;
-  $("acusarBtn").setAttribute("aria-pressed", "false"); $("acusarBtn").textContent = "🎯 ¡Ya sé quién fue!";
+  modoAcusar(false);
   if (id === caso.culpable) {
-    resuelto = true;
+    resuelto = true; senalado = null;
     pintarSospechosos();
     // Explicación: por qué no fue cada uno de los otros
     const razones = caso.sospechosos.filter(s => s !== id).map(s => {
@@ -275,6 +345,13 @@ function acusar(id) {
     fallos++;
     const pis = descartadoPor(caso, id).filter(i => i !== caso.trampa);
     const visibles = pis.filter(i => i < vistas);
+    // 🪜 Después de dos acusaciones equivocadas, se le señala al culpable (sin regaños) y queda listo para acusarlo
+    if (azar === "paso" && fallos >= 2) {
+      senalado = caso.culpable; tachados.delete(caso.culpable); modoAcusar(true); pintarSospechosos();
+      feedback("almost", "🤝", `No fue ${nombreCon(id)}`);
+      decir(`No fue ${nombreCon(id)}. Te ayudo: el culpable es el de la manito. ¡Tocal${laO(caso.culpable) === "la" ? "a" : "o"}!`);
+      return;
+    }
     pintarSospechosos();
     if (visibles.length) {
       pintarPistas(-1, [visibles[0]]);
@@ -351,6 +428,8 @@ function preguntarTrampa(base, vio) {
 
 function ganar(estrellas, titulo, extra = "") {
   resuelto = true;
+  ayuda.parar();
+  $("acusarBtn").classList.remove("senal"); $("otraBtn").classList.remove("senal");
   // Los casos al azar suman estrellas cada vez; los fijos guardan la mejor
   if (caso.azar) progreso.azar = (progreso.azar || 0) + estrellas;
   else progreso[caso.id] = Math.max(progreso[caso.id] || 0, estrellas);
@@ -359,6 +438,7 @@ function ganar(estrellas, titulo, extra = "") {
   feedback("ok", "🎉", `${titulo} ${"⭐".repeat(estrellas)}`);
   const cierre = fallos === 0 ? "¡Resuelto al primer intento!" : "¡Resuelto! La próxima, revisá bien cada pista antes de acusar.";
   decir(`${extra || elogio()} ${cierre}`);
+  if (azar === "paso") esc.resultado({ fallos, ayuda: ayuda.usada, opciones: caso.tipo === "sospechosos" ? caso.sospechosos.length : 0 });
   if (azar || k < CASOS.length - 1) { $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); }
   else decir("¡Resolviste todos los casos! Sos un detective de verdad, como el jaguar.", { cola: true });
 }
@@ -371,10 +451,11 @@ $("nextBtn").addEventListener("click", () => (azar ? cargarAzar(azar) : cargar(M
 const leerCaso = lento => caso && decir(`${caso.historia} ${caso.pistas.slice(0, vistas).map((q, i) => `Pista ${i + 1}: ${q.txt}`).join(" ")}`, lento ? { rate: LENTO } : undefined);
 const primero = CASOS.findIndex(c => !progreso[c.id]);
 k = primero === -1 ? 0 : primero;
-alEmpezar(() => (dia ? cargarAzar(dia.reto === "libreta" ? "libreta" : "dificil", dia.rnd, true) : cargar(k)), leerCaso);
+// Con un perfil que todavía no lee (o de 7 años o menos) se arranca 🪜 paso a paso
+alEmpezar(() => (dia ? cargarAzar(dia.reto === "libreta" ? "libreta" : "dificil", dia.rnd, true) : pasoPorDefecto ? cargarAzar("paso") : cargar(k)), leerCaso);
 pintarCasos();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__jaguar = { get caso() { return caso; } };
+if (new URLSearchParams(location.search).has("prueba")) window.__jaguar = { get caso() { return caso; }, get vistas() { return vistas; }, get azar() { return azar; }, esc };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

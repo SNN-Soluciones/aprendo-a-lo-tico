@@ -68,15 +68,16 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [ ] Sacar los rangos de cada juego a una config por grado (`generate(nivel)`)
 - [x] Sumas llevando con bloques (espejo de las restas)
-- [ ] 🚌 ¿A qué hora llega el bus? Tiempo transcurrido ("sale de Cartago a las 7:15 y llega a las 8:40") · 3°–4°
+- [x] 🚌 ¿A qué hora llega el bus? Tiempo transcurrido con rutas ticas, a. m./p. m., horarios y días · 2°–5°
+- [x] 📐 Perímetro y área en la finca: cuadritos, pintar corrales, fórmulas, figuras en L, triángulos y problemas · 3°–6°
+- [x] 📊 Encuesta en la escuela: pictogramas, barras, moda, promedio y probabilidad · 2°–6°
 - [ ] Pulpería: ¿cuánta plata hay? (contar un montón)
 - [ ] Pulpería: alcancía (¿qué puedo comprar sin pasarme?)
 - [ ] Cambiar billetes (¿cuántas de ₡500 hacen ₡5 000?)
 - [x] ✖️ Tablas en la feria: multiplicación como filas de fruta en el tramo, tablas del 1 al 10 con trucos, contra reloj · 2°–4°
-- [ ] 🥭 Repartiendo mangos: división arrastrando a canastas, el sobrante es el residuo · 3°–4°
-- [ ] 🍕 Fracciones con pizza y sandía: cortar, pintar la fracción y comparar · 3°–5°
-- [ ] Decimales con plata
-- [ ] 🏷️ Descuentos en la pulpería: porcentajes y decimales con precios en colones · 5°–6°
+- [x] 🥭 Repartiendo mangos: división tocando canastas, el sobrante es el residuo, hasta 3 cifras · 2°–4°
+- [x] 🍕 Fracciones con pizza y sandía: pintar, comparar, equivalentes, sumar, mixtos y simplificar · 3°–6°
+- [x] 🏷️ Ofertas en la feria: decimales con kilos y litros, porcentajes, descuentos e IVA · 4°–6°
 
 ## ✏️ Español
 
@@ -84,8 +85,10 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🧩 Armo la oración: ordenar palabras (con voz), punto/pregunta/emoción y mayúsculas · 1°–3°
 - [ ] Mayúsculas y puntuación
 - [x] 🐝 Ortografía: b/v, s/c/z y h con dibujo, voz y la regla (mb, nv, -aba, -bir, z→ces, hue-) · 3°–6°
-- [ ] 🦥 ¿Qué es? Sustantivo, verbo, adjetivo: clasificar en tres canastas · 3°–5°
-- [ ] 📖 Cuentos ticos cortos: comprensión lectora con cuentos originales (preguntas literales e inferenciales) · 2°–6°
+- [x] 📦 ¿Qué es? Sustantivo, verbo, adjetivo, concordancia, pronombres, adverbios y sujeto y predicado · 2°–6°
+- [x] 📖 Cuentos ticos: 27 textos originales con preguntas literales, inferenciales, de vocabulario y propósito · 1°–6°
+- [x] ✍️ ¿Dónde suena más fuerte? Sílabas, agudas, graves, esdrújulas, tildes e hiato · 2°–6°
+- [ ] 📖 Más cuentos (la meta: 10 por escalón) y cuentos con audio grabado
 
 ## 🌱 Ciencias
 
@@ -94,7 +97,9 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🌱 Partes de la planta: explorar, ¿dónde está?, ¿para qué sirve? y ¿qué parte comemos? (la papa es tallo, el café es semilla) · 1°–3°
 - [x] 🌳 Ecosistemas de Costa Rica: ¿dónde vive?, ¿cómo es? y ¿dónde queda? · 3°–6°
 - [x] 🧊 Sólido, líquido o gaseoso: estados y cambios (derretir, congelar, evaporar, condensar) · 1°–4°
-- [ ] Cuerpo humano básico
+- [x] 🫀 El cuerpo humano: sentidos y sistemas, tocando cada órgano · 1°–6°
+- [x] 🔗 ¿Quién se come a quién? Cadenas y redes alimenticias de Costa Rica · 2°–6°
+- [ ] 🪐 El sistema solar y la Tierra (día y noche, estaciones secas y lluviosas) · 4°–6°
 
 ## 🗺️ Estudios Sociales
 
@@ -104,6 +109,9 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
 - [x] 📅 Efemérides: ¿qué se celebra?, ¿qué día es? y ¿por qué? (15 fechas) · 2°–6°
 - [ ] Mi comunidad: servicios, oficios
+- [x] 🏛️ La historia de Costa Rica: línea del tiempo, pueblos originarios, personajes y gobierno · 2°–6°
+- [x] 🧭 Direcciones a lo tico: rosa de los vientos, «200 metros al este», coordenadas, latitud y longitud · 1°–6°
+- [ ] 🗺️ Regiones de Costa Rica: clima, relieve y producción · 4°–6°
 
 ## 💬 Inglés
 
@@ -130,6 +138,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Nota de 0 a 100, resultado por tema, revisión con explicaciones y «practicar lo que fallé»
 - [x] Imprimir el examen con hoja de respuestas
 - [ ] Más temas por grado (según el programa del MEP) y preguntas con dibujos (relojes, figuras, mapas)
+- [ ] Usar los generadores de los juegos nuevos (tiempo, área, gráficos, tildes, historia…) como temas del examen
 - [ ] Compartir el examen por WhatsApp (mismo examen con un enlace)
 
 ## 🎲 Que no siempre sea lo mismo (generadores, sin servidor)
@@ -164,7 +173,9 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Jaguar detective 🪜 paso a paso: de 2 sospechosos y 1 pista hasta los difíciles, con dibujos en las pistas
 - [x] Perezoso: 💡 pone la siguiente flecha después de 2 intentos fallidos
 - [ ] Escalera en Listen and tap, Trazá letras, Gato (fácil → medio cuando gana seguido) y Memory in English
-- [ ] Modo papá: ver en qué escalón va cada juego y moverlo a mano
+- [x] «📈 Cómo va…» en el inicio: en qué escalón va el niño en cada juego
+- [x] `js/quiz.js` con modo 🪜 y respuestas escritas
+- [ ] Modo papá: mover a mano el escalón de un juego desde el inicio
 - [ ] Voz grabada para las onomatopeyas de «¿Quién hace así?» (la voz del teléfono no siempre las dice bien)
 
 ## 👨‍👩‍👧 Perfiles y progreso (local)

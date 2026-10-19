@@ -47,6 +47,19 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 📏 Grande y pequeño | Matemáticas | Prepa y 1° (3 a 6 años) | `public/juegos/tamanos.html` |
 | 🐮 ¿Quién hace así? | Ciencias | Prepa (3 a 6 años) | `public/juegos/sonidos.html` |
 | 🧺 ¿Dónde va? (clasificar) | Ciencias | Prepa y 1° (3 a 7 años) | `public/juegos/clasificar.html` |
+| 🍕 Fracciones con pizza y sandía | Matemáticas | 3° a 6° | `public/juegos/fracciones.html` |
+| 🥭 Repartiendo mangos (división) | Matemáticas | 2° a 4° | `public/juegos/repartir.html` |
+| 🚌 ¿A qué hora llega el bus? (tiempo transcurrido) | Matemáticas | 2° a 5° | `public/juegos/bus.html` |
+| 📐 Perímetro y área en la finca | Matemáticas | 3° a 6° | `public/juegos/area.html` |
+| 🏷️ Ofertas en la feria (decimales y porcentajes) | Matemáticas | 4° a 6° | `public/juegos/porcentajes.html` |
+| 📊 Encuesta en la escuela (gráficos y probabilidad) | Matemáticas | 2° a 6° | `public/juegos/graficos.html` |
+| 📦 ¿Qué es? Clases de palabras | Español | 2° a 6° | `public/juegos/palabras.html` |
+| ✍️ ¿Dónde suena más fuerte? (sílabas y tildes) | Español | 2° a 6° | `public/juegos/acentos.html` |
+| 📖 Cuentos ticos: leo y entiendo | Español | 1° a 6° | `public/juegos/cuentos.html` |
+| 🫀 El cuerpo humano | Ciencias | 1° a 6° | `public/juegos/cuerpo.html` |
+| 🔗 ¿Quién se come a quién? (cadenas alimenticias) | Ciencias | 2° a 6° | `public/juegos/cadenas.html` |
+| 🏛️ La historia de Costa Rica | Estudios Sociales | 2° a 6° | `public/juegos/historia.html` |
+| 🧭 Direcciones a lo tico (puntos cardinales y mapas) | Estudios Sociales | 1° a 6° | `public/juegos/rumbos.html` |
 
 ## 📝 Preparate para el examen
 
@@ -76,6 +89,12 @@ aprendo-a-lo-tico/
 │   ├── js/perfil.js        # 👧 Perfiles: edad, si ya lee, animalito; juegos sugeridos para cada uno
 │   ├── js/escalera.js      # 🪜 Sube y baja el nivel de a poquito según cómo le va (por perfil y por juego)
 │   ├── js/patrones.js      # 🧩 Patrones de «¿Qué sigue?» por escalón (siempre una sola respuesta)
+│   ├── js/fracciones.js, repartir.js, bus.js, area.js, porcentajes.js, graficos.js
+│   │                       # 🔢 Generadores de Matemáticas de 2° a 6° (cada uno con su revisar… para node)
+│   ├── js/palabras.js, acentos.js, cuentos.js
+│   │                       # ✏️ Clases de palabras, sílabas y tildes (200 palabras curadas), 27 textos originales
+│   ├── js/cuerpo.js, cadenas.js, historia.js, rumbos.js
+│   │                       # 🌱🗺️ Cuerpo humano (con dibujo), cadenas alimenticias, historia de Costa Rica, mapas
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"
@@ -200,6 +219,10 @@ La primera vez, el inicio pregunta **cuántos años tiene** quien va a jugar, **
 - **Juegos sugeridos:** cada juego del catálogo dice `edad: [desde, hasta]` y `leer: "no" | "poco" | "si"`. Si el niño no lee, solo se le sugieren los de `leer: "no"` (los demás quedan aparte, «con un adulto que le lea»). Cada tarjeta tiene 🔊 para oír el nombre del juego. A los que no leen no se les muestra el reto del día ni el examen.
 - **Escalera 🪜 (`js/escalera.js`):** los juegos con `escalera: true` tienen niveles chiquitos (escalones). Cada ronda bien al primer intento suma una hojita 🍃; con 4 sube un escalón, con fiesta 🎉. Una ronda con un error no suma ni resta. Si una ronda le costó mucho (2 errores o más, o hubo que señalarle la respuesta) pierde una hojita, y con dos rondas así seguidas baja un escalón, sin regaños. Mientras nunca se haya equivocado en ese juego, cada acierto vale doble, para llegar rápido a su nivel. El escalón inicial depende de la edad. Se guarda por perfil y por juego. El papá puede escoger un nivel a mano (los botones de nivel); el 🪜 vuelve al modo automático.
 - **Ayudas sin pedirlas (`js/prepa.js`):** `ayudaSiSeQueda()` repite la instrucción si el niño pasa un rato sin tocar nada y, si sigue sin tocar, `senalar()` hace brillar la respuesta con una manito 👆. Después del 2.º error también se señala la correcta. Así nunca se queda pegado ni se frustra.
+
+Los juegos de preguntas (`js/quiz.js`) también tienen escalera: `montarQuiz({ …, escalera: { id, escalones: [{ nombre, pregunta }], inicio } })` agrega el modo 🪜 (por defecto), que va pregunta por pregunta. Las preguntas pueden ser con opciones o para escribir la respuesta (`escribir: { respuesta, numero, sufijo }`, acepta coma o punto decimal y espacio de miles). Ver `juegos/bus.html`.
+
+En el inicio, «📈 Cómo va…» muestra en qué escalón va el niño en cada juego que ya jugó.
 
 Para pasar un juego a la escalera (ver `juegos/contar.html`):
 

@@ -552,4 +552,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/palabras.html",
   },
+  {
+    id: "cuentos",
+    titulo: "Cuentos ticos: leo y entiendo",
+    descripcion: "Leé o escuchá cuentos, avisos, noticias y poemas ticos, y contestá: ¿quién?, ¿por qué?, ¿qué quiere decir? Si te equivocás, te muestra dónde volver a leer.",
+    emoji: "📖",
+    materia: "espanol",
+    grados: [1, 2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/cuentos.html",
+  },
 ];

@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cuentos ticos: leo y entiendo</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #E8574A; }
+  .ancho { width: min(96vw, 600px); }
+  .levels button { font-size: .95rem; }
+
+  /* 📖 El texto */
+  .lectura {
+    margin-top: 10px; background: #FFFDF5; color: var(--ink); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 10px 14px 12px; box-shadow: 0 5px 0 var(--rim); user-select: text; -webkit-user-select: text;
+  }
+  .lectura header { display: flex; align-items: center; gap: 10px; }
+  .lectura .emoji { font-size: 2.4rem; line-height: 1; flex: none; }
+  .lectura h2 { margin: 0; font-size: clamp(1.15rem, 5vw, 1.4rem); line-height: 1.15; color: var(--materia); }
+  .lectura .clase { display: inline-block; margin-top: 2px; font-size: .78rem; font-weight: 800; background: #FBE3E0; color: #9B2B20; border-radius: 999px; padding: 0 8px; }
+  #texto p { margin: 8px 0; padding: 2px 6px; border-radius: 10px; font-size: clamp(1.08rem, 4.6vw, 1.22rem); line-height: 1.55; font-weight: 600; transition: background .2s; }
+  #texto p.verso { font-style: italic; }
+  #texto.aviso p, #texto.receta p { font-weight: 700; }
+  #texto p.leyendo { background: #FFF1C2; }
+  #texto p.mirar { background: #FFF8DD; outline: 3px dashed var(--btn); }
+  #texto mark { background: #FFE08A; color: inherit; border-radius: 4px; padding: 0 2px; }
+  .lectura .acciones { display: flex; gap: 8px; margin-top: 4px; }
+  .lectura .acciones button { flex: 1; font-size: 1.05rem; padding: 4px 8px; border-radius: 16px; }
+  #escucharBtn { background: var(--btn); }
+
+  #leidoBtn { margin-top: 12px; font-size: 1.25rem; padding: 8px 12px; border-radius: 18px; background: var(--materia); color: #fff; animation: pulse 1.4s ease-in-out infinite; }
+
+  /* ❓ Preguntas */
+  .caja-pregunta { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 10px 12px 12px; box-shadow: 0 5px 0 var(--rim); }
+  .avance { display: flex; gap: 5px; justify-content: center; }
+  .avance span { width: 14px; height: 14px; border-radius: 50%; background: var(--face); border: 3px solid var(--rim); }
+  .avance .bien { background: var(--ok); }
+  .avance .costo { background: var(--btn); }
+  .avance .ahora { outline: 3px solid var(--materia); outline-offset: 2px; }
+  .tipo-q { margin: 8px 0 0; font-size: .85rem; font-weight: 800; color: var(--materia); }
+  .enunciado { margin: 2px 0 8px; font-size: clamp(1.15rem, 5vw, 1.35rem); line-height: 1.25; }
+  .opciones { display: grid; gap: 8px; }
+  .opciones button { text-align: left; font-size: clamp(1rem, 4.4vw, 1.12rem); font-weight: 700; line-height: 1.25; padding: 8px 12px; border-radius: 16px; position: relative; }
+  .opciones button.paso { padding-left: 46px; }
+  .opciones button.paso .num {
+    position: absolute; left: 8px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border-radius: 50%;
+    border: 3px dashed var(--soft); display: flex; align-items: center; justify-content: center; font-size: 1rem;
+  }
+  .opciones button.paso.puesto { background: #CFF5DC; opacity: 1; }
+  .opciones button.paso.puesto .num { background: var(--ok); border: 3px solid var(--ok); color: #fff; }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.35; }
+  .explica blockquote { margin: 6px 0 0; padding: 6px 10px; background: #fff; border-left: 5px solid var(--btn); border-radius: 8px; font-weight: 600; }
+  .explica button { margin-top: 6px; font-size: .9rem; padding: 2px 10px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+
+  .final { margin-top: 12px; text-align: center; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 12px; box-shadow: 0 5px 0 var(--rim); }
+  .final .grande { font-size: 2.6rem; letter-spacing: 4px; }
+  .final p { margin: 4px 0; font-weight: 700; }
+  .bottom button { font-size: 1.3rem; padding: 6px 22px; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">📖🦥🌋</div>
+  <h1>Cuentos ticos: leo y entiendo</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Leé (o escuchá) un texto cortito y contestá las preguntas. Si te equivocás, te muestro dónde volver a leer. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" id="niveles" role="group" aria-label="Nivel"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<article class="lectura ancho" id="lectura" aria-labelledby="titulo">
+  <header><span class="emoji" id="emoji" aria-hidden="true"></span><div><h2 id="titulo"></h2><span class="clase" id="clase"></span></div></header>
+  <div id="texto"></div>
+  <div class="acciones"><button id="escucharBtn">🔊 Escuchar el texto</button></div>
+</article>
+
+<button id="leidoBtn" class="ancho">✅ Ya lo leí: ¡a las preguntas!</button>
+
+<section class="caja-pregunta ancho" id="preguntaBox" hidden aria-live="polite">
+  <div class="avance" id="avance" aria-hidden="true"></div>
+  <p class="tipo-q" id="tipoQ"></p>
+  <h3 class="enunciado" id="enunciado"></h3>
+  <div class="opciones" id="opciones"></div>
+</section>
+
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="final ancho" id="final" hidden></div>
+<div class="wrap bottom"><button id="nextBtn" hidden>➡️</button></div>
+
+<script type="module">
+import { hablar, callar, elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { perfilActivo } from "../js/perfil.js";
+import { ESCALONES, BANDAS, TIPOS, inicioPorEdad, siguienteTexto, prepararPreguntas, explicacion, parrafoDe } from "../js/cuentos.js";
+
+const $ = id => document.getElementById(id);
+const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const CLASES = { cuento: "Cuento", informativo: "Texto informativo", receta: "Receta", aviso: "Aviso", noticia: "Noticia", carta: "Carta", poema: "Poema" };
+
+// 🪜 Cada texto es una ronda: si contestó todo al primer intento, gana una hojita (con 2 sube de escalón).
+const esc = escalera("cuentos", { escalones: ESCALONES.length, meta: 2, inicio: inicioPorEdad });
+const stars = estrellas("cuentos-stars");
+
+// Textos ya leídos (por perfil), para no repetir hasta haber visto los de ese escalón
+const CLAVE_VISTOS = `cuentos-vistos-${perfilActivo()?.id || "sin-perfil"}`;
+let vistos = [];
+try { vistos = JSON.parse(localStorage.getItem(CLAVE_VISTOS)) || []; } catch (_) {}
+
+let banda = null, texto = null, preguntas = [], k = 0, fase = "leer";
+let fallosQ = 0, conError = 0, listo = false, paso = 0, marcas = []; // marcas: cómo le fue en cada pregunta
+let turnoLectura = 0, leyendo = false;
+
+// Si se queda quieto en una pregunta: se la repite y después se le marca el párrafo donde buscar.
+// Espera más que en los juegos de Prepa porque volver a leer toma su tiempo.
+const ayuda = ayudaSiSeQueda({ espera: 20000, repetir: () => fase === "preguntas" && decir(vozPregunta()), senalar: () => mirarParrafo(false) });
+
+$("niveles").innerHTML = `<button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>`
+  + BANDAS.map(b => `<button data-nivel="${b.id}" aria-pressed="false">${b.nombre}</button>`).join("");
+
+// ---------- El texto ----------
+function pintarTexto(marcar = null) {
+  $("texto").className = texto.tipo;
+  $("texto").innerHTML = texto.parrafos.map((p, i) => {
+    let h = escapar(p);
+    if (marcar && marcar.p === i && marcar.cita) h = h.replace(escapar(marcar.cita), m => `<mark>${m}</mark>`);
+    return `<p data-p="${i}" class="${texto.tipo === "poema" ? "verso" : ""}${marcar && marcar.p === i ? " mirar" : ""}">${h.replace(/\n/g, "<br>")}</p>`;
+  }).join("");
+}
+
+function pararLectura() {
+  if (leyendo) { turnoLectura++; leyendo = false; callar(); }
+  $("texto").querySelectorAll(".leyendo").forEach(x => x.classList.remove("leyendo"));
+  $("escucharBtn").textContent = "🔊 Escuchar el texto";
+}
+
+/** Lee el título y cada párrafo, resaltando el que se está leyendo. */
+async function leerTexto(lento = false) {
+  pararLectura();
+  const t = ++turnoLectura, op = lento ? { rate: LENTO } : undefined;
+  leyendo = true;
+  $("escucharBtn").textContent = "⏹️ Parar";
+  await hablar(texto.titulo, op);
+  for (let i = 0; i < texto.parrafos.length && t === turnoLectura; i++) {
+    const p = $("texto").querySelector(`[data-p="${i}"]`);
+    $("texto").querySelectorAll(".leyendo").forEach(x => x.classList.remove("leyendo"));
+    p?.classList.add("leyendo");
+    await hablar(texto.parrafos[i].replace(/\n/g, ", "), op);
+  }
+  if (t === turnoLectura) { leyendo = false; pararLectura(); }
+}
+$("escucharBtn").addEventListener("click", () => { sonido("tap"); if (leyendo) pararLectura(); else leerTexto(); });
+
+// ---------- Rondas ----------
+function nuevo() {
+  pararLectura();
+  const escalones = esc.activa ? [esc.nivel] : BANDAS.find(b => b.id === banda).escalones;
+  const r = siguienteTexto(escalones, vistos, Math.random, texto?.id);
+  texto = r.texto; vistos = r.vistos;
+  try { localStorage.setItem(CLAVE_VISTOS, JSON.stringify(vistos)); } catch (_) {}
+  preguntas = prepararPreguntas(texto);
+  k = 0; conError = 0; marcas = []; fase = "leer";
+  $("emoji").textContent = texto.emoji;
+  $("titulo").textContent = texto.titulo;
+  $("clase").textContent = `${CLASES[texto.tipo]} · ${ESCALONES[texto.escalon].grados}`;
+  pintarTexto();
+  $("leidoBtn").hidden = false; $("preguntaBox").hidden = true; $("explica").hidden = true; $("final").hidden = true; $("nextBtn").hidden = true;
+  feedback("");
+  ayuda.parar();
+  $("lectura").scrollIntoView({ block: "start", behavior: "smooth" });
+  const que = texto.tipo === "cuento" ? "el cuento" : texto.tipo === "poema" ? "el poema" : "el texto";
+  instruccion(`📖 Leé ${que}`, `${texto.titulo}. Leé ${que} con calma. Si querés, tocá «Escuchar el texto». Cuando terminés, tocá «Ya lo leí».`);
+}
+
+$("leidoBtn").addEventListener("click", () => {
+  sonido("tap"); pararLectura();
+  fase = "preguntas";
+  $("leidoBtn").hidden = true; $("preguntaBox").hidden = false;
+  mostrarPregunta();
+  $("preguntaBox").scrollIntoView({ block: "start", behavior: "smooth" });
+});
+
+function pintarAvance() {
+  $("avance").innerHTML = preguntas.map((_, i) => `<span class="${marcas[i] === 0 ? "bien" : marcas[i] > 0 ? "costo" : ""}${i === k && fase === "preguntas" ? " ahora" : ""}"></span>`).join("");
+}
+
+const q = () => preguntas[k];
+function vozPregunta() {
+  const p = q();
+  // A los más chiquitos también se les leen las opciones
+  if (p.t !== "secuencia" && texto.escalon <= 3) return `${p.q} ${p.opciones.join(". ")}.`;
+  if (p.t === "secuencia") return `${p.q} ${p.pasos.join(". ")}.`;
+  return p.q;
+}
+
+function mostrarPregunta() {
+  const p = q();
+  fallosQ = 0; listo = false; paso = 0;
+  pintarTexto();
+  $("explica").hidden = true; $("nextBtn").hidden = true; feedback("");
+  $("tipoQ").textContent = `${TIPOS[p.t].emoji} ${TIPOS[p.t].nombre} · Pregunta ${k + 1} de ${preguntas.length}`;
+  $("enunciado").textContent = p.q;
+  $("opciones").innerHTML = p.t === "secuencia"
+    ? p.pasos.map((x, i) => `<button class="paso" data-i="${i}"><span class="num" aria-hidden="true"></span>${escapar(x)}</button>`).join("")
+    : p.opciones.map((x, i) => `<button data-i="${i}">${escapar(x)}</button>`).join("");
+  pintarAvance();
+  instruccion(`❓ Pregunta ${k + 1} de ${preguntas.length}`, vozPregunta());
+  ayuda.empezar();
+}
+
+/** Marca en el texto dónde está la respuesta: el párrafo (pista) o la frase exacta (cuando ya se equivocó dos veces). */
+function mirarParrafo(conCita = false) {
+  const p = q(), i = parrafoDe(texto, p.cita);
+  if (i < 0) return -1;
+  pintarTexto({ p: i, cita: conCita ? p.cita : null });
+  return i;
+}
+
+const PISTAS = {
+  idea: "Pensá en todo el texto: ¿de qué hablan todos los párrafos juntos?",
+  proposito: "Pensá: ¿el texto cuenta una historia, informa, explica cómo hacer algo, invita o quiere convencer?",
+  tipo: "Fijate en cómo está escrito: ¿tiene versos? ¿pasos? ¿saludo y firma? ¿cuenta algo que pasó de verdad?",
+  ensenanza: "Pensá en lo que le pasó al personaje y en lo que cambió al final.",
+};
+
+function bienContestada() {
+  const p = q();
+  listo = true; ayuda.parar();
+  marcas[k] = fallosQ;
+  if (fallosQ > 0) conError++;
+  $("opciones").querySelectorAll("button").forEach(x => { x.disabled = true; x.classList.remove("senal"); });
+  pintarAvance();
+  const exp = explicacion(texto, p);
+  if (fallosQ === 0) { const bien = elogio(); feedback("ok", "🎉", "¡Acertado!"); decir(bien); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir("¡Ahora sí!"); }
+  if (exp) { $("explica").hidden = false; $("explica").innerHTML = escapar(exp); }
+  if (p.cita) mirarParrafo(true);
+  $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse");
+  $("nextBtn").textContent = k + 1 < preguntas.length ? "Siguiente pregunta ➡️" : "¿Cómo me fue? 🏁";
+}
+
+// Opciones
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled) return;
+  pararLectura();
+  const p = q(), i = Number(b.dataset.i);
+  if (p.t === "secuencia") return tocarPaso(b, i);
+  if (p.opciones[i] === p.ok) { b.classList.add("right"); return bienContestada(); }
+  fallosQ++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  feedback("bad", "🙈", "No es");
+  const quedan = [...$("opciones").querySelectorAll("button:not(:disabled)")];
+  if (fallosQ === 1 && quedan.length > 1) {
+    // Primera vez: se le dice dónde volver a leer, sin darle la respuesta
+    const par = mirarParrafo(false);
+    if (par >= 0) {
+      $("explica").innerHTML = `No es «${escapar(p.opciones[i])}». Volvé a leer ${texto.parrafos.length > 1 ? `el párrafo ${par + 1}` : "el texto"}:<blockquote>${escapar(texto.parrafos[par]).replace(/\n/g, "<br>")}</blockquote>`;
+      decir(`No es. Volvé a leer ${texto.parrafos.length > 1 ? `el párrafo ${par + 1}` : "el texto"}: ${texto.parrafos[par].replace(/\n/g, ", ")}`);
+    } else {
+      $("explica").innerHTML = escapar(PISTAS[p.t] || "Pensá otra vez en lo que pasa en el texto.");
+      decir(`No es. ${PISTAS[p.t] || "Pensá otra vez en lo que pasa en el texto."}`);
+    }
+    $("explica").hidden = false;
+  } else {
+    // Segunda vez: se le muestra la frase del texto y se señala la correcta
+    const correcta = quedan.find(x => p.opciones[Number(x.dataset.i)] === p.ok);
+    senalar(correcta);
+    mirarParrafo(true);
+    const exp = explicacion(texto, p);
+    $("explica").hidden = false; $("explica").innerHTML = escapar(exp || "Fijate en la respuesta que brilla.");
+    decir(`${exp} Tocá la respuesta que brilla.`);
+  }
+});
+
+// Ordenar: hay que tocar los pasos del primero al último
+function tocarPaso(b, i) {
+  const p = q();
+  if (p.pasos[i] === p.orden[paso]) {
+    paso++;
+    sonido("tap");
+    b.classList.add("puesto"); b.classList.remove("senal"); b.disabled = true;
+    b.querySelector(".num").textContent = paso;
+    hablar(p.pasos[i]);
+    if (paso === p.orden.length) bienContestada();
+    return;
+  }
+  fallosQ++;
+  b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope");
+  feedback("almost", "🤏", "¡Casi! Eso pasó después");
+  $("explica").hidden = false;
+  if (fallosQ >= 2) {
+    const sig = [...$("opciones").querySelectorAll("button")].find(x => p.pasos[Number(x.dataset.i)] === p.orden[paso]);
+    senalar(sig);
+    $("explica").innerHTML = `${paso === 0 ? "Lo primero" : "Lo que sigue"} es: «${escapar(p.orden[paso])}».`;
+    decir(`Eso pasó después. ${paso === 0 ? "Lo primero" : "Lo que sigue"} es: ${p.orden[paso]}.`);
+  } else {
+    $("explica").innerHTML = `«${escapar(p.pasos[i])}» pasó después. ${paso === 0 ? "¿Qué pasó primero de todo?" : "¿Qué pasó antes de eso?"} Si querés, volvé a leer el texto.`;
+    decir(`Eso pasó después. ${paso === 0 ? "¿Qué pasó primero de todo?" : "¿Qué pasó antes de eso?"}`);
+  }
+}
+
+$("nextBtn").addEventListener("click", () => {
+  sonido("tap");
+  $("nextBtn").classList.remove("pulse");
+  if (fase === "fin") return nuevo();
+  k++;
+  if (k < preguntas.length) { mostrarPregunta(); $("preguntaBox").scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+  else terminar();
+});
+
+function terminar() {
+  fase = "fin";
+  ayuda.parar();
+  pintarTexto(); pintarAvance();
+  const primera = marcas.filter(x => x === 0).length, n = conError === 0 ? 3 : conError === 1 ? 2 : 1;
+  for (let i = 0; i < n; i++) stars.sumar();
+  $("preguntaBox").hidden = true; $("explica").hidden = true; feedback("");
+  const msg = conError === 0 ? "¡Entendiste todo el texto! Leés muy bien." : conError === 1 ? "¡Muy bien! Casi todo al primer intento." : "¡Bien! Volver a leer es lo que hace la gente que lee bien.";
+  $("final").hidden = false;
+  $("final").innerHTML = `<div class="grande" aria-label="${n} estrellas">${"⭐".repeat(n)}${"☆".repeat(3 - n)}</div>
+    <p>${primera} de ${preguntas.length} al primer intento</p><p>${msg}</p>`;
+  instruccion("🏁 ¡Terminaste!", msg);
+  esc.resultado({ fallos: conError }); // después de la frase, para que «¡Subiste un escalón!» se oiga al final
+  $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse"); $("nextBtn").textContent = "Otro texto ➡️";
+  $("final").scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
+niveles(v => {
+  esc.activa = v === "auto";
+  banda = v === "auto" ? null : v;
+  nuevo();
+});
+
+// 🔊 y 🐢: al leer, leen el texto; en las preguntas, la pregunta
+alEmpezar(nuevo, lento => {
+  if (fase === "leer") return leerTexto(lento);
+  pararLectura();
+  if (fase === "preguntas") return decir(vozPregunta(), lento ? { rate: LENTO } : undefined);
+  return decir($("final").innerText, lento ? { rate: LENTO } : undefined);
+});
+
+if (new URLSearchParams(location.search).has("prueba")) window.__cuentos = {
+  get texto() { return texto; }, get pregunta() { return q(); }, get k() { return k; }, get fase() { return fase; },
+  get nivel() { return esc.nivel; }, get conError() { return conError; }, get paso() { return paso; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

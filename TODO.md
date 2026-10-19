@@ -49,9 +49,13 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
 - [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
 - [x] Trazos: cada letra se dibuja con sus trazos en orden (`js/trazos.js`): puntito numerado y flechita por trazo, el dedito levanta el dedo entre trazos y en los escalones altos se pide empezar en el puntito 1
-- [ ] Trazos: el resto del abecedario y mayúsculas de consonantes
-- [ ] Trazar su nombre (lo escribe el papá)
-- [ ] Palabras comunes: mamá, papá, casa, sol, perro…
+- [x] Trazos: el resto del abecedario, mayúsculas, tildes, ñ y ü (76 caracteres, 21 escalones)
+- [x] Trazar su nombre («Mi nombre»: el del perfil o el que escriba un adulto)
+- [x] Palabras comunes: mamá, papá, casa, sol, perro… letra por letra, viendo crecer la palabra
+- [ ] Trazos: que una maestra revise el orden de trazo de la T, la N y la tilde (cambia según la escuela)
+- [x] 📖 Leo y miro: de las sílabas a leer oraciones, con cada palabra para tocar y oír · Prepa–2°
+- [x] 🎶 La marimba: repetir melodías, agudo o grave, iguales o distintas, ritmo y tocar libre (sin leer)
+- [ ] Marimba: escuchar el timbre en un celular y afinarlo
 - [x] 🔤 Sílabas mágicas: vocales, ma me mi mo mu, armar la sílaba y la palabra, leer palabras y oraciones
 - [x] Armar palabras con sílabas (tocando)
 - [x] Sonido inicial: ¿cuál empieza como…?
@@ -72,9 +76,9 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🚌 ¿A qué hora llega el bus? Tiempo transcurrido con rutas ticas, a. m./p. m., horarios y días · 2°–5°
 - [x] 📐 Perímetro y área en la finca: cuadritos, pintar corrales, fórmulas, figuras en L, triángulos y problemas · 3°–6°
 - [x] 📊 Encuesta en la escuela: pictogramas, barras, moda, promedio y probabilidad · 2°–6°
-- [ ] Pulpería: ¿cuánta plata hay? (contar un montón)
-- [ ] Pulpería: alcancía (¿qué puedo comprar sin pasarme?)
-- [ ] Cambiar billetes (¿cuántas de ₡500 hacen ₡5 000?)
+- [x] 🐷 La alcancía: contar un montón, pagar exacto, ¿me alcanza?, cambiar billetes, vuelto y ahorro · 1°–4°
+- [x] 📐 Geometría: figuras, líneas, ángulos y transportador, simetría, triángulos, cuadriláteros, circunferencia y cuerpos · 1°–6°
+- [x] 📏 Medidas en la feria: regla, estimar, unidades, convertir, temperatura y problemas · 2°–6°
 - [x] ✖️ Tablas en la feria: multiplicación como filas de fruta en el tramo, tablas del 1 al 10 con trucos, contra reloj · 2°–4°
 - [x] 🥭 Repartiendo mangos: división tocando canastas, el sobrante es el residuo, hasta 3 cifras · 2°–4°
 - [x] 🍕 Fracciones con pizza y sandía: pintar, comparar, equivalentes, sumar, mixtos y simplificar · 3°–6°
@@ -82,12 +86,12 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 ## ✏️ Español
 
-- [ ] Lectura de oraciones cortas con audio
+- [x] Lectura de oraciones cortas con audio (📖 Leo y miro)
 - [x] 🧩 Armo la oración: ordenar palabras (con voz), punto/pregunta/emoción y mayúsculas · 1°–3°
 - [ ] Mayúsculas y puntuación
 - [x] 🐝 Ortografía: b/v, s/c/z y h con dibujo, voz y la regla (mb, nv, -aba, -bir, z→ces, hue-) · 3°–6°
 - [x] 📦 ¿Qué es? Sustantivo, verbo, adjetivo, concordancia, pronombres, adverbios y sujeto y predicado · 2°–6°
-- [x] 📖 Cuentos ticos: 27 textos originales con preguntas literales, inferenciales, de vocabulario y propósito · 1°–6°
+- [x] 📖 Cuentos ticos: textos originales con preguntas literales, inferenciales, de vocabulario y propósito · 1°–6°
 - [x] ✍️ ¿Dónde suena más fuerte? Sílabas, agudas, graves, esdrújulas, tildes e hiato · 2°–6°
 - [x] 📖 Más cuentos: 82 textos (unos 8 por escalón)
 - [ ] Cuentos con audio grabado
@@ -110,7 +114,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🌸 Símbolos patrios: conocer los 12, memoria dibujo–nombre (4, 6 y 8 parejas) y adivinanzas · 1°–4°
 - [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
 - [x] 📅 Efemérides: ¿qué se celebra?, ¿qué día es? y ¿por qué? (15 fechas) · 2°–6°
-- [ ] Mi comunidad: servicios, oficios
+- [x] 🏘️ Mi comunidad: oficios, lugares, servicios, cuidar el barrio y seguridad (9-1-1) · Prepa–3°
 - [x] 🏛️ La historia de Costa Rica: línea del tiempo, pueblos originarios, personajes y gobierno · 2°–6°
 - [x] 🧭 Direcciones a lo tico: rosa de los vientos, «200 metros al este», coordenadas, latitud y longitud · 1°–6°
 - [x] 🌋 Volcanes, ríos, parques, golfos, cordilleras y las seis regiones, en el mapa · 3°–6°
@@ -180,13 +184,17 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Escalera en Listen and tap, Trazá letras, Gato (de muy fácil a difícil) y Memory in English
 - [x] «📈 Cómo va…» en el inicio: en qué escalón va el niño en cada juego
 - [x] `js/quiz.js` con modo 🪜 y respuestas escritas
-- [ ] Modo papá: mover a mano el escalón de un juego desde el inicio
+- [x] Escalera en Sumas, Restas, Tablas, Reloj, Sólido/líquido/gaseoso, Ecosistemas, Efemérides, Ortografía y Partes de la planta
+- [x] Modo papá en «📈 Cómo va…»: mover a mano el escalón de un juego o empezarlo de cero
+- [ ] Modo papá: poner `escalones: N` en el catálogo para poder mover también los juegos que todavía no ha jugado
+- [ ] Escalera en los juegos que faltan: pulpería, animales, provincias, perezoso, repetí y decidí, lapa, dato u opinión, oraciones, símbolos, escudo y armo en inglés
+- [ ] El 🏠 fijo abajo a la izquierda tapa la ⌫ del teclado en pantallas bajas (área, tablas, geometría…)
 - [ ] Voz grabada para las onomatopeyas de «¿Quién hace así?» (la voz del teléfono no siempre las dice bien)
 
 ## 👨‍👩‍👧 Perfiles y progreso (local)
 
 - [x] Perfiles por niño (nombre opcional, edad, si lee y animalito) en `localStorage`
-- [ ] Estrellas y logros por perfil
+- [x] 🏆 Álbum de stickers por perfil: uno nuevo cada vez que llega a un escalón más alto que nunca (60 animales, comidas y cosas ticas)
 - [ ] Modo papá con PIN: ver progreso, cambiar grado, reiniciar
 - [ ] Superhéroes ticos **originales** como mascotas/avatares (no personajes con derechos de autor)
 

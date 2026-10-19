@@ -48,7 +48,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Afinar la 🐢 en Apple con las mediciones de `prueba-voz.html` (hoy 0.25)
 - [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
 - [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
-- [ ] Trazos: flechas y puntito de inicio con el orden correcto de cada trazo
+- [x] Trazos: cada letra se dibuja con sus trazos en orden (`js/trazos.js`): puntito numerado y flechita por trazo, el dedito levanta el dedo entre trazos y en los escalones altos se pide empezar en el puntito 1
 - [ ] Trazos: el resto del abecedario y mayúsculas de consonantes
 - [ ] Trazar su nombre (lo escribe el papá)
 - [ ] Palabras comunes: mamá, papá, casa, sol, perro…

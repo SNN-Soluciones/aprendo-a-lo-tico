@@ -129,6 +129,11 @@ const tarjetaGrande = j => {
     <button class="sug-oir" data-oir="${j.id}" aria-label="Escuchar: ${j.titulo}">🔊</button>
   </div>`;
 };
+// Si son muchos (los grandes tienen decenas), se agrupan por materia, cada grupo con los más justos a su edad primero
+const agrupados = lista => lista.length <= 10 ? lista.map(tarjetaGrande).join("") : MATERIAS.map(m => {
+  const de = lista.filter(j => j.materia === m.id);
+  return de.length ? `<h3 class="sug-materia" style="--mat:${m.color}"><span aria-hidden="true">${m.emoji}</span> ${m.nombre}</h3>${de.map(tarjetaGrande).join("")}` : "";
+}).join("");
 function pintarSugeridos() {
   const p = perfilActivo();
   $("#sugeridos").hidden = !p || !!editando;
@@ -137,11 +142,11 @@ function pintarSugeridos() {
   $("#sugTitulo").innerHTML = `<span aria-hidden="true">${p.avatar}</span> Juegos para ${p.nombre ? escapar(p.nombre) : "vos"}`;
   $("#sugNota").textContent = p.lee === "no"
     ? "Para jugar escuchando y mirando, sin leer. 🔊 dice el nombre de cada juego. 🪜 = sube de nivel solito, de a poquito."
-    : "Los de más arriba le quedan mejor a su edad. 🪜 = sube de nivel solito, de a poquito.";
-  $("#sugLista").innerHTML = juegos.map(tarjetaGrande).join("") || `<p class="sug-nota">Todavía no hay juegos para esta edad. ¡Pronto!</p>`;
+    : `${juegos.length > 10 ? "Por materia; en cada una, primero los que mejor le quedan a su edad." : "Los de más arriba le quedan mejor a su edad."} 🪜 = sube de nivel solito, de a poquito.`;
+  $("#sugLista").innerHTML = agrupados(juegos) || `<p class="sug-nota">Todavía no hay juegos para esta edad. ¡Pronto!</p>`;
   $("#conAyuda").hidden = !conAyuda.length;
   $("#conAyudaTitulo").textContent = `📖 Con un adulto que le lea (${conAyuda.length})`;
-  $("#conAyudaLista").innerHTML = conAyuda.map(tarjetaGrande).join("");
+  $("#conAyudaLista").innerHTML = agrupados(conAyuda);
 }
 $("#sugeridos").addEventListener("click", e => {
   const b = e.target.closest("[data-oir]");

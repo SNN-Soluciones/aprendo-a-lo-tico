@@ -237,5 +237,7 @@ body.con-perfil .hero h1 { font-size: clamp(2rem, 9vw, 3.2rem); }
   font-size: 1.2rem; background: var(--btn); border: 3px solid var(--rim); box-shadow: 0 2px 0 var(--rim);
 }
 .sug-oir:active { transform: translateY(2px); box-shadow: none; }
+.sug-materia { grid-column: 1 / -1; margin: 10px 0 -2px; font-size: 1.2rem; color: var(--page-ink); border-bottom: 5px solid var(--mat); padding-bottom: 2px; }
+.sug-materia:first-child { margin-top: 0; }
 .con-ayuda { margin-top: 14px; }
 .con-ayuda summary { cursor: pointer; font-weight: 800; font-size: 1.1rem; color: var(--page-ink); padding: 6px 0 10px; }

@@ -130,8 +130,8 @@ let ayuda = ayudaChica;
 
 let manual = null, x = null, e = null, fase = "", paso = 0, escrito = "", fallosPaso = 0, fallos = 0, revelado = false, cuentas = [], monton = 0, ocupado = false;
 
-// Lo que se dice en voz alta: sin etiquetas (ni restos de < >), y los signos se leen como palabras
-const aVoz = t => String(t).replace(/<[^>]*>/g, "").replace(/[<>]/g, "").replace(/₡(\d[\d ]*)/g, (_, v) => v.replace(/ /g, "") + " colones")
+// Lo que se dice en voz alta: sin etiquetas (el navegador saca el texto), y los signos se leen como palabras
+const aVoz = t => new DOMParser().parseFromString(String(t), "text/html").body.textContent.replace(/₡(\d[\d ]*)/g, (_, v) => v.replace(/ /g, "") + " colones")
   .replace(/÷/g, " dividido entre ").replace(/×/g, " por ").replace(/−/g, " menos ").replace(/=/g, " es igual a ");
 const loDe = c => (c.f ? "las" : "los");
 const unoDe = c => (c.f ? "una" : "uno");

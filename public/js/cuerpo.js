@@ -301,8 +301,17 @@ export function tocarPorFuncion(sistema, rnd = Math.random) {
     bien: `${eseEs(p.n)}: ${p.f}.` };
 }
 
-// La voz lee el texto sin etiquetas (y sin ningún < o > suelto)
-const opcion = (id, html, por) => ({ id, html, voz: html.replace(/<[^>]*>/g, "").replace(/[<>]/g, ""), por });
+// La voz lee el texto sin etiquetas: se copia letra por letra, saltando lo que va entre < y >
+export function sinEtiquetas(t) {
+  let s = "", dentro = false;
+  for (const c of String(t)) {
+    if (c === "<") dentro = true;
+    else if (c === ">") dentro = false;
+    else if (!dentro) s += c;
+  }
+  return s;
+}
+const opcion = (id, html, por) => ({ id, html, voz: sinEtiquetas(html), por });
 
 /** ¿Para qué sirve? Las opciones malas son de otros sistemas, para que no haya dos respuestas parecidas. */
 export function sirve(sistema, rnd = Math.random) {

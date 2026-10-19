@@ -255,12 +255,13 @@ export const JUEGOS = [
   {
     id: "planta",
     titulo: "Partes de la planta",
-    descripcion: "Raíz, tallo, hoja, flor, fruto y semilla: dónde están, para qué sirven y qué parte nos comemos.",
+    descripcion: "Raíz, tallo, hoja, flor, fruto y semilla: dónde están, para qué sirven, qué parte nos comemos, qué necesita la planta y su ciclo de vida.",
     emoji: "🌱",
     materia: "ciencias",
     grados: [1, 2, 3],
     edad: [6, 9],
     leer: "poco",
+    escalera: true,
     url: "juegos/planta.html",
   },
   {
@@ -311,12 +312,13 @@ export const JUEGOS = [
   {
     id: "efemerides",
     titulo: "Efemérides",
-    descripcion: "15 de setiembre, 25 de julio, 11 de abril… ¿qué celebramos cada día y por qué?",
+    descripcion: "15 de setiembre, 25 de julio, 11 de abril… ¿qué celebramos cada día, en qué mes, en qué año pasó y por qué?",
     emoji: "📅",
     materia: "sociales",
     grados: [2, 3, 4, 5, 6],
     edad: [7, 12],
     leer: "si",
+    escalera: true,
     url: "juegos/efemerides.html",
   },
   {
@@ -328,6 +330,7 @@ export const JUEGOS = [
     grados: [3, 4, 5, 6],
     edad: [8, 12],
     leer: "si",
+    escalera: true,
     url: "juegos/ortografia.html",
   },
   {
@@ -339,17 +342,19 @@ export const JUEGOS = [
     grados: [3, 4, 5, 6],
     edad: [8, 12],
     leer: "si",
+    escalera: true,
     url: "juegos/ecosistemas.html",
   },
   {
     id: "estados",
     titulo: "Sólido, líquido o gaseoso",
-    descripcion: "¿El hielo es sólido? ¿Y el vapor? Descubrí los estados del agua y qué pasa con el calor y el frío.",
+    descripcion: "¿El hielo es sólido? ¿Y el vapor? Descubrí los estados del agua, qué pasa con el calor y el frío, y de qué estado a qué estado cambia.",
     emoji: "🧊",
     materia: "ciencias",
     grados: [1, 2, 3, 4],
     edad: [6, 10],
     leer: "poco",
+    escalera: true,
     url: "juegos/estados.html",
   },
   {

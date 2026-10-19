@@ -420,4 +420,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/clasificar.html",
   },
+  {
+    id: "porcentajes",
+    titulo: "Ofertas en la feria",
+    descripcion: "Decimales con kilos y litros, porcentajes en la cuadrícula, descuentos en colones y el IVA del 13 %.",
+    emoji: "🏷️",
+    materia: "mate",
+    grados: [4, 5, 6],
+    edad: [9, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/porcentajes.html",
+  },
 ];

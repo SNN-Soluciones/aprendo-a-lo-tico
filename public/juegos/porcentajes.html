@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ofertas en la feria</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .levels button { font-size: .95rem; padding: 3px 10px; }
+  .levels button.auto { font-size: 1.2rem; }
+  .instr .txt { font-size: clamp(1rem, 4.4vw, 1.25rem); }
+  .tarjeta { font-size: clamp(1.05rem, 4.6vw, 1.25rem); text-align: left; }
+  .tarjeta small { display: inline; font-size: .85rem; }
+  .tarjeta b { color: var(--materia); }
+
+  /* Tira de 10 y cuadrícula de 100 (las columnas son décimas) */
+  .figura { display: flex; justify-content: center; margin: 10px 0 2px; }
+  .tira { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; width: min(86vw, 380px); height: 54px;
+    border: 3px solid var(--rim); border-radius: 8px; padding: 3px; background: var(--rim); }
+  .cuadricula { display: grid; grid-template-rows: repeat(10, 1fr); grid-auto-flow: column; grid-auto-columns: 1fr; gap: 2px;
+    width: min(84vw, 330px); aspect-ratio: 1; border: 3px solid var(--rim); border-radius: 8px; padding: 2px; background: #9DB3C9; }
+  .celda { background: #fff; border-radius: 2px; border: none; padding: 0; box-shadow: none; display: block; min-width: 0; }
+  .tira .celda { border-radius: 4px; }
+  .celda.pintada { background: var(--materia); }
+  .celda.pintada.par { background: #5AA0E6; }
+  .interactiva .celda { cursor: pointer; touch-action: manipulation; }
+  .interactiva .celda:active { transform: none; box-shadow: none; }
+  .contador { text-align: center; font-weight: 800; color: var(--page-ink); margin: 6px 0 0; min-height: 1.4em; }
+  .botones-pintar { display: flex; gap: 10px; justify-content: center; margin-top: 10px; }
+  .botones-pintar button { font-size: 1.2rem; padding: 6px 18px; }
+  .botones-pintar .listo { background: var(--btn); }
+
+  /* Ordenar: se tocan de menor a mayor */
+  .ordenar { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+  .ordenar button { position: relative; font-size: 1.3rem; padding: 10px 6px; border-radius: 18px; }
+  .ordenar button small { font-size: .85rem; font-weight: 700; opacity: .8; }
+  .ordenar button.puesto { background: #CFF5DC; border-color: var(--ok); box-shadow: 0 4px 0 var(--ok); opacity: 1; }
+  .ordenar .num { position: absolute; top: -10px; left: -8px; width: 30px; height: 30px; border-radius: 50%; background: var(--ok); color: #fff;
+    font-size: 1rem; line-height: 30px; text-align: center; }
+
+  /* Factura del IVA */
+  .factura { width: 100%; border-collapse: collapse; margin: 0 0 10px; font-size: .95rem; background: #FFFDF5; border: 2px dashed var(--rim); }
+  .factura caption { font-weight: 800; text-align: left; padding-bottom: 2px; }
+  .factura td { padding: 3px 8px; }
+  .factura td:last-child { text-align: right; white-space: nowrap; }
+  .factura tr.sub td { border-top: 2px solid var(--rim); font-weight: 800; }
+
+  .pistita { margin-top: 10px; background: #EAF3FF; color: var(--ink); border: 3px dashed var(--materia); border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  .explica b { color: inherit; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🏷️💯🔢</div>
+  <h1>Ofertas en la feria</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Decimales con kilos y litros, porcentajes, descuentos en colones y el IVA. Sube de nivel de a poquito. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" id="niveles" role="group" aria-label="Qué practicar"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tarjeta ancho" id="tarjeta" aria-live="polite"></div>
+<div class="ancho" id="zona"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="pistita ancho" id="pistita" hidden aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra pregunta">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, GRUPOS, inicioPorEdad, pregunta, paraVoz, leer, bienEscrito, dec } from "../js/porcentajes.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("porcentajes", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("porcentajes-stars");
+
+let grupo = null;           // null = 🪜 automático; si no, el grupo que escogió el papá o la maestra
+let p = null, fallos = 0, listo = false, pintadas = 0, puestos = [], ultimo = "";
+
+// 🤝 Si se queda pegado: se repite la pregunta y después se ayuda (señalar o dar una pista)
+const ayuda = ayudaSiSeQueda({
+  repetir: () => leerPregunta(),
+  senalar: () => {
+    if (p.tipo === "opciones") senalar($("zona").querySelector(`[data-id="${p.correcta}"]`));
+    else if (p.tipo === "ordenar") senalar(siguienteOrden());
+    else darPista();
+  },
+});
+
+// ---------- Botones de arriba ----------
+$("niveles").innerHTML = `<button class="auto" data-g="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>`
+  + GRUPOS.map(g => `<button data-g="${g.id}" aria-pressed="false">${g.nombre}</button>`).join("");
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-g]");
+  if (!b) return;
+  $("niveles").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  grupo = b.dataset.g === "auto" ? null : GRUPOS.find(g => g.id === b.dataset.g);
+  esc.activa = !grupo;
+  sonido("tap"); nueva();
+});
+
+// ---------- Figuras ----------
+function figura(partes, n, interactiva = false) {
+  const celdas = Array.from({ length: partes }, (_, i) => {
+    const cls = ["celda", i < n ? "pintada" : "", i < n && partes === 100 && Math.floor(i / 10) % 2 ? "par" : ""].join(" ");
+    return partes === 10 && interactiva
+      ? `<button class="${cls}" data-i="${i}" aria-label="Parte ${i + 1}"></button>`
+      : `<i class="${cls}" data-i="${i}"></i>`;
+  }).join("");
+  return `<div class="figura"><div class="${partes === 10 ? "tira" : "cuadricula"}${interactiva ? " interactiva" : ""}" role="img" aria-label="${n} de ${partes} partes pintadas">${celdas}</div></div>`;
+}
+
+// ---------- Preguntas ----------
+function escalonActual() {
+  if (!grupo) return esc.nivel;
+  return grupo.escalones[Math.floor(Math.random() * grupo.escalones.length)];
+}
+
+function nueva() {
+  let i, intentos = 0;
+  do { i = escalonActual(); p = pregunta(i); } while (p.html === ultimo && ++intentos < 10);
+  ultimo = p.html;
+  fallos = 0; listo = false; pintadas = 0; puestos = [];
+  feedback(""); $("pistita").hidden = true; $("explica").hidden = true;
+  $("nextBtn").classList.remove("pulse");
+  $("tarjeta").innerHTML = p.html + (p.figura ? figura(p.figura.partes, p.figura.pintadas) : "");
+  pintarZona();
+  instruccion(`<b>${grupo ? grupo.nombre : "🪜"}</b> · ${ESCALONES[i].nombre} <small>(${ESCALONES[i].grado})</small>`, paraVoz(p.html));
+  ayuda.empezar();
+}
+const leerPregunta = (lento = false) => p && decir(paraVoz(p.html), lento ? { rate: LENTO } : undefined);
+
+function pintarZona() {
+  const z = $("zona");
+  if (p.tipo === "opciones") {
+    z.innerHTML = `<div class="opciones" style="grid-template-columns:repeat(${p.cols || Math.min(p.opciones.length, 3)}, 1fr)">${
+      p.opciones.map(o => `<button data-id="${o.id}">${o.html}</button>`).join("")}</div>`;
+  } else if (p.tipo === "escribir") {
+    z.innerHTML = `<div class="opciones"><form class="escribir" novalidate>
+      ${p.antes ? `<span class="sufijo">${p.antes}</span>` : ""}
+      <input id="respuesta" autocomplete="off" aria-label="Tu respuesta" inputmode="${p.como === "colones" ? "numeric" : "decimal"}">
+      ${p.despues ? `<span class="sufijo">${p.despues}</span>` : ""}<button type="submit" aria-label="Revisar">✔️</button></form></div>`;
+    setTimeout(() => $("respuesta")?.focus({ preventScroll: true }), 50);
+  } else if (p.tipo === "pintar") {
+    z.innerHTML = `<div id="lienzo">${figura(p.partes, 0, true)}</div><p class="contador" id="contador" aria-live="polite"></p>
+      <div class="botones-pintar"><button id="borrarBtn">🧽 Borrar</button><button class="listo" id="listoBtn">✔️ Listo</button></div>`;
+    contar();
+  } else if (p.tipo === "ordenar") {
+    z.innerHTML = `<div class="ordenar">${p.items.map(it => `<button data-o="${it.id}">${it.html}</button>`).join("")}</div>`;
+  }
+}
+
+// ---------- Pintar ----------
+function contar() {
+  const que = p.partes === 10 ? (pintadas === 1 ? "parte" : "partes") : (pintadas === 1 ? "cuadrito" : "cuadritos");
+  $("contador").textContent = pintadas ? `Pintaste ${pintadas} ${que} de ${p.partes}` : "Tocá para pintar";
+}
+function repintar() {
+  $("lienzo").innerHTML = figura(p.partes, pintadas, !listo);
+  contar();
+}
+
+$("zona").addEventListener("click", e => {
+  if (!p || listo) return;
+  // pintar: se pinta desde el principio hasta el cuadrito tocado (otra vez el mismo: se quita ese)
+  const c = e.target.closest(".interactiva [data-i]");
+  if (c && p.tipo === "pintar") {
+    const i = Number(c.dataset.i);
+    pintadas = pintadas === i + 1 ? i : i + 1;
+    sonido("tap"); repintar(); return;
+  }
+  if (e.target.closest("#borrarBtn")) { pintadas = 0; sonido("tap"); repintar(); return; }
+  if (e.target.closest("#listoBtn")) return revisarPintura();
+
+  const b = e.target.closest("[data-id]");
+  if (b && p.tipo === "opciones" && !b.disabled) return elegir(b);
+  const o = e.target.closest("[data-o]");
+  if (o && p.tipo === "ordenar" && !o.disabled) return ordenar(o);
+});
+
+function revisarPintura() {
+  if (!pintadas) { decir("Primero pintá tocando la tira o la cuadrícula."); return; }
+  if (pintadas === p.meta) return acierto();
+  const casi = p.casi?.(pintadas);
+  error(casi, () => { pintadas = p.meta; listo = true; repintar(); });
+}
+
+// ---------- Opciones ----------
+function elegir(b) {
+  if (b.dataset.id === p.correcta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("zona").querySelectorAll("[data-id]").forEach(x => { x.disabled = true; });
+    return acierto();
+  }
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  error(null, () => senalar($("zona").querySelector(`[data-id="${p.correcta}"]`)), true);
+}
+
+// ---------- Ordenar ----------
+const ordenados = () => [...p.items].sort((a, b) => a.valor - b.valor);
+const siguienteOrden = () => { const sig = ordenados()[puestos.length]; return sig && $("zona").querySelector(`[data-o="${sig.id}"]`); };
+function ordenar(b) {
+  const sig = ordenados()[puestos.length];
+  if (b.dataset.o === sig.id) {
+    puestos.push(sig.id);
+    b.classList.remove("senal", "wrong"); b.classList.add("puesto"); b.disabled = true;
+    b.insertAdjacentHTML("beforeend", `<span class="num">${puestos.length}</span>`);
+    sonido("tap");
+    decir(dec(sig.valor));
+    if (puestos.length === p.items.length) acierto();
+    return;
+  }
+  b.classList.add("nope");
+  setTimeout(() => b.classList.remove("nope"), 400);
+  error("Ese no es el menor de los que quedan.", () => senalar(siguienteOrden()), true);
+}
+
+// ---------- Escribir ----------
+$("zona").addEventListener("submit", e => {
+  e.preventDefault();
+  const campo = $("respuesta");
+  if (!p || listo || !campo || !campo.value.trim()) return;
+  if (bienEscrito(p, campo.value)) { campo.classList.add("right"); campo.disabled = true; return acierto(); }
+  const v = leer(campo.value, p.como);
+  if (Number.isNaN(v)) { decir(p.como === "colones" ? "Escribí solo el número, sin letras." : "Escribí un número. Para los decimales usá la coma, por ejemplo 1,5."); return; }
+  campo.classList.add("wrong");
+  error(p.casi?.(v), () => {
+    listo = true; campo.disabled = true;
+    const r = p.como === "decimal" ? dec(p.respuesta) : p.como === "colones" ? String(p.respuesta).replace(/\B(?=(\d{3})+(?!\d))/g, " ") : String(p.respuesta);
+    campo.closest("form").insertAdjacentHTML("beforeend", `<span class="era">✔️ ${p.antes || ""}${r}${p.despues ? " " + p.despues : ""}</span>`);
+  });
+  setTimeout(() => { if (!listo) { campo.classList.remove("wrong"); campo.select(); } }, 900);
+});
+
+// ---------- Errores, pistas y aciertos ----------
+function darPista() {
+  $("pistita").hidden = false;
+  $("pistita").textContent = `💡 ${p.pista}`;
+  decir(paraVoz(p.pista));
+}
+
+/**
+ * Un error: el primero da una pista y deja probar otra vez; el segundo muestra la respuesta.
+ * @param {string|null} casi   mensaje si estuvo cerca
+ * @param {Function} mostrar   enseña la respuesta (o la señala)
+ * @param {boolean} seguir     opciones y ordenar: después de señalar, el niño todavía la toca
+ */
+function error(casi, mostrar, seguir = false) {
+  fallos++;
+  if (fallos === 1) {
+    feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "No es");
+    $("pistita").hidden = false;
+    $("pistita").textContent = `💡 ${p.pista}`;
+    decir(paraVoz(`${casi || "No es."} ${p.pista} Probá otra vez.`));
+    return;
+  }
+  mostrar();
+  if (seguir) {
+    feedback("almost", "👆", "Es este");
+    decir(paraVoz(casi ? `${casi} Mirá, es este.` : "Mirá, es este. Tocalo."));
+    return;
+  }
+  terminar(false);
+}
+
+function acierto() { terminar(true); }
+
+function terminar(bien) {
+  listo = true;
+  ayuda.parar();
+  const limpio = bien && fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); }
+  else if (bien) feedback("almost", "🤏", "¡Ahora sí!");
+  else feedback("bad", "💡", "Así se hace");
+  $("pistita").hidden = true;
+  $("explica").hidden = false;
+  $("explica").innerHTML = p.explica;
+  decir(`${limpio ? elogio() + " " : bien ? "¡Ahora sí! " : ""}${paraVoz(p.explica)}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: p.tipo === "opciones" ? p.opciones.length : 0 });
+  $("nextBtn").classList.add("pulse");
+}
+
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+alEmpezar(nueva, lento => leerPregunta(lento));
+
+if (new URLSearchParams(location.search).has("prueba")) window.__porcentajes = {
+  get p() { return p; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; }, get listo() { return listo; }, get pintadas() { return pintadas; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

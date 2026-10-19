@@ -705,4 +705,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/comunidad.html",
   },
+  {
+    id: "medidas",
+    titulo: "Medidas en la feria",
+    descripcion: "Largo, peso, capacidad, tiempo y temperatura: comparar, medir con la regla, estimar, escoger la unidad, convertir y resolver problemas de la casa y la feria.",
+    emoji: "📏",
+    materia: "mate",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/medidas.html",
+  },
 ];

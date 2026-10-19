@@ -7,6 +7,7 @@ const SHELL = [
   "css/base.css", "css/prepa.css", "js/home.js", "js/catalog.js", "js/config.js", "js/voz.js", "js/prepa.js",
   "js/perfil.js", "js/escalera.js", "juegos/buscar.html", "juegos/patrones.html", "js/patrones.js", "juegos/parejas.html",
   "juegos/tamanos.html", "juegos/sonidos.html", "juegos/clasificar.html",
+  "juegos/cuerpo.html", "js/cuerpo.js",
   "juegos/rumbos.html", "js/rumbos.js",
   "juegos/area.html", "js/area.js",
   "juegos/acentos.html", "js/acentos.js",

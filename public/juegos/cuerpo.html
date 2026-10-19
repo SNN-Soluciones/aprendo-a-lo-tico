@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El cuerpo humano</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2FA85A; }
+  .ancho { width: min(96vw, 560px); }
+  /* Temas en una sola fila que se desliza con el dedo */
+  .top .modos { display: flex; gap: 6px; flex-basis: 100%; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
+  .top .modos::-webkit-scrollbar { display: none; }
+  .modos button { flex: none; }
+  .modos button { padding: 2px 9px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .instr .txt { font-size: clamp(1.05rem, 4.6vw, 1.35rem); }
+  .instr .txt .big { font-size: clamp(2rem, 9vw, 2.6rem); }
+  .instr .txt b { color: var(--materia); }
+
+  /* El dibujo del cuerpo */
+  .lamina { margin-top: 10px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px; padding: 6px; display: flex; justify-content: center; box-shadow: 0 5px 0 var(--rim); }
+  .lamina svg { width: 100%; height: auto; max-height: min(56vh, 460px); display: block; }
+  .lamina.chica svg { max-height: 170px; }
+  .lamina.chica .parte { pointer-events: none; }
+  .lamina.tocable .parte { cursor: pointer; }
+  .parte { transition: opacity .2s; }
+  .parte.mal { opacity: .3; }
+  .parte.bien { filter: drop-shadow(0 0 3px #2FA85A) drop-shadow(0 0 6px #2FA85A); }
+  .parte.marcado, .parte.brilla { filter: drop-shadow(0 0 3px #FFB300) drop-shadow(0 0 7px #FFB300); }
+  .parte.brilla { animation: titila .9s ease-in-out infinite; }
+  @keyframes titila { 50% { opacity: .45; } }
+
+  /* Opciones */
+  .opciones { margin-top: 12px; display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 10px; }
+  .opciones button { font-size: 1.1rem; padding: 10px 8px; border-radius: 18px; line-height: 1.2; }
+  .opciones button b { display: block; font-size: 2rem; line-height: 1.1; }
+
+  /* Ordenar un recorrido */
+  .orden { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .orden button { display: flex; align-items: center; gap: 10px; text-align: left; font-size: 1.1rem; padding: 8px 12px; border-radius: 16px; line-height: 1.2; }
+  .orden .num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 3px dashed var(--soft); display: flex; align-items: center; justify-content: center; }
+  .orden button.right .num { background: var(--ok); color: #fff; border: 3px solid var(--ok); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.35; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🫀🦴🧠</div>
+  <h1>El cuerpo humano</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Los sentidos, las partes del cuerpo y sus sistemas: tocá cada órgano, descubrí para qué sirve y cómo cuidarlo. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Tema"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="lamina ancho" id="lamina" hidden></div>
+<div class="opciones ancho" id="opciones" hidden></div>
+<div class="orden ancho" id="orden" hidden></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra pregunta">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda, barajar } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, TEMAS, PARTES, dibujo, generar, inicio, parecidos, eseEs } from "../js/cuerpo.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("cuerpo", { escalones: ESCALONES.length, inicio });
+const stars = estrellas("cuerpo-stars");
+const sinEmoji = t => t.replace(/<[^>]+>/g, "").replace(/[^\p{L}\p{N}\s,.¿?¡!«»:]/gu, "").trim();
+
+// Una parte puede tener más de un grupo en el dibujo (por ejemplo, el área extra del cuello)
+const enDibujo = id => $("lamina").querySelectorAll(`[data-parte="${id}"]`);
+
+let tema = null; // null = 🪜 de a poquito; si no, el tema que escogió el papá o la maestra
+let q = null, fallos = 0, listo = false, ultimo = "", sigue = 0, malos = new Set();
+
+// 🤝 Si se queda sin tocar nada: se repite la pregunta y después se señala la respuesta
+const ayuda = ayudaSiSeQueda({ senalar: () => pista() });
+
+function pintarModos() {
+  $("modos").innerHTML = [`<button data-t="" aria-pressed="${!tema}" aria-label="De a poquito: sube solo">🪜</button>`,
+    ...TEMAS.map(t => `<button data-t="${t.id}" aria-pressed="${tema?.id === t.id}">${t.nombre}</button>`)].join("");
+}
+
+/** Baraja los pasos sin dejarlos en el orden correcto. */
+function revolver(pasos) {
+  let r;
+  do r = barajar(pasos); while (r.every((p, i) => p === pasos[i]));
+  return r;
+}
+
+function nuevo() {
+  const tipos = tema ? tema.tipos : ESCALONES[esc.nivel].tipos;
+  let n = 0;
+  do q = generar(tipos); while (q.voz === ultimo && ++n < 15);
+  ultimo = q.voz; fallos = 0; listo = false; sigue = 0; malos = new Set();
+  feedback(""); $("explica").hidden = true; $("nextBtn").classList.remove("pulse");
+
+  const lam = $("lamina"), ops = $("opciones"), ord = $("orden");
+  lam.hidden = ops.hidden = ord.hidden = true;
+  lam.className = "lamina ancho";
+  if (q.tipo === "tocar") {
+    lam.hidden = false; lam.classList.add("tocable");
+    lam.innerHTML = dibujo(q.sistema);
+  } else if (q.tipo === "opciones") {
+    if (q.ver) {
+      lam.hidden = false; lam.classList.add("chica");
+      lam.innerHTML = dibujo(q.ver.sistema);
+      enDibujo(q.ver.marcar).forEach(g => g.classList.add("marcado"));
+    }
+    ops.hidden = false;
+    ops.style.setProperty("--cols", q.cols || Math.min(q.opciones.length, 3));
+    ops.innerHTML = q.opciones.map(o => `<button data-id="${o.id}">${o.html}</button>`).join("");
+  } else {
+    ord.hidden = false;
+    ord.innerHTML = revolver(q.pasos).map(p => `<button data-id="${p.id}"><span class="num" aria-hidden="true"></span><span>${p.html}</span></button>`).join("");
+  }
+  instruccion(q.html, q.voz);
+  ayuda.empezar();
+}
+
+/** 👆 Señala la respuesta (o el paso que sigue). */
+function pista() {
+  if (!q || listo) return;
+  if (q.tipo === "tocar") enDibujo(q.meta).forEach(g => g.classList.add("brilla"));
+  else if (q.tipo === "opciones") senalar($("opciones").querySelector(`[data-id="${q.correcta}"]`));
+  else senalar($("orden").querySelector(`[data-id="${q.pasos[sigue].id}"]`));
+}
+
+function ganar() {
+  listo = true;
+  ayuda.parar();
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", "¡Acertado!"); }
+  else feedback("almost", "🤏", "¡Ahora sí!");
+  $("explica").hidden = false;
+  $("explica").textContent = "💡 " + q.bien;
+  decir(`${limpio ? elogio() : "¡Ahora sí!"} ${q.bien}`);
+  const opciones = q.tipo === "tocar" ? q.partes.length : q.tipo === "opciones" ? q.opciones.length : 0;
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones });
+  $("nextBtn").classList.add("pulse");
+}
+
+// Tocar en el dibujo
+$("lamina").addEventListener("click", e => {
+  if (q?.tipo !== "tocar" || listo) return;
+  const g = e.target.closest("[data-parte]");
+  if (!g) return;
+  const id = g.dataset.parte;
+  if (malos.has(id)) return; // ya lo tocó: no cuenta otra vez
+  if (id === q.meta) {
+    enDibujo(id).forEach(x => { x.classList.remove("brilla"); x.classList.add("bien"); });
+    return ganar();
+  }
+  fallos++; malos.add(id);
+  enDibujo(id).forEach(x => x.classList.add("mal"));
+  const p = PARTES[id], meta = PARTES[q.meta];
+  const que = `${eseEs(p.n)}${p.f ? `: ${p.f}` : ""}.`;
+  const busca = q.porFuncion ? `Probá otra vez. ${q.voz}` : `Buscá ${meta.n}.`;
+  if (parecidos(id, q.meta)) { feedback("almost", "🤏", "¡Casi!"); decir(`¡Casi! ${que} ${busca}`); }
+  else { feedback("bad", "🙈", "No es"); decir(`${que} ${busca}`); }
+  if (fallos >= 2) pista();
+});
+
+// Escoger una opción
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled || q.tipo !== "opciones") return;
+  const o = q.opciones.find(x => x.id === b.dataset.id);
+  if (o.id === q.correcta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    return ganar();
+  }
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  feedback("bad", "🤔", "No es");
+  decir(`${o.por} Probá otra vez.`);
+  if (fallos >= 2) pista();
+});
+
+// Ordenar: tocar los pasos en orden
+$("orden").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled || q.tipo !== "ordenar") return;
+  const i = q.pasos.findIndex(p => p.id === b.dataset.id);
+  if (i === sigue) {
+    b.classList.remove("senal"); b.classList.add("right"); b.disabled = true;
+    b.querySelector(".num").textContent = ++sigue;
+    sonido("tap");
+    if (sigue === q.pasos.length) return ganar();
+    feedback("");
+    decir(sinEmoji(q.pasos[i].html));
+    return;
+  }
+  fallos++;
+  b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope");
+  const casi = i === sigue + 1;
+  feedback(casi ? "almost" : "bad", "🤔", casi ? "¡Casi! Ese va justo después" : "Todavía no");
+  decir(sigue === 0 ? `«${sinEmoji(q.pasos[i].html)}» no va primero. ¿Por dónde empieza?`
+    : `«${sinEmoji(q.pasos[i].html)}» va más adelante. ¿Qué sigue después de «${sinEmoji(q.pasos[sigue - 1].html)}»?`);
+  if (fallos >= 2) pista();
+});
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-t]");
+  if (!b) return;
+  sonido("tap");
+  tema = TEMAS.find(t => t.id === b.dataset.t) || null;
+  esc.activa = !tema;
+  ultimo = "";
+  pintarModos(); nuevo();
+});
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+
+pintarModos();
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__cuerpo = { get q() { return q; }, get nivel() { return esc.nivel; }, get sigue() { return sigue; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

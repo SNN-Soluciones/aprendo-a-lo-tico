@@ -528,4 +528,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/rumbos.html",
   },
+  {
+    id: "cuerpo",
+    titulo: "El cuerpo humano",
+    descripcion: "Los sentidos y los sistemas del cuerpo: tocá cada órgano, descubrí para qué sirve, ordená el viaje de la comida y aprendé a cuidarte.",
+    emoji: "🫀",
+    materia: "ciencias",
+    grados: [1, 2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/cuerpo.html",
+  },
 ];

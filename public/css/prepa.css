@@ -111,3 +111,41 @@ button:disabled { opacity: .35; cursor: default; transform: none; box-shadow: 0 
   font-size: 1.6rem; background: #FFFFFF; border: 4px solid #1F3A5F; box-shadow: 0 4px 0 #1F3A5F;
 }
 .home-link:active { transform: translateY(3px); box-shadow: 0 1px 0 #1F3A5F; }
+
+/* 🪜 Escalera: escalón actual y hojitas que faltan para subir (js/escalera.js) */
+.escalera { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--page-ink); }
+/* La escalera y las estrellas van juntas a la derecha, aunque la barra no quepa en una línea (js/escalera.js las agrupa) */
+.marcador { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+.escalera[hidden] { display: none; }
+.escalera .esc-num { font-size: 1.3rem; white-space: nowrap; }
+.escalera .esc-num b { font-size: 1.05rem; margin-left: 2px; }
+.escalera .hojas { display: flex; gap: 3px; }
+.escalera .hojas i {
+  width: 16px; height: 16px; border-radius: 0 60% 0 60%; border: 2px solid var(--rim);
+  background: var(--face); display: block; transform: rotate(45deg);
+}
+.escalera .hojas i.llena { background: var(--ok); }
+.escalera .hojas i.nueva { animation: hoja .5s ease-out; }
+@keyframes hoja { 0% { transform: rotate(45deg) scale(.3); } 70% { transform: rotate(45deg) scale(1.4); } 100% { transform: rotate(45deg) scale(1); } }
+.levels button.auto { font-size: 1.2rem; }
+
+/* 🎉 ¡Subiste un escalón! (no tapa el juego: dura un par de segundos) */
+.subio { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+.subio .cartel {
+  position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+  background: var(--btn); border: 4px solid var(--rim); border-radius: 26px; box-shadow: 0 5px 0 var(--rim);
+  padding: 8px 22px; font-size: clamp(1.8rem, 9vw, 2.6rem); font-weight: 800; color: var(--ink); white-space: nowrap;
+  animation: cartel 2.6s ease-out forwards;
+}
+.subio i { position: absolute; top: -3rem; left: var(--x); font-style: normal; font-size: 2rem; animation: cae 2.2s ease-in var(--d) forwards; }
+@keyframes cartel { 0% { transform: translateX(-50%) scale(.3); opacity: 0; } 15% { transform: translateX(-50%) scale(1.15); opacity: 1; } 25%, 80% { transform: translateX(-50%) scale(1); opacity: 1; } 100% { opacity: 0; } }
+@keyframes cae { to { transform: translateY(110vh) rotate(260deg); } }
+
+/* 👆 Respuesta señalada como ayuda (js/prepa.js → senalar) */
+.senal { position: relative; outline: 6px solid var(--btn) !important; outline-offset: 3px; animation: brinco .9s ease-in-out infinite; z-index: 1; }
+.senal::after {
+  content: "👆"; position: absolute; right: -4px; bottom: -14px; font-size: 2.2rem; line-height: 1;
+  animation: toca .9s ease-in-out infinite; pointer-events: none;
+}
+@keyframes brinco { 50% { transform: translateY(-6px) scale(1.04); } }
+@keyframes toca { 50% { transform: translate(-4px, -8px); } }

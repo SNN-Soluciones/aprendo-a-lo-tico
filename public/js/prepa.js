@@ -79,5 +79,40 @@ export function alEmpezar(fn, repetir = repetirInstruccion) {
   if (lento) lento.addEventListener("click", () => repetir(true));
 }
 
+/** 👆 Señala una respuesta (brilla, brinca y aparece una manito) para ayudar sin decir «está mal». */
+export function senalar(el) {
+  if (!el) return;
+  el.classList.remove("senal");
+  void el.offsetWidth;
+  el.classList.add("senal");
+}
+
+/**
+ * 🤝 Ayuda sin pedirla, para el niño que se queda pegado y no sabe qué hacer:
+ * si pasa un rato sin tocar nada (y sin que la voz esté hablando), se repite la instrucción;
+ * si sigue sin tocar, se le señala la respuesta con `senalar()` (y `usada` queda en true, para la escalera).
+ * Cualquier toque en la pantalla vuelve a empezar la cuenta.
+ * @param {{senalar?: Function, repetir?: Function, espera?: number}} op
+ */
+export function ayudaSiSeQueda({ senalar: mostrar, repetir = () => repetirInstruccion(false), espera = 9000 } = {}) {
+  let t = 0, etapa = 0, activa = false, usada = false;
+  const hablando = () => { try { return speechSynthesis.speaking; } catch (_) { return false; } };
+  const tick = () => {
+    if (!activa) return;
+    if (hablando()) { t = setTimeout(tick, 1500); return; }
+    if (etapa === 0) { etapa = 1; repetir(); t = setTimeout(tick, espera); }
+    else if (etapa === 1 && mostrar) { etapa = 2; usada = true; mostrar(); }
+  };
+  const armar = () => { clearTimeout(t); etapa = 0; if (activa) t = setTimeout(tick, espera); };
+  document.addEventListener("pointerdown", armar, true);
+  return {
+    /** Al empezar cada ronda. */
+    empezar() { activa = true; usada = false; armar(); },
+    /** Cuando la ronda terminó (acertó). */
+    parar() { activa = false; clearTimeout(t); },
+    get usada() { return usada; },
+  };
+}
+
 export const barajar = arr => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
 export const azar = arr => arr[Math.floor(Math.random() * arr.length)];

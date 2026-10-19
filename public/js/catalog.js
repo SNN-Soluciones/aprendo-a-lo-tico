@@ -1,4 +1,7 @@
 // 📚 Catálogo de juegos. Para agregar uno nuevo: poné el HTML en /juegos y agregalo aquí.
+//   edad:     de qué edad a qué edad se sugiere (el inicio pregunta la edad: ver js/perfil.js)
+//   leer:     "no" = se juega solo escuchando y mirando · "poco" = algunas palabras, o con un adulto · "si" = hay que leer
+//   escalera: true si sube de nivel solo, de a poquito (js/escalera.js)
 export const MATERIAS = [
   { id: "mate",     nombre: "Matemáticas",       emoji: "🔢", color: "#2F7FD1" },
   { id: "espanol",  nombre: "Español",           emoji: "✏️", color: "#E8574A" },
@@ -28,6 +31,8 @@ export const JUEGOS = [
     emoji: "🕒",
     materia: "mate",
     grados: [1, 2, 3],
+    edad: [6, 9],
+    leer: "poco",
     url: "juegos/reloj.html",
   },
   {
@@ -37,6 +42,8 @@ export const JUEGOS = [
     emoji: "🧱",
     materia: "mate",
     grados: [2, 3, 4],
+    edad: [7, 10],
+    leer: "poco",
     url: "juegos/restas-bloques.html",
   },
   {
@@ -46,6 +53,8 @@ export const JUEGOS = [
     emoji: "🪙",
     materia: "mate",
     grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
     url: "juegos/pulperia.html",
   },
   {
@@ -55,6 +64,8 @@ export const JUEGOS = [
     emoji: "➕",
     materia: "mate",
     grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
     url: "juegos/sumas-bloques.html",
   },
   {
@@ -64,6 +75,8 @@ export const JUEGOS = [
     emoji: "🦥",
     materia: "ciencias",
     grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
     url: "juegos/animales-cr.html",
   },
   {
@@ -73,6 +86,8 @@ export const JUEGOS = [
     emoji: "🗺️",
     materia: "sociales",
     grados: [2, 3, 4],
+    edad: [7, 11],
+    leer: "si",
     url: "juegos/provincias.html",
   },
   {
@@ -82,6 +97,8 @@ export const JUEGOS = [
     emoji: "👂",
     materia: "ingles",
     grados: [1, 2, 3, 4],
+    edad: [5, 10],
+    leer: "no",
     url: "juegos/listen-tap.html",
   },
   {
@@ -91,6 +108,9 @@ export const JUEGOS = [
     emoji: "🐥",
     materia: "mate",
     grados: [0, 1],
+    edad: [3, 6],
+    leer: "no",
+    escalera: true,
     url: "juegos/contar.html",
   },
   {
@@ -100,6 +120,9 @@ export const JUEGOS = [
     emoji: "🔺",
     materia: "mate",
     grados: [0],
+    edad: [3, 6],
+    leer: "no",
+    escalera: true,
     url: "juegos/colores-figuras.html",
   },
   {
@@ -109,6 +132,9 @@ export const JUEGOS = [
     emoji: "👂",
     materia: "espanol",
     grados: [0, 1],
+    edad: [4, 7],
+    leer: "no",
+    escalera: true,
     url: "juegos/sonido-inicial.html",
   },
   {
@@ -118,6 +144,8 @@ export const JUEGOS = [
     emoji: "✍️",
     materia: "espanol",
     grados: [0, 1],
+    edad: [4, 7],
+    leer: "no",
     url: "juegos/trazos.html",
   },
   {
@@ -127,6 +155,8 @@ export const JUEGOS = [
     emoji: "🦥",
     materia: "prog",
     grados: [0, 1, 2],
+    edad: [4, 8],
+    leer: "no",
     url: "juegos/perezoso.html",
   },
   {
@@ -136,6 +166,8 @@ export const JUEGOS = [
     emoji: "🔁",
     materia: "prog",
     grados: [2, 3, 4],
+    edad: [7, 10],
+    leer: "poco",
     url: "juegos/repeti-decidi.html",
   },
   {
@@ -145,6 +177,8 @@ export const JUEGOS = [
     emoji: "🦜",
     materia: "prog",
     grados: [4, 5, 6],
+    edad: [9, 12],
+    leer: "si",
     url: "juegos/lapa.html",
   },
   {
@@ -154,6 +188,9 @@ export const JUEGOS = [
     emoji: "🐆",
     materia: "logica",
     grados: [1, 2, 3, 4, 5, 6],
+    edad: [5, 12],
+    leer: "poco",
+    escalera: true,
     url: "juegos/jaguar.html",
   },
   {
@@ -163,6 +200,9 @@ export const JUEGOS = [
     emoji: "🐸",
     materia: "logica",
     grados: [1, 2, 3, 4, 5, 6],
+    edad: [5, 12],
+    leer: "no",
+    escalera: true,
     url: "juegos/sudoku-ranas.html",
   },
   {
@@ -172,6 +212,8 @@ export const JUEGOS = [
     emoji: "❌",
     materia: "logica",
     grados: [0, 1, 2, 3, 4, 5, 6],
+    edad: [4, 12],
+    leer: "no",
     url: "juegos/gato.html",
   },
   {
@@ -181,6 +223,8 @@ export const JUEGOS = [
     emoji: "📰",
     materia: "logica",
     grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "si",
     url: "juegos/dato-opinion.html",
   },
   {
@@ -190,6 +234,8 @@ export const JUEGOS = [
     emoji: "✖️",
     materia: "mate",
     grados: [2, 3, 4],
+    edad: [7, 10],
+    leer: "poco",
     url: "juegos/tablas.html",
   },
   {
@@ -199,6 +245,8 @@ export const JUEGOS = [
     emoji: "🧩",
     materia: "espanol",
     grados: [1, 2, 3],
+    edad: [6, 9],
+    leer: "poco",
     url: "juegos/oraciones.html",
   },
   {
@@ -208,6 +256,8 @@ export const JUEGOS = [
     emoji: "🌱",
     materia: "ciencias",
     grados: [1, 2, 3],
+    edad: [6, 9],
+    leer: "poco",
     url: "juegos/planta.html",
   },
   {
@@ -217,6 +267,8 @@ export const JUEGOS = [
     emoji: "🌸",
     materia: "sociales",
     grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
     url: "juegos/simbolos.html",
   },
   {
@@ -226,6 +278,8 @@ export const JUEGOS = [
     emoji: "🛡️",
     materia: "sociales",
     grados: [2, 3, 4, 5],
+    edad: [7, 11],
+    leer: "poco",
     url: "juegos/escudo.html",
   },
   {
@@ -235,6 +289,8 @@ export const JUEGOS = [
     emoji: "🦜",
     materia: "ingles",
     grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
     url: "juegos/armo-ingles.html",
   },
   {
@@ -244,6 +300,8 @@ export const JUEGOS = [
     emoji: "🧠",
     materia: "ingles",
     grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
     url: "juegos/memory-ingles.html",
   },
   {
@@ -253,6 +311,8 @@ export const JUEGOS = [
     emoji: "📅",
     materia: "sociales",
     grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
     url: "juegos/efemerides.html",
   },
   {
@@ -262,6 +322,8 @@ export const JUEGOS = [
     emoji: "🐝",
     materia: "espanol",
     grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "si",
     url: "juegos/ortografia.html",
   },
   {
@@ -271,6 +333,8 @@ export const JUEGOS = [
     emoji: "🌳",
     materia: "ciencias",
     grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "si",
     url: "juegos/ecosistemas.html",
   },
   {
@@ -280,6 +344,80 @@ export const JUEGOS = [
     emoji: "🧊",
     materia: "ciencias",
     grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
     url: "juegos/estados.html",
+  },
+  {
+    id: "buscar",
+    titulo: "¿Dónde está?",
+    descripcion: "Escuchá qué hay que buscar y tocalo: de 2 dibujos a 16, y «¿cuál es diferente?». Sin leer.",
+    emoji: "🔍",
+    materia: "logica",
+    grados: [0, 1],
+    edad: [3, 7],
+    leer: "no",
+    escalera: true,
+    url: "juegos/buscar.html",
+  },
+  {
+    id: "patrones",
+    titulo: "¿Qué sigue?",
+    descripcion: "Escuchá la fila 🔴🔵🔴🔵… y tocá lo que sigue. Patrones que suben de a poquito, sin leer.",
+    emoji: "🧩",
+    materia: "mate",
+    grados: [0, 1],
+    edad: [4, 7],
+    leer: "no",
+    escalera: true,
+    url: "juegos/patrones.html",
+  },
+  {
+    id: "parejas",
+    titulo: "Parejas",
+    descripcion: "Memoria con dibujos y voz: volteá dos cartas y encontrá las iguales. Animales, frutas, juguetes y más. Sin leer.",
+    emoji: "🃏",
+    materia: "logica",
+    grados: [0, 1, 2],
+    edad: [3, 8],
+    leer: "no",
+    escalera: true,
+    url: "juegos/parejas.html",
+  },
+  {
+    id: "tamanos",
+    titulo: "Grande y pequeño",
+    descripcion: "Escuchá y tocá el más grande, el más pequeño o el mediano, y ordenalos de pequeño a grande. Sin leer.",
+    emoji: "📏",
+    materia: "mate",
+    grados: [0, 1],
+    edad: [3, 6],
+    leer: "no",
+    escalera: true,
+    url: "juegos/tamanos.html",
+  },
+  {
+    id: "sonidos",
+    titulo: "¿Quién hace así?",
+    descripcion: "Escuchá «¡Muuu!» o «¡Croac!» y tocá al animal: de la finca al bosque tico. Sin leer.",
+    emoji: "🐮",
+    materia: "ciencias",
+    grados: [0],
+    edad: [3, 6],
+    leer: "no",
+    escalera: true,
+    url: "juegos/sonidos.html",
+  },
+  {
+    id: "clasificar",
+    titulo: "¿Dónde va?",
+    descripcion: "Mirá el dibujo y ponelo en su canasta: frutas o animales, colores, agua, tierra o aire. Sin leer.",
+    emoji: "🧺",
+    materia: "ciencias",
+    grados: [0, 1],
+    edad: [3, 7],
+    leer: "no",
+    escalera: true,
+    url: "juegos/clasificar.html",
   },
 ];

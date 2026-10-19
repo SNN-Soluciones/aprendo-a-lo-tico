@@ -74,10 +74,12 @@
 
 <div class="wrap top ancho">
   <div class="modos" id="modos" role="group" aria-label="Modo de juego">
-    <button data-modo="filas" aria-pressed="true">🥭 Filas de fruta</button>
+    <button data-modo="auto" class="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-modo="filas" aria-pressed="false">🥭 Filas de fruta</button>
     <button data-modo="tabla" aria-pressed="false">📋 Tablas</button>
     <button data-modo="reloj" aria-pressed="false">⏱️ Contra reloj</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -107,21 +109,28 @@
 
 <script type="module">
 import { elogio, sonido, LENTO } from "../js/voz.js";
-import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { FRUTAS, preguntasTabla, preguntaMezcla, preguntasFilas, sumaRepetida, contarDeA, truco, estrellasTabla } from "../js/tablas.js";
+import { decir, instruccion, feedback, alEmpezar, ayudaSiSeQueda } from "../js/prepa.js";
+import { FRUTAS, preguntasTabla, preguntaMezcla, preguntasFilas, sumaRepetida, contarDeA, truco, estrellasTabla, ESCALONES, inicioTablas, preguntaEscalon, respuestaDe, pistaDe, explicaDe } from "../js/tablas.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 const CLAVE = "tablas-feria";
 const SEGUNDOS = 60;
 
-let prog = { tablas: {}, filas: 0, record: 0 };
+let prog = { tablas: {}, filas: 0, record: 0, auto: 0 };
 try { prog = { ...prog, ...JSON.parse(localStorage.getItem(CLAVE)) }; } catch (_) {}
 const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(prog)); } catch (_) {} };
 
-let modo = "filas", tabla = 2, preguntas = [], k = 0, q = null, escrito = "", intentos = 0, errores = 0, resultados = [], fruta = FRUTAS[0];
+// 🪜 De a poquito (ESCALONES en js/tablas.js): de contar filas de fruta a dividir. Los otros modos son a mano.
+const esc = escalera("tablas", { escalones: ESCALONES.length, inicio: inicioTablas });
+let modo = "auto", tabla = 2, preguntas = [], k = 0, q = null, escrito = "", intentos = 0, errores = 0, resultados = [], fruta = FRUTAS[0];
 let bloqueado = false, fin = 0, timer = null, aciertos = 0;
+let turno = 0, pidio = false, recientes = []; // pidio: usó 💡 (o se le dio la pista) antes de contestar
+const esFilas = () => modo === "filas" || (modo === "auto" && q?.tipo === "filas");
+/** Espera y después hace `fn`, solo si sigue la misma pregunta (si cambió de modo o de pregunta, no). */
+const despues = (fn, ms) => { const t = turno; setTimeout(() => { if (t === turno) fn(); }, ms); };
 
-const totalEstrellas = () => Object.values(prog.tablas).reduce((a, b) => a + b, 0) + prog.filas;
+const totalEstrellas = () => Object.values(prog.tablas).reduce((a, b) => a + b, 0) + prog.filas + (prog.auto || 0);
 
 // ---------- Pintar ----------
 function pintarTablas() {
@@ -141,8 +150,11 @@ function pintarTramo(a, b, resaltar = false) {
 }
 
 function pintarPregunta(estado = "") {
-  const sub = modo === "filas" ? `<span class="sub">¿${fruta.cuantas} ${fruta.n} hay en total?</span>` : "";
-  $("pregunta").innerHTML = `${q.a} × ${q.b} = <span class="caja ${estado}">${escrito || "?"}</span>${sub}`;
+  const sub = esFilas() ? `<span class="sub">¿${fruta.cuantas} ${fruta.n} hay en total?</span>` : "";
+  const caja = `<span class="caja ${estado}">${escrito || "?"}</span>`;
+  // En la escalera también: el número que falta (3 × ? = 12) y dividir (12 ÷ 3 = ?)
+  const cuenta = q.tipo === "falta" ? `${q.a} × ${caja} = ${q.r}` : q.tipo === "division" ? `${q.r} ÷ ${q.a} = ${caja}` : `${q.a} × ${q.b} = ${caja}`;
+  $("pregunta").innerHTML = cuenta + sub;
 }
 
 function pintarLista() {
@@ -155,23 +167,29 @@ function pintarLista() {
 }
 
 // ---------- Preguntas ----------
-const vozDe = p => `¿Cuánto es ${p.a} por ${p.b}?`;
+const vozDe = p => p.tipo === "falta" ? `¿${p.a} por cuánto da ${p.r}?` : p.tipo === "division" ? `¿Cuánto es ${p.r} entre ${p.a}?` : `¿Cuánto es ${p.a} por ${p.b}?`;
+const vozFilas = () => `En el tramo hay ${q.a} filas de ${q.b} ${fruta.n}. ¿${fruta.cuantas} hay en total?`;
 
 function siguiente() {
-  escrito = ""; intentos = 0; bloqueado = false;
+  turno++;
+  escrito = ""; intentos = 0; bloqueado = false; pidio = false;
   $("explica").hidden = true; feedback("");
   if (modo === "reloj") q = preguntaMezcla([2, 3, 4, 5, 6, 7, 8, 9, 10], q);
+  else if (modo === "auto") { q = preguntaEscalon(esc.nivel, recientes); recientes = [...recientes, q].slice(-3); }
   else q = preguntas[k];
   fruta = FRUTAS[Math.floor(Math.random() * FRUTAS.length)];
-  if (modo === "filas") pintarTramo(q.a, q.b); else $("tramo").hidden = true;
+  if (esFilas()) pintarTramo(q.a, q.b); else $("tramo").hidden = true;
   pintarPregunta(); pintarLista();
-  if (modo === "filas") instruccion(`Hay <b>${q.a} filas</b> de <b>${q.b}</b>. ¿${fruta.cuantas} hay en total?`, `En el tramo hay ${q.a} filas de ${q.b} ${fruta.n}. ¿${fruta.cuantas} hay en total? Podés tocar cada fruta para contar.`);
+  if (esFilas()) instruccion(`Hay <b>${q.a} filas</b> de <b>${q.b}</b>. ¿${fruta.cuantas} hay en total?`, `${vozFilas()} Podés tocar cada fruta para contar.`);
   else if (modo === "tabla") instruccion(`Tabla del <b>${tabla}</b> · ${k + 1} de 10`, vozDe(q));
+  else if (modo === "auto") instruccion(`🪜 <b>${ESCALONES[esc.nivel].nombre}</b>`, vozDe(q));
   else decir(vozDe(q), aciertos === 0 ? { cola: true } : undefined); // la primera espera a la instrucción
+  if (modo === "auto") ayudaQuieto.empezar(); else ayudaQuieto.parar();
 }
 
 function empezar() {
   clearInterval(timer);
+  esc.activa = modo === "auto";
   k = 0; errores = 0; resultados = []; aciertos = 0; q = null;
   $("resumen").hidden = true; $("juego").hidden = false;
   $("tablas").hidden = modo !== "tabla";
@@ -179,6 +197,7 @@ function empezar() {
   $("ayudaBtn").parentElement.hidden = modo === "reloj";
   if (modo === "filas") preguntas = preguntasFilas();
   if (modo === "tabla") { preguntas = preguntasTabla(tabla); pintarTablas(); }
+  if (modo === "auto") pintarTablas();
   if (modo === "reloj") {
     fin = Date.now() + SEGUNDOS * 1000;
     $("marcas").textContent = `✅ 0 · 🏆 Récord: ${prog.record}`;
@@ -199,14 +218,15 @@ function tic() {
 function revisar() {
   if (!escrito || bloqueado) return;
   const n = Number(escrito);
-  if (n === q.r) {
+  if (n === respuestaDe(q)) {
     pintarPregunta("ok");
     if (modo === "reloj") {
       aciertos++; sonido("ok");
       $("marcas").textContent = `✅ ${aciertos} · 🏆 Récord: ${Math.max(prog.record, aciertos)}`;
-      setTimeout(siguiente, 250);
+      despues(siguiente, 250);
       return;
     }
+    if (modo === "auto") return acertoEscalera();
     bloqueado = true;
     resultados.push({ b: q.b, ok: intentos === 0 });
     feedback("ok", "🎉", `${elogio()} ${q.a} × ${q.b} = ${q.r}`);
@@ -219,12 +239,14 @@ function revisar() {
   // Error
   intentos++;
   pintarPregunta("mal");
-  if (modo === "reloj") { sonido("mal"); escrito = ""; setTimeout(() => pintarPregunta(), 300); return; }
+  if (modo === "reloj") { sonido("mal"); escrito = ""; despues(() => pintarPregunta(), 300); return; }
   if (intentos === 1) {
     feedback("almost", "🤔", "¡Casi! Probá otra vez.");
     ayuda();
     escrito = "";
-    setTimeout(() => pintarPregunta(), 500);
+    despues(() => pintarPregunta(), 500);
+  } else if (modo === "auto") {
+    noLeSalio();
   } else {
     errores++; bloqueado = true;
     resultados.push({ b: q.b, ok: false });
@@ -235,22 +257,57 @@ function revisar() {
     // Se repite al final para practicarla
     if (modo === "tabla") preguntas.push({ ...q, repaso: true });
     pintarLista();
-    setTimeout(avanzar, 3800);
+    despues(avanzar, 3800);
   }
 }
 
+// ---------- 🪜 Escalera ----------
+// Bien a la primera suma una hojita; con la pista (💡 o porque se quedó pegado) o un error, ni suma ni resta;
+// con dos errores (o pista y error) es una ronda difícil.
+const fallosEscalera = () => intentos + (pidio ? 1 : 0);
+function acertoEscalera() {
+  bloqueado = true;
+  ayudaQuieto.parar();
+  const limpio = fallosEscalera() === 0;
+  if (limpio) { prog.auto = (prog.auto || 0) + 1; guardar(); pintarTablas(); }
+  feedback("ok", "🎉", `${elogio()} ${textoCuenta(q)}`);
+  if (q.tipo === "filas") { pintarTramo(q.a, q.b, true); explicar(`${sumaRepetida(q.a, q.b)} = ${q.r}. ¡Por eso ${q.a} × ${q.b} = ${q.r}!`, false); }
+  decir(`${elogio()} ${vozCuenta(q)}`);
+  esc.resultado({ fallos: fallosEscalera() }); // después de la voz: «¡Subiste!» se dice en cola
+  despues(siguiente, q.tipo === "filas" ? 2600 : 1500);
+}
+function noLeSalio() {
+  bloqueado = true;
+  ayudaQuieto.parar();
+  escrito = String(respuestaDe(q)); pintarPregunta("ok");
+  feedback("bad", "💡", `Es ${respuestaDe(q)}.`);
+  if (q.tipo !== "falta" && q.tipo !== "division") pintarTramo(q.a, q.b, true);
+  explicar(explicaDe(q));
+  esc.resultado({ fallos: 2 });
+  despues(siguiente, 4200);
+}
+const textoCuenta = p => p.tipo === "division" ? `${p.r} ÷ ${p.a} = ${p.b}` : `${p.a} × ${p.b} = ${p.r}`;
+const vozCuenta = p => p.tipo === "division" ? `${p.r} entre ${p.a} es ${p.b}.` : `${p.a} por ${p.b} es ${p.r}.`;
+
 function avanzar() {
+  if (modo === "auto") return siguiente();
   k++;
   if (k < preguntas.length) siguiente(); else terminar();
 }
 
 function explicar(txt, habla = true) {
   $("explica").hidden = false; $("explica").textContent = "💡 " + txt;
-  if (habla) decir(txt.replace(/×/g, "por").replace(/−/g, "menos"), { cola: true });
+  if (habla) decir(txt.replace(/×/g, "por").replace(/÷/g, "entre").replace(/−/g, "menos"), { cola: true });
 }
 
 function ayuda() {
   if (bloqueado || !q) return;
+  if (modo === "auto") {
+    if (q.tipo === "filas") pintarTramo(q.a, q.b, "pista");
+    else if (q.tipo === "producto") pintarTramo(q.a, q.b, false);
+    explicar(pistaDe(q));
+    return;
+  }
   if (modo === "filas") {
     pintarTramo(q.a, q.b, "pista");
     explicar(`Contá de ${q.b} en ${q.b}, una fila a la vez: ${contarDeA(q.a, q.b).slice(0, -1).join(", ")}… ¿y la última fila?`);
@@ -326,7 +383,20 @@ $("tramo").addEventListener("click", e => {
   const n = $("tramo").querySelectorAll(".contada").length;
   if (f.classList.contains("contada")) decir(String(n));
 });
-$("ayudaBtn").addEventListener("click", () => { sonido("tap"); ayuda(); });
+$("ayudaBtn").addEventListener("click", () => {
+  sonido("tap");
+  if (modo === "auto" && !bloqueado && intentos === 0) pidio = true; // pedir la pista antes de contestar: no suma hojita
+  ayuda();
+});
+// 🤝 Si se queda sin tocar: se repite la pregunta y después se le da la pista (como si hubiera tocado 💡)
+const ayudaQuieto = ayudaSiSeQueda({
+  repetir: () => decir(esFilas() ? vozFilas() : vozDe(q)),
+  senalar: () => {
+    if (modo !== "auto" || bloqueado || !q) return;
+    if (intentos === 0) pidio = true;
+    ayuda();
+  },
+});
 $("tablas").addEventListener("click", e => {
   const b = e.target.closest("[data-tabla]");
   if (!b) return;
@@ -334,6 +404,8 @@ $("tablas").addEventListener("click", e => {
 });
 
 function cambiarModo(m) {
+  // Pasar a otra después de equivocarse cuenta como ronda difícil (si no, cambiar de modo evitaría bajar)
+  if (modo === "auto" && !bloqueado && q && intentos > 0) esc.resultado({ fallos: 2 });
   modo = m;
   document.querySelectorAll("#modos button").forEach(x => x.setAttribute("aria-pressed", x.dataset.modo === m ? "true" : "false"));
   empezar();
@@ -344,11 +416,11 @@ $("modos").addEventListener("click", e => {
   sonido("tap"); cambiarModo(b.dataset.modo);
 });
 
-const repetir = lento => decir(!$("resumen").hidden ? "Tocá otra vez o elegí otro modo arriba." : modo === "filas" ? `Hay ${q.a} filas de ${q.b} ${fruta.n}. ¿${fruta.cuantas} hay en total?` : vozDe(q), lento ? { rate: LENTO } : undefined);
+const repetir = lento => decir(!$("resumen").hidden ? "Tocá otra vez o elegí otro modo arriba." : !q ? "" : esFilas() ? vozFilas() : vozDe(q), lento ? { rate: LENTO } : undefined);
 alEmpezar(() => empezar(), repetir);
 pintarTablas();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__tablas = { get q() { return q; }, get modo() { return modo; }, get k() { return k; }, get preguntas() { return preguntas; }, fin: () => { fin = Date.now(); } };
+if (new URLSearchParams(location.search).has("prueba")) window.__tablas = { get q() { return q; }, get modo() { return modo; }, get k() { return k; }, get preguntas() { return preguntas; }, get nivel() { return esc.nivel; }, get intentos() { return intentos; }, get pidio() { return pidio; }, get bloqueado() { return bloqueado; }, respuesta: () => respuestaDe(q), fin: () => { fin = Date.now(); } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

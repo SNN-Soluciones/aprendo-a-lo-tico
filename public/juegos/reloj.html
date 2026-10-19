@@ -141,6 +141,62 @@
     button { transition: none; }
   }
 
+  /* 🪜 Escalera, fiesta al subir y ayuda señalada (igual que en css/prepa.css; este juego no usa ese archivo) */
+  .top { flex-wrap: wrap; gap: 8px; }
+  .modos { display: flex; gap: 6px; }
+  .modos button { font-size: 1rem; padding: 3px 12px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .modos button.auto { font-size: 1.15rem; }
+  .marcador { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .escalera { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--page-ink); }
+  .escalera[hidden] { display: none; }
+  .escalera .esc-num { font-size: 1.3rem; white-space: nowrap; }
+  .escalera .esc-num b { font-size: 1.05rem; margin-left: 2px; }
+  .escalera .hojas { display: flex; gap: 3px; }
+  .escalera .hojas i { width: 16px; height: 16px; border-radius: 0 60% 0 60%; border: 2px solid var(--rim); background: var(--face); display: block; transform: rotate(45deg); }
+  .escalera .hojas i.llena { background: var(--ok); }
+  .escalera .hojas i.nueva { animation: hoja .5s ease-out; }
+  @keyframes hoja { 0% { transform: rotate(45deg) scale(.3); } 70% { transform: rotate(45deg) scale(1.4); } 100% { transform: rotate(45deg) scale(1); } }
+  .subio { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+  .subio .cartel {
+    position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    background: var(--btn); border: 4px solid var(--rim); border-radius: 26px; box-shadow: 0 5px 0 var(--rim);
+    padding: 8px 22px; font-size: clamp(1.8rem, 9vw, 2.6rem); font-weight: 800; color: var(--ink); white-space: nowrap;
+    animation: cartel 2.6s ease-out forwards;
+  }
+  .subio i { position: absolute; top: -3rem; left: var(--x); font-style: normal; font-size: 2rem; animation: cae 2.2s ease-in var(--d) forwards; }
+  @keyframes cartel { 0% { transform: translateX(-50%) scale(.3); opacity: 0; } 15% { transform: translateX(-50%) scale(1.15); opacity: 1; } 25%, 80% { transform: translateX(-50%) scale(1); opacity: 1; } 100% { opacity: 0; } }
+  @keyframes cae { to { transform: translateY(110vh) rotate(260deg); } }
+  .senal { position: relative; outline: 6px solid var(--btn) !important; outline-offset: 3px; animation: brinco .9s ease-in-out infinite; z-index: 1; }
+  .senal::after { content: "👆"; position: absolute; right: -4px; bottom: -14px; font-size: 2.2rem; line-height: 1; animation: toca .9s ease-in-out infinite; pointer-events: none; }
+  @keyframes brinco { 50% { transform: translateY(-6px) scale(1.04); } }
+  @keyframes toca { 50% { transform: translate(-4px, -8px); } }
+
+  /* 🪜 Retos: leer la hora, ponerla con las agujas, a. m. o p. m. */
+  [hidden] { display: none !important; }
+  p.hint { text-align: center; margin: 0 auto 4px; color: var(--page-ink); }
+  .fila-titulo { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 6px; }
+  .fila-titulo .guess-title { margin: 0; }
+  .fila-titulo .oir { font-size: 1.1rem; padding: 2px 9px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); flex: none; }
+  .reto { text-align: center; }
+  .reto .meta { font-size: 2.6rem; font-weight: 800; line-height: 1.05; }
+  .reto .words { font-size: 1.2rem; font-weight: 700; }
+  .reto .momento { font-size: 1.35rem; font-weight: 800; line-height: 1.2; }
+  .reto .momento .e { font-size: 2.2rem; vertical-align: middle; }
+  .acciones, .ampm-ops { display: flex; gap: 10px; justify-content: center; margin-top: 6px; }
+  .acciones .listo { background: var(--ok); color: #fff; font-size: 1.4rem; padding: 8px 30px; }
+  .ampm-ops button { font-size: 1.4rem; flex: 1; border-radius: 18px; line-height: 1.1; }
+  .ampm-ops button small { display: block; font-size: .8rem; font-weight: 700; }
+  .ampm-ops button:disabled { opacity: 1; }
+  .ampm-ops button.bien { background: #CFF5DC; border-color: var(--ok); }
+  .ampm-ops button.mal { background: #FFE3E0; border-color: var(--bad); opacity: .6; }
+  .clock-wrap.fija .hand { cursor: default; }
+  .buttons .main.pulse { animation: pulso 1s ease-in-out infinite; }
+  @keyframes pulso { 50% { transform: scale(1.06); } }
+  @media (prefers-reduced-motion: reduce) {
+    .senal, .senal::after, .subio .cartel, .subio i, .escalera .hojas i.nueva, .buttons .main.pulse { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+  }
+
   .home-link {
     position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     z-index: 50; width: 52px; height: 52px; border-radius: 50%;
@@ -155,11 +211,16 @@
 <a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
 
 <div class="col top">
-  <p class="hint">Mueve la aguja <span class="h">roja</span> o la <span class="m">azul</span></p>
+  <div class="modos" id="modos" role="group" aria-label="Modo">
+    <button class="auto" data-modo="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-modo="libre" aria-pressed="false">🕹️ Libre</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars" aria-live="polite">⭐ 0</div>
 </div>
+<p class="col hint" id="hint"></p>
 
-<div class="col clock-wrap">
+<div class="col clock-wrap" id="clockWrap">
   <svg id="clock" viewBox="0 0 400 400" aria-label="Reloj analógico">
     <circle cx="200" cy="200" r="190" fill="var(--rim)"/>
     <circle cx="200" cy="200" r="178" fill="var(--face)"/>
@@ -180,8 +241,12 @@
 </div>
 
 <div class="col panel">
-  <p class="guess-title">¿Qué hora marca el reloj?</p>
-  <div class="entry">
+  <div class="fila-titulo">
+    <button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button>
+    <p class="guess-title" id="titulo">¿Qué hora marca el reloj?</p>
+  </div>
+  <div class="reto" id="reto" hidden></div>
+  <div class="entry" id="entry">
     <button class="slot hh active" id="slotH" aria-label="Hora"></button>
     <span class="colon">:</span>
     <button class="slot mm" id="slotM" aria-label="Minutos"></button>
@@ -195,264 +260,422 @@
     <button data-n="0">0</button>
     <button class="check" id="checkBtn" aria-label="Revisar">✔</button>
   </div>
+  <div class="acciones" id="acciones" hidden><button class="listo" id="listoBtn">✔ ¡Listo!</button></div>
+  <div class="ampm-ops" id="ampmOps" role="group" aria-label="¿a. m. o p. m.?" hidden>
+    <button data-ampm="am">☀️ a. m.<small>mañana</small></button>
+    <button data-ampm="pm">🌙 p. m.<small>tarde o noche</small></button>
+  </div>
 </div>
 
 <div class="col panel answer" id="answer" aria-live="polite"></div>
 
-<div class="col buttons">
+<div class="col buttons" id="libreBtns" hidden>
   <button class="main" id="showBtn">Mostrar la hora</button>
   <button id="randomBtn">Hora sorpresa</button>
   <button id="nowBtn">Hora de ahora</button>
 </div>
+<div class="col buttons" id="autoBtns">
+  <button class="main" id="otraBtn">Otra hora ➡️</button>
+</div>
 
-<script>
-(() => {
-  const NS = "http://www.w3.org/2000/svg";
-  const C = 200;
-  const $ = id => document.getElementById(id);
-  const svg = $("clock"), hourHand = $("hourHand"), minuteHand = $("minuteHand");
-  const answer = $("answer"), feedback = $("feedback");
-  const slotH = $("slotH"), slotM = $("slotM"), checkBtn = $("checkBtn"), starsEl = $("stars");
+<script type="module">
+import { escalera } from "../js/escalera.js";
+import { ayudaSiSeQueda, senalar } from "../js/prepa.js";
+import { hablar, sonido, elogio, LENTO } from "../js/voz.js";
+import { enPalabras, aLaHora, dosCifras, ESCALONES, inicioReloj, retoEscalon, totalDe, AMPM } from "../js/reloj.js";
 
-  let total = 3 * 60;       // minutos en 12 h (0..719)
-  let revealed = false;
-  let inH = "", inM = "", field = "h";
-  let stars = 0;
-  let solved = false;       // ya acertó esta hora (no suma dos veces)
+const NS = "http://www.w3.org/2000/svg";
+const C = 200;
+const $ = id => document.getElementById(id);
+const svg = $("clock"), hourHand = $("hourHand"), minuteHand = $("minuteHand");
+const answer = $("answer"), feedback = $("feedback");
+const slotH = $("slotH"), slotM = $("slotM"), checkBtn = $("checkBtn"), starsEl = $("stars");
 
-  // ---------- Esfera ----------
-  const ticks = $("ticks");
-  for (let i = 0; i < 60; i++) {
-    const a = i * 6 * Math.PI / 180, big = i % 5 === 0;
-    const r1 = big ? 160 : 166, r2 = 174;
-    const l = document.createElementNS(NS, "line");
-    l.setAttribute("x1", C + r1 * Math.sin(a)); l.setAttribute("y1", C - r1 * Math.cos(a));
-    l.setAttribute("x2", C + r2 * Math.sin(a)); l.setAttribute("y2", C - r2 * Math.cos(a));
-    l.setAttribute("stroke", big ? "var(--rim)" : "var(--tick)");
-    l.setAttribute("stroke-width", big ? 4 : 2);
-    l.setAttribute("stroke-linecap", "round");
-    ticks.appendChild(l);
+let total = 3 * 60;       // minutos en 12 h (0..719)
+let revealed = false;
+let inH = "", inM = "", field = "h";
+let stars = 0;
+try { stars = Number(localStorage.getItem("reloj-stars")) || 0; } catch (_) {}
+let solved = false;       // ya acertó esta hora (no suma dos veces)
+
+// 🪜 De a poquito (ESCALONES en js/reloj.js): en punto → y media → cuartos → de 5 en 5 → minuto exacto → a. m. y p. m.
+// Se lee la hora o se ponen las agujas. «Libre» es el reloj de siempre, para jugar a mano: ahí la escalera no cuenta.
+const esc = escalera("reloj", { escalones: ESCALONES.length, inicio: inicioReloj });
+let auto = true, reto = null, anterior = null, fase = "jugando", fallos = 0, ayudada = false, turno = 0;
+const despues = (fn, ms) => { const t = turno; setTimeout(() => { if (t === turno) fn(); }, ms); };
+const puedeMover = () => !auto || (reto?.tipo === "poner" && fase === "jugando");
+const escribe = () => !auto || (reto?.tipo === "leer" && fase === "jugando");
+
+// ---------- Esfera ----------
+const ticks = $("ticks");
+for (let i = 0; i < 60; i++) {
+  const a = i * 6 * Math.PI / 180, big = i % 5 === 0;
+  const r1 = big ? 160 : 166, r2 = 174;
+  const l = document.createElementNS(NS, "line");
+  l.setAttribute("x1", C + r1 * Math.sin(a)); l.setAttribute("y1", C - r1 * Math.cos(a));
+  l.setAttribute("x2", C + r2 * Math.sin(a)); l.setAttribute("y2", C - r2 * Math.cos(a));
+  l.setAttribute("stroke", big ? "var(--rim)" : "var(--tick)");
+  l.setAttribute("stroke-width", big ? 4 : 2);
+  l.setAttribute("stroke-linecap", "round");
+  ticks.appendChild(l);
+}
+function label(parent, x, y, size, fill, txt) {
+  const t = document.createElementNS(NS, "text");
+  t.setAttribute("x", x); t.setAttribute("y", y);
+  t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central");
+  t.setAttribute("font-size", size); t.setAttribute("font-weight", "800");
+  t.setAttribute("fill", fill); t.textContent = txt;
+  parent.appendChild(t);
+}
+for (let h = 1; h <= 12; h++) {
+  const a = h * 30 * Math.PI / 180;
+  label($("hourLabels"), C + 112 * Math.sin(a), C - 112 * Math.cos(a), 38, "var(--ink)", h);
+  label($("minLabels"), C + 146 * Math.sin(a), C - 146 * Math.cos(a), 15, "var(--minute)", String((h * 5) % 60).padStart(2, "0"));
+}
+
+function horaMin(t = total) {
+  let h = Math.floor(t / 60) % 12;
+  if (h === 0) h = 12;
+  return { h, m: t % 60 };
+}
+
+// ---------- Render ----------
+function renderClock() {
+  const { h, m } = horaMin();
+  minuteHand.setAttribute("transform", `rotate(${m * 6} ${C} ${C})`);
+  hourHand.setAttribute("transform", `rotate(${total / 2} ${C} ${C})`);
+  minuteHand.setAttribute("aria-valuetext", m + " minutos");
+  hourHand.setAttribute("aria-valuetext", "hora " + h);
+  if (revealed) {
+    answer.innerHTML =
+      `<div class="digital"><span class="dh">${h}</span>:<span class="dm">${String(m).padStart(2, "0")}</span></div>` +
+      `<div class="words">${enPalabras(h, m)}</div>`;
+  } else {
+    answer.innerHTML = `<div class="mystery">?</div>`;
   }
-  function label(parent, x, y, size, fill, txt) {
-    const t = document.createElementNS(NS, "text");
-    t.setAttribute("x", x); t.setAttribute("y", y);
-    t.setAttribute("text-anchor", "middle"); t.setAttribute("dominant-baseline", "central");
-    t.setAttribute("font-size", size); t.setAttribute("font-weight", "800");
-    t.setAttribute("fill", fill); t.textContent = txt;
-    parent.appendChild(t);
-  }
-  for (let h = 1; h <= 12; h++) {
-    const a = h * 30 * Math.PI / 180;
-    label($("hourLabels"), C + 112 * Math.sin(a), C - 112 * Math.cos(a), 38, "var(--ink)", h);
-    label($("minLabels"), C + 146 * Math.sin(a), C - 146 * Math.cos(a), 15, "var(--minute)", String((h * 5) % 60).padStart(2, "0"));
-  }
+}
 
-  // ---------- Español a lo tico ----------
-  const N = ["", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez",
-    "once", "doce", "trece", "catorce", "quince", "dieciséis", "diecisiete", "dieciocho", "diecinueve", "veinte",
-    "veintiuno", "veintidós", "veintitrés", "veinticuatro", "veinticinco", "veintiséis", "veintisiete",
-    "veintiocho", "veintinueve", "treinta"];
-  const HORAS = ["", "una", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve", "diez", "once", "doce"];
-  const DECENAS = { 3: "treinta", 4: "cuarenta", 5: "cincuenta" };
-  const numero = n => n <= 30 ? N[n] : (n % 10 === 0 ? DECENAS[Math.floor(n / 10)] : DECENAS[Math.floor(n / 10)] + " y " + N[n % 10]);
-  const artHora = h => h === 1 ? "Es la una" : "Son las " + HORAS[h];
+function renderEntry() {
+  slotH.innerHTML = inH || '<span class="ph">--</span>';
+  slotM.innerHTML = inM || '<span class="ph">--</span>';
+  slotH.classList.toggle("active", field === "h");
+  slotM.classList.toggle("active", field === "m");
+  checkBtn.disabled = !(inH && (inM.length === 2 || (inH.length === 2 && inM.length === 1)));
+}
 
-  function enPalabras(h, m) {
-    if (m === 0) return artHora(h) + " en punto";
-    if (m === 15) return artHora(h) + " y cuarto";
-    if (m === 30) return artHora(h) + " y media";
-    if (m === 45) {
-      const next = h === 12 ? 1 : h + 1;
-      return "Un cuarto para " + (next === 1 ? "la una" : "las " + HORAS[next]);
-    }
-    return artHora(h) + " y " + numero(m);
-  }
+function setFeedback(kind, main, sub) {
+  feedback.className = "feedback " + (kind || "");
+  feedback.innerHTML = main ? `<div>${main}${sub ? `<small>${sub}</small>` : ""}</div>` : "";
+  if (main) { feedback.classList.remove("pop"); void feedback.offsetWidth; feedback.classList.add("pop"); }
+}
 
-  function horaMin(t = total) {
-    let h = Math.floor(t / 60) % 12;
-    if (h === 0) h = 12;
-    return { h, m: t % 60 };
-  }
-
-  // ---------- Render ----------
-  function renderClock() {
-    const { h, m } = horaMin();
-    minuteHand.setAttribute("transform", `rotate(${m * 6} ${C} ${C})`);
-    hourHand.setAttribute("transform", `rotate(${total / 2} ${C} ${C})`);
-    minuteHand.setAttribute("aria-valuetext", m + " minutos");
-    hourHand.setAttribute("aria-valuetext", "hora " + h);
-    if (revealed) {
-      answer.innerHTML =
-        `<div class="digital"><span class="dh">${h}</span>:<span class="dm">${String(m).padStart(2, "0")}</span></div>` +
-        `<div class="words">${enPalabras(h, m)}</div>`;
-    } else {
-      answer.innerHTML = `<div class="mystery">?</div>`;
-    }
-  }
-
-  function renderEntry() {
-    slotH.innerHTML = inH || '<span class="ph">--</span>';
-    slotM.innerHTML = inM || '<span class="ph">--</span>';
-    slotH.classList.toggle("active", field === "h");
-    slotM.classList.toggle("active", field === "m");
-    checkBtn.disabled = !(inH && inM.length === 2);
-  }
-
-  function setFeedback(kind, main, sub) {
-    feedback.className = "feedback " + (kind || "");
-    feedback.innerHTML = main ? `<div>${main}${sub ? `<small>${sub}</small>` : ""}</div>` : "";
-    if (main) { feedback.classList.remove("pop"); void feedback.offsetWidth; feedback.classList.add("pop"); }
-  }
-
-  // Cuando cambia la hora del reloj: se oculta todo y empieza de nuevo
-  function newTime() {
-    revealed = false;
-    solved = false;
-    inH = ""; inM = ""; field = "h";
-    setFeedback("", "");
-    renderEntry();
-  }
-
-  function setTotal(v) { total = ((Math.round(v) % 720) + 720) % 720; }
-
-  // ---------- Arrastre ----------
-  function angleFromEvent(e) {
-    const pt = svg.createSVGPoint();
-    pt.x = e.clientX; pt.y = e.clientY;
-    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
-    return (Math.atan2(p.x - C, -(p.y - C)) * 180 / Math.PI + 360) % 360;
-  }
-  let dragging = null, acc = 0;
-  function startDrag(which, e) {
-    e.preventDefault();
-    dragging = which; acc = total;
-    svg.setPointerCapture(e.pointerId);
-  }
-  hourHand.addEventListener("pointerdown", e => startDrag("hour", e));
-  minuteHand.addEventListener("pointerdown", e => startDrag("minute", e));
-  svg.addEventListener("pointermove", e => {
-    if (!dragging) return;
-    const ang = angleFromEvent(e);
-    if (dragging === "minute") {
-      let d = ang / 6 - (((acc % 60) + 60) % 60);
-      if (d > 30) d -= 60; if (d < -30) d += 60;
-      acc += d;
-    } else {
-      let d = ang * 2 - (((acc % 720) + 720) % 720);
-      if (d > 360) d -= 720; if (d < -360) d += 720;
-      acc += d;
-    }
-    const before = total;
-    setTotal(acc);
-    if (total !== before) newTime();
-    renderClock();
-  });
-  const endDrag = e => { if (!dragging) return; dragging = null; try { svg.releasePointerCapture(e.pointerId); } catch (_) {} };
-  svg.addEventListener("pointerup", endDrag);
-  svg.addEventListener("pointercancel", endDrag);
-
-  const keyMove = step => e => {
-    let d = 0;
-    if (e.key === "ArrowUp" || e.key === "ArrowRight") d = step;
-    if (e.key === "ArrowDown" || e.key === "ArrowLeft") d = -step;
-    if (!d) return;
-    e.preventDefault(); e.stopPropagation();
-    setTotal(total + d); newTime(); renderClock();
-  };
-  minuteHand.addEventListener("keydown", keyMove(1));
-  hourHand.addEventListener("keydown", keyMove(60));
-
-  // ---------- Teclado numérico ----------
-  function typeDigit(d) {
-    if (feedback.classList.contains("bad") || feedback.classList.contains("almost")) setFeedback("", "");
-    if (field === "h") {
-      if (inH.length === 0) {
-        if (d === "0") return;           // no hay hora 0
-        inH = d;
-        if (d !== "1") field = "m";      // 2..9 ya es una hora completa
-      } else if (inH === "1" && ["0", "1", "2"].includes(d)) {
-        inH += d; field = "m";           // 10, 11, 12
-      } else {
-        field = "m"; typeDigit(d); return;
-      }
-    } else {
-      if (inM.length >= 2) return;
-      if (inM.length === 0 && Number(d) > 5) return; // minutos 00..59
-      inM += d;
-    }
-    renderEntry();
-  }
-  function backspace() {
-    setFeedback("", "");
-    if (field === "m" && inM) inM = inM.slice(0, -1);
-    else if (field === "m") { field = "h"; inH = inH.slice(0, -1); }
-    else inH = inH.slice(0, -1);
-    renderEntry();
-  }
-
-  function check() {
-    if (checkBtn.disabled) return;
-    const gh = Number(inH), gm = Number(inM);
-    const { h, m } = horaMin();
-    const guessTotal = (gh % 12) * 60 + gm;
-    let diff = Math.abs(guessTotal - total);
-    diff = Math.min(diff, 720 - diff);
-
-    if (gh === h && gm === m) {
-      setFeedback("ok", "¡Acertado! 🎉", enPalabras(h, m));
-      if (!solved) {
-        solved = true; stars++;
-        starsEl.textContent = "⭐ " + stars;
-        starsEl.classList.remove("bump"); void starsEl.offsetWidth; starsEl.classList.add("bump");
-      }
-      return;
-    }
-    const hourOk = gh === h, minOk = gm === m;
-    // Casi: muy cerca en minutos, o solo se equivocó por una hora (típico cuando la roja va cerca del siguiente número)
-    const offByOneHour = minOk && (Math.abs(gh - h) === 1 || Math.abs(gh - h) === 11);
-    if (diff <= 5 || offByOneHour) {
-      setFeedback("almost", "¡Casi! 🤏", hourOk ? "Revisa la aguja azul" : minOk ? "Revisa la aguja roja" : "Estás muy cerca");
-    } else {
-      setFeedback("bad", "Uy, no es 🙈", hourOk ? "La hora está bien, revisa la aguja azul"
-        : minOk ? "Los minutos están bien, revisa la aguja roja" : "Mira bien las dos agujas");
-    }
-  }
-
-  $("pad").addEventListener("click", e => {
-    const b = e.target.closest("button");
-    if (!b) return;
-    if (b.dataset.n) typeDigit(b.dataset.n);
-  });
-  $("delBtn").addEventListener("click", backspace);
-  checkBtn.addEventListener("click", check);
-  slotH.addEventListener("click", () => { field = "h"; inH = ""; renderEntry(); });
-  slotM.addEventListener("click", () => { if (inH) { field = "m"; inM = ""; renderEntry(); } });
-
-  // Teclado físico también
-  document.addEventListener("keydown", e => {
-    if (/^[0-9]$/.test(e.key)) typeDigit(e.key);
-    else if (e.key === "Backspace") backspace();
-    else if (e.key === "Enter") check();
-  });
-
-  // ---------- Botones ----------
-  $("showBtn").addEventListener("click", () => {
-    revealed = true; renderClock();
-    answer.classList.remove("pop"); void answer.offsetWidth; answer.classList.add("pop");
-  });
-  $("randomBtn").addEventListener("click", () => {
-    setTotal(Math.floor(Math.random() * 144) * 5);
-    newTime(); renderClock();
-  });
-  $("nowBtn").addEventListener("click", () => {
-    const d = new Date();
-    setTotal((d.getHours() % 12) * 60 + d.getMinutes());
-    newTime(); renderClock();
-  });
-
+// Cuando cambia la hora del reloj: se oculta todo y empieza de nuevo
+function newTime() {
+  revealed = false;
+  solved = false;
+  inH = ""; inM = ""; field = "h";
+  setFeedback("", "");
   renderEntry();
+}
+
+function setTotal(v) { total = ((Math.round(v) % 720) + 720) % 720; }
+// Al poner la hora en la escalera, las agujas van de a 5 minutos (o de a 1 en el minuto exacto)
+const ajustar = v => auto && reto?.paso ? Math.round(v / reto.paso) * reto.paso : v;
+function movio() {
+  if (auto) { if (feedback.classList.contains("bad")) setFeedback("", ""); }
+  else newTime();
+}
+
+// ---------- Arrastre ----------
+function angleFromEvent(e) {
+  const pt = svg.createSVGPoint();
+  pt.x = e.clientX; pt.y = e.clientY;
+  const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+  return (Math.atan2(p.x - C, -(p.y - C)) * 180 / Math.PI + 360) % 360;
+}
+let dragging = null, acc = 0;
+function startDrag(which, e) {
+  e.preventDefault();
+  if (!puedeMover()) return;
+  dragging = which; acc = total;
+  svg.setPointerCapture(e.pointerId);
+}
+hourHand.addEventListener("pointerdown", e => startDrag("hour", e));
+minuteHand.addEventListener("pointerdown", e => startDrag("minute", e));
+svg.addEventListener("pointermove", e => {
+  if (!dragging) return;
+  const ang = angleFromEvent(e);
+  if (dragging === "minute") {
+    let d = ang / 6 - (((acc % 60) + 60) % 60);
+    if (d > 30) d -= 60; if (d < -30) d += 60;
+    acc += d;
+  } else {
+    let d = ang * 2 - (((acc % 720) + 720) % 720);
+    if (d > 360) d -= 720; if (d < -360) d += 720;
+    acc += d;
+  }
+  const before = total;
+  setTotal(ajustar(acc));
+  if (total !== before) movio();
   renderClock();
-})();
+});
+const endDrag = e => { if (!dragging) return; dragging = null; try { svg.releasePointerCapture(e.pointerId); } catch (_) {} };
+svg.addEventListener("pointerup", endDrag);
+svg.addEventListener("pointercancel", endDrag);
+
+const keyMove = step => e => {
+  let d = 0;
+  if (e.key === "ArrowUp" || e.key === "ArrowRight") d = step();
+  if (e.key === "ArrowDown" || e.key === "ArrowLeft") d = -step();
+  if (!d || !puedeMover()) return;
+  e.preventDefault(); e.stopPropagation();
+  setTotal(ajustar(total + d)); movio(); renderClock();
+};
+minuteHand.addEventListener("keydown", keyMove(() => auto && reto?.paso ? reto.paso : 1));
+hourHand.addEventListener("keydown", keyMove(() => 60));
+
+// ---------- Teclado numérico ----------
+function typeDigit(d) {
+  if (!escribe()) return;
+  if (feedback.classList.contains("bad") || feedback.classList.contains("almost")) setFeedback("", "");
+  if (field === "h") {
+    if (inH.length === 0) {
+      if (d === "0") return;           // no hay hora 0
+      inH = d;
+      if (d !== "1") field = "m";      // 2..9 ya es una hora completa
+    } else if (inH === "1" && ["0", "1", "2"].includes(d)) {
+      inH += d; field = "m";           // 10, 11, 12
+    } else {
+      field = "m"; typeDigit(d); return;
+    }
+  } else {
+    if (inM.length >= 2) return;
+    if (inM.length === 0 && Number(d) > 5) return; // minutos 00..59
+    inM += d;
+  }
+  renderEntry();
+}
+function backspace() {
+  if (!escribe()) return;
+  setFeedback("", "");
+  if (field === "m" && inM) inM = inM.slice(0, -1);
+  else if (field === "m") { field = "h"; inH = inH.slice(0, -1); }
+  else inH = inH.slice(0, -1);
+  renderEntry();
+}
+
+function check() {
+  if (checkBtn.disabled || !escribe()) return;
+  // «1», «0», «0» es la 1:00 (no las 10:0_): con tres números, el primero es la hora
+  if (inH.length === 2 && inM.length === 1) { inM = inH[1] + inM; inH = inH[0]; renderEntry(); }
+  const gh = Number(inH), gm = Number(inM);
+  const { h, m } = horaMin();
+  const guessTotal = (gh % 12) * 60 + gm;
+  let diff = Math.abs(guessTotal - total);
+  diff = Math.min(diff, 720 - diff);
+
+  if (gh === h && gm === m) {
+    if (auto) return acierto();
+    setFeedback("ok", "¡Acertado! 🎉", enPalabras(h, m));
+    if (!solved) { solved = true; sumarEstrella(); }
+    return;
+  }
+  const hourOk = gh === h, minOk = gm === m;
+  // Casi: muy cerca en minutos, o solo se equivocó por una hora (típico cuando la roja va cerca del siguiente número)
+  const offByOneHour = minOk && (Math.abs(gh - h) === 1 || Math.abs(gh - h) === 11);
+  let sub;
+  if (diff <= 5 || offByOneHour) {
+    sub = hourOk ? "Revisá la aguja azul" : minOk ? "Revisá la aguja roja" : "Estás muy cerca";
+    setFeedback("almost", "¡Casi! 🤏", sub);
+  } else {
+    sub = hourOk ? "La hora está bien, revisá la aguja azul"
+      : minOk ? "Los minutos están bien, revisá la aguja roja" : "Mirá bien las dos agujas";
+    setFeedback("bad", "Uy, no es 🙈", sub);
+  }
+  if (auto) { inH = ""; inM = ""; field = "h"; renderEntry(); fallo(sub); }
+}
+
+function sumarEstrella() {
+  stars++;
+  try { localStorage.setItem("reloj-stars", stars); } catch (_) {}
+  starsEl.textContent = "⭐ " + stars;
+  starsEl.classList.remove("bump"); void starsEl.offsetWidth; starsEl.classList.add("bump");
+}
+
+// ---------- 🪜 Retos de la escalera ----------
+const vozReto = () => !reto ? "" : reto.tipo === "leer" ? "¿Qué hora marca el reloj? Escribí la hora y los minutos."
+  : reto.tipo === "poner" ? `Mové las agujas: poné el reloj ${aLaHora(reto.h, reto.m)}.`
+  : `${reto.momento.txt} ${aLaHora(reto.h, reto.m)}. ¿Es ${AMPM.am.voz}, de la mañana, o ${AMPM.pm.voz}, de la tarde o la noche?`;
+const opcionesDe = () => reto?.tipo === "ampm" ? 2 : 0;
+
+function pintarModo() {
+  const tipo = auto ? reto?.tipo : "libre";
+  esc.activa = auto;
+  $("libreBtns").hidden = auto; $("autoBtns").hidden = !auto;
+  $("entry").hidden = $("pad").hidden = !(tipo === "libre" || tipo === "leer");
+  $("acciones").hidden = tipo !== "poner";
+  $("ampmOps").hidden = tipo !== "ampm";
+  $("reto").hidden = !(tipo === "poner" || tipo === "ampm");
+  answer.hidden = auto && tipo !== "leer" && fase !== "listo";
+  $("clockWrap").classList.toggle("fija", !puedeMover());
+  $("hint").innerHTML = tipo === "leer" ? 'La aguja <span class="h">roja</span> marca la hora; la <span class="m">azul</span>, los minutos'
+    : tipo === "ampm" ? "☀️ a. m.: de la medianoche al mediodía · 🌙 p. m.: del mediodía a la medianoche"
+    : 'Mové la aguja <span class="h">roja</span> o la <span class="m">azul</span>';
+  $("titulo").textContent = tipo === "poner" ? "Poné el reloj:" : tipo === "ampm" ? "¿a. m. o p. m.?" : "¿Qué hora marca el reloj?";
+  if (tipo === "poner") $("reto").innerHTML = `<div class="meta"><span class="dh">${reto.h}</span>:<span class="dm">${dosCifras(reto.m)}</span></div><div class="words">${enPalabras(reto.h, reto.m)}</div>`;
+  if (tipo === "ampm") $("reto").innerHTML = `<div class="momento"><span class="e" aria-hidden="true">${reto.momento.e}</span> ${reto.momento.txt}</div><div class="meta"><span class="dh">${reto.h}</span>:<span class="dm">${dosCifras(reto.m)}</span></div>`;
+}
+
+function siguienteReto() {
+  turno++;
+  reto = retoEscalon(esc.nivel, anterior); anterior = reto;
+  fase = "jugando"; fallos = 0; ayudada = false;
+  revealed = false; solved = false; inH = ""; inM = ""; field = "h";
+  setFeedback("", "");
+  $("otraBtn").classList.remove("pulse");
+  setTotal(reto.tipo === "poner" ? reto.desde : totalDe(reto.h, reto.m));
+  $("ampmOps").querySelectorAll("button").forEach(b => { b.disabled = false; b.classList.remove("bien", "mal", "senal"); });
+  pintarModo(); renderEntry(); renderClock();
+  hablar(vozReto());
+  ayuda.empezar();
+}
+
+function fallo(sub) {
+  fallos++;
+  sonido("mal");
+  if (fallos >= 2) return noLeSalio();
+  hablar(sub + ".");
+}
+
+function acierto() {
+  fase = "listo";
+  ayuda.parar();
+  sumarEstrella(); sonido("ok");
+  const { h, m } = reto;
+  if (reto.tipo === "ampm") {
+    const x = AMPM[reto.momento.ampm];
+    setFeedback("ok", "¡Acertado! 🎉", `${reto.momento.txt} a las ${h}:${dosCifras(m)} ${x.corto}`);
+    hablar(`${elogio()} Es ${x.voz}.`);
+  } else {
+    setFeedback("ok", "¡Acertado! 🎉", enPalabras(h, m));
+    hablar(`${elogio()} ${enPalabras(h, m)}.`);
+  }
+  revealed = true; pintarModo(); renderClock();
+  $("otraBtn").classList.add("pulse");
+  esc.resultado({ fallos, ayuda: ayudada, opciones: opcionesDe() }); // después de la voz: «¡Subiste!» se dice en cola
+  despues(siguienteReto, 3000);
+}
+
+function noLeSalio() {
+  fase = "listo";
+  ayuda.parar();
+  const { h, m } = reto;
+  if (reto.tipo === "ampm") {
+    const x = AMPM[reto.momento.ampm];
+    $("ampmOps").querySelector(`[data-ampm="${reto.momento.ampm}"]`).classList.add("bien");
+    setFeedback("bad", `💡 Es ${x.corto}`, `${x.corto} va ${x.cuando}.`);
+    hablar(`Es ${x.voz}: va ${x.cuando}.`);
+  } else {
+    if (reto.tipo === "poner") setTotal(totalDe(h, m));   // las agujas se van solas a la hora
+    if (reto.tipo === "leer") { inH = String(h); inM = dosCifras(m); renderEntry(); }
+    setFeedback("bad", "💡 Así es:", enPalabras(h, m));
+    hablar(`Así es: ${enPalabras(h, m)}.`);
+  }
+  $("ampmOps").querySelectorAll("button").forEach(b => b.disabled = true);
+  revealed = true; pintarModo(); renderClock();
+  $("otraBtn").classList.add("pulse");
+  esc.resultado({ fallos: 2, ayuda: ayudada, opciones: opcionesDe() });
+  despues(siguienteReto, 4800);
+}
+
+// Poner la hora: ✔ ¡Listo!
+function listoPoner() {
+  if (!auto || reto?.tipo !== "poner" || fase !== "jugando") return;
+  if (total === totalDe(reto.h, reto.m)) return acierto();
+  const { h, m } = horaMin();
+  const sub = m === reto.m ? "Los minutos están bien: revisá la aguja roja, la corta"
+    : h === reto.h ? "La hora está bien: revisá la aguja azul, la larga" : "Revisá las dos agujas";
+  setFeedback("bad", "Uy, todavía no 🙈", sub);
+  fallo(sub);
+}
+
+// a. m. o p. m.: con dos opciones, equivocarse ya es ronda difícil y se explica enseguida
+$("ampmOps").addEventListener("click", e => {
+  const b = e.target.closest("[data-ampm]");
+  if (!b || b.disabled || !auto || reto?.tipo !== "ampm" || fase !== "jugando") return;
+  if (b.dataset.ampm === reto.momento.ampm) { b.classList.add("bien"); return acierto(); }
+  b.classList.add("mal"); sonido("mal");
+  fallos = 1;
+  noLeSalio();
+});
+
+// 🤝 Si se queda sin tocar: se repite el reto y después se le da una pista (cuenta como ayuda para la escalera)
+const ayuda = ayudaSiSeQueda({
+  repetir: () => hablar(vozReto()),
+  senalar: () => {
+    if (!auto || fase !== "jugando" || !reto) return;
+    ayudada = true;
+    const { h, m } = reto;
+    let pista;
+    if (reto.tipo === "leer") pista = m === 0 ? `La aguja roja, la corta, está en el ${h}: esa es la hora` : `La aguja roja, la corta, ya pasó del ${h}: esa es la hora`;
+    else if (reto.tipo === "poner") pista = m % 5 === 0 ? `La aguja azul, la larga, va en el ${m === 0 ? 12 : m / 5}` : `La aguja azul, la larga, va en el minuto ${m}: contá las rayitas`;
+    else { senalar($("ampmOps").querySelector(`[data-ampm="${reto.momento.ampm}"]`)); hablar("Te ayudo: ¡es esta!"); return; }
+    setFeedback("almost", "👀 Una pista", pista);
+    hablar(pista + ".");
+  },
+});
+
+$("pad").addEventListener("click", e => {
+  const b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.n) typeDigit(b.dataset.n);
+});
+$("delBtn").addEventListener("click", backspace);
+checkBtn.addEventListener("click", check);
+slotH.addEventListener("click", () => { if (!escribe()) return; field = "h"; inH = ""; renderEntry(); });
+slotM.addEventListener("click", () => { if (!escribe()) return; if (inH) { field = "m"; inM = ""; renderEntry(); } });
+$("listoBtn").addEventListener("click", listoPoner);
+
+// Teclado físico también
+document.addEventListener("keydown", e => {
+  if (e.target.closest?.("button, .hand") && (e.key === "Enter" || e.key === " ")) return; // Enter sobre un botón ya lo activa
+  if (/^[0-9]$/.test(e.key)) typeDigit(e.key);
+  else if (e.key === "Backspace") backspace();
+  else if (e.key === "Enter") { if (auto && reto?.tipo === "poner") listoPoner(); else check(); }
+});
+
+// ---------- Botones ----------
+$("showBtn").addEventListener("click", () => {
+  revealed = true; renderClock();
+  answer.classList.remove("pop"); void answer.offsetWidth; answer.classList.add("pop");
+});
+$("randomBtn").addEventListener("click", () => {
+  setTotal(Math.floor(Math.random() * 144) * 5);
+  newTime(); renderClock();
+});
+$("nowBtn").addEventListener("click", () => {
+  const d = new Date();
+  setTotal((d.getHours() % 12) * 60 + d.getMinutes());
+  newTime(); renderClock();
+});
+// Pasar a otra después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar)
+const saltar = () => { if (auto && fase === "jugando" && fallos > 0) esc.resultado({ fallos: 2, opciones: opcionesDe() }); };
+$("otraBtn").addEventListener("click", () => { saltar(); siguienteReto(); });
+$("oir").addEventListener("click", () => hablar(auto ? vozReto() : "Mové las agujas y adiviná la hora."));
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  saltar();
+  auto = b.dataset.modo === "auto";
+  $("modos").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  if (auto) siguienteReto();
+  else { turno++; ayuda.parar(); reto = null; fase = "jugando"; pintarModo(); newTime(); renderClock(); }
+});
+
+starsEl.textContent = "⭐ " + stars;
+siguienteReto();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__reloj = { get reto() { return reto; }, get total() { return total; }, get fase() { return fase; }, get fallos() { return fallos; }, get nivel() { return esc.nivel; }, get auto() { return auto; }, get ayudada() { return ayudada; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

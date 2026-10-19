@@ -559,7 +559,7 @@ export const JUEGOS = [
   {
     id: "cuentos",
     titulo: "Cuentos ticos: leo y entiendo",
-    descripcion: "Leé o escuchá cuentos, avisos, noticias y poemas ticos, y contestá: ¿quién?, ¿por qué?, ¿qué quiere decir? Si te equivocás, te muestra dónde volver a leer.",
+    descripcion: "82 textos ticos para leer o escuchar: cuentos, fábulas, recetas, noticias, textos informativos, cartas, poemas y adivinanzas. Si te equivocás, te muestra dónde volver a leer.",
     emoji: "📖",
     materia: "espanol",
     grados: [1, 2, 3, 4, 5, 6],

@@ -27,7 +27,7 @@
   .lectura .clase { display: inline-block; margin-top: 2px; font-size: .78rem; font-weight: 800; background: #FBE3E0; color: #9B2B20; border-radius: 999px; padding: 0 8px; }
   #texto p { margin: 8px 0; padding: 2px 6px; border-radius: 10px; font-size: clamp(1.08rem, 4.6vw, 1.22rem); line-height: 1.55; font-weight: 600; transition: background .2s; }
   #texto p.verso { font-style: italic; }
-  #texto.aviso p, #texto.receta p { font-weight: 700; }
+  #texto.aviso p, #texto.receta p, #texto.instrucciones p { font-weight: 700; }
   #texto p.leyendo { background: #FFF1C2; }
   #texto p.mirar { background: #FFF8DD; outline: 3px dashed var(--btn); }
   #texto mark { background: #FFE08A; color: inherit; border-radius: 4px; padding: 0 2px; }
@@ -110,11 +110,10 @@ import { hablar, callar, elogio, sonido, LENTO } from "../js/voz.js";
 import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
 import { escalera } from "../js/escalera.js";
 import { perfilActivo } from "../js/perfil.js";
-import { ESCALONES, BANDAS, TIPOS, inicioPorEdad, siguienteTexto, prepararPreguntas, explicacion, parrafoDe } from "../js/cuentos.js";
+import { ESCALONES, BANDAS, TIPOS, CLASES, inicioPorEdad, siguienteTexto, prepararPreguntas, explicacion, parrafoDe } from "../js/cuentos.js";
 
 const $ = id => document.getElementById(id);
 const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
-const CLASES = { cuento: "Cuento", informativo: "Texto informativo", receta: "Receta", aviso: "Aviso", noticia: "Noticia", carta: "Carta", poema: "Poema" };
 
 // 🪜 Cada texto es una ronda: si contestó todo al primer intento, gana una hojita (con 2 sube de escalón).
 const esc = escalera("cuentos", { escalones: ESCALONES.length, meta: 2, inicio: inicioPorEdad });
@@ -142,7 +141,7 @@ function pintarTexto(marcar = null) {
   $("texto").innerHTML = texto.parrafos.map((p, i) => {
     let h = escapar(p);
     if (marcar && marcar.p === i && marcar.cita) h = h.replace(escapar(marcar.cita), m => `<mark>${m}</mark>`);
-    return `<p data-p="${i}" class="${texto.tipo === "poema" ? "verso" : ""}${marcar && marcar.p === i ? " mirar" : ""}">${h.replace(/\n/g, "<br>")}</p>`;
+    return `<p data-p="${i}" class="${CLASES[texto.tipo].verso ? "verso" : ""}${marcar && marcar.p === i ? " mirar" : ""}">${h.replace(/\n/g, "<br>")}</p>`;
   }).join("");
 }
 
@@ -180,13 +179,13 @@ function nuevo() {
   k = 0; conError = 0; marcas = []; fase = "leer";
   $("emoji").textContent = texto.emoji;
   $("titulo").textContent = texto.titulo;
-  $("clase").textContent = `${CLASES[texto.tipo]} · ${ESCALONES[texto.escalon].grados}`;
+  $("clase").textContent = `${CLASES[texto.tipo].nombre} · ${ESCALONES[texto.escalon].grados}`;
   pintarTexto();
   $("leidoBtn").hidden = false; $("preguntaBox").hidden = true; $("explica").hidden = true; $("final").hidden = true; $("nextBtn").hidden = true;
   feedback("");
   ayuda.parar();
   $("lectura").scrollIntoView({ block: "start", behavior: "smooth" });
-  const que = texto.tipo === "cuento" ? "el cuento" : texto.tipo === "poema" ? "el poema" : "el texto";
+  const que = CLASES[texto.tipo].que;
   instruccion(`📖 Leé ${que}`, `${texto.titulo}. Leé ${que} con calma. Si querés, tocá «Escuchar el texto». Cuando terminés, tocá «Ya lo leí».`);
 }
 

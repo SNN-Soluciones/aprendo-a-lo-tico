@@ -366,7 +366,7 @@ function estimar(lista, rnd) {
     html: `<span class="big">${e}</span> ${q}`,
     opciones: opcionesDe(nbsp(bien), malas.map(nbsp), rnd), correcta: "ok",
     pista: "Pensá en el tamaño de verdad. Una de las tres es posible; las otras son demasiado grandes o demasiado pequeñas.",
-    explica: `Más o menos <b>${nbsp(bien)}</b>. ${malas.map(nbsp).join(" o ")} no tiene sentido: para esto se usan los ${U[u].p}.`,
+    explica: `Más o menos <b>${nbsp(bien)}</b>. ${malas.map(nbsp).join(" o ")} no tienen sentido: para esto se usan los ${U[u].p}.`,
   };
 }
 

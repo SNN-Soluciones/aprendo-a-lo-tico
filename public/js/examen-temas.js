@@ -25,6 +25,10 @@ import { TEXTOS, prepararPreguntas, explicacion as explicacionCuento } from "./c
 import { PARTES, SISTEMAS, ORGANICOS, RECORRIDOS, sentidoUso, habitoSiNo, habitoCual, concepto } from "./cuerpo.js";
 import { pregunta as preguntaCadena } from "./cadenas.js";
 import { HECHOS, MODOS as MODOS_HISTORIA, preguntaDeModo } from "./historia.js";
+// Lote 4: juegos que traen su propia pregunta de examen
+import { preguntaExamen as preguntaPlata } from "./plata.js";
+import { preguntaExamen as preguntaMedidas } from "./medidas.js";
+import { preguntaExamen as preguntaComunidad } from "./comunidad.js";
 
 // ---------- Ayudas ----------
 const ent = (a, b, r) => a + Math.floor(r() * (b - a + 1));
@@ -683,6 +687,8 @@ const MATE = [
   { id: "decimales", nombre: "Decimales", emoji: "🔟", grados: [4, 5, 6], pregunta: decimales },
   { id: "porcentajes", nombre: "Porcentajes", emoji: "💯", grados: [5, 6], pregunta: porcentajes },
   { id: "graficos", nombre: "Gráficos y probabilidad", emoji: "📊", grados: [2, 3, 4, 5, 6], pregunta: graficosTema },
+  { id: "alcancia", nombre: "Monedas y billetes", emoji: "🐷", grados: [1, 2, 3, 4], pregunta: (r, g) => preguntaPlata(r, g) },
+  { id: "medidas", nombre: "Medidas", emoji: "📏", grados: [2, 3, 4, 5, 6], pregunta: (r, g) => preguntaMedidas(r, g) },
 ];
 
 // ================= ESPAÑOL =================
@@ -797,6 +803,7 @@ const SOCIALES = [
   { id: "historia", nombre: "Historia de Costa Rica", emoji: "🏛️", grados: [2, 3, 4, 5, 6], pregunta: historiaTema },
   { id: "gobierno", nombre: "Gobierno y ciudadanía", emoji: "⚖️", grados: [5, 6], pregunta: gobiernoTema },
   { id: "direcciones", nombre: "Puntos cardinales y direcciones", emoji: "🧭", grados: [1, 2, 3, 4, 5, 6], pregunta: direcciones },
+  { id: "comunidad", nombre: "Mi comunidad", emoji: "🏘️", grados: [1, 2], pregunta: (r, g) => preguntaComunidad(r, g) },
 ];
 
 // ================= INGLÉS =================

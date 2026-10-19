@@ -588,4 +588,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/numeros.html",
   },
+  {
+    id: "silabas",
+    titulo: "Sílabas mágicas",
+    descripcion: "Escuchá y tocá vocales y sílabas, armá la sílaba y la palabra, y empezá a leer palabras y oraciones. Método silábico, de a poquito.",
+    emoji: "🔤",
+    materia: "espanol",
+    grados: [0, 1],
+    edad: [5, 7],
+    leer: "no",
+    escalera: true,
+    url: "juegos/silabas.html",
+  },
 ];

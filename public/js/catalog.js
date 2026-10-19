@@ -456,4 +456,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/fracciones.html",
   },
+  {
+    id: "historia",
+    titulo: "La historia de Costa Rica",
+    descripcion: "Ordená la línea del tiempo: pueblos originarios, la Independencia, la Campaña Nacional, la abolición del ejército… y el gobierno.",
+    emoji: "🏛️",
+    materia: "sociales",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/historia.html",
+  },
 ];

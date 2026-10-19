@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¿Cómo se siente?</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; }
+  [hidden] { display: none !important; }
+  .instr .txt b { color: var(--materia); }
+
+  /* Lo que pasa (situación, cuerpo) o la cara que hay que mirar */
+  .escena {
+    margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px;
+    padding: 10px 12px; display: flex; gap: 12px; align-items: center; min-height: 84px;
+  }
+  .escena .grande { font-size: clamp(2.6rem, 13vw, 3.4rem); line-height: 1; flex: none; }
+  .escena .txt { font-size: clamp(1.02rem, 4.4vw, 1.2rem); font-weight: 700; line-height: 1.3; }
+  .escena .txt b { display: block; margin-top: 4px; color: var(--materia); }
+  .escena.sola { justify-content: center; }
+  .escena .cara-grande { width: min(46vw, 170px); }
+  .escena .cara-grande svg { width: 100%; display: block; }
+
+  /* Opciones: caras, acciones o nombres */
+  .opciones { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 10px; margin-top: 12px; }
+  .opciones.lista { grid-template-columns: 1fr; }
+  .opciones button { border-radius: 22px; }
+  .opciones button.cara { padding: 6px 4px 4px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .opciones button.cara svg { width: 92%; max-width: 140px; display: block; }
+  .opciones button .nom { font-size: .92rem; font-weight: 800; min-height: 1.2rem; visibility: hidden; }
+  .opciones.revelar .nom, .opciones button.wrong .nom { visibility: visible; }
+  .opciones button.accion { display: flex; align-items: center; gap: 10px; text-align: left; padding: 8px 12px; font-size: clamp(1rem, 4.4vw, 1.12rem); line-height: 1.2; }
+  .opciones button.accion .e { font-size: 2.2rem; line-height: 1; flex: none; }
+  .opciones button.nombre { font-size: 1.25rem; padding: 10px 6px; display: flex; flex-direction: column; align-items: center; }
+  .opciones button.nombre .e { font-size: 2.2rem; line-height: 1.1; }
+  .opciones button.dicho { outline: 4px solid var(--btn); outline-offset: 2px; }
+
+  #calmaBtn { background: #B3E5FC; }
+
+  /* 🫧 Rincón de calma */
+  .calma {
+    position: fixed; inset: 0; z-index: 70; background: rgba(207, 239, 227, .97);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 20px; text-align: center;
+  }
+  .calma h2 { margin: 0; font-size: clamp(1.6rem, 7vw, 2.1rem); color: #1F3A5F; }
+  .burbuja {
+    width: 130px; height: 130px; border-radius: 50%; border: 4px solid #1F3A5F;
+    background: radial-gradient(circle at 35% 35%, #FFFFFF, #81D4FA 60%, #29B6F6);
+    transition: transform 4s ease-in-out; margin: 40px 0;
+  }
+  .burbuja.grande { transform: scale(1.75); }
+  .calma .paso { font-size: 1.8rem; font-weight: 800; color: #1F3A5F; min-height: 2.2rem; }
+  .calma .cuenta { font-size: 2.6rem; font-weight: 800; color: #1F3A5F; min-height: 3rem; }
+  .calma button { background: var(--btn); font-size: 1.3rem; padding: 6px 22px; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">😄😢😠</div>
+  <h1>¿Cómo se siente?</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Mirá las caras, escuchá lo que pasa y descubrí cómo se sienten. Todas las emociones están bien: lo importante es qué hacemos con ellas.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="caras" aria-label="Caras">🙂</button>
+    <button data-nivel="situaciones" aria-label="¿Cómo se siente?">📖</button>
+    <button data-nivel="cuerpo" aria-label="Lo que siente el cuerpo">💓</button>
+    <button data-nivel="hacer" aria-label="¿Qué podemos hacer?">🤝</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap escena" id="escena" hidden></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom">
+  <button id="calmaBtn" aria-label="Rincón de calma: respirar despacio">🫧</button>
+  <button id="nextBtn" aria-label="Otro">➡️</button>
+</div>
+
+<div class="calma" id="calma" role="dialog" aria-modal="true" aria-label="Rincón de calma" hidden>
+  <h2>🫧 Rincón de calma</h2>
+  <div class="burbuja" id="burbuja" aria-hidden="true"></div>
+  <div class="paso" id="calmaPaso" aria-live="polite"></div>
+  <div class="cuenta" id="calmaCuenta" aria-hidden="true"></div>
+  <button id="calmaCerrar">Listo ✔️</button>
+</div>
+
+<script type="module">
+import { hablar, elogio, sonido, callar, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { EMO, ESCALONES, MODOS, inicio, ronda, porQueNo, cara } from "../js/emociones.js";
+
+const $ = id => document.getElementById(id);
+
+// 🪜 De a poquito: de las caras de alegría y tristeza hasta la mejor reacción (ver ESCALONES en js/emociones.js)
+const esc = escalera("emociones", { escalones: ESCALONES.length, inicio });
+const stars = estrellas("emociones-stars");
+
+let manual = "caras", r = null, fallos = 0, listo = false, turno = 0, clave = "";
+const botonDe = id => $("opciones").querySelector(`[data-id="${id}"]`);
+// Si se queda pegado: se repite lo que pasa (y las opciones), y después se le señala la respuesta
+const ayuda = ayudaSiSeQueda({ repetir: () => presentar(false), senalar: () => senalar(botonDe(r.meta)) });
+
+const ACCIONES = ["accion", "empatia", "reaccion"];
+const textoDe = id => { const o = r.opciones.find(x => x.id === id); return o.tipo === "accion" ? o.t : EMO[o.emo].n; };
+
+function instrHtml() {
+  if (r.tipo === "cara") return `<span class="big" aria-hidden="true">🔍</span> Tocá la cara de <b>${EMO[r.meta].n}</b>`;
+  if (r.tipo === "parecidas") return `<span class="big" aria-hidden="true">🤔</span> ¿<b>${EMO[r.preguntaNombres[0]].n}</b> o <b>${EMO[r.preguntaNombres[1]].n}</b>?`;
+  if (r.tipo === "cuerpo") return `<span class="big" aria-hidden="true">💓</span> ¿Qué estás sintiendo?`;
+  if (r.tipo === "situacion") return `<span class="big" aria-hidden="true">💭</span> ¿Cómo se siente ${r.persona.n}?`;
+  return `<span class="big" aria-hidden="true">🤝</span> ${r.tipo === "empatia" ? "¿Cómo le ayudás?" : r.tipo === "reaccion" ? "¿Qué es lo mejor?" : "¿Qué le ayuda?"}`;
+}
+
+function pintar() {
+  const esc2 = $("escena");
+  if (r.tipo === "cara") { esc2.hidden = true; esc2.innerHTML = ""; }
+  else if (r.tipo === "parecidas") {
+    esc2.hidden = false; esc2.className = "wrap escena sola";
+    esc2.innerHTML = `<div class="cara-grande" role="img" aria-label="Una cara con ${EMO[r.meta].rasgos}">${cara(r.meta)}</div>`;
+  } else {
+    esc2.hidden = false; esc2.className = "wrap escena";
+    esc2.innerHTML = `<span class="grande" aria-hidden="true">${r.escena}</span><span class="txt">${r.html}</span>`;
+  }
+  const ops = $("opciones");
+  ops.className = "wrap opciones" + (ACCIONES.includes(r.tipo) ? " lista" : "");
+  ops.style.setProperty("--n", r.opciones.length === 4 ? 2 : r.opciones.length);
+  ops.innerHTML = r.opciones.map(o => {
+    if (o.tipo === "cara") return `<button class="cara" data-id="${o.id}" aria-label="Una cara con ${EMO[o.emo].rasgos}">${cara(o.emo)}<span class="nom">${EMO[o.emo].n}</span></button>`;
+    if (o.tipo === "accion") return `<button class="accion" data-id="${o.id}"><span class="e" aria-hidden="true">${o.e}</span><span>${o.t}</span></button>`;
+    return `<button class="nombre" data-id="${o.id}"><span class="e" aria-hidden="true">${EMO[o.emo].e}</span>${EMO[o.emo].n}</button>`;
+  }).join("");
+}
+
+function nuevo() {
+  const i = esc.activa ? esc.nivel : azar(MODOS[manual]);
+  r = ronda(i, Math.random, clave);
+  clave = r.clave;
+  fallos = 0; listo = false;
+  pintar();
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  presentar(false);
+  ayuda.empezar();
+}
+
+// Dice lo que pasa y, si las opciones son acciones o nombres, las lee una por una (para los que no leen)
+async function presentar(lento = false) {
+  const t = ++turno, actual = r;
+  const op = lento ? { rate: LENTO } : undefined;
+  await instruccion(instrHtml(), r.voz, lento);
+  if (t !== turno || r !== actual || r.opciones[0].tipo === "cara") return;
+  const btns = [...$("opciones").querySelectorAll("button")];
+  for (const b of btns) {
+    if (t !== turno || r !== actual) break;
+    if (b.disabled) continue;
+    b.classList.add("dicho");
+    await hablar(textoDe(b.dataset.id), op);
+    b.classList.remove("dicho");
+  }
+  btns.forEach(b => b.classList.remove("dicho"));
+}
+
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled) return;
+  turno++;
+  $("opciones").querySelectorAll(".dicho").forEach(x => x.classList.remove("dicho"));
+  const id = b.dataset.id;
+  if (id === r.meta) {
+    listo = true;
+    ayuda.parar();
+    b.classList.remove("senal");
+    b.classList.add("right");
+    $("opciones").classList.add("revelar");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${r.explica}`); }
+    else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${r.explica}`); }
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones: r.opciones.length });
+    $("nextBtn").classList.add("pulse");
+  } else {
+    fallos++;
+    b.classList.add("wrong", "nope"); b.disabled = true;
+    const casi = r.tipo === "parecidas" && id === r.parecida;
+    if (casi) feedback("almost", "🤏", "¡Casi!");
+    else if (ACCIONES.includes(r.tipo)) feedback("bad", "🤔", "Eso no ayuda tanto");
+    else feedback("bad", "🤔", "No es");
+    decir(porQueNo(r, id));
+    // Al segundo error se le señala la respuesta
+    if (fallos >= 2) senalar(botonDe(r.meta));
+  }
+});
+
+$("nextBtn").addEventListener("click", () => {
+  // Saltarse una ronda después de equivocarse cuenta como ronda difícil
+  if (r && !listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap");
+  nuevo();
+});
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = v;
+  clave = ""; nuevo();
+});
+
+// ---------- 🫧 Rincón de calma: inhalá 4, exhalá 4, tres veces ----------
+let calmaTurno = 0;
+const esperar = ms => new Promise(res => setTimeout(res, ms));
+async function contar(t) {
+  for (let k = 1; k <= 4; k++) {
+    if (t !== calmaTurno) return false;
+    $("calmaCuenta").textContent = k;
+    await esperar(1000);
+  }
+  return t === calmaTurno;
+}
+async function respirar() {
+  const t = ++calmaTurno;
+  ayuda.parar();
+  turno++; // deja de leer las opciones
+  $("calma").hidden = false;
+  $("calmaCerrar").focus();
+  const burbuja = $("burbuja");
+  await hablar("Vamos a respirar despacio, como una burbuja.");
+  for (let ciclo = 0; ciclo < 3; ciclo++) {
+    if (t !== calmaTurno) return;
+    $("calmaPaso").textContent = "Inhalá…"; burbuja.classList.add("grande"); hablar("Inhalá");
+    if (!(await contar(t))) return;
+    $("calmaPaso").textContent = "Exhalá…"; burbuja.classList.remove("grande"); hablar("Soltá el aire");
+    if (!(await contar(t))) return;
+  }
+  $("calmaPaso").textContent = "¡Muy bien!"; $("calmaCuenta").textContent = "😌";
+  hablar("¡Muy bien! Tu cuerpo está más tranquilo.");
+}
+function cerrarCalma() {
+  if ($("calma").hidden) return;
+  calmaTurno++;
+  callar();
+  $("calma").hidden = true;
+  $("burbuja").classList.remove("grande");
+  $("calmaPaso").textContent = ""; $("calmaCuenta").textContent = "";
+  $("calmaBtn").focus();
+  if (r && !listo) ayuda.empezar();
+}
+$("calmaBtn").addEventListener("click", () => { sonido("tap"); respirar(); });
+$("calmaCerrar").addEventListener("click", () => { sonido("tap"); cerrarCalma(); });
+addEventListener("keydown", e => { if (e.key === "Escape") cerrarCalma(); });
+
+alEmpezar(nuevo, presentar);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__emociones = { get r() { return r; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

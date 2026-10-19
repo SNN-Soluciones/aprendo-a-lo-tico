@@ -141,11 +141,11 @@ export const JUEGOS = [
   {
     id: "trazos",
     titulo: "Trazá letras y números",
-    descripcion: "Pasá el dedo por la letra punteada: vocales, números y letras.",
+    descripcion: "Letras, mayúsculas, números y palabras con el orden de cada trazo; también tu propio nombre.",
     emoji: "✍️",
     materia: "espanol",
     grados: [0, 1],
-    edad: [4, 7],
+    edad: [4, 8],
     leer: "no",
     escalera: true,
     url: "juegos/trazos.html",

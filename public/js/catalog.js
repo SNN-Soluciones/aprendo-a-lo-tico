@@ -576,4 +576,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/repartir.html",
   },
+  {
+    id: "numeros",
+    titulo: "Números del 1 al 100",
+    descripcion: "Antes y después, mayor y menor, pares e impares, de 2 en 2, decenas con barras y cubitos, la tabla del 100 y redondear.",
+    emoji: "💯",
+    materia: "mate",
+    grados: [1, 2],
+    edad: [6, 8],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/numeros.html",
+  },
 ];

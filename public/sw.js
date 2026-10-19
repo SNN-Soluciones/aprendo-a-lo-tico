@@ -1,12 +1,13 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v24";
+const VERSION = "v25";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",
   "css/base.css", "css/prepa.css", "js/home.js", "js/catalog.js", "js/config.js", "js/voz.js", "js/prepa.js",
   "js/perfil.js", "js/escalera.js", "juegos/buscar.html", "juegos/patrones.html", "js/patrones.js", "juegos/parejas.html",
   "juegos/tamanos.html", "juegos/sonidos.html", "juegos/clasificar.html",
+  "juegos/numeros.html", "js/numeros.js",
   "juegos/repartir.html", "js/repartir.js",
   "juegos/cuentos.html", "js/cuentos.js",
   "juegos/palabras.html", "js/palabras.js",

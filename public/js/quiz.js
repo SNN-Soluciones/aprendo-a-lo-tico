@@ -24,8 +24,20 @@ export function barajar(arr, rnd = Math.random) {
 }
 export const estrellasDe = (bien, total) => { const p = bien / total; return p >= 0.9 ? 3 : p >= 0.7 ? 2 : p >= 0.5 ? 1 : 0; };
 
-/** Para comparar respuestas escritas: sin mayúsculas, tildes de más, espacios ni puntos de miles; la coma decimal vale como punto. */
-export const normalizar = t => String(t).trim().toLowerCase().replace(/\s+/g, "").replace(/(\d)\.(?=\d{3}\b)/g, "$1").replace(",", ".");
+/** Para comparar respuestas escritas: sin mayúsculas ni espacios (los miles van con espacio), y la coma decimal vale como punto. */
+export const normalizar = t => String(t).trim().toLowerCase().replace(/\s+/g, "").replace(/,/g, ".");
+/**
+ * ¿La respuesta escrita vale? Con `numero`, se comparan como números (0,750 = 0.75 = ,75),
+ * y también se acepta el punto de miles cuando se escribió así (1.500 por 1500).
+ */
+export function igual(respuesta, dado, numero = false) {
+  const a = normalizar(respuesta), b = normalizar(dado);
+  if (a === b) return true;
+  if (!numero || !b || !isFinite(Number(a))) return false;
+  const leidos = [Number(b)];
+  if (/^\d{1,3}(\.\d{3})+$/.test(b)) leidos.push(Number(b.replace(/\./g, "")));
+  return leidos.some(x => x === Number(a));
+}
 const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 /**
@@ -124,7 +136,7 @@ export function montarQuiz({ clave, modos, textos = {}, leerOpcion, escalera: co
     const p = q(), campo = $("respuesta");
     if (listo || !p.escribir || !campo.value.trim()) return;
     const w = p.escribir, dado = campo.value;
-    const ok = w.revisar ? w.revisar(dado) : [].concat(w.respuesta).some(r => normalizar(r) === normalizar(dado));
+    const ok = w.revisar ? w.revisar(dado) : [].concat(w.respuesta).some(r => igual(r, dado, w.numero));
     campo.disabled = true; campo.closest("form").querySelector("button").disabled = true;
     campo.classList.add(ok ? "right" : "wrong");
     if (!ok) campo.insertAdjacentHTML("afterend", `<span class="era">✔️ ${escapar([].concat(w.respuesta)[0])}${w.sufijo ? " " + w.sufijo : ""}</span>`);

@@ -77,7 +77,8 @@ import { escalera } from "../js/escalera.js";
 import { ESCALONES, MODOS, inicioPorEdad, preguntaDeModo, hecho } from "../js/historia.js";
 
 const $ = id => document.getElementById(id);
-const sinHtml = t => t.replace(/<[^>]+>/g, "");
+// Texto sin etiquetas (para la voz): lo saca el navegador, que también entiende &nbsp; y compañía
+const sinHtml = t => new DOMParser().parseFromString(t, "text/html").body.textContent;
 
 // 🪜 De a poquito por defecto; los otros modos son para el papá o la maestra (no mueven la escalera)
 const esc = escalera("historia", { escalones: ESCALONES.length, inicio: inicioPorEdad });

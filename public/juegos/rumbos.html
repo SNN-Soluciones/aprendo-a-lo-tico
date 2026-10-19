@@ -80,6 +80,9 @@
   .globo .zona.wrong { fill: rgba(217, 68, 58, .35); }
   .globo .linea.right .ver { stroke: var(--ok); stroke-width: 6; }
   .globo .linea.wrong .ver { stroke: var(--bad); stroke-width: 5; }
+  .globo [data-t]:focus { outline: none; }
+  .globo .linea:focus-visible .ver { stroke: #FFB300; stroke-width: 6; }
+  .globo .zona:focus-visible { fill: rgba(255, 179, 0, .35); }
   .globo text, .malla text { font-family: inherit; font-weight: 800; fill: #1F3A5F; pointer-events: none; }
   .globo .cr { fill: #E53935; stroke: #fff; stroke-width: 2; }
   .malla { width: min(92vw, 380px); display: block; }
@@ -205,14 +208,21 @@ function dibujarCamino() {
   t.innerHTML = `<polyline points="${p}" pathLength="1"/><circle cx="${pts[0][0] + 0.5}" cy="${pts[0][1] + 0.5}" r=".13"/>`;
 }
 
-function globoSVG({ zonas, etiquetas, cr }) {
+// Nombres de lo que se puede tocar en el globo (para el teclado y el lector de pantalla)
+const NOMBRE_GLOBO = { ecuador: "El ecuador", greenwich: "El meridiano de Greenwich", paralelo: "Un paralelo", meridiano: "Un meridiano",
+  hn: "Hemisferio norte", hs: "Hemisferio sur", he: "Hemisferio oriental (este)", ho: "Hemisferio occidental (oeste)" };
+const tocable = t => `role="button" tabindex="0" aria-label="${NOMBRE_GLOBO[t]}"`;
+
+/** tocar: el niño contesta tocando el globo (las líneas, o las mitades si hay `zonas`). */
+function globoSVG({ zonas, etiquetas, cr }, tocar = false) {
   const C = 130, R = 100, rad = g => g * Math.PI / 180;
-  const linea = (t, d, extra = "") => `<g class="linea ${t} ${extra}${zonas ? " sin-toque" : ""}" data-t="${t}"><path class="ver" d="${d}"/><path class="hit" d="${d}"/></g>`;
+  const linea = (t, d, extra = "") => `<g class="linea ${t} ${extra}${zonas ? " sin-toque" : ""}" data-t="${t}"${tocar && !zonas ? ` ${tocable(t)}` : ""}><path class="ver" d="${d}"/><path class="hit" d="${d}"/></g>`;
+  const zona = (t, d) => `<path class="zona" data-t="${t}"${tocar ? ` ${tocable(t)}` : ""} d="${d}"/>`;
   const par = [-60, -30, 30, 60].map(f => { const y = C - R * Math.sin(rad(f)), w = R * Math.cos(rad(f)); return linea("paralelo", `M${C - w},${y} H${C + w}`); }).join("");
   const mer = [-60, -30, 30, 60].map(l => linea("meridiano", `M${C},${C - R} A${R * Math.abs(Math.sin(rad(l)))},${R} 0 0 ${l > 0 ? 1 : 0} ${C},${C + R}`)).join("");
   const zon = zonas === "ns"
-    ? `<path class="zona" data-t="hn" d="M${C - R},${C} A${R},${R} 0 0 1 ${C + R},${C} Z"/><path class="zona" data-t="hs" d="M${C - R},${C} A${R},${R} 0 0 0 ${C + R},${C} Z"/>`
-    : zonas === "eo" ? `<path class="zona" data-t="ho" d="M${C},${C - R} A${R},${R} 0 0 0 ${C},${C + R} Z"/><path class="zona" data-t="he" d="M${C},${C - R} A${R},${R} 0 0 1 ${C},${C + R} Z"/>` : "";
+    ? zona("hn", `M${C - R},${C} A${R},${R} 0 0 1 ${C + R},${C} Z`) + zona("hs", `M${C - R},${C} A${R},${R} 0 0 0 ${C + R},${C} Z`)
+    : zonas === "eo" ? zona("ho", `M${C},${C - R} A${R},${R} 0 0 0 ${C},${C + R} Z`) + zona("he", `M${C},${C - R} A${R},${R} 0 0 1 ${C},${C + R} Z`) : "";
   // Costa Rica: unos 10° norte y 84° oeste; con el meridiano de Greenwich en el centro queda casi en la orilla izquierda
   const crx = C + R * Math.cos(rad(10)) * Math.sin(rad(-84)), cry = C - R * Math.sin(rad(10));
   return `<svg class="globo" viewBox="0 0 260 260" role="group" aria-label="La Tierra con paralelos y meridianos">
@@ -249,7 +259,7 @@ function nuevo() {
   if (v.mapa) html += mapaHTML(v);
   if (v.rosa) html += `<div class="carta">${rosaSVG(v.rosa, !!v.mapa)}</div>`;
   if (v.sol) html += `<div class="carta sol-escena" aria-hidden="true">${v.sol}</div>`;
-  if (v.globo) html += `<div class="carta">${globoSVG(v.globo)}</div>`;
+  if (v.globo) html += `<div class="carta">${globoSVG(v.globo, q.responder === "globo")}</div>`;
   if (v.malla) html += `<div class="carta">${mallaSVG(v.malla)}</div>`;
   $("escena").innerHTML = html;
   $("opciones").hidden = q.responder !== "opcion";
@@ -323,6 +333,8 @@ function pistaMala(valor) {
 
 function contestar(valor, el) {
   if (listo || !q) return;
+  // Un segundo toque sobre lo mismo que ya estaba mal (los chiquitos tocan dos veces) no es otro error
+  if (el?.classList.contains("wrong")) return;
   const ok = q.responder === "globo" ? q.respuesta.includes(valor) : String(valor) === String(q.respuesta);
   if (ok) {
     listo = true;
@@ -368,7 +380,7 @@ $("escena").addEventListener("click", e => {
   if (c && !listo) { const L = lugarEn(q.vista.mapa, ...c.dataset.c.split(",").map(Number)); if (L) decir(L.n); }
 });
 $("escena").addEventListener("keydown", e => {
-  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".brazo, .punto")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+  if ((e.key === "Enter" || e.key === " ") && e.target.matches?.(".brazo, .punto, [data-t]")) { e.preventDefault(); e.target.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
 });
 $("opciones").addEventListener("click", e => {
   const b = e.target.closest("[data-id]");

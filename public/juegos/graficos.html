@@ -51,6 +51,8 @@
   .barras .fantasma { fill: none; stroke: var(--ok); stroke-width: 3; stroke-dasharray: 5 4; }
   .barras .toque { fill: transparent; cursor: pointer; }
   .barras .toque:hover { fill: rgba(47, 127, 209, .12); }
+  .barras .toque:focus { outline: none; }
+  .barras .toque:focus-visible { fill: rgba(47, 127, 209, .22); stroke: #2F7FD1; stroke-width: 3; }
 
   /* Tabla de conteo (palitos) */
   .conteo { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
@@ -130,7 +132,8 @@ import { ESCALONES, COLORES_BARRAS, CONFITES, generar, inicioPorEdad } from "../
 
 const $ = id => document.getElementById(id);
 const may = t => t.charAt(0).toUpperCase() + t.slice(1);
-const sinEtiquetas = t => t.replace(/<[^>]+>/g, "");
+// Texto para la voz: el navegador saca el texto del HTML (sin ejecutar nada)
+const sinEtiquetas = t => new DOMParser().parseFromString(t, "text/html").body.textContent || "";
 
 // Modos a mano (para el papá o la maestra): escogen al azar entre sus escalones
 const MODOS = [
@@ -172,7 +175,7 @@ function barras(g, valores = g.valores, editable = false) {
   const paso = ancho / g.cats.length, bw = Math.min(54, paso * 0.58);
   const xb = i => L + paso * i + (paso - bw) / 2;
   const res = pista?.resaltar || [], guias = pista?.guias || [], malas = pista?.malas || [];
-  let s = `<svg class="barras" viewBox="0 0 ${W} ${H}" role="img" aria-label="Gráfico de barras">`;
+  let s = `<svg class="barras" viewBox="0 0 ${W} ${H}" role="${editable ? "group" : "img"}" aria-label="Gráfico de barras">`;
   for (let v = 0; v <= g.max; v += g.escala) {
     s += `<line class="${v ? "raya" : "eje"}" x1="${L}" y1="${y(v)}" x2="${W - R}" y2="${y(v)}"/>`;
     s += `<text class="num" x="${L - 6}" y="${y(v) + 4.5}" text-anchor="end">${v}</text>`;
@@ -187,7 +190,7 @@ function barras(g, valores = g.valores, editable = false) {
     s += `<text class="nombre" x="${x + bw / 2}" y="${H - B + 44}" text-anchor="middle">${may(c.n)}</text>`;
     // Zonas para tocar: cada rayita de la columna
     if (editable) for (let k = 1; k <= g.max; k++)
-      s += `<rect class="toque" data-c="${i}" data-v="${k}" x="${L + paso * i + 2}" y="${y(k) - (y(k - 1) - y(k)) / 2}" width="${paso - 4}" height="${y(k - 1) - y(k)}"><title>${may(c.n)}: ${k}</title></rect>`;
+      s += `<rect class="toque" data-c="${i}" data-v="${k}" tabindex="0" role="button" aria-label="${may(c.n)}: hasta el ${k}" x="${L + paso * i + 2}" y="${y(k) - (y(k - 1) - y(k)) / 2}" width="${paso - 4}" height="${y(k - 1) - y(k)}"><title>${may(c.n)}: ${k}</title></rect>`;
   });
   return s + "</svg>";
 }
@@ -365,6 +368,21 @@ $("grafico").addEventListener("click", e => {
   sonido("tap");
   if (pista?.malas) pista.malas = pista.malas.filter(x => x !== i);
   pintarGrafico();
+});
+// Con el teclado: Enter o Espacio ponen la barra; ↑ y ↓ suben y bajan por la columna
+$("grafico").addEventListener("keydown", e => {
+  const r = e.target.closest(".toque");
+  if (!r) return;
+  const c = r.dataset.c, v = Number(r.dataset.v);
+  const enfocar = k => $("grafico").querySelector(`.toque[data-c="${c}"][data-v="${k}"]`)?.focus();
+  if (e.key === "Enter" || e.key === " ") {
+    e.preventDefault();
+    r.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    enfocar(v); // el gráfico se vuelve a dibujar: el foco se queda donde estaba
+  } else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+    e.preventDefault();
+    enfocar(v + (e.key === "ArrowUp" ? 1 : -1));
+  }
 });
 $("respuesta").addEventListener("click", e => {
   if (!e.target.closest("#revisarBtn") || listo) return;

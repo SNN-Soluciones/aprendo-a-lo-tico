@@ -106,7 +106,7 @@ export const POSICIONES = ["última", "penúltima", "antepenúltima", "trasantep
 function leer(entrada) {
   const crudas = entrada.split("-");
   const tonica = crudas.findIndex(s => s.startsWith("'"));
-  const silabas = crudas.map(s => s.replace("'", ""));
+  const silabas = crudas.map(s => s.replace(/'/g, ""));
   const palabra = silabas.join("");
   const desdeFinal = silabas.length - 1 - tonica;
   const u = unidades(palabra);

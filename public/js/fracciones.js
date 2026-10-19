@@ -35,11 +35,12 @@ const entre = (a, b, rnd) => a + Math.floor(rnd() * (b - a + 1));
 const azar = (arr, rnd) => arr[Math.floor(rnd() * arr.length)];
 
 // ---------- Figuras y cosas ----------
+// s: con artículo · de: con «de» (y «del» si es masculino) · f: femenino («partida» o «partido»)
 export const FORMAS = {
-  pizza: { s: "la pizza", forma: "pizza" },
-  sandia: { s: "la tajada de sandía", forma: "sandia" },
-  chocolate: { s: "la barra de chocolate", forma: "barra" },
-  queque: { s: "el queque", forma: "pizza" },
+  pizza: { s: "la pizza", de: "de la pizza", f: true, forma: "pizza" },
+  sandia: { s: "la tajada de sandía", de: "de la tajada de sandía", f: true, forma: "sandia" },
+  chocolate: { s: "la barra de chocolate", de: "de la barra de chocolate", f: true, forma: "barra" },
+  queque: { s: "el queque", de: "del queque", f: false, forma: "pizza" },
 };
 const COSAS = [
   { e: "🥭", s: "mango", p: "mangos" }, { e: "🍌", s: "banano", p: "bananos" }, { e: "🍓", s: "fresa", p: "fresas" },
@@ -100,8 +101,8 @@ const generadores = {
     const forma = azar(Object.keys(FORMAS), rnd);
     return {
       tipo: "pintar", n, d, forma,
-      html: `Pintá ${fr(n, d)} de ${FORMAS[forma].s}`,
-      voz: `Pintá ${enPalabras(n, d)} de ${FORMAS[forma].s}. Está partida en ${NUM[d]} partes iguales: tocá las partes para pintarlas.`,
+      html: `Pintá ${fr(n, d)} ${FORMAS[forma].de}`,
+      voz: `Pintá ${enPalabras(n, d)} ${FORMAS[forma].de}. Está ${FORMAS[forma].f ? "partida" : "partido"} en ${NUM[d]} partes iguales: tocá las partes para pintarlas.`,
       explica: `${fr(n, d)}: de <b>${d}</b> partes iguales (el denominador, abajo), se pintan <b>${n}</b> (el numerador, arriba).`,
       vozExplica: `De ${NUM[d]} partes iguales, se pintan ${n === 1 ? "una" : NUM[n]}. Eso es ${enPalabras(n, d)}.`,
       pista: `Hay que pintar ${n === 1 ? "una parte" : `${NUM[n]} partes`}.`,
@@ -114,8 +115,8 @@ const generadores = {
     const malas = [{ n, d: d - n }, { n: d - n, d }, { n, d: d + 1 }, { n, d: d - 1 }, { n: n + 1, d }, { n: Math.max(1, n - 1), d }];
     return {
       tipo: "cual", n, d, forma,
-      html: `¿Qué fracción de ${FORMAS[forma].s} está pintada?`,
-      voz: `¿Qué fracción de ${FORMAS[forma].s} está pintada?`,
+      html: `¿Qué fracción ${FORMAS[forma].de} está pintada?`,
+      voz: `¿Qué fracción ${FORMAS[forma].de} está pintada?`,
       opciones: opcionesFraccion({ n, d }, malas, es.ops, rnd), correcta: `${n}-${d}`,
       explica: `Hay <b>${d}</b> partes iguales y <b>${n}</b> pintadas: ${fr(n, d)}. El de abajo cuenta todas las partes; el de arriba, las pintadas.`,
       vozExplica: `Hay ${NUM[d]} partes iguales y ${n === 1 ? "una pintada" : `${NUM[n]} pintadas`}: ${enPalabras(n, d)}.`,

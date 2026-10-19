@@ -38,7 +38,7 @@ export const CONFITES = [
 ];
 
 // Datos para moda, rango y promedio
-const DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+const DIAS = ["lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo"];
 const NOMBRES = ["Valeria", "Mateo", "Sofía", "Daniel", "Camila", "Josué", "Fernanda", "Andrés", "Mariana", "Esteban"];
 const SERIES = [
   { titulo: "⚽ Goles del equipo de la escuela", fila: "Partido", filas: "partidos", unidad: "goles", min: 0, max: 6 },
@@ -419,6 +419,8 @@ export function revisarPregunta(q) {
     if (ids.length < 2) mal.push("muy pocas opciones");
   }
   if (q.forma === "numero" && (!Number.isInteger(q.respuesta) || q.respuesta < 0)) mal.push(`respuesta rara: ${q.respuesta}`);
+  // Cada dato tiene que tener su fila: si no, se vería un dato menos del que se usa para calificar
+  if (g.filas && g.valores && g.filas.length !== g.valores.length) mal.push(`${g.filas.length} filas para ${g.valores.length} datos`);
   if (g.clase === "picto" || g.clase === "barras" || g.clase === "armar") {
     if (new Set(g.valores).size !== g.valores.length) mal.push("valores repetidos en el gráfico");
     if (g.valores.some(v => v <= 0)) mal.push("valor en cero");

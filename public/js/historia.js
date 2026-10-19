@@ -71,7 +71,7 @@ export const HECHOS = [
     imp: "Es la ley más importante del país: todas las demás leyes tienen que respetarla." },
   { id: "voto", grupo: "voto", año: 1950, cuando: "1950", e: "👩", t: "Las mujeres votan por primera vez",
     d: "En 1950, en una votación en La Tigra y La Fortuna de San Carlos, las mujeres votaron por primera vez en Costa Rica.",
-    imp: "Las mujeres ganaron el derecho a elegir y a ser elegidas, igual que los hombres." },
+    imp: "Fue la primera vez que las mujeres usaron su derecho a votar, que la Constitución de 1949 les había dado." },
   { id: "nobel", año: 1987, cuando: "1987", e: "🏅", t: "Premio Nobel de la Paz",
     d: "Óscar Arias Sánchez recibió el Premio Nobel de la Paz por su plan de paz para Centroamérica.",
     imp: "El mundo reconoció el trabajo de Costa Rica por la paz en una región que vivía guerras." },
@@ -99,15 +99,16 @@ export const PERSONAS = [
 
 // ---------- Los ocho pueblos indígenas de hoy ----------
 // donde: dónde viven, en general · pista: algo que solo es de ese pueblo (para «¿Qué pueblo…?»)
+// zonas: para no poner en la misma pregunta dos lugares que sirven para el mismo pueblo (Talamanca, el sur de Puntarenas)
 export const PUEBLOS = [
-  { id: "bribri", n: "Bribri", donde: "en Talamanca (Limón) y en el sur de Puntarenas", pista: "habla bribri y para su cultura el cacao es muy importante" },
-  { id: "cabecar", n: "Cabécar", donde: "en las montañas de Alto Chirripó y Talamanca", pista: "es uno de los pueblos más numerosos y vive en Alto Chirripó" },
-  { id: "maleku", n: "Maleku", donde: "en Guatuso, en la zona norte de Alajuela", pista: "vive en Guatuso, en la zona norte" },
-  { id: "boruca", n: "Brunca o boruca", donde: "en Boruca y Curré, en el sur de Puntarenas", pista: "es famoso por sus máscaras talladas y la Fiesta de los Diablitos" },
-  { id: "ngabe", n: "Ngäbe", donde: "en Coto Brus, Corredores y Golfito, en el sur", pista: "vive en Coto Brus, Corredores y Golfito" },
-  { id: "huetar", n: "Huetar", donde: "en Quitirrisí y Zapatón, en la provincia de San José", pista: "vive en Quitirrisí y Zapatón, cerca de la capital" },
-  { id: "chorotega", n: "Chorotega", donde: "en Matambú, en Guanacaste", pista: "vive en Matambú, Guanacaste" },
-  { id: "terraba", n: "Térraba o teribe", donde: "en Térraba, en Buenos Aires de Puntarenas", pista: "vive en Térraba, en Buenos Aires de Puntarenas" },
+  { id: "bribri", zonas: ["talamanca", "sur"], n: "Bribri", donde: "en Talamanca (Limón) y en el sur de Puntarenas", pista: "habla bribri y para su cultura el cacao es muy importante" },
+  { id: "cabecar", zonas: ["talamanca"], n: "Cabécar", donde: "en las montañas de Alto Chirripó y Talamanca", pista: "es uno de los pueblos más numerosos y vive en Alto Chirripó" },
+  { id: "maleku", zonas: ["norte"], n: "Maleku", donde: "en Guatuso, en la zona norte de Alajuela", pista: "vive en Guatuso, en la zona norte" },
+  { id: "boruca", zonas: ["sur"], n: "Brunca o boruca", donde: "en Boruca y Curré, en el sur de Puntarenas", pista: "es famoso por sus máscaras talladas y la Fiesta de los Diablitos" },
+  { id: "ngabe", zonas: ["sur"], n: "Ngäbe", donde: "en Coto Brus, Corredores y Golfito, en el sur", pista: "vive en Coto Brus, Corredores y Golfito" },
+  { id: "huetar", zonas: ["sanjose"], n: "Huetar", donde: "en Quitirrisí y Zapatón, en la provincia de San José", pista: "vive en Quitirrisí y Zapatón, cerca de la capital" },
+  { id: "chorotega", zonas: ["guanacaste"], n: "Chorotega", donde: "en Matambú, en Guanacaste", pista: "vive en Matambú, Guanacaste" },
+  { id: "terraba", zonas: ["sur"], n: "Térraba o teribe", donde: "en Térraba, en Buenos Aires de Puntarenas", pista: "vive en Térraba, en Buenos Aires de Puntarenas" },
 ];
 
 // ---------- Gobierno y ciudadanía (5° y 6°) ----------
@@ -278,8 +279,10 @@ function importancia(rnd) {
 
 /** Pueblos indígenas de hoy: ¿dónde viven? o ¿qué pueblo…? */
 function pueblo(rnd) {
-  const [x, ...otros] = barajar(PUEBLOS, rnd).slice(0, 4);
+  let [x, ...otros] = barajar(PUEBLOS, rnd).slice(0, 4);
   if (rnd() < 0.5) {
+    // ¿Dónde vive?: sin otros pueblos de la misma zona, para que solo un lugar sea correcto
+    otros = barajar(PUEBLOS.filter(p => p !== x && !p.zonas.some(z => x.zonas.includes(z))), rnd).slice(0, 3);
     return { tipo: "opciones", instr: "¿Dónde <b>vive</b>?", cols: 1,
       html: `🏡 ¿Dónde vive el pueblo ${x.n.toLowerCase()}?`, voz: `¿Dónde vive el pueblo ${x.n}?`,
       opciones: barajar([x, ...otros], rnd).map(p => ({ id: p.id, html: p.donde, voz: p.donde, porque: `Ahí vive el pueblo ${p.n.toLowerCase()}.` })),

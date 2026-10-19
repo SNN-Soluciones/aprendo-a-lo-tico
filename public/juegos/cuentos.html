@@ -251,7 +251,9 @@ function bienContestada() {
   const exp = explicacion(texto, p);
   if (fallosQ === 0) { const bien = elogio(); feedback("ok", "🎉", "¡Acertado!"); decir(bien); }
   else { feedback("almost", "🤏", "¡Ahora sí!"); decir("¡Ahora sí!"); }
+  // Sin explicación (las de ordenar), se quita la pista que haya quedado de un error
   if (exp) { $("explica").hidden = false; $("explica").innerHTML = escapar(exp); }
+  else $("explica").hidden = true;
   if (p.cita) mirarParrafo(true);
   $("nextBtn").hidden = false; $("nextBtn").classList.add("pulse");
   $("nextBtn").textContent = k + 1 < preguntas.length ? "Siguiente pregunta ➡️" : "¿Cómo me fue? 🏁";

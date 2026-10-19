@@ -353,7 +353,9 @@ function tecla(k) {
 }
 $("teclado").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) tecla(b.dataset.k); });
 addEventListener("keydown", e => {
-  if ($("zonaEscribir").hidden || $("start").hidden === false) return;
+  if ($("zonaEscribir").hidden || $("start").hidden === false || listo) return;
+  // Con un botón enfocado, Enter es de ese botón (➡️, 🔊, las teclas en pantalla…); los números sí se escriben
+  if (e.key === "Enter" && e.target.closest?.("button, a, input")) return;
   if (/^\d$/.test(e.key)) tecla(e.key);
   else if (e.key === "Backspace") tecla("borrar");
   else if (e.key === "Enter") { e.preventDefault(); tecla("ok"); }

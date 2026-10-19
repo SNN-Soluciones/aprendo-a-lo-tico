@@ -130,8 +130,8 @@ let ayuda = ayudaChica;
 
 let manual = null, x = null, e = null, fase = "", paso = 0, escrito = "", fallosPaso = 0, fallos = 0, revelado = false, cuentas = [], monton = 0, ocupado = false;
 
-// Lo que se dice en voz alta: los signos se leen como palabras
-const aVoz = t => String(t).replace(/<[^>]+>/g, "").replace(/₡(\d[\d ]*)/g, (_, v) => v.replace(/ /g, "") + " colones")
+// Lo que se dice en voz alta: sin etiquetas (ni restos de < >), y los signos se leen como palabras
+const aVoz = t => String(t).replace(/<[^>]*>/g, "").replace(/[<>]/g, "").replace(/₡(\d[\d ]*)/g, (_, v) => v.replace(/ /g, "") + " colones")
   .replace(/÷/g, " dividido entre ").replace(/×/g, " por ").replace(/−/g, " menos ").replace(/=/g, " es igual a ");
 const loDe = c => (c.f ? "las" : "los");
 const unoDe = c => (c.f ? "una" : "uno");
@@ -245,7 +245,13 @@ $("vueltaBtn").addEventListener("click", async () => {
   const faltan = cuentas.map((k, i) => (k === min ? i : -1)).filter(i => i >= 0);
   if (monton < faltan.length) return;
   ocupado = true;
-  for (const i of faltan) { cuentas[i]++; monton--; sonido("tap"); pintarEscena(i); await new Promise(r => setTimeout(r, 160)); }
+  // Si mientras tanto tocan ➡️ (o cambian el nivel), la ronda es otra: no se toca nada de la nueva
+  const esta = x;
+  for (const i of faltan) {
+    cuentas[i]++; monton--; sonido("tap"); pintarEscena(i);
+    await new Promise(r => setTimeout(r, 160));
+    if (x !== esta) return;
+  }
   ocupado = false;
   revisarReparto();
 });
@@ -271,7 +277,8 @@ function terminarManipular() {
   let dicho;
   if (x.tipo === "repartir") dicho = monton ? `¡Ya no alcanza para darle otr${c.f ? "a" : "o"} a cada ${x.quien.tipo === "amigos" ? "amigo" : "canasta"}! ${monton === 1 ? "Ese que quedó" : "Esos que quedaron"} en el montón sobran.` : "¡Listo! Se repartieron todos y no sobró nada.";
   else dicho = monton ? `¡Ya no alcanza para otra bolsita de ${x.d}!` : "¡Listo! Todos quedaron en bolsitas.";
-  decir(dicho).then(() => { if (fase === "pregunta" && paso === 0 && !escrito) decir(x.pasos[0].pregunta); });
+  const esta = x;
+  decir(dicho).then(() => { if (x === esta && fase === "pregunta" && paso === 0 && !escrito) decir(x.pasos[0].pregunta); });
   preguntar(false);
 }
 
@@ -367,7 +374,8 @@ function revisar(v, boton) {
       paso++;
       feedback("ok", "👍", "¡Eso!");
       ocupado = true;
-      setTimeout(() => { ocupado = false; preguntar(); }, 700);
+      const esta = x;
+      setTimeout(() => { if (x !== esta) return; ocupado = false; preguntar(); }, 700);
     } else terminar();
     return;
   }
@@ -379,12 +387,13 @@ function revisar(v, boton) {
   const casi = Math.abs(v - p.respuesta) === 1;
   feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "No es");
   darPista();
-  setTimeout(() => { if (fase === "pregunta") pintarPregunta(); }, 600);
+  const esta = x;
+  setTimeout(() => { if (x === esta && fase === "pregunta") pintarPregunta(); }, 600);
 }
 
 // Segundo error: se le muestra la respuesta, con el porqué, y se sigue
 async function revelar() {
-  const p = x.pasos[paso];
+  const p = x.pasos[paso], esta = x;
   revelado = true; ocupado = true;
   escrito = String(p.respuesta);
   pintarPregunta("revelada");
@@ -399,6 +408,8 @@ async function revelar() {
   feedback("almost", "🤝", `Era ${p.prefijo || ""}${p.respuesta}`);
   $("explica").hidden = false; $("explica").textContent = "💡 " + porque;
   await decir(aVoz(`Era ${p.prefijo ? colones(p.respuesta) : p.respuesta}. ${porque}`));
+  // Si tocaron ➡️ mientras se explicaba, esta ronda ya terminó: no se sigue (ni se cuenta) en la nueva
+  if (x !== esta) return;
   ocupado = false;
   if (fase !== "pregunta") return;
   if (paso + 1 < x.pasos.length) { paso++; preguntar(); } else terminar();

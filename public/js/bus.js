@@ -60,6 +60,8 @@ export function enPalabras(n) {
   const cien = ["", "ciento", "doscientos", "trescientos", "cuatrocientos", "quinientos", "seiscientos", "setecientos", "ochocientos", "novecientos"][c];
   return r ? `${cien} ${enPalabras(r)}` : c === 1 ? "cien" : cien;
 }
+/** Número antes de un sustantivo: «treinta y un días», «veintiún minutos», «veintiuna horas». */
+export const cuantos = (n, fem = false) => enPalabras(n).replace(/(veinti)?uno$/, (_, v) => v ? (fem ? "veintiuna" : "veintiún") : (fem ? "una" : "un"));
 const HORAS = ["", "la una", "las dos", "las tres", "las cuatro", "las cinco", "las seis", "las siete", "las ocho", "las nueve", "las diez", "las once", "las doce"];
 /** Cómo se dice la hora a lo tico: «las siete y cuarto», «un cuarto para las ocho», «las doce del mediodía». */
 export function horaDicha(t, ampm = false) {
@@ -79,8 +81,8 @@ export const dur = d => [Math.floor(d / 60) ? `${Math.floor(d / 60)} h` : "", d 
 /** 95 → "una hora y treinta y cinco minutos" */
 export function durDicha(d) {
   const h = Math.floor(d / 60), m = d % 60;
-  const hs = h ? (h === 1 ? "una hora" : `${enPalabras(h)} horas`) : "";
-  const ms = m ? `${enPalabras(m)} minutos` : "";
+  const hs = h ? (h === 1 ? "una hora" : `${cuantos(h, true)} horas`) : "";
+  const ms = m ? `${cuantos(m)} minutos` : "";
   return [hs, ms].filter(Boolean).join(" y ") || "cero minutos";
 }
 
@@ -287,7 +289,7 @@ function convertir({ n }, rnd) {
     const malas = [cien, d - 60, d + 60, h * 60 + Math.min(55, m + 10), d - 10, d + 40];
     return {
       html: `<span class="grande">⏱️</span>Un viaje dura <b>${d} minutos</b>.<br>¿Cuántas horas y minutos son?`,
-      voz: `Un viaje dura ${enPalabras(d)} minutos. ¿Cuántas horas y minutos son?`,
+      voz: `Un viaje dura ${cuantos(d)} minutos. ¿Cuántas horas y minutos son?`,
       ...opsDur(d, malas, n, rnd),
       explica: `Una hora tiene 60 minutos, no 100. ${d} = ${Array(h).fill("60").join(" + ")} + ${m}. Son <b>${dur(d)}</b>.`,
       dato: { tipo: "aHoras", d },
@@ -364,7 +366,7 @@ function dias({ n }, rnd) {
     const s = entre(1, 6, rnd), dd = entre(1, 6, rnd), total = s * 7 + dd;
     return {
       html: `<span class="grande">🚌</span>Una gira de la escuela dura <b>${s} ${s === 1 ? "semana" : "semanas"} y ${dd} ${dd === 1 ? "día" : "días"}</b>.<br>¿Cuántos días son?`,
-      voz: `Una gira dura ${s === 1 ? "una semana" : `${enPalabras(s)} semanas`} y ${dd === 1 ? "un día" : `${enPalabras(dd)} días`}. ¿Cuántos días son?`,
+      voz: `Una gira dura ${s === 1 ? "una semana" : `${cuantos(s, true)} semanas`} y ${dd === 1 ? "un día" : `${cuantos(dd)} días`}. ¿Cuántos días son?`,
       escribir: { respuesta: String(total), numero: true, sufijo: "días", revisar: txt => Number(txt.replace(/[^\d]/g, "")) === total },
       explica: `Una semana tiene 7 días: ${s} × 7 = ${s * 7}, y ${s * 7} + ${dd} = <b>${total} días</b>.`,
       dato: { tipo, total, s, dd },
@@ -378,7 +380,7 @@ function dias({ n }, rnd) {
     const lista = opciones(total, malas, n, fmt);
     return {
       html: `<span class="grande">🏖️</span>Faltan <b>${total} días</b> para las vacaciones.<br>¿Cuántas semanas y días son?`,
-      voz: `Faltan ${enPalabras(total)} días para las vacaciones. ¿Cuántas semanas y días son?`,
+      voz: `Faltan ${cuantos(total)} días para las vacaciones. ¿Cuántas semanas y días son?`,
       opciones: barajar(lista, rnd).map(x => ({ id: fmt(x), html: `<b>${fmt(x)}</b>` })), correcta: fmt(total), cols: 2,
       explica: `Cada semana tiene 7 días: en ${total} caben ${s} semanas (${s} × 7 = ${s * 7}) y sobran ${total - s * 7}. Son <b>${fmt(total)}</b>.`,
       dato: { tipo, total },
@@ -391,7 +393,7 @@ function dias({ n }, rnd) {
     const lista = opciones(horas, malas, n, fmt);
     return {
       html: `<span class="grande">⏳</span>Un viaje en barco dura <b>${horas} horas</b>.<br>¿Cuántos días son?`,
-      voz: `Un viaje en barco dura ${enPalabras(horas)} horas. ¿Cuántos días son?`,
+      voz: `Un viaje en barco dura ${cuantos(horas, true)} horas. ¿Cuántos días son?`,
       opciones: barajar(lista, rnd).map(x => ({ id: fmt(x), html: `<b>${fmt(x)}</b>` })), correcta: fmt(horas), cols: 2,
       explica: `Un día tiene 24 horas: ${dd} × 24 = ${dd * 24}${extra ? ` y sobran ${extra} horas` : ""}. Son <b>${fmt(horas)}</b>.`,
       dato: { tipo, horas },
@@ -401,10 +403,10 @@ function dias({ n }, rnd) {
   const lista = opciones(dia, [(dia + 1) % 7, (dia + 6) % 7, (dia + 2) % 7, (dia + 5) % 7], n, x => DIAS[x]);
   return {
     html: `<span class="grande">🚌</span>Hoy es <b>${DIAS[hoy]}</b>. El bus de la gira sale dentro de <b>${mas} días</b>.<br>¿Qué día de la semana sale?`,
-    voz: `Hoy es ${DIAS[hoy]}. El bus de la gira sale dentro de ${enPalabras(mas)} días. ¿Qué día de la semana sale?`,
+    voz: `Hoy es ${DIAS[hoy]}. El bus de la gira sale dentro de ${cuantos(mas)} días. ¿Qué día de la semana sale?`,
     opciones: barajar(lista, rnd).map(x => ({ id: DIAS[x], html: `<b>${may(DIAS[x])}</b>` })), correcta: DIAS[dia], cols: 2,
     explica: `${mas >= 7 ? `Cada 7 días vuelve a ser ${DIAS[hoy]}: ${mas} = ${Math.floor(mas / 7)} × 7${mas % 7 ? ` + ${mas % 7}` : ""}. ` : ""}${mas % 7
-      ? `Después del ${DIAS[hoy]} contamos ${mas % 7 === 1 ? "un día" : `${enPalabras(mas % 7)} días`}${mas >= 7 ? " más" : ""}: ${Array.from({ length: mas % 7 }, (_, i) => DIAS[(hoy + i + 1) % 7]).join(", ")}.`
+      ? `Después del ${DIAS[hoy]} contamos ${mas % 7 === 1 ? "un día" : `${cuantos(mas % 7)} días`}${mas >= 7 ? " más" : ""}: ${Array.from({ length: mas % 7 }, (_, i) => DIAS[(hoy + i + 1) % 7]).join(", ")}.`
       : `Cae otra vez ${DIAS[hoy]}.`} Sale el <b>${DIAS[dia]}</b>.`,
     dato: { tipo, hoy, mas },
   };

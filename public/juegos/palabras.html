@@ -94,7 +94,7 @@ import { ESCALONES, ronda, opcionesDe } from "../js/palabras.js";
 const $ = id => document.getElementById(id);
 const mayus = t => t.charAt(0).toUpperCase() + t.slice(1);
 const sinTildes = t => t.normalize("NFD").replace(/[̀-ͯ]/g, "");
-const texto = html => html.replace(/<[^>]+>/g, "");
+const texto = html => new DOMParser().parseFromString(html, "text/html").body.textContent;
 
 // Modos a mano (papá o maestra): cada uno toma escalones al azar de su grupo
 const GRUPOS = {

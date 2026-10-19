@@ -280,7 +280,7 @@ function preguntaRol(e, rnd) {
   return {
     tipo: "opciones",
     html: `${cadenaHTML(c.c, i)}En esta cadena, ¿qué es ${conArt(id)}?`,
-    voz: `En esta cadena de ${c.eco}: ${c.c.map(conArt).join(", ")}. ¿Qué es ${conArt(id)}?`,
+    voz: `En esta cadena ${delEco(c.eco)}: ${c.c.map(conArt).join(", ")}. ¿Qué es ${conArt(id)}?`,
     opciones: ROLES.map(r => opcion(r, nom[r])),
     correcta: rol,
     explica: `${may(conArt(id))} ${por}: ${pl ? "son el" : "es"} <b>${ROL[rol]}</b>.`,
@@ -302,11 +302,11 @@ function preguntaFalta(e, rnd) {
     ? `Sin ${sinArt(ya)} nadie en esta cadena tiene alimento: la energía empieza en los productores. Va a haber <b>menos ${sinArt(otro)}</b>.`
     : sube
       ? `En esta cadena, ${SERES[ya].pl} ${comian} ${aPl(otro)}. Si ${desaparece(ya)}, ya nadie se come ${aPl(otro)}: va a haber <b>más ${sinArt(otro)}</b>.`
-      : `En esta cadena, ${SERES[otro].pl} se alimenta${esPlural(otro) ? "n" : ""} de ${sinArt(ya)}. Sin su comida, va a haber <b>menos ${sinArt(otro)}</b>.`;
+      : `En esta cadena, ${SERES[otro].pl} se alimenta${/^(los|las) /.test(SERES[otro].pl) ? "n" : ""} de ${sinArt(ya)}. Sin su comida, va a haber <b>menos ${sinArt(otro)}</b>.`;
   return {
     tipo: "opciones",
     html: `${cadenaHTML(c.c, i)}Si ${desaparece(ya)} ${SERES[ya].pl} ${SERES[ya].e}, ¿qué pasa con ${SERES[otro].pl} ${SERES[otro].e}?`,
-    voz: `En esta cadena de ${c.eco}, si ${desaparece(ya)} ${SERES[ya].pl}, ¿qué pasa con ${SERES[otro].pl}?`,
+    voz: `En esta cadena ${delEco(c.eco)}, si ${desaparece(ya)} ${SERES[ya].pl}, ¿qué pasa con ${SERES[otro].pl}?`,
     opciones: [opcion("mas", "📈 Va a haber más"), opcion("menos", "📉 Va a haber menos"), opcion("igual", "😐 Nada cambia",
       { mal: "Sí cambia algo: en una cadena, cada eslabón depende de los otros." })],
     correcta, explica,

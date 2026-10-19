@@ -293,7 +293,11 @@ function tilde(b, i) {
   error(b, i >= 0 && enLaFuerte, pista, porque);
 }
 
-$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+$("nextBtn").addEventListener("click", () => {
+  // Saltarse una ronda después de equivocarse cuenta como ronda difícil: si no, saltar evitaría bajar de escalón
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
 niveles(v => {
   esc.activa = v === "auto";
   if (v !== "auto") manual = Number(v);

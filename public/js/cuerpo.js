@@ -188,7 +188,8 @@ export const VISTAS = {
 };
 
 /** Un grupo que se puede tocar: el dibujo y, si hace falta, un área invisible más grande para el dedo. */
-const parte = (id, dib, toque = "") => `<g class="parte" data-parte="${id}" role="button" aria-label="${PARTES[id].n}">${toque}${dib}</g>`;
+const TOCABLE = `role="button" tabindex="0"`;
+const parte = (id, dib, toque = "") => `<g class="parte" data-parte="${id}" ${TOCABLE} aria-label="${PARTES[id].n}">${toque}${dib}</g>`;
 const toqueLinea = d => `<path d="${d}" fill="none" stroke="transparent" stroke-width="16" stroke-linecap="round"/>`;
 
 function base(sistema) {
@@ -270,9 +271,15 @@ function organos(sistema) {
   }
 }
 
-/** El dibujo del cuerpo con las partes del sistema que se pueden tocar. */
-export function dibujo(sistema) {
-  return `<svg viewBox="${VISTAS[sistema]}" role="img" aria-label="Dibujo del cuerpo: ${SISTEMAS[sistema].n}">${base(sistema)}${organos(sistema)}</svg>`;
+/**
+ * El dibujo del cuerpo con las partes del sistema.
+ * tocable: las partes son botones (se enfocan con Tab); si no, el dibujo es solo una imagen.
+ */
+export function dibujo(sistema, { tocable = true } = {}) {
+  const partes = base(sistema) + organos(sistema);
+  return tocable
+    ? `<svg viewBox="${VISTAS[sistema]}" role="group" aria-label="Dibujo del cuerpo: ${SISTEMAS[sistema].n}">${partes}</svg>`
+    : `<svg viewBox="${VISTAS[sistema]}" role="img" aria-label="Dibujo del cuerpo: ${SISTEMAS[sistema].n}">${partes.split(` ${TOCABLE}`).join("")}</svg>`;
 }
 
 // ---------- Generadores ----------
@@ -294,7 +301,8 @@ export function tocarPorFuncion(sistema, rnd = Math.random) {
     bien: `${eseEs(p.n)}: ${p.f}.` };
 }
 
-const opcion = (id, html, por) => ({ id, html, voz: html.replace(/<[^>]+>/g, ""), por });
+// La voz lee el texto sin etiquetas (y sin ningún < o > suelto)
+const opcion = (id, html, por) => ({ id, html, voz: html.replace(/<[^>]*>/g, "").replace(/[<>]/g, ""), por });
 
 /** ¿Para qué sirve? Las opciones malas son de otros sistemas, para que no haya dos respuestas parecidas. */
 export function sirve(sistema, rnd = Math.random) {

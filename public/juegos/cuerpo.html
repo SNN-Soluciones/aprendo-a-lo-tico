@@ -30,6 +30,8 @@
   .lamina.chica svg { max-height: 170px; }
   .lamina.chica .parte { pointer-events: none; }
   .lamina.tocable .parte { cursor: pointer; }
+  .lamina .parte:focus { outline: none; }
+  .lamina .parte:focus-visible { filter: drop-shadow(0 0 3px #2F7FD1) drop-shadow(0 0 7px #2F7FD1); }
   .parte { transition: opacity .2s; }
   .parte.mal { opacity: .3; }
   .parte.bien { filter: drop-shadow(0 0 3px #2FA85A) drop-shadow(0 0 6px #2FA85A); }
@@ -86,7 +88,8 @@ import { ESCALONES, TEMAS, PARTES, dibujo, generar, inicio, parecidos, eseEs } f
 const $ = id => document.getElementById(id);
 const esc = escalera("cuerpo", { escalones: ESCALONES.length, inicio });
 const stars = estrellas("cuerpo-stars");
-const sinEmoji = t => t.replace(/<[^>]+>/g, "").replace(/[^\p{L}\p{N}\s,.¿?¡!«»:]/gu, "").trim();
+// Texto para la voz: el navegador saca el texto del HTML (sin ejecutar nada) y se quitan los emojis
+const sinEmoji = t => (new DOMParser().parseFromString(t, "text/html").body.textContent || "").replace(/[^\p{L}\p{N}\s,.¿?¡!«»:]/gu, "").trim();
 
 // Una parte puede tener más de un grupo en el dibujo (por ejemplo, el área extra del cuello)
 const enDibujo = id => $("lamina").querySelectorAll(`[data-parte="${id}"]`);
@@ -125,7 +128,7 @@ function nuevo() {
   } else if (q.tipo === "opciones") {
     if (q.ver) {
       lam.hidden = false; lam.classList.add("chica");
-      lam.innerHTML = dibujo(q.ver.sistema);
+      lam.innerHTML = dibujo(q.ver.sistema, { tocable: false });
       enDibujo(q.ver.marcar).forEach(g => g.classList.add("marcado"));
     }
     ops.hidden = false;
@@ -160,6 +163,12 @@ function ganar() {
   esc.resultado({ fallos, ayuda: ayuda.usada, opciones });
   $("nextBtn").classList.add("pulse");
 }
+
+// Con el teclado: Enter o Espacio sobre una parte enfocada es como tocarla
+$("lamina").addEventListener("keydown", e => {
+  const g = e.target.closest("[data-parte]");
+  if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); g.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+});
 
 // Tocar en el dibujo
 $("lamina").addEventListener("click", e => {

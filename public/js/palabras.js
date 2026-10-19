@@ -44,7 +44,7 @@ const SUSTANTIVOS = [
 const INFINITIVOS = ["correr", "saltar", "comer", "cantar", "nadar", "dormir", "escribir", "leer", "jugar", "bailar", "cocinar",
   "barrer", "estudiar", "sembrar", "volar", "caminar", "reír", "llorar", "subir", "dibujar", "trabajar", "aplaudir", "respirar", "lavar"];
 const CONJUGADOS = ["corre", "salta", "come", "canta", "duerme", "escribe", "lee", "juega", "baila", "barre", "estudia", "vuela",
-  "camina", "ríe", "llora", "sube", "dibuja", "trabaja", "aplaude", "respira", "construye", "lava", "ladra", "maúlla", "brinca", "grita"];
+  "camina", "ríe", "llora", "sube", "dibuja", "trabaja", "aplaude", "respira", "construye", "sonríe", "ladra", "maúlla", "brinca", "grita"];
 // adjetivos: [masculino, femenino]
 const ADJ_SUELTOS = [["bonito", "bonita"], ["hermoso", "hermosa"], ["alegre", "alegre"], ["triste", "triste"], ["feliz", "feliz"],
   ["valiente", "valiente"], ["amable", "amable"], ["inteligente", "inteligente"], ["sucio", "sucia"], ["nuevo", "nueva"],

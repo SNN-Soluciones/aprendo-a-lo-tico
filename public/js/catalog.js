@@ -600,4 +600,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/silabas.html",
   },
+  {
+    id: "espacio",
+    titulo: "El sistema solar y la Tierra",
+    descripcion: "El Sol y los ocho planetas, el día y la noche, el año, las fases de la Luna, por qué aquí hay época seca y lluviosa, y los eclipses.",
+    emoji: "🪐",
+    materia: "ciencias",
+    grados: [3, 4, 5, 6],
+    edad: [8, 12],
+    leer: "si",
+    escalera: true,
+    url: "juegos/espacio.html",
+  },
 ];

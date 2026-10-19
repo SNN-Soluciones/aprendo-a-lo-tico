@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>El sistema solar y la Tierra</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2FA85A; }
+  .ancho { width: min(96vw, 560px); }
+  /* Temas en una sola fila que se desliza con el dedo */
+  .top .modos { display: flex; gap: 6px; flex-basis: 100%; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
+  .top .modos::-webkit-scrollbar { display: none; }
+  .modos button { flex: none; padding: 2px 9px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .instr .txt { font-size: clamp(1.02rem, 4.4vw, 1.3rem); }
+  .instr .txt .big { font-size: clamp(1.9rem, 8.5vw, 2.5rem); }
+  .instr .txt b { color: var(--materia); }
+  .instr .txt small { display: block; font-size: .85rem; opacity: .75; }
+  .instr .txt svg { margin-right: 4px; }
+
+  /* El dibujo */
+  .lamina { margin-top: 10px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px; padding: 6px; display: flex; justify-content: center; box-shadow: 0 5px 0 var(--rim); }
+  .lamina svg { width: 100%; height: auto; display: block; max-height: 46vh; }
+  .lamina.luna svg { width: auto; height: 150px; }
+  .lamina.tocable .cuerpo { cursor: pointer; }
+  .lamina .cuerpo:focus { outline: none; }
+  .lamina .cuerpo:focus-visible { filter: drop-shadow(0 0 3px #7CC4F2) drop-shadow(0 0 7px #7CC4F2); }
+  .cuerpo { transition: opacity .2s; }
+  .cuerpo.mal { opacity: .3; }
+  .cuerpo.bien { filter: drop-shadow(0 0 3px #7BE3A0) drop-shadow(0 0 7px #7BE3A0); }
+  .cuerpo.brilla { filter: drop-shadow(0 0 3px #FFC83D) drop-shadow(0 0 8px #FFC83D); animation: titila .9s ease-in-out infinite; }
+  @keyframes titila { 50% { opacity: .5; } }
+  .nota { margin: 4px 0 0; font-size: .82rem; font-weight: 700; opacity: .7; text-align: center; }
+
+  /* Opciones */
+  .opciones { margin-top: 12px; display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 10px; }
+  .opciones button { font-size: 1.1rem; padding: 10px 8px; border-radius: 18px; line-height: 1.2; display: flex; align-items: center; justify-content: center; gap: 6px; }
+
+  /* Ordenar */
+  .orden { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .orden button { display: flex; align-items: center; gap: 10px; text-align: left; font-size: 1.15rem; padding: 6px 12px; border-radius: 16px; line-height: 1.2; }
+  .orden .num { flex: none; width: 32px; height: 32px; border-radius: 50%; border: 3px dashed var(--soft); display: flex; align-items: center; justify-content: center; }
+  .orden button.right .num { background: var(--ok); color: #fff; border: 3px solid var(--ok); }
+
+  /* Escribir un número */
+  .escribir { margin-top: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .escribir input { width: min(48vw, 180px); font: inherit; font-size: 1.8rem; font-weight: 800; text-align: center; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 16px; padding: 4px 10px; background: #fff; }
+  .escribir input.wrong { background: #FFE3E0; border-color: var(--bad); }
+  .escribir input.right { background: #CFF5DC; border-color: var(--ok); }
+  .escribir .sufijo { font-size: 1.3rem; font-weight: 800; color: var(--page-ink); }
+  .escribir button { font-size: 1.6rem; padding: 4px 18px; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.35; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">☀️🌍🪐</div>
+  <h1>El sistema solar y la Tierra</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>El Sol, los ocho planetas, el día y la noche, la Luna y sus fases, por qué aquí hay época seca y lluviosa, y los eclipses. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Tema"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="ancho" id="zonaDibujo" hidden>
+  <div class="lamina" id="lamina"></div>
+  <p class="nota" id="nota">El dibujo no está a escala: de verdad, el Sol y las distancias son muchísimo más grandes.</p>
+</div>
+<div class="opciones ancho" id="opciones" hidden></div>
+<div class="orden ancho" id="orden" hidden></div>
+<form class="escribir ancho" id="escribir" hidden novalidate>
+  <input id="respuesta" inputmode="numeric" autocomplete="off" aria-label="Tu respuesta">
+  <span class="sufijo" id="sufijo"></span>
+  <button type="submit" aria-label="Revisar">✔️</button>
+</form>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra pregunta">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda, barajar } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { igual } from "../js/quiz.js";
+import { ESCALONES, TEMAS, PLANETAS, generar, inicio, dibujoDe, eseEs } from "../js/espacio.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("espacio", { escalones: ESCALONES.length, inicio });
+const stars = estrellas("espacio-stars");
+const enDibujo = id => $("lamina").querySelectorAll(`[data-c="${id}"]`);
+
+let tema = null; // null = 🪜 de a poquito; si no, el tema que escogió el papá o la maestra
+let q = null, fallos = 0, listo = false, ultimo = "", sigue = 0, malos = new Set();
+
+// 🤝 Si se queda sin tocar nada: se repite la pregunta y después se señala la respuesta (los grandes piensan antes: 14 s)
+const ayuda = ayudaSiSeQueda({ senalar: () => pista(), espera: 14000 });
+
+function pintarModos() {
+  $("modos").innerHTML = [`<button data-t="" aria-pressed="${!tema}" aria-label="De a poquito: sube solo">🪜</button>`,
+    ...TEMAS.map(t => `<button data-t="${t.id}" aria-pressed="${tema?.id === t.id}">${t.nombre}</button>`)].join("");
+}
+
+/** Baraja los pasos sin dejarlos en el orden correcto. */
+function revolver(pasos) {
+  let r;
+  do r = barajar(pasos); while (r.every((p, i) => p === pasos[i]));
+  return r;
+}
+
+function nuevo() {
+  const tipos = tema ? tema.tipos : ESCALONES[esc.nivel].tipos;
+  let n = 0;
+  do q = generar(tipos); while (q.voz === ultimo && ++n < 15);
+  ultimo = q.voz; fallos = 0; listo = false; sigue = 0; malos = new Set();
+  feedback(""); $("explica").hidden = true; $("nextBtn").classList.remove("pulse");
+
+  const zona = $("zonaDibujo"), lam = $("lamina"), ops = $("opciones"), ord = $("orden"), esc_ = $("escribir");
+  zona.hidden = ops.hidden = ord.hidden = esc_.hidden = true;
+  lam.className = "lamina";
+  if (q.dibujo) {
+    zona.hidden = false;
+    lam.innerHTML = dibujoDe(q);
+    lam.classList.toggle("tocable", q.tipo === "tocar");
+    lam.classList.toggle("luna", q.dibujo.cual === "luna");
+    $("nota").hidden = !["sistema", "tierra", "eclipse"].includes(q.dibujo.cual);
+  }
+  if (q.tipo === "opciones") {
+    ops.hidden = false;
+    ops.style.setProperty("--cols", q.cols || 2);
+    ops.innerHTML = q.opciones.map(o => `<button data-id="${o.id}" aria-label="${o.voz}">${o.html}</button>`).join("");
+  } else if (q.tipo === "ordenar") {
+    ord.hidden = false;
+    ord.innerHTML = revolver(q.pasos).map(p => `<button data-id="${p.id}" aria-label="${p.n}"><span class="num" aria-hidden="true"></span><span>${p.html}</span></button>`).join("");
+  } else if (q.tipo === "escribir") {
+    esc_.hidden = false;
+    const campo = $("respuesta");
+    campo.value = ""; campo.disabled = false; campo.className = "";
+    esc_.querySelector("button").disabled = false;
+    $("sufijo").textContent = q.sufijo || "";
+  }
+  instruccion(q.html, q.voz);
+  ayuda.empezar();
+}
+
+/** 👆 Señala la respuesta (o el paso que sigue). */
+function pista() {
+  if (!q || listo) return;
+  if (q.tipo === "tocar") enDibujo(q.meta).forEach(g => g.classList.add("brilla"));
+  else if (q.tipo === "opciones") senalar($("opciones").querySelector(`[data-id="${q.correcta}"]`));
+  else if (q.tipo === "ordenar") senalar($("orden").querySelector(`[data-id="${q.pasos[sigue].id}"]`));
+  else { $("explica").hidden = false; $("explica").textContent = "💡 " + q.pista; decir(q.pista); }
+}
+
+function ganar(mostrada = false) {
+  listo = true;
+  ayuda.parar();
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", "¡Acertado!"); }
+  else if (mostrada) feedback("almost", "🤔", `Era ${q.respuesta}${q.sufijo ? " " + q.sufijo : ""}`);
+  else feedback("almost", "🤏", "¡Ahora sí!");
+  $("explica").hidden = false;
+  $("explica").textContent = "💡 " + q.bien;
+  decir(`${limpio ? elogio() : mostrada ? `Era ${q.respuesta}.` : "¡Ahora sí!"} ${q.bien}`);
+  const opciones = q.tipo === "tocar" ? q.tocables.length : q.tipo === "opciones" ? q.opciones.length : 0;
+  esc.resultado({ fallos: mostrada ? 2 : fallos, ayuda: ayuda.usada, opciones });
+  $("nextBtn").classList.add("pulse");
+}
+
+// Con el teclado: Enter o Espacio sobre algo del dibujo es como tocarlo
+$("lamina").addEventListener("keydown", e => {
+  const g = e.target.closest("[data-c][role=button]");
+  if (g && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); g.dispatchEvent(new MouseEvent("click", { bubbles: true })); }
+});
+
+// Tocar en el dibujo
+$("lamina").addEventListener("click", e => {
+  if (q?.tipo !== "tocar" || listo) return;
+  const g = e.target.closest("[data-c]");
+  if (!g || !q.tocables.includes(g.dataset.c)) return;
+  const id = g.dataset.c;
+  if (malos.has(id)) return; // ya lo tocó: no cuenta otra vez
+  if (id === q.meta) {
+    enDibujo(id).forEach(x => { x.classList.remove("brilla"); x.classList.add("bien"); });
+    return ganar();
+  }
+  fallos++; malos.add(id);
+  enDibujo(id).forEach(x => x.classList.add("mal"));
+  // ¡Casi! = tocó el planeta de al lado
+  const i = PLANETAS.findIndex(p => p.id === id), j = PLANETAS.findIndex(p => p.id === q.meta);
+  const casi = i >= 0 && j >= 0 && Math.abs(i - j) === 1;
+  if (casi) { feedback("almost", "🤏", "¡Casi! Es el de al lado"); decir(`¡Casi! ${eseEs(id)}. Está justo al lado. ${q.voz}`); }
+  else { feedback("bad", "🙈", "No es"); decir(`${eseEs(id)}. ${q.voz}`); }
+  if (fallos >= 2) pista();
+});
+
+// Escoger una opción
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled || q.tipo !== "opciones") return;
+  const o = q.opciones.find(x => x.id === b.dataset.id);
+  if (o.id === q.correcta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    return ganar();
+  }
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  feedback("bad", "🤔", "No es");
+  decir(`${o.por} Probá otra vez.`);
+  if (fallos >= 2) pista();
+});
+
+// Ordenar: tocar en orden
+$("orden").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled || q.tipo !== "ordenar") return;
+  const i = q.pasos.findIndex(p => p.id === b.dataset.id);
+  if (i === sigue) {
+    b.classList.remove("senal"); b.classList.add("right"); b.disabled = true;
+    b.querySelector(".num").textContent = ++sigue;
+    sonido("tap");
+    if (sigue === q.pasos.length) return ganar();
+    feedback("");
+    decir(q.pasos[i].n);
+    return;
+  }
+  if (malos.has(`${sigue}-${b.dataset.id}`)) return; // el mismo error dos veces seguidas cuenta una sola vez
+  malos.add(`${sigue}-${b.dataset.id}`);
+  fallos++;
+  b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope");
+  const casi = i === sigue + 1;
+  feedback(casi ? "almost" : "bad", "🤔", casi ? "¡Casi! Ese va justo después" : "Todavía no");
+  decir(sigue === 0 ? `${q.pasos[i].n} no va de primero. ¿Cuál va primero?` : `${q.pasos[i].n} va más adelante. ¿Cuál sigue después de ${q.pasos[sigue - 1].n}?`);
+  if (fallos >= 2) pista();
+});
+
+// Escribir un número
+$("escribir").addEventListener("submit", e => {
+  e.preventDefault();
+  if (listo || q.tipo !== "escribir") return;
+  const campo = $("respuesta"), dado = campo.value.trim();
+  if (!dado) return;
+  if (igual(q.respuesta, dado, true)) {
+    campo.className = "right"; campo.disabled = true;
+    return ganar();
+  }
+  if (malos.has(dado)) return; // el mismo número otra vez no cuenta como otro error
+  malos.add(dado);
+  fallos++;
+  campo.className = "wrong";
+  if (fallos >= 2) {
+    campo.value = q.respuesta; campo.disabled = true;
+    return ganar(true);
+  }
+  feedback("bad", "🤔", "No es");
+  decir(`${dado} no es. ${q.pista}`);
+  $("explica").hidden = false; $("explica").textContent = "💡 " + q.pista;
+  campo.select();
+});
+
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-t]");
+  if (!b) return;
+  sonido("tap");
+  tema = TEMAS.find(t => t.id === b.dataset.t) || null;
+  esc.activa = !tema;
+  ultimo = "";
+  pintarModos(); nuevo();
+});
+$("nextBtn").addEventListener("click", () => {
+  // Saltarse una ronda después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar de escalón)
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
+
+pintarModos();
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__espacio = { get q() { return q; }, get nivel() { return esc.nivel; }, get sigue() { return sigue; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

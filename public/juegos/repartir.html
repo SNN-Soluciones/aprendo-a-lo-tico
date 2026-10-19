@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repartiendo mangos</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .ancho { width: min(96vw, 540px); }
+  .levels button { font-size: .95rem; padding: 3px 10px; }
+
+  /* Montón y canastas (o amigos, o bolsitas) */
+  .escena { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .monton {
+    background: #F4E1C1; border: 4px dashed #B98A52; border-radius: 20px; padding: 6px 8px; min-height: 64px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-content: center; gap: 2px;
+  }
+  .monton .rot { flex-basis: 100%; text-align: center; font-size: .85rem; font-weight: 800; color: #7A4E1D; }
+  .monton i, .grupo i { font-style: normal; line-height: 1.1; }
+  .monton i { font-size: var(--tam, 2rem); }
+  .monton .vacio { font-size: .95rem; font-weight: 700; color: #7A4E1D; opacity: .8; }
+  .grupos { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 8px; }
+  .grupo {
+    display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px 8px; border-radius: 18px;
+    background: var(--face); min-height: 104px; font-weight: 800;
+  }
+  .grupo .quien { font-size: 2rem; line-height: 1; }
+  .grupo .nom { font-size: .8rem; line-height: 1; }
+  .grupo .dentro { display: flex; flex-wrap: wrap; justify-content: center; gap: 0 1px; }
+  .grupo .dentro i { font-size: var(--tamg, 1.35rem); }
+  .grupo .dentro i.nueva, .monton i.nueva { animation: pop .35s ease-out; }
+  div.grupo { border: 4px solid var(--rim); box-shadow: 0 4px 0 var(--rim); }
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { flex: 1; font-size: 1.15rem; padding: 6px 4px; border-radius: 18px; background: var(--btn); }
+
+  /* Tarjeta: la cuenta o el problema */
+  .tarjeta { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 12px 14px;
+    font-size: 1.25rem; font-weight: 700; line-height: 1.35; text-align: center; box-shadow: 0 5px 0 var(--rim); }
+  .tarjeta .cuenta { display: block; font-size: 2.6rem; font-weight: 800; line-height: 1.1; }
+  .tarjeta .mult { display: block; font-size: 1.3rem; color: var(--materia); }
+  .tarjeta .filas { display: flex; flex-direction: column; align-items: center; gap: 0; margin: 4px 0; font-size: 1.3rem; line-height: 1.15; }
+  .tarjeta.problema { text-align: left; font-size: 1.2rem; }
+
+  /* Pregunta con teclado */
+  .pregunta { margin-top: 10px; text-align: center; font-weight: 800; color: var(--page-ink); line-height: 1.2; }
+  .pregunta .q { display: block; font-size: 1.3rem; }
+  .caja { display: inline-block; margin-top: 6px; min-width: 2.6em; font-size: 2.4rem; border: 4px solid var(--rim); background: var(--face); color: var(--ink); border-radius: 16px; padding: 0 12px; }
+  .caja.ok { background: #CFF5DC; border-color: var(--ok); }
+  .caja.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .caja.revelada { background: #FFF1B8; border-color: #D9A400; }
+  /* Teclado de 3 filas cortas, para que la pregunta y la respuesta se vean juntas en el celular */
+  .teclado { margin-top: 10px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+  .teclado button { font-size: 1.6rem; padding: 2px 0; border-radius: 14px; }
+  .teclado .borrar { grid-column: span 2; }
+  .teclado .ok { grid-column: span 3; background: var(--btn); }
+  .opciones { margin-top: 10px; display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 10px; }
+  .opciones button { font-size: 2.2rem; padding: 6px 0; border-radius: 18px; }
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 12px; font-weight: 700; font-size: 1.05rem; }
+  .explica b { font-size: 1.2rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🥭➗🧺</div>
+  <h1>Repartiendo mangos</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Dividir es repartir en partes iguales. Repartí la fruta, descubrí cuánto le toca a cada uno y cuánto sobra. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="repartir">🧺 Repartir</button>
+    <button data-nivel="agrupar">🛍️ Agrupar</button>
+    <button data-nivel="cuentas">✏️ Cuentas</button>
+    <button data-nivel="problemas">📖 Problemas</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tarjeta ancho" id="tarjeta" hidden></div>
+<div class="escena ancho" id="escena" hidden>
+  <div class="monton" id="monton" aria-label="El montón"></div>
+  <div class="grupos" id="grupos"></div>
+</div>
+<div class="acciones ancho" id="acciones" hidden>
+  <button id="vueltaBtn">🔁 Uno a cada uno</button>
+  <button id="bolsaBtn">🛍️ Llenar una bolsita</button>
+</div>
+
+<div class="pregunta ancho" id="pregunta" aria-live="polite" hidden></div>
+<div class="opciones ancho" id="opciones" hidden></div>
+<div class="teclado ancho" id="teclado" hidden>
+  <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button><button data-k="4">4</button><button data-k="5">5</button>
+  <button data-k="6">6</button><button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button><button data-k="0">0</button>
+  <button data-k="borrar" class="borrar" aria-label="Borrar">⌫</button><button data-k="ok" class="ok" aria-label="Revisar">✔️ Listo</button>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, MANUAL, ronda, pista, colones, sobran } from "../js/repartir.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("repartir", { escalones: ESCALONES.length,
+  inicio: edad => edad === null ? 2 : edad <= 7 ? 0 : edad === 8 ? 3 : edad === 9 ? 6 : edad === 10 ? 8 : 10 });
+const stars = estrellas("repartir-stars");
+
+// Ayuda si se queda quieto: con dibujos, se le señala qué hacer; en cuentas y problemas solo se repite (hay que dejarlo pensar)
+const ayudaChica = ayudaSiSeQueda({ senalar: () => darPista(true) });
+const ayudaPensar = ayudaSiSeQueda({ espera: 25000 });
+let ayuda = ayudaChica;
+
+let manual = null, x = null, e = null, fase = "", paso = 0, escrito = "", fallosPaso = 0, fallos = 0, revelado = false, cuentas = [], monton = 0, ocupado = false;
+
+// Lo que se dice en voz alta: los signos se leen como palabras
+const aVoz = t => String(t).replace(/<[^>]+>/g, "").replace(/₡(\d[\d ]*)/g, (_, v) => v.replace(/ /g, "") + " colones")
+  .replace(/÷/g, " dividido entre ").replace(/×/g, " por ").replace(/−/g, " menos ").replace(/=/g, " es igual a ");
+const loDe = c => (c.f ? "las" : "los");
+const unoDe = c => (c.f ? "una" : "uno");
+const quienes = () => x.quien.tipo === "amigos" ? "amigos" : "canastas";
+const unQuien = () => x.quien.tipo === "amigos" ? "un amigo" : "una canasta";
+
+// ---------- Rondas ----------
+function nuevo() {
+  e = ESCALONES[esc.activa ? esc.nivel : azar(MANUAL[manual])];
+  x = ronda(e, Math.random, x);
+  fase = ""; paso = 0; escrito = ""; fallosPaso = 0; fallos = 0; revelado = false; ocupado = false;
+  ["tarjeta", "escena", "acciones", "pregunta", "opciones", "teclado", "explica"].forEach(id => { $(id).hidden = true; });
+  $("nextBtn").classList.remove("pulse");
+  feedback("");
+  ayuda.parar();
+  ayuda = x.tipo === "cuenta" || x.tipo === "problema" ? ayudaPensar : ayudaChica;
+
+  if (x.tipo === "repartir" || x.tipo === "agrupar") {
+    fase = "manipular";
+    cuentas = x.tipo === "repartir" ? Array(x.d).fill(0) : [];
+    monton = x.n;
+    pintarEscena();
+    $("escena").hidden = false;
+    $("acciones").hidden = !(x.tipo === "agrupar" || x.vuelta);
+    $("vueltaBtn").hidden = x.tipo !== "repartir";
+    $("bolsaBtn").hidden = x.tipo !== "agrupar";
+    $("bolsaBtn").textContent = `🛍️ Llenar una bolsita de ${x.d}`;
+    const c = x.cosa;
+    if (x.tipo === "repartir") {
+      instruccion(`<b>${x.n} ${c.e}</b> entre <b>${x.d} ${x.quien.tipo === "amigos" ? "🧒" : "🧺"}</b><br><small>¡A todos les toca igual!</small>`,
+        `Repartí ${x.n} ${c.p} entre ${x.d} ${quienes()}, en partes iguales. Tocá ${unQuien()} para darle ${unoDe(c)}.${x.vuelta ? " Con el botón de la vuelta le das uno a cada uno de una vez." : ""} ¡A todos les tiene que tocar igual!`);
+    } else {
+      instruccion(`<b>${x.n} ${c.e}</b> en bolsitas de <b>${x.d}</b>`,
+        `Hay ${x.n} ${c.p}. Metelos en bolsitas de ${x.d}. Tocá el botón amarillo para llenar una bolsita. ¿Cuántas bolsitas salen?`);
+    }
+  } else {
+    fase = "pregunta";
+    $("tarjeta").hidden = false;
+    pintarTarjeta();
+    if (x.tipo === "multi") instruccion("Usá la multiplicación 🧠", `Si ${x.a} por ${x.b} es ${x.a * x.b}, ¿cuánto es ${x.n} dividido entre ${x.d}?`);
+    else if (x.tipo === "cuenta") instruccion("Dividí sin dibujos ✏️", `¿Cuánto es ${x.n} dividido entre ${x.d}? ¿Y cuánto sobra?`);
+    else instruccion("📖 Leé el problema", aVoz(`${x.texto} ${x.pasos[0].pregunta}`));
+    preguntar();
+  }
+  ayuda.empezar();
+}
+
+function pintarTarjeta() {
+  $("tarjeta").classList.toggle("problema", x.tipo === "problema");
+  if (x.tipo === "multi") {
+    // Las filas de la multiplicación, si son pocas
+    const filas = x.a * x.b <= 30 ? `<span class="filas" aria-hidden="true">${Array.from({ length: x.a }, () => `<span>${x.cosa.e.repeat(x.b)}</span>`).join("")}</span>` : "";
+    $("tarjeta").innerHTML = `<span class="mult">${x.a} × ${x.b} = ${x.a * x.b}</span>${filas}<span class="cuenta">${x.n} ÷ ${x.d} = ?</span>`;
+  } else if (x.tipo === "cuenta") {
+    const hecho = paso > 0 ? `${x.q}` : "?";
+    $("tarjeta").innerHTML = `<span class="cuenta">${x.n} ÷ ${x.d} = ${hecho}</span>${paso > 0 ? `<span>y sobra${paso > 1 && x.r === 1 ? "" : "n"} ${paso > 1 ? x.r : "?"}</span>` : ""}`;
+  } else {
+    $("tarjeta").innerHTML = x.texto;
+  }
+}
+
+// ---------- Repartir y agrupar ----------
+function pintarEscena(nuevaEn = -1) {
+  const c = x.cosa;
+  const tam = x.n <= 12 ? "2rem" : x.n <= 24 ? "1.6rem" : "1.35rem";
+  $("monton").style.setProperty("--tam", tam);
+  $("monton").innerHTML = `<span class="rot">El montón</span>${monton ? `<i>${c.e}</i>`.repeat(monton) : `<span class="vacio">¡Vacío!</span>`}`;
+  const g = $("grupos");
+  if (x.tipo === "repartir") {
+    g.style.setProperty("--cols", x.d === 4 ? 2 : Math.min(x.d, 3));
+    g.style.setProperty("--tamg", Math.max(...cuentas) > 6 ? "1.1rem" : "1.35rem");
+    g.innerHTML = cuentas.map((k, i) => {
+      const q = x.quien.tipo === "amigos" ? x.quien.lista[i] : null;
+      const quien = q ? `<span class="quien" aria-hidden="true">${q.e}</span><span class="nom">${q.n}</span>` : `<span class="quien" aria-hidden="true">🧺</span>`;
+      const dentro = Array.from({ length: k }, (_, j) => `<i class="${i === nuevaEn && j === k - 1 ? "nueva" : ""}">${c.e}</i>`).join("");
+      return `<button class="grupo" data-g="${i}" aria-label="${q ? q.n : `Canasta ${i + 1}`}">${quien}<span class="dentro">${dentro}</span></button>`;
+    }).join("");
+  } else {
+    g.style.setProperty("--cols", 3);
+    g.style.setProperty("--tamg", x.d > 4 ? "1.1rem" : "1.35rem");
+    g.innerHTML = cuentas.map((k, i) => `<div class="grupo" aria-label="Bolsita ${i + 1}"><span class="quien" aria-hidden="true">🛍️</span><span class="dentro">${`<i class="${i === nuevaEn ? "nueva" : ""}">${c.e}</i>`.repeat(k)}</span></div>`).join("");
+  }
+}
+
+function darA(i) {
+  const min = Math.min(...cuentas);
+  if (cuentas[i] > min) {
+    const b = $("grupos").querySelector(`[data-g="${i}"]`);
+    b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope");
+    senalar($("grupos").querySelector(`[data-g="${cuentas.indexOf(min)}"]`));
+    decir(`¡Ojo! Primero dale a ${x.quien.tipo === "amigos" ? "los demás" : "las otras canastas"}, para que sea parejo.`);
+    return false;
+  }
+  cuentas[i]++; monton--;
+  sonido("tap");
+  pintarEscena(i);
+  revisarReparto();
+  return true;
+}
+
+$("grupos").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-g]");
+  if (!b || fase !== "manipular" || ocupado || x.tipo !== "repartir") return;
+  darA(Number(b.dataset.g));
+});
+
+// 🔁 Le da uno a cada uno (a los que les falta en esta vuelta)
+$("vueltaBtn").addEventListener("click", async () => {
+  if (fase !== "manipular" || ocupado) return;
+  const min = Math.min(...cuentas);
+  const faltan = cuentas.map((k, i) => (k === min ? i : -1)).filter(i => i >= 0);
+  if (monton < faltan.length) return;
+  ocupado = true;
+  for (const i of faltan) { cuentas[i]++; monton--; sonido("tap"); pintarEscena(i); await new Promise(r => setTimeout(r, 160)); }
+  ocupado = false;
+  revisarReparto();
+});
+
+$("bolsaBtn").addEventListener("click", () => {
+  if (fase !== "manipular" || ocupado) return;
+  if (monton < x.d) return;
+  cuentas.push(x.d); monton -= x.d;
+  sonido("tap");
+  pintarEscena(cuentas.length - 1);
+  if (monton < x.d) terminarManipular();
+});
+
+function revisarReparto() {
+  const parejo = cuentas.every(k => k === cuentas[0]);
+  if (parejo && monton < x.d) terminarManipular();
+}
+
+function terminarManipular() {
+  fase = "pregunta";
+  $("acciones").hidden = true;
+  const c = x.cosa;
+  let dicho;
+  if (x.tipo === "repartir") dicho = monton ? `¡Ya no alcanza para darle otr${c.f ? "a" : "o"} a cada ${x.quien.tipo === "amigos" ? "amigo" : "canasta"}! ${monton === 1 ? "Ese que quedó" : "Esos que quedaron"} en el montón sobran.` : "¡Listo! Se repartieron todos y no sobró nada.";
+  else dicho = monton ? `¡Ya no alcanza para otra bolsita de ${x.d}!` : "¡Listo! Todos quedaron en bolsitas.";
+  decir(dicho).then(() => { if (fase === "pregunta" && paso === 0 && !escrito) decir(x.pasos[0].pregunta); });
+  preguntar(false);
+}
+
+// ---------- Preguntas ----------
+function preguntar(hablar = true) {
+  const p = x.pasos[paso];
+  escrito = ""; fallosPaso = 0;
+  $("pregunta").hidden = false;
+  const conOpciones = !!p.opciones;
+  $("teclado").hidden = conOpciones; $("opciones").hidden = !conOpciones;
+  if (conOpciones) {
+    $("opciones").style.setProperty("--n", p.opciones.length);
+    $("opciones").innerHTML = p.opciones.map(v => `<button data-v="${v}">${v}</button>`).join("");
+  }
+  pintarPregunta();
+  if (x.tipo === "cuenta") pintarTarjeta();
+  if (hablar && paso > 0) decir(aVoz(p.pregunta));
+}
+
+function pintarPregunta(estado = "") {
+  const p = x.pasos[paso];
+  // En las cuentas la división ya está en la tarjeta: aquí solo se pregunta
+  const txt = x.tipo === "multi" ? "Escogé la respuesta:" : x.tipo === "cuenta" ? (p.id === "residuo" ? "¿Cuánto sobra?" : "¿Cuánto da?") : p.pregunta;
+  $("pregunta").innerHTML = `<span class="q">${txt}</span>${p.opciones ? "" : `<span class="caja ${estado}">${p.prefijo || ""}${escrito || "?"}</span>`}`;
+}
+
+$("teclado").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-k]");
+  if (!b || fase !== "pregunta" || ocupado) return;
+  const k = b.dataset.k;
+  if (k === "borrar") escrito = escrito.slice(0, -1);
+  else if (k === "ok") { if (escrito) revisar(Number(escrito), null); return; }
+  else if (escrito.length < 5) escrito = escrito === "0" ? k : escrito + k;
+  sonido("tap");
+  pintarPregunta();
+});
+// Teclado de la compu
+addEventListener("keydown", ev => {
+  if (fase !== "pregunta" || $("teclado").hidden) return;
+  if (/^\d$/.test(ev.key)) $("teclado").querySelector(`[data-k="${ev.key}"]`).click();
+  else if (ev.key === "Backspace") $("teclado").querySelector(`[data-k="borrar"]`).click();
+  else if (ev.key === "Enter") $("teclado").querySelector(`[data-k="ok"]`).click();
+});
+
+$("opciones").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-v]");
+  if (!b || b.disabled || fase !== "pregunta" || ocupado) return;
+  revisar(Number(b.dataset.v), b);
+});
+
+/** La pista de esta pregunta (y qué señalar). Con `quieto`, es la ayuda por no tocar nada. */
+function darPista(quieto = false) {
+  const p = x.pasos[paso], c = x.cosa;
+  if (fase === "manipular") {
+    if (x.tipo === "repartir") senalar($("grupos").querySelector(`[data-g="${cuentas.indexOf(Math.min(...cuentas))}"]`));
+    else senalar($("bolsaBtn"));
+    return;
+  }
+  if (fase !== "pregunta") return;
+  let txt = "", el = null;
+  if (x.tipo === "repartir") {
+    if (p.id === "cociente") { txt = `Contá ${loDe(c)} ${c.p} de ${x.quien.tipo === "amigos" ? "un solo amigo" : "una sola canasta"}.`; el = $("grupos").querySelector(".grupo"); }
+    else { txt = `Contá ${loDe(c)} que quedaron en el montón: no alcanzaron para todos.`; el = $("monton"); }
+  } else if (x.tipo === "agrupar") {
+    if (p.id === "cociente") { txt = "Contá las bolsitas llenas."; el = $("grupos"); }
+    else { txt = `Contá ${loDe(c)} que quedaron sueltos en el montón.`; el = $("monton"); }
+  } else if (x.tipo === "multi") {
+    txt = `Pensá: ${x.d} por cuánto da ${x.n}?`;
+    el = p.opciones && $("opciones").querySelector(`[data-v="${p.respuesta}"]`);
+    if (!quieto) el = null;
+  } else if (x.tipo === "cuenta") {
+    txt = p.id === "cociente" ? pista(x) : `Multiplicá: ${x.d} × ${x.q} = ${x.d * x.q}. ¿Cuánto falta para llegar a ${x.n}?`;
+  } else {
+    const ex = { arriba: `Hacé la división ${x.n} ÷ ${x.d}. ¿Y los que sobran? ¡También tienen que caber!`,
+      abajo: `Hacé la división ${x.n} ÷ ${x.d}. Solo cuentan los completos.`,
+      plata: p.id === "residuo" ? "Restá: lo que tiene menos lo que gasta en empanadas." : `Es como dividir ${x.n} entre ${x.d}.`,
+      exacto: `Pensá: ${x.d} por cuánto da ${x.n}?`, ambos: p.id === "residuo" ? `Multiplicá ${x.d} × ${x.q} y fijate cuánto falta para ${x.n}.` : `Hacé la división ${x.n} ÷ ${x.d}.` };
+    txt = ex[x.pide];
+  }
+  $("explica").hidden = false; $("explica").textContent = "💡 " + txt;
+  if (el) senalar(el);
+  decir(aVoz(txt), { cola: quieto });
+}
+
+function revisar(v, boton) {
+  const p = x.pasos[paso];
+  if (v === p.respuesta) {
+    if (boton) boton.classList.add("right");
+    pintarPregunta("ok");
+    sonido("ok");
+    $("explica").hidden = true;
+    if (paso + 1 < x.pasos.length) {
+      paso++;
+      feedback("ok", "👍", "¡Eso!");
+      ocupado = true;
+      setTimeout(() => { ocupado = false; preguntar(); }, 700);
+    } else terminar();
+    return;
+  }
+  fallos++; fallosPaso++;
+  if (boton) { boton.classList.add("wrong", "nope"); boton.disabled = true; }
+  if (fallosPaso >= 2) return revelar();
+  pintarPregunta("mal");
+  escrito = "";
+  const casi = Math.abs(v - p.respuesta) === 1;
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "No es");
+  darPista();
+  setTimeout(() => { if (fase === "pregunta") pintarPregunta(); }, 600);
+}
+
+// Segundo error: se le muestra la respuesta, con el porqué, y se sigue
+async function revelar() {
+  const p = x.pasos[paso];
+  revelado = true; ocupado = true;
+  escrito = String(p.respuesta);
+  pintarPregunta("revelada");
+  if (p.opciones) senalar($("opciones").querySelector(`[data-v="${p.respuesta}"]`));
+  const { n, d, q, r } = x;
+  const porque = p.explica
+    || (p.id === "residuo" ? (r ? `${d} × ${q} = ${d * q}, y de ${d * q} a ${n} hay ${r}.` : `${d} × ${q} = ${n}: no sobra nada.`)
+    : x.tipo === "cuenta" ? pista(x, true)
+    : x.tipo === "multi" ? `${d} × ${q} = ${n}, entonces ${n} ÷ ${d} = ${q}.`
+    : x.tipo === "repartir" ? `A cada ${x.quien.tipo === "amigos" ? "amigo" : "canasta"} le tocaron ${q}: ${n} ÷ ${d} = ${q}.`
+    : `Salieron ${q} ${q === 1 ? "bolsita" : "bolsitas"} de ${d}.`);
+  feedback("almost", "🤝", `Era ${p.prefijo || ""}${p.respuesta}`);
+  $("explica").hidden = false; $("explica").textContent = "💡 " + porque;
+  await decir(aVoz(`Era ${p.prefijo ? colones(p.respuesta) : p.respuesta}. ${porque}`));
+  ocupado = false;
+  if (fase !== "pregunta") return;
+  if (paso + 1 < x.pasos.length) { paso++; preguntar(); } else terminar();
+}
+
+function terminar() {
+  fase = "fin";
+  ayuda.parar();
+  $("teclado").hidden = true;
+  const limpio = fallos === 0 && !revelado && !ayuda.usada;
+  const { n, d, q, r } = x;
+  let resumen;
+  if (x.tipo === "problema") resumen = x.pasos.map(p => p.explica).join(" ");
+  else if (x.tipo === "multi") resumen = `${n} ÷ ${d} = ${q}, porque ${d} × ${q} = ${n}.`;
+  else resumen = `${n} ÷ ${d} = ${q}${r ? ` y ${sobran(r)}` : ""}. Comprobación: ${d} × ${q}${r ? ` + ${r}` : ""} = ${n}.`;
+  const dibujo = x.tipo === "repartir" ? `${q} para cada ${x.quien.tipo === "amigos" ? "amigo" : "canasta"}${r ? ` y ${sobran(r)}` : ""}. `
+    : x.tipo === "agrupar" ? `Salen ${q} ${q === 1 ? "bolsita" : "bolsitas"} de ${d}${r ? ` y ${sobran(r)}` : ""}. ` : "";
+  $("explica").hidden = false;
+  $("explica").innerHTML = `${dibujo ? `${dibujo}<br>` : ""}<b>${resumen}</b>`;
+  if (limpio) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(aVoz(`${bien} ${dibujo}${resumen}`)); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(aVoz(`¡Ahora sí! ${dibujo}${resumen}`)); }
+  if (x.tipo === "cuenta") { paso = 2; pintarTarjeta(); }
+  esc.resultado({ fallos, ayuda: revelado || ayuda.usada, opciones: x.tipo === "multi" ? x.pasos[0].opciones.length : 0 });
+  $("nextBtn").classList.add("pulse");
+}
+
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+niveles(v => { esc.activa = v === "auto"; manual = v === "auto" ? null : v; x = null; nuevo(); });
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__repartir = {
+  get x() { return x; }, get fase() { return fase; }, get paso() { return paso; }, get nivel() { return esc.nivel; },
+  get cuentas() { return cuentas; }, get monton() { return monton; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

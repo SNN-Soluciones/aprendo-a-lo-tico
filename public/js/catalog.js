@@ -564,4 +564,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/cuentos.html",
   },
+  {
+    id: "repartir",
+    titulo: "Repartiendo mangos",
+    descripcion: "Dividir es repartir: repartí fruta en partes iguales, descubrí cuánto sobra y resolvé problemas, de 6 ÷ 2 a 3 cifras.",
+    emoji: "🥭",
+    materia: "mate",
+    grados: [2, 3, 4],
+    edad: [7, 10],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/repartir.html",
+  },
 ];

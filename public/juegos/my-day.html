@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My day in English</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #8E5BD9; }
+  /* Los temas en una sola fila que se desliza */
+  .top .modos { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 2px 2px 8px; }
+  .top .modos::-webkit-scrollbar { display: none; }
+  .top .modos button { flex: none; white-space: nowrap; }
+  .modos button.auto { font-size: 1.1rem; }
+
+  .tarjeta .reloj { display: block; margin: 0 auto; width: min(46vw, 170px); height: auto; }
+  .tarjeta .horario { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 6px; padding: 4px 14px; border: 3px dashed var(--materia); border-radius: 14px; background: #F6F0FF; }
+  .tarjeta .horario span { font-size: 1.8rem; }
+  .opciones button .emo { font-size: clamp(2.6rem, 13vw, 3.4rem); line-height: 1.1; }
+  .opciones button .dig { font-size: 2rem; letter-spacing: 1px; font-variant-numeric: tabular-nums; }
+  .opciones button { text-align: center; }
+
+  /* 🔢 Ordenar: casillas de arriba (primero) a abajo (último) */
+  .guia { margin: 10px 0 4px; text-align: center; font-weight: 800; font-size: .95rem; color: var(--page-ink); }
+  .slots { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+  .slot { display: flex; align-items: center; gap: 8px; min-height: 50px; padding: 4px 8px; border: 3px dashed var(--rim); border-radius: 16px; background: rgba(255, 255, 255, .45); }
+  .slot .num { flex: none; width: 30px; height: 30px; border-radius: 50%; background: var(--materia); color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+  .slot .quitar { flex: 1; display: flex; align-items: center; gap: 8px; text-align: left; padding: 4px 10px; border-radius: 12px; font-size: 1.05rem; line-height: 1.15; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .slot.bien { border-style: solid; border-color: var(--ok); background: #CFF5DC; }
+  .slot.bien .quitar { background: #CFF5DC; }
+  .e { font-size: 1.6rem; }
+  .cartas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+  .carta { border-radius: 16px; padding: 6px 4px; display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 1.05rem; line-height: 1.15; }
+  .carta.usada { visibility: hidden; }
+  .escribir input { text-transform: none; }
+  .tarjeta .hueco { display: inline-block; min-width: 3ch; margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🌦️📅⏰</div>
+  <h1>My day in English</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Days, months, the weather, what to wear, the time and your day, in English. Escuchá, tocá, ordená y escribí. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Tema"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div id="juego" class="ancho">
+  <div class="tarjeta" id="tarjeta" aria-live="polite"></div>
+  <div id="zona"></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Next ➡️</button>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, MODOS, inicioPorEdad, preguntaDeModo, acepta, pistaPalabra, pistaHora } from "../js/my-day.js";
+
+const $ = id => document.getElementById(id);
+const sinHtml = t => new DOMParser().parseFromString(String(t), "text/html").body.textContent;
+
+// 🪜 De a poquito por defecto; los temas a mano son para el papá o la maestra (no mueven la escalera)
+const esc = escalera("my-day", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("my-day-stars");
+// Si se queda un rato sin tocar nada, se le vuelve a decir la pregunta
+const ayuda = ayudaSiSeQueda({ repetir: () => decirPregunta(false), espera: 20000 });
+
+let modo = "auto", q = null, fallos = 0, listo = false, puestos = [];
+
+// 🔊 Las partes se dicen una tras otra, cada una con la voz de su idioma.
+// Si empieza otra cosa (otra pregunta, otro toque), lo que quedaba por decir se corta.
+let turnoVoz = 0;
+async function decirPartes(partes, lento = false) {
+  const t = ++turnoVoz;
+  for (let i = 0; i < partes.length; i++) {
+    if (t !== turnoVoz) return;
+    const [texto, lang] = partes[i];
+    await decir(texto, { lang, cola: i > 0, ...(lento ? { rate: LENTO } : {}) });
+  }
+}
+const decirPregunta = lento => q && decirPartes(q.voz, lento);
+
+function pintarModos() {
+  $("modos").innerHTML = `<button class="auto" data-modo="auto" aria-pressed="${modo === "auto"}" aria-label="De a poquito: sube solo">🪜</button>`
+    + MODOS.map(m => `<button data-modo="${m.id}" aria-pressed="${m.id === modo}">${m.nombre}</button>`).join("");
+  $("modos").querySelector('[aria-pressed="true"]')?.scrollIntoView({ block: "nearest", inline: "center" });
+}
+function pista(texto) {
+  $("explica").hidden = false;
+  $("explica").textContent = `💡 ${texto}`;
+}
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b) return;
+  // Irse de una ronda después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar)
+  if (modo === "auto" && q && !listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap");
+  modo = b.dataset.modo;
+  esc.activa = modo === "auto";
+  pintarModos(); nueva();
+});
+
+// ---------- Pregunta nueva ----------
+function nueva() {
+  q = modo === "auto" ? ESCALONES[esc.nivel].gen(Math.random) : preguntaDeModo(MODOS.find(m => m.id === modo));
+  fallos = 0; listo = false; puestos = [];
+  $("tarjeta").innerHTML = q.html;
+  $("explica").hidden = true; $("sigBtn").hidden = true;
+  feedback("");
+  if (q.tipo === "opciones") {
+    $("zona").innerHTML = `<div class="opciones" style="grid-template-columns:repeat(${q.cols || 1}, 1fr)">${
+      q.opciones.map(o => `<button data-id="${o.id}" aria-label="${sinHtml(o.html) || o.voz.map(p => p[0]).join(" ")}">${o.html}</button>`).join("")}</div>`;
+  } else if (q.tipo === "escribir") {
+    const hora = q.clase === "hora";
+    $("zona").innerHTML = `<form class="escribir" id="escribir" novalidate>
+      <input id="respuesta" autocomplete="off" autocapitalize="off" spellcheck="false" ${hora ? `inputmode="decimal" maxlength="5" placeholder="3:45"` : `maxlength="12"`} aria-label="${hora ? "La hora con números" : "La palabra en inglés"}">
+      <button type="submit" aria-label="Revisar">✔️</button></form>`;
+    setTimeout(() => $("respuesta")?.focus({ preventScroll: true }), 50);
+  } else pintarOrden();
+  $("instr").innerHTML = q.instr;
+  decirPregunta(false);
+  ayuda.empezar();
+}
+
+// ---------- Fin de la ronda ----------
+function ganar() {
+  listo = true;
+  ayuda.parar();
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decirPartes([[bien, "es"], ...q.explicaVoz]); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decirPartes([["¡Ahora sí!", "es"], ...q.explicaVoz]); }
+  cerrar();
+}
+/** Después de 2 intentos se muestra la respuesta y se explica. */
+function mostrarRespuesta() {
+  listo = true;
+  ayuda.parar();
+  feedback("bad", "📖", "Así era");
+  decirPartes([["Así era:", "es"], ...q.explicaVoz]);
+  cerrar();
+}
+function cerrar() {
+  $("explica").hidden = false; $("explica").innerHTML = q.explica;
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: q.tipo === "opciones" ? q.opciones.length : 0 });
+  $("sigBtn").hidden = false;
+}
+
+// ---------- Opciones y piezas ----------
+$("zona").addEventListener("click", e => {
+  if (!q || listo) return;
+  const b = e.target.closest(".opciones [data-id]");
+  if (b && !b.disabled) return elegir(b);
+  const c = e.target.closest("[data-pieza]");
+  if (c) return poner(c.dataset.pieza);
+  const s = e.target.closest("[data-quitar]");
+  if (s) return quitar(Number(s.dataset.quitar));
+});
+
+function elegir(b) {
+  const o = q.opciones.find(x => x.id === b.dataset.id);
+  const botones = [...$("zona").querySelectorAll(".opciones button")];
+  const buena = botones.find(x => x.dataset.id === q.correcta);
+  if (o.id === q.correcta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    botones.forEach(x => { if (x !== b) x.disabled = true; });
+    return ganar();
+  }
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true; // tocarla otra vez no cuenta otro error
+  const quedan = botones.filter(x => !x.disabled).length;
+  feedback(fallos === 1 && quedan > 1 ? "almost" : "bad", "🤔", "No es");
+  pista(o.porque.txt);
+  if (fallos >= 2 || quedan === 1) {
+    senalar(buena);
+    decirPartes([...o.porque.voz, ["Mirá la que brilla: esa es.", "es"]]);
+  } else decirPartes([...o.porque.voz, ["Probá otra vez.", "es"]]);
+}
+
+// ---------- 🔢 Ordenar ----------
+const pieza = id => q.items.find(i => i.id === id);
+function pintarOrden(bien = 0) {
+  const n = q.items.length;
+  $("zona").innerHTML = `<p class="guia">${q.arriba}</p><ol class="slots">${
+    Array.from({ length: n }, (_, i) => {
+      const p = puestos[i] && pieza(puestos[i]);
+      return `<li class="slot${i < bien ? " bien" : ""}"><span class="num">${i + 1}</span>${p
+        ? `<button class="quitar" data-quitar="${i}" aria-label="${sinHtml(p.html)}: tocá para quitarlo">${p.html}</button>` : ""}</li>`;
+    }).join("")}</ol><p class="guia">${q.abajo}</p>
+    <div class="cartas">${q.items.map(p => `<button class="carta${puestos.includes(p.id) ? " usada" : ""}" data-pieza="${p.id}" aria-label="${sinHtml(p.html)}">${p.html}</button>`).join("")}</div>`;
+}
+function poner(id) {
+  if (puestos.includes(id)) return;
+  sonido("tap");
+  decirPartes(pieza(id).voz);
+  puestos.push(id);
+  pintarOrden();
+  if (puestos.length === q.items.length) revisarOrden();
+}
+function quitar(i) {
+  sonido("tap");
+  puestos.splice(i, 1);
+  pintarOrden();
+}
+function revisarOrden() {
+  const k = puestos.findIndex((id, i) => id !== q.orden[i]);
+  if (k === -1) { listo = true; pintarOrden(q.orden.length); return ganar(); }
+  fallos++;
+  if (fallos >= 2) {
+    listo = true;
+    puestos = [...q.orden];
+    pintarOrden(q.orden.length);
+    return mostrarRespuesta();
+  }
+  // Los que están bien se quedan; de ahí para abajo se vuelve a intentar
+  const iba = pieza(q.orden[k]);
+  puestos = puestos.slice(0, k);
+  pintarOrden(k);
+  pista(`En la casilla ${k + 1} va «${sinHtml(iba.html).trim()}».`);
+  if (k > 0) {
+    feedback("almost", "🤏", `¡Casi! ${k === 1 ? "El primero está" : `Los primeros ${k} están`} bien`);
+    decirPartes([[`¡Casi! ${k === 1 ? "El primero está bien" : `Los primeros ${k} están bien`}. En la casilla ${k + 1} va:`, "es"], ...iba.voz]);
+  } else {
+    feedback("bad", "🤔", "No es ese orden");
+    decirPartes([["Todavía no. Primero va:", "es"], ...iba.voz]);
+  }
+}
+
+// ---------- ✍️ Escribir ----------
+$("zona").addEventListener("submit", e => {
+  e.preventDefault();
+  if (!q || listo || q.tipo !== "escribir") return;
+  const campo = $("respuesta"), texto = campo.value.trim();
+  if (!texto) return;
+  if (acepta(q, texto)) { campo.classList.add("right"); campo.disabled = true; return ganar(); }
+  fallos++;
+  if (fallos >= 2) {
+    campo.classList.add("wrong"); campo.disabled = true;
+    campo.insertAdjacentHTML("afterend", `<span class="era">✔️ ${q.respuesta}</span>`);
+    return mostrarRespuesta();
+  }
+  campo.value = "";
+  const p = q.clase === "hora" ? pistaHora(q) : pistaPalabra(q);
+  feedback("almost", "🤔", "Todavía no");
+  pista(p);
+  decirPartes([["Todavía no.", "es"], [p.replace(/[«»]/g, ""), "es"], ["Escuchá otra vez:", "es"], ...q.voz.filter(x => x[1] === "en")]);
+  campo.focus({ preventScroll: true });
+});
+
+$("sigBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+
+alEmpezar(nueva, lento => decirPregunta(lento));
+pintarModos();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__myday = { get q() { return q; }, get nivel() { return esc.nivel; }, get modo() { return modo; }, get fallos() { return fallos; }, get puestos() { return puestos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

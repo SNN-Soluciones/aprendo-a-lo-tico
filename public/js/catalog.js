@@ -612,4 +612,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/espacio.html",
   },
+  {
+    id: "my-day",
+    titulo: "My day in English",
+    descripcion: "Days, months, the weather, what to wear, telling the time and your daily routine: escuchá, tocá, ordená y escribí en inglés.",
+    emoji: "🌦️",
+    materia: "ingles",
+    grados: [2, 3, 4, 5, 6],
+    edad: [7, 12],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/my-day.html",
+  },
 ];

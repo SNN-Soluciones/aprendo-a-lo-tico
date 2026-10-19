@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Números del 1 al 100</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .levels button { font-size: 1.25rem; padding: 2px 10px; }
+
+  .escena { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; min-height: 40px; }
+  .escena:empty { display: none; }
+
+  /* Tira de números con un hueco */
+  .tira { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+  .tira b { min-width: 64px; padding: 4px 8px; border: 4px solid var(--rim); border-radius: 16px; background: var(--face);
+    font-size: clamp(1.8rem, 9vw, 2.4rem); text-align: center; line-height: 1.2; color: var(--ink); }
+  .tira.serie b { min-width: 54px; font-size: clamp(1.4rem, 7vw, 2rem); }
+  .hueco { color: var(--materia) !important; border-style: dashed !important; }
+
+  /* Zapatos en parejas, número grande y palabra */
+  .zapatos { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; font-size: clamp(1.8rem, 9vw, 2.4rem); }
+  .zapatos .pareja { border: 3px dashed var(--ok); border-radius: 14px; padding: 0 4px; background: #EFFAF2; }
+  .zapatos .solo { border: 3px dashed var(--bad); border-radius: 14px; padding: 0 4px; background: #FFF0EE; }
+  .grande { font-size: clamp(3.4rem, 18vw, 4.6rem); font-weight: 800; color: var(--page-ink); line-height: 1; }
+  .grande u { text-decoration-color: var(--materia); text-decoration-thickness: 6px; color: var(--materia); }
+  .palabra { display: inline-block; background: var(--face); border: 4px solid var(--rim); border-radius: 18px; padding: 6px 16px;
+    font-size: clamp(1.5rem, 7vw, 2rem); font-weight: 800; color: var(--ink); }
+  .grande-num { font-size: 2.2rem; color: var(--materia); }
+  .escena > p { margin: 0; font-size: 1.3rem; font-weight: 800; color: var(--page-ink); text-align: center; }
+
+  /* Decenas (▮) y unidades (•) */
+  .bloq { display: inline-flex; flex-wrap: wrap; align-items: flex-end; gap: 2px; max-width: 150px; }
+  .bloq i { display: block; background: var(--materia); border: 1px solid var(--rim); }
+  .bloq i.d { width: 9px; height: 42px; }
+  .bloq i.u { width: 9px; height: 9px; background: #FFC83D; }
+  .par-bloq { display: flex; gap: 40px; justify-content: center; }
+
+  /* Pedacito de la tabla del 100 */
+  .cruz { display: grid; grid-template-columns: repeat(3, 64px); gap: 4px; }
+  .cruz b { border: 3px solid var(--rim); border-radius: 10px; background: var(--face); color: var(--ink); text-align: center; font-size: 1.6rem; line-height: 1.5; }
+  .cruz b.centro { background: #FFF1C2; }
+
+  /* Recta numérica para redondear */
+  .recta { display: flex; width: min(92vw, 520px); justify-content: space-between; border-top: 4px solid var(--rim); padding-top: 2px; }
+  .recta i { font-style: normal; position: relative; width: 26px; text-align: center; font-weight: 800; font-size: 1rem; color: var(--page-ink); }
+  .recta i::before { content: ""; position: absolute; top: -12px; left: 50%; width: 3px; height: 12px; background: var(--rim); }
+  .recta i.aqui { color: var(--bad); font-size: 1.3rem; }
+  .recta i.aqui::after { content: "▲"; position: absolute; top: -32px; left: 50%; transform: translateX(-50%); color: var(--bad); font-size: 1rem; }
+
+  /* Tabla del 100 */
+  .tabla100 { display: grid; grid-template-columns: repeat(10, 1fr); gap: 3px; width: min(96vw, 520px); }
+  .tabla100 button { padding: 0; height: clamp(30px, 8.6vw, 44px); border-width: 2px; border-radius: 8px; box-shadow: 0 2px 0 var(--rim);
+    font-size: clamp(.85rem, 3.6vw, 1.05rem); font-weight: 800; }
+  .tabla100 button.dado { background: #EEF3F8; }
+  .tabla100 button.mal { background: #FFE3E0; }
+
+  /* Armar con barras y cubitos */
+  .tablero { display: flex; gap: 14px; align-items: flex-end; justify-content: center; flex-wrap: wrap; min-height: 120px;
+    width: min(96vw, 560px); background: var(--face); border: 4px solid var(--rim); border-radius: 18px; padding: 10px; }
+  .tablero .lado { display: flex; gap: 4px; align-items: flex-end; flex-wrap: wrap; justify-content: center; }
+  .tablero button { padding: 0; border: none; box-shadow: none; background: none; border-radius: 4px; }
+  .barra { display: flex; flex-direction: column; gap: 1px; }
+  .barra i, .cubito i { display: block; width: 18px; height: 9px; background: var(--materia); border: 1px solid var(--rim); }
+  .cubito i { height: 18px; background: #FFC83D; }
+  .cuenta { font-weight: 800; color: var(--page-ink); font-size: 1.1rem; }
+
+  /* Opciones */
+  .opciones { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 12px; margin-top: 12px; }
+  .opciones button { font-size: clamp(1.6rem, 8vw, 2.2rem); line-height: 1.15; border-radius: 22px; padding: 8px 4px; }
+  .opciones.palabras button { font-size: clamp(1.1rem, 5vw, 1.35rem); }
+  .opciones .grupo { display: block; font-size: 1.5rem; line-height: 1.25; word-break: break-all; }
+  .opciones .grupo + b { display: block; font-size: 1.4rem; color: var(--materia); }
+  .opciones button.puesto { background: #C9F2D6; }
+  .opciones button .orden { display: block; font-size: .9rem; color: var(--ok); }
+  .opciones.armar button { font-size: 1.15rem; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .opciones.armar .barra i { width: 14px; height: 6px; }
+  .opciones.armar #listoBtn { font-size: 2.4rem; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; font-size: 1.05rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">💯🔢</div>
+  <h1>Números del 1 al 100</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Antes y después, mayor y menor, pares, decenas y la tabla del 100.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" id="niveles" role="group" aria-label="Nivel"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap escena" id="escena"></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap explica" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, MODOS, inicio, ronda } from "../js/numeros.js";
+
+const $ = id => document.getElementById(id);
+// Texto para la voz: el navegador saca el texto de las etiquetas
+const texto = html => new DOMParser().parseFromString(html, "text/html").body.textContent;
+
+$("niveles").innerHTML = `<button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>`
+  + MODOS.map(m => `<button data-nivel="${m.id}" aria-label="${m.nombre}" title="${m.nombre}">${m.emoji}</button>`).join("");
+
+const esc = escalera("numeros", { escalones: ESCALONES.length, inicio });
+const stars = estrellas("numeros-stars");
+let manual = null, q = null, fallos = 0, listo = false, malos = new Set(), puestos = 0, barras = 0, cubitos = 0;
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(objetivo()) });
+
+// ---------- Ronda nueva ----------
+function nuevo() {
+  fallos = 0; listo = false; malos = new Set(); puestos = 0; barras = 0; cubitos = 0;
+  const i = esc.activa ? esc.nivel : azar(MODOS.find(m => m.id === manual).escalones);
+  q = ronda(i);
+  feedback(""); $("explica").hidden = true; $("nextBtn").classList.remove("pulse");
+  pintar();
+  // Arriba, la pregunta corta (la primera frase de lo que dice la voz); el dibujo grande va en la escena
+  const corta = q.voz.split(/(?<=[?.:])\s/)[0];
+  instruccion(corta, q.voz);
+  ayuda.empezar();
+}
+
+function pintar() {
+  const visual = (q.instr.includes('class="') ? q.instr : "") + (q.escena || "");
+  $("opciones").className = "wrap opciones" + (q.modo === "palabras" && q.cols === 1 ? " palabras" : "");
+  if (q.tipo === "armar") return pintarArmar();
+  if (q.tipo === "tabla") return pintarTabla();
+  $("escena").innerHTML = visual;
+  const lista = q.tipo === "ordenar" ? q.numeros.map(n => ({ id: String(n), html: String(n), voz: String(n) })) : q.opciones;
+  $("opciones").style.setProperty("--cols", q.cols || Math.min(lista.length, q.tipo === "ordenar" ? 4 : 3));
+  $("opciones").innerHTML = lista.map(o => `<button data-id="${o.id}" aria-label="${o.voz}">${o.html}</button>`).join("");
+}
+
+// Lo que se le señala si se queda pegado o tras el 2.º error
+function objetivo() {
+  if (!q || listo) return null;
+  if (q.tipo === "opciones") return $("opciones").querySelector(`[data-id="${CSS.escape(q.correcta)}"]`);
+  if (q.tipo === "ordenar") return $("opciones").querySelector(`[data-id="${q.orden[puestos]}"]`);
+  if (q.tipo === "tabla") return $("escena").querySelector(`[data-n="${q.n}"]`);
+  const d = Math.floor(q.n / 10), u = q.n % 10;
+  if (barras < d) return $("masBarra");
+  if (barras > d) return $("tablero").querySelector(".barra");
+  if (cubitos < u) return $("masCubito");
+  if (cubitos > u) return $("tablero").querySelector(".cubito");
+  return $("listoBtn");
+}
+
+// ---------- Acertó / se equivocó ----------
+function acierto() {
+  listo = true; ayuda.parar();
+  document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); } else feedback("almost", "🤏", "¡Ahora sí!");
+  $("explica").hidden = false; $("explica").innerHTML = q.explica;
+  decir(`${limpio ? elogio() : "¡Ahora sí!"} ${texto(q.explica)}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: q.tipo === "opciones" ? q.opciones.length : 0 });
+  $("opciones").querySelectorAll("button").forEach(b => { b.disabled = true; });
+  $("nextBtn").classList.add("pulse");
+}
+
+function error(el, casi, dicho) {
+  fallos++;
+  if (el) { el.classList.add("nope"); setTimeout(() => el.classList.remove("nope"), 400); }
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", casi ? "¡Casi!" : "No es");
+  decir(dicho);
+  if (fallos >= 2) senalar(objetivo());
+}
+
+// ---------- Opciones y ordenar ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled) return;
+  if (q.tipo === "armar") return;
+  sonido("tap");
+  if (q.tipo === "ordenar") return tocarOrden(b);
+  if (b.dataset.id === q.correcta) { b.classList.add("right"); return acierto(); }
+  b.disabled = true; b.classList.add("wrong");
+  const o = q.opciones.find(x => x.id === b.dataset.id);
+  // ¡Casi! = el número de al lado o la decena de al lado
+  const cerca = /^\d+$/.test(o.id) && /^\d+$/.test(q.correcta) && Math.abs(Number(o.id) - Number(q.correcta)) === 1;
+  const quedan = [...$("opciones").querySelectorAll("button:not(:disabled)")];
+  const que = q.modo === "comparar" ? `Ahí hay ${o.voz}.` : q.modo === "signo" ? `Ese es el signo «${o.voz}».` : `Ese es ${o.voz}.`;
+  error(b, cerca, `${que} ${q.pista}`);
+  if (quedan.length === 1) senalar(quedan[0]);
+});
+
+function tocarOrden(b) {
+  const n = Number(b.dataset.id);
+  if (n === q.orden[puestos]) {
+    puestos++;
+    b.disabled = true; b.classList.add("puesto");
+    b.insertAdjacentHTML("beforeend", `<span class="orden">${puestos}.º</span>`);
+    document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+    if (puestos === q.orden.length) return acierto();
+    return;
+  }
+  if (malos.has(n)) return; // el mismo número otra vez no cuenta como otro error
+  malos.add(n);
+  error(b, false, `¡Ojo! Todavía hay uno más pequeño que el ${n}. Fijate en las decenas.`);
+}
+
+// ---------- Tabla del 100 ----------
+function pintarTabla() {
+  // Se ven la primera fila y las columnas del 1 y del 10; las demás casillas están vacías
+  const celdas = Array.from({ length: 100 }, (_, i) => {
+    const n = i + 1, fila = Math.floor(i / 10) + 1, col = i % 10 + 1;
+    const ver = n <= 10 || col === 1 || col === 10;
+    return `<button data-n="${n}" class="${ver ? "dado" : ""}" aria-label="Fila ${fila}, columna ${col}${ver ? `: ${n}` : ""}">${ver ? n : ""}</button>`;
+  }).join("");
+  $("escena").innerHTML = `<div class="tabla100" id="tabla">${celdas}</div>`;
+  $("opciones").innerHTML = "";
+}
+$("escena").addEventListener("click", e => {
+  const b = e.target.closest("[data-n]");
+  if (!b || listo || q.tipo !== "tabla") return;
+  const n = Number(b.dataset.n);
+  sonido("tap");
+  if (n === q.n) { b.textContent = n; b.classList.add("right"); return acierto(); }
+  if (malos.has(n)) return;
+  malos.add(n);
+  b.textContent = n; b.classList.add("mal");
+  const mismaFila = Math.floor((n - 1) / 10) === Math.floor((q.n - 1) / 10);
+  error(b, mismaFila, mismaFila
+    ? `Ahí va el ${n}. ¡Esa es la fila! Ahora contá hacia ${n < q.n ? "la derecha" : "la izquierda"}.`
+    : `Ahí va el ${n}. ${q.pista}`);
+});
+
+// ---------- Armar con barras y cubitos ----------
+function pintarArmar() {
+  $("escena").innerHTML = `<p>Armá el <b class="grande-num">${q.n}</b></p>
+    <div class="tablero" id="tablero" aria-label="Lo que llevás"><span class="lado" id="ladoBarras"></span><span class="lado" id="ladoCubitos"></span></div>
+    <span class="cuenta" id="cuenta"></span>`;
+  $("opciones").style.setProperty("--cols", 3);
+  $("opciones").className = "wrap opciones armar";
+  $("opciones").innerHTML = `<button id="masBarra" data-accion="barra" aria-label="Poner una barra de diez"><span class="barra">${"<i></i>".repeat(10)}</span>+10</button>
+    <button id="masCubito" data-accion="cubito" aria-label="Poner un cubito de uno"><span class="cubito"><i></i></span>+1</button>
+    <button id="listoBtn" data-accion="listo" aria-label="Listo, revisar">✔️</button>`;
+  pintarTablero();
+}
+function pintarTablero() {
+  $("ladoBarras").innerHTML = Array.from({ length: barras }, (_, i) => `<button class="barra" data-quitar="barra" aria-label="Quitar una barra">${"<i></i>".repeat(10)}</button>`).join("");
+  $("ladoCubitos").innerHTML = Array.from({ length: cubitos }, () => `<button class="cubito" data-quitar="cubito" aria-label="Quitar un cubito"><i></i></button>`).join("");
+  $("cuenta").textContent = `${barras} ${barras === 1 ? "barra" : "barras"} y ${cubitos} ${cubitos === 1 ? "cubito" : "cubitos"}`;
+}
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-accion]");
+  if (!b || listo || q?.tipo !== "armar") return;
+  sonido("tap");
+  document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  if (b.dataset.accion === "barra" && barras < 10) barras++;
+  else if (b.dataset.accion === "cubito" && cubitos < 19) cubitos++;
+  else if (b.dataset.accion === "listo") return revisarArmar();
+  pintarTablero();
+});
+$("escena").addEventListener("click", e => {
+  const b = e.target.closest("[data-quitar]");
+  if (!b || listo || q?.tipo !== "armar") return;
+  sonido("tap");
+  if (b.dataset.quitar === "barra") barras--; else cubitos--;
+  pintarTablero();
+});
+function revisarArmar() {
+  const d = Math.floor(q.n / 10), u = q.n % 10, total = barras * 10 + cubitos;
+  if (barras === d && cubitos === u) return acierto();
+  let casi = false, dicho;
+  if (total === q.n) { casi = true; dicho = `Son ${q.n}, ¡pero con 10 cubitos se hace una barra! Cambiá 10 cubitos por una barra.`; }
+  else if (barras === u && cubitos === d) { casi = true; dicho = `¡Casi! Lo pusiste al revés. El primer número del ${q.n} dice cuántas barras: ${d}.`; }
+  else dicho = `Llevás ${total}. ${total < q.n ? `Te faltan ${q.n - total}.` : `Te sobran ${total - q.n}.`} ${q.pista}`;
+  error($("listoBtn"), casi, dicho);
+}
+
+// ---------- Botones ----------
+$("nextBtn").addEventListener("click", () => {
+  // Saltarse una ronda después de equivocarse cuenta como ronda difícil
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
+niveles(v => {
+  esc.activa = v === "auto";
+  manual = v === "auto" ? null : v;
+  nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__numeros = { get q() { return q; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

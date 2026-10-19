@@ -71,7 +71,8 @@
   .prompt .slow { font-size: 1.4rem; padding: 2px 12px; }
   .prompt .play.pulse { animation: pulse 1s ease-in-out 3; }
 
-  .cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 14px; }
+  .cards { display: grid; grid-template-columns: repeat(var(--n, 2), minmax(0, 1fr)); gap: 12px; margin-top: 14px; }
+  .cards.tres button { aspect-ratio: 1; font-size: clamp(2.6rem, 12vw, 4rem); padding: 4px; }
   .cards button {
     border-radius: 22px; aspect-ratio: 4 / 3; padding: 6px;
     display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
@@ -116,7 +117,35 @@
 
   @media (prefers-reduced-motion: reduce) {
     .cards button.nope, .bottom button.pulse, .prompt .play.pulse { animation-duration: .01s; animation-iteration-count: 1; }
+    .senal, .senal::after, .subio .cartel, .subio i, .escalera .hojas i.nueva { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
   }
+
+  /* 🪜 Escalera, fiesta al subir y respuesta señalada (igual que en css/prepa.css; este juego no usa ese archivo) */
+  .levels button.auto { font-size: 1.15rem; }
+  .marcador { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .escalera { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--page-ink); }
+  .escalera[hidden] { display: none; }
+  .escalera .esc-num { font-size: 1.3rem; white-space: nowrap; }
+  .escalera .esc-num b { font-size: 1.05rem; margin-left: 2px; }
+  .escalera .hojas { display: flex; gap: 3px; }
+  .escalera .hojas i { width: 16px; height: 16px; border-radius: 0 60% 0 60%; border: 2px solid var(--rim); background: var(--face); display: block; transform: rotate(45deg); }
+  .escalera .hojas i.llena { background: var(--ok); }
+  .escalera .hojas i.nueva { animation: hoja .5s ease-out; }
+  @keyframes hoja { 0% { transform: rotate(45deg) scale(.3); } 70% { transform: rotate(45deg) scale(1.4); } 100% { transform: rotate(45deg) scale(1); } }
+  .subio { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+  .subio .cartel {
+    position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    background: var(--btn); border: 4px solid var(--rim); border-radius: 26px; box-shadow: 0 5px 0 var(--rim);
+    padding: 8px 22px; font-size: clamp(1.8rem, 9vw, 2.6rem); font-weight: 800; color: var(--ink); white-space: nowrap;
+    animation: cartel 2.6s ease-out forwards;
+  }
+  .subio i { position: absolute; top: -3rem; left: var(--x); font-style: normal; font-size: 2rem; animation: cae 2.2s ease-in var(--d) forwards; }
+  @keyframes cartel { 0% { transform: translateX(-50%) scale(.3); opacity: 0; } 15% { transform: translateX(-50%) scale(1.15); opacity: 1; } 25%, 80% { transform: translateX(-50%) scale(1); opacity: 1; } 100% { opacity: 0; } }
+  @keyframes cae { to { transform: translateY(110vh) rotate(260deg); } }
+  .senal { position: relative; outline: 6px solid var(--btn) !important; outline-offset: 3px; animation: brinco .9s ease-in-out infinite; z-index: 1; }
+  .senal::after { content: "👆"; position: absolute; right: -4px; bottom: -14px; font-size: 2.2rem; line-height: 1; animation: toca .9s ease-in-out infinite; pointer-events: none; }
+  @keyframes brinco { 50% { transform: translateY(-6px) scale(1.04); } }
+  @keyframes toca { 50% { transform: translate(-4px, -8px); } }
 
   .home-link {
     position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
@@ -140,7 +169,8 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Tema">
-    <button data-tema="colors" aria-pressed="true">🎨 Colors</button>
+    <button class="auto" data-tema="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-tema="colors">🎨 Colors</button>
     <button data-tema="animals">🐶 Animals</button>
     <button data-tema="numbers">🔢 Numbers</button>
     <button data-tema="family">👪 Family</button>
@@ -151,6 +181,7 @@
     <button data-tema="food">🍕 Food</button>
     <button data-tema="bignumbers">💯 13–100</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -160,7 +191,9 @@
 <div class="wrap bottom"><button id="nextBtn">Otra palabra</button></div>
 
 <script type="module">
-import { VELOCIDAD, LENTO } from "../js/voz.js";
+import { hablar as decirVoz, VELOCIDAD, LENTO } from "../js/voz.js";
+import { senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
 (() => {
   const $ = id => document.getElementById(id);
 
@@ -272,18 +305,38 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
     ].map(([d, en]) => ({ en, es: String(d), d })),
   };
 
-  let tema = "colors", mazo = [], meta = null, opciones = [], fallos = 0, listo = false;
+  // 🪜 De a poquito: de 2 colores a los números hasta 100. solo = usar solo los primeros (los más fáciles)
+  const ESCALONES = [
+    { temas: ["colors"], ops: 2, solo: 4 },             //  1. red, blue, yellow, green: entre 2
+    { temas: ["colors"], ops: 3 },                      //  2. todos los colores, entre 3
+    { temas: ["animals"], ops: 3, solo: 8 },            //  3. animales de la finca, entre 3
+    { temas: ["numbers"], ops: 3, solo: 5 },            //  4. one a five
+    { temas: ["animals"], ops: 4 },                     //  5. todos los animales, entre 4
+    { temas: ["numbers"], ops: 4 },                     //  6. one a twelve
+    { temas: ["fruits"], ops: 4 },                      //  7.
+    { temas: ["family"], ops: 4 },                      //  8.
+    { temas: ["colors", "animals", "fruits"], ops: 4 }, //  9. repaso revuelto
+    { temas: ["body"], ops: 4 },                        // 10.
+    { temas: ["school"], ops: 4 },                      // 11.
+    { temas: ["food"], ops: 4 },                        // 12.
+    { temas: ["clothes"], ops: 4 },                     // 13.
+    { temas: ["bignumbers"], ops: 4 },                  // 14. thirteen a one hundred
+  ];
+  const esc = escalera("listen-tap", { escalones: ESCALONES.length,
+    inicio: edad => edad === null || edad <= 5 ? 0 : edad === 6 ? 1 : edad === 7 ? 2 : edad === 8 ? 4 : 5 });
+
+  let tema = "auto", mazo = [], meta = null, opciones = [], fallos = 0, listo = false;
   let stars = 0;
   try { stars = Number(localStorage.getItem("listen-stars")) || 0; } catch (_) {}
 
   // ---------- Voz (Web Speech API) ----------
   const puedeHablar = "speechSynthesis" in window;
-  let vozEn = null, vozEs = null;
+  // Solo para saber si hay voz en inglés; lo que se dice va por js/voz.js
+  let vozEn = null;
   function cargarVoces() {
     if (!puedeHablar) return;
     const voces = speechSynthesis.getVoices();
     vozEn = voces.find(v => /^en[-_]US/i.test(v.lang)) || voces.find(v => /^en/i.test(v.lang)) || null;
-    vozEs = voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null;
   }
   if (puedeHablar) {
     cargarVoces();
@@ -292,18 +345,7 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
   // Si el dispositivo no tiene voz en inglés, se muestra la palabra escrita.
   const hayIngles = () => puedeHablar && (vozEn || speechSynthesis.getVoices().length === 0);
 
-  function hablar(texto, lang = "en", lento = false) {
-    if (!puedeHablar) return;
-    try {
-      speechSynthesis.cancel();
-      const u = new SpeechSynthesisUtterance(texto);
-      const voz = lang === "en" ? vozEn : vozEs;
-      if (voz) u.voice = voz;
-      u.lang = voz ? voz.lang : (lang === "en" ? "en-US" : "es-MX");
-      u.rate = lento ? LENTO : VELOCIDAD;
-      speechSynthesis.speak(u);
-    } catch (_) {}
-  }
+  const hablar = (texto, lang = "en", lento = false) => decirVoz(texto, { lang, rate: lento ? LENTO : VELOCIDAD });
 
   const barajar = arr => arr.map(x => [Math.random(), x]).sort((a, b) => a[0] - b[0]).map(x => x[1]);
 
@@ -326,21 +368,39 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
     }
   }
 
+  // Si se queda sin tocar nada: se repite la palabra y después se señala el dibujo
+  const botonMeta = () => $("cards").querySelector(`[data-i="${opciones.indexOf(meta)}"]`);
+  const ayuda = ayudaSiSeQueda({ repetir: () => meta && hablar(meta.en), senalar: () => senalar(botonMeta()) });
+
   function siguiente() {
-    const lista = TEMAS[tema];
-    if (!mazo.length) {
-      mazo = barajar(lista);
-      if (meta && mazo[mazo.length - 1] === meta) mazo.unshift(mazo.pop());
+    let lista, cuantas = 4;
+    if (tema === "auto") {
+      // Escalera: la palabra sale de uno de los temas del escalón; las otras opciones, del mismo tema
+      const e = ESCALONES[esc.nivel];
+      const t = e.temas[Math.floor(Math.random() * e.temas.length)];
+      lista = e.solo ? TEMAS[t].slice(0, e.solo) : TEMAS[t];
+      cuantas = e.ops;
+      const antes = meta;
+      do meta = lista[Math.floor(Math.random() * lista.length)]; while (meta === antes && lista.length > 1);
+    } else {
+      lista = TEMAS[tema];
+      if (!mazo.length) {
+        mazo = barajar(lista);
+        if (meta && mazo[mazo.length - 1] === meta) mazo.unshift(mazo.pop());
+      }
+      meta = mazo.pop();
     }
-    meta = mazo.pop();
     fallos = 0; listo = false;
-    opciones = barajar([meta, ...barajar(lista.filter(x => x !== meta)).slice(0, 3)]);
+    opciones = barajar([meta, ...barajar(lista.filter(x => x !== meta)).slice(0, cuantas - 1)]);
+    $("cards").style.setProperty("--n", opciones.length === 4 ? 2 : opciones.length);
+    $("cards").classList.toggle("tres", opciones.length === 3);
     $("cards").innerHTML = opciones.map((x, i) =>
       `<button data-i="${i}" aria-label="Opción ${i + 1}">${dibujo(x)}<span class="en"></span></button>`).join("");
     $("feedback").className = "wrap feedback"; $("feedback").innerHTML = "";
     $("nextBtn").classList.remove("pulse");
     pintarPrompt(false);
     hablar(meta.en);
+    ayuda.empezar();
   }
 
   function setFeedback(kind, main, sub) {
@@ -356,10 +416,12 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
     btn.querySelector(".en").textContent = item.en;
     if (item === meta) {
       listo = true;
+      ayuda.parar();
+      btn.classList.remove("senal");
       btn.classList.add("right");
       $("cards").querySelectorAll("button").forEach(b => { if (b !== btn) b.disabled = true; });
       const sub = `<b>${meta.en}</b> = ${meta.es}`;
-      if (fallos === 0) {
+      if (fallos === 0 && !ayuda.usada) {
         stars++;
         try { localStorage.setItem("listen-stars", stars); } catch (_) {}
         $("stars").textContent = "⭐ " + stars;
@@ -369,6 +431,7 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
       }
       pintarPrompt(true);
       hablar(meta.en);
+      esc.resultado({ fallos, ayuda: ayuda.usada, opciones: opciones.length });
       $("nextBtn").classList.add("pulse");
     } else {
       fallos++;
@@ -376,14 +439,19 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
       btn.disabled = true;
       setFeedback("bad", "Uy, no es 🙈", `Ese es <b>${item.en}</b> (${item.es}). Escuchá otra vez 👂`);
       hablar(item.en);
-      if (fallos >= 2) pintarPrompt(true); // ayudita: después de dos fallos se ve la palabra
+      if (fallos >= 2) { pintarPrompt(true); senalar(botonMeta()); } // ayudita: después de dos fallos se ve la palabra y se señala el dibujo
     }
   });
 
-  $("nextBtn").addEventListener("click", siguiente);
+  $("nextBtn").addEventListener("click", () => {
+    // Pasar a otra palabra después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar)
+    if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+    siguiente();
+  });
   document.querySelectorAll(".levels button").forEach(btn => {
     btn.addEventListener("click", () => {
       tema = btn.dataset.tema;
+      esc.activa = tema === "auto";
       document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
       mazo = []; meta = null;
       siguiente();
@@ -399,7 +467,7 @@ import { VELOCIDAD, LENTO } from "../js/voz.js";
   });
 
   $("stars").textContent = "⭐ " + stars;
-  if (new URLSearchParams(location.search).has("prueba")) window.__listen = { get meta() { return meta; }, get opciones() { return opciones; } };
+  if (new URLSearchParams(location.search).has("prueba")) window.__listen = { get meta() { return meta; }, get opciones() { return opciones; }, get nivel() { return esc.nivel; } };
 })();
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>

@@ -29,6 +29,25 @@ export const NIVELES = [
   { id: "8", nombre: "8 pairs", parejas: 8 },
 ];
 
+// 🪜 De a poquito: de 3 parejas de un tema fácil a 8 parejas de los temas difíciles
+const FACILES = ["animals", "colors", "fruits"], DIFICILES = ["clothes", "body", "school"];
+export const ESCALONES = [
+  { temas: ["animals"], parejas: 3 },                   // 1. tres animales
+  { temas: ["colors", "fruits"], parejas: 3 },          // 2.
+  { temas: FACILES, parejas: 4 },                       // 3.
+  { temas: FACILES, parejas: 5 },                       // 4.
+  { temas: DIFICILES, parejas: 4 },                     // 5. ropa, cuerpo, escuela
+  { temas: [...FACILES, ...DIFICILES], parejas: 6 },    // 6.
+  { temas: DIFICILES, parejas: 6 },                     // 7.
+  { temas: DIFICILES, parejas: 8 },                     // 8. ocho parejas difíciles
+];
+
+/** Para la escalera: 0 = bien (con tolerancia según el tamaño), 1 = le costó un poco, 2 = le costó mucho. */
+export function fallosMemoria(intentos, parejas) {
+  const extra = intentos - parejas, tolerancia = Math.max(1, Math.floor(parejas * 0.75));
+  return extra <= tolerancia ? 0 : extra <= tolerancia + parejas ? 1 : 2;
+}
+
 function barajar(arr, rnd) {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }

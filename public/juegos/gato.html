@@ -18,10 +18,11 @@
   .modos button { padding: 3px 10px; font-size: .95rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
   .modos button[aria-pressed="true"] { background: var(--btn); }
 
-  .marcador { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
-  .marcador div { background: var(--face); border: 3px solid var(--rim); border-radius: 16px; text-align: center; padding: 4px 2px; font-weight: 800; line-height: 1.1; }
-  .marcador .n { font-size: 1.8rem; display: block; }
-  .marcador .turno { outline: 4px solid var(--btn); outline-offset: 2px; }
+  /* Tanteo (antes .marcador: ese nombre lo usa prepa.css para juntar la escalera con las estrellas) */
+  .tanteo { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .tanteo div { background: var(--face); border: 3px solid var(--rim); border-radius: 16px; text-align: center; padding: 4px 2px; font-weight: 800; line-height: 1.1; }
+  .tanteo .n { font-size: 1.8rem; display: block; }
+  .tanteo .turno { outline: 4px solid var(--btn); outline-offset: 2px; }
 
   .turnoTxt { margin-top: 8px; text-align: center; font-size: 1.25rem; font-weight: 800; color: var(--page-ink); min-height: 1.6rem; }
 
@@ -58,17 +59,19 @@
 
 <div class="wrap top ancho">
   <div class="modos" id="modos" role="group" aria-label="Contra quién jugar">
-    <button data-modo="facil" aria-pressed="true">🐆 Fácil</button>
+    <button data-modo="auto" aria-pressed="true" aria-label="De a poquito: el jaguar se pone más listo solito">🪜</button>
+    <button data-modo="facil" aria-pressed="false">🐆 Fácil</button>
     <button data-modo="medio" aria-pressed="false">🐆 Medio</button>
     <button data-modo="dificil" aria-pressed="false">🐆 Difícil</button>
     <button data-modo="dos" aria-pressed="false">👫 2 jugadores</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
 <div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
 
-<div class="marcador ancho" id="marcador"></div>
+<div class="tanteo ancho" id="marcador"></div>
 <div class="turnoTxt ancho" id="turnoTxt" aria-live="polite"></div>
 <div class="tablero ancho" id="tablero" role="grid" aria-label="Tablero del gato"></div>
 
@@ -81,8 +84,9 @@
 
 <script type="module">
 import { hablar, elogio, sonido, LENTO } from "../js/voz.js";
-import { decir, instruccion, feedback, alEmpezar } from "../js/prepa.js";
-import { resultado, jugadaJaguar, consejo, paraGanar, otro } from "../js/gato.js";
+import { decir, instruccion, feedback, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { resultado, jugadaJaguar, consejo, paraGanar, otro, NIVELES_JAGUAR } from "../js/gato.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 const DIBUJO = {
@@ -92,12 +96,26 @@ const DIBUJO = {
 const NOMBRE = { X: "equis", O: "círculo" };
 const ESTRELLAS = { facil: 1, medio: 2, dificil: 2 }; // contra el difícil, empatar ya es un logro
 
-let modo = "facil", t = Array(9).fill(null), turno = "X", empieza = "X", fin = false, pensando = false, usoConsejo = false;
-let marcador = { facil: [0, 0, 0], medio: [0, 0, 0], dificil: [0, 0, 0], dos: [0, 0, 0] }; // [gana X / vos, empates, gana O / jaguar]
+// 🪜 De a poquito: el jaguar se pone más listo cuando le ganás seguido, y menos si te gana seguido.
+// Escalones: muy fácil → fácil → regular → medio → astuto → difícil (en js/gato.js)
+const esc = escalera("gato", { escalones: NIVELES_JAGUAR.length, meta: 2,
+  inicio: edad => edad === null || edad <= 5 ? 0 : edad <= 7 ? 1 : edad === 8 ? 2 : 3 });
+const NOMBRE_JAGUAR = { muyfacil: "muy fácil", facil: "fácil", regular: "regular", medio: "medio", astuto: "astuto", dificil: "difícil" };
+
+let modo = "auto", t = Array(9).fill(null), turno = "X", empieza = "X", fin = false, pensando = false, usoConsejo = false;
+let partida = 0; // cambia con cada partida: las jugadas del jaguar que quedaron pendientes no tocan la nueva
+let marcador = { auto: [0, 0, 0], facil: [0, 0, 0], medio: [0, 0, 0], dificil: [0, 0, 0], dos: [0, 0, 0] }; // [gana X / vos, empates, gana O / jaguar]
 let progreso = { total: 0 };
 try { const g = JSON.parse(localStorage.getItem("gato-progreso")); if (g) { progreso = g.progreso || progreso; marcador = { ...marcador, ...g.marcador }; } } catch (_) {}
 const guardar = () => { try { localStorage.setItem("gato-progreso", JSON.stringify({ progreso, marcador })); } catch (_) {} };
 const vsJaguar = () => modo !== "dos";
+const nivelJaguar = () => (modo === "auto" ? NIVELES_JAGUAR[esc.nivel] : modo);
+// Si se queda sin jugar: se repite la instrucción y después se le señala una buena casilla (cuenta como ayuda)
+const ayuda = ayudaSiSeQueda({ senalar: () => {
+  if (fin || pensando || !vsJaguar() || turno !== "X") return;
+  usoConsejo = true;
+  senalar($("tablero").querySelector(`[data-i="${consejo(t, "X").casilla}"]`));
+} });
 
 // ---------- Pintar ----------
 function pintarMarcador() {
@@ -126,15 +144,21 @@ function pintarTurno() {
 
 // ---------- Partidas ----------
 function nueva(voz = true) {
+  partida++;
   t = Array(9).fill(null); fin = false; pensando = false; usoConsejo = false;
   turno = empieza;
+  esc.activa = modo === "auto";
   $("explica").hidden = true; feedback(""); $("nuevaBtn").classList.remove("pulse");
   pintarMarcador(); pintarTablero(); pintarTurno();
   if (voz) {
     const quien = vsJaguar() ? (turno === "X" ? "Empezás vos." : "Empieza el jaguar.") : `Empieza ${NOMBRE[turno]}.`;
-    instruccion(`<b>Hacé tres en línea</b>: en fila, en columna o en diagonal.`, `Hacé tres en línea: en fila, en columna o en diagonal. ${quien}`);
+    const cual = modo === "auto" ? ` Jaguar ${NOMBRE_JAGUAR[nivelJaguar()]}.` : "";
+    instruccion(`<b>Hacé tres en línea</b>: en fila, en columna o en diagonal.${modo === "auto" ? ` <small>🐆 Jaguar ${NOMBRE_JAGUAR[nivelJaguar()]}</small>` : ""}`,
+      `Hacé tres en línea: en fila, en columna o en diagonal.${cual} ${quien}`);
   }
-  if (vsJaguar() && turno === "O") setTimeout(juegaJaguar, 700);
+  if (vsJaguar()) ayuda.empezar(); else ayuda.parar();
+  const esta = partida;
+  if (vsJaguar() && turno === "O") setTimeout(() => { if (esta === partida) juegaJaguar(); }, 700);
 }
 
 function poner(i) {
@@ -144,20 +168,25 @@ function poner(i) {
   if (r) return terminar(r, i);
   turno = otro(turno);
   pintarMarcador(); pintarTablero({}, i); pintarTurno();
-  if (vsJaguar() && turno === "O") setTimeout(juegaJaguar, 650);
+  const esta = partida;
+  if (vsJaguar() && turno === "O") setTimeout(() => { if (esta === partida) juegaJaguar(); }, 650);
 }
 
 function juegaJaguar() {
   if (fin) return;
+  const esta = partida;
   pensando = true; pintarTablero();
   setTimeout(() => {
+    if (esta !== partida) return; // ya empezó otra partida
     pensando = false;
-    poner(jugadaJaguar(t, "O", modo));
+    poner(jugadaJaguar(t, "O", nivelJaguar()));
   }, 450);
 }
 
 function terminar(r, ultima) {
   fin = true;
+  ayuda.parar();
+  const nj = nivelJaguar();
   const m = marcador[modo];
   const marcas = {};
   if (r.linea) r.linea.forEach(i => marcas[i] = "gana");
@@ -165,12 +194,12 @@ function terminar(r, ultima) {
   let ganadas = 0;
   if (r.quien === "empate") {
     m[1]++;
-    if (vsJaguar() && modo === "dificil") ganadas = ESTRELLAS.dificil;
+    if (vsJaguar() && nj === "dificil") ganadas = ESTRELLAS.dificil;
     feedback("almost", "🤝", "¡Empate!");
-    decir(vsJaguar() && modo === "dificil" ? "¡Empate contra el jaguar difícil! Eso es muy difícil de lograr. ¡Muy bien pensado!" : "¡Empate! Nadie hizo tres en línea.");
+    decir(vsJaguar() && nj === "dificil" ? "¡Empate contra el jaguar difícil! Eso es muy difícil de lograr. ¡Muy bien pensado!" : "¡Empate! Nadie hizo tres en línea.");
   } else if (r.quien === "X") {
     m[0]++;
-    if (vsJaguar()) { ganadas = ESTRELLAS[modo]; feedback("ok", "🎉", "¡Le ganaste al jaguar!"); decir(`${elogio()} ¡Le ganaste al jaguar!`); }
+    if (vsJaguar()) { ganadas = ESTRELLAS[nj] || (NIVELES_JAGUAR.indexOf(nj) >= 3 ? 2 : 1); feedback("ok", "🎉", "¡Le ganaste al jaguar!"); decir(`${elogio()} ¡Le ganaste al jaguar!`); }
     else { feedback("ok", "🎉", "¡Ganó equis!"); decir("¡Ganó equis! Tres en línea."); }
   } else {
     m[2]++;
@@ -180,6 +209,14 @@ function terminar(r, ultima) {
   if (ganadas && !usoConsejo) progreso.total += ganadas;
   else if (ganadas) progreso.total += 1; // con consejo, un poquito menos
   guardar();
+  // 🪜 Ganar sube; perder seguido baja. Desde el jaguar medio, que casi nunca se deja ganar, empatarle también
+  // cuenta como bien (es no dejarse ganar). Con consejo, ganar no sube (pero tampoco baja).
+  if (modo === "auto") {
+    const bien = r.quien === "X" || (r.quien === "empate" && NIVELES_JAGUAR.indexOf(nj) >= NIVELES_JAGUAR.indexOf("medio"));
+    if (r.quien === "O") esc.resultado({ fallos: 2 });
+    else if (bien) esc.resultado({ fallos: usoConsejo ? 1 : 0 });
+    else esc.resultado({ fallos: 1 });
+  }
   $("turnoTxt").textContent = "";
   pintarMarcador();
   empieza = otro(empieza); // la próxima empieza el otro
@@ -216,7 +253,11 @@ $("consejoBtn").addEventListener("click", () => {
   sonido("tap"); decir(txt);
 });
 
-$("nuevaBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+$("nuevaBtn").addEventListener("click", () => {
+  // Dejar a medias una partida ya avanzada cuenta como perdida (si no, empezar otra evitaría bajar)
+  if (modo === "auto" && !fin && t.filter(Boolean).length >= 3) esc.resultado({ fallos: 2 });
+  sonido("tap"); nueva();
+});
 $("modos").addEventListener("click", e => {
   const b = e.target.closest("[data-modo]");
   if (!b || pensando) return;
@@ -224,7 +265,7 @@ $("modos").addEventListener("click", e => {
   document.querySelectorAll("#modos button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
   empieza = "X"; sonido("tap");
   nueva(false);
-  const txt = { facil: "Jaguar fácil: a veces se equivoca.", medio: "Jaguar medio: si puede ganar, gana, y si vos podés ganar, te bloquea.",
+  const txt = { auto: "De a poquito: cuando le ganás seguido al jaguar, se pone más listo.", facil: "Jaguar fácil: a veces se equivoca.", medio: "Jaguar medio: si puede ganar, gana, y si vos podés ganar, te bloquea.",
     dificil: "Jaguar difícil: juega perfecto. No se le puede ganar, ¡pero sí empatarle!", dos: "Dos jugadores: uno juega con equis y el otro con círculo, en el mismo celular." }[modo];
   instruccion(`<b>${b.textContent}</b>: ${txt}`, `${txt} ${vsJaguar() ? "Empezás vos." : "Empieza equis."}`);
 });
@@ -233,7 +274,7 @@ const repetir = lento => decir("Hacé tres en línea: en fila, en columna o en d
 alEmpezar(() => nueva(), repetir);
 pintarMarcador();
 
-if (new URLSearchParams(location.search).has("prueba")) window.__gato = { get t() { return t; }, get turno() { return turno; }, get fin() { return fin; } };
+if (new URLSearchParams(location.search).has("prueba")) window.__gato = { get t() { return t; }, get turno() { return turno; }, get fin() { return fin; }, get nivel() { return esc.nivel; }, get pensando() { return pensando; }, get jaguar() { return nivelJaguar(); } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

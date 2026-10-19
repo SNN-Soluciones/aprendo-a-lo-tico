@@ -60,6 +60,13 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🔗 ¿Quién se come a quién? (cadenas alimenticias) | Ciencias | 2° a 6° | `public/juegos/cadenas.html` |
 | 🏛️ La historia de Costa Rica | Estudios Sociales | 2° a 6° | `public/juegos/historia.html` |
 | 🧭 Direcciones a lo tico (puntos cardinales y mapas) | Estudios Sociales | 1° a 6° | `public/juegos/rumbos.html` |
+| 🔤 Sílabas mágicas (método silábico) | Español | Prepa y 1° (5 a 7 años) | `public/juegos/silabas.html` |
+| 💯 Números del 1 al 100 | Matemáticas | 1° y 2° | `public/juegos/numeros.html` |
+| 💭 ¿Cómo se siente? (emociones) | Pensamiento lógico | Prepa a 3° (4 a 9 años) | `public/juegos/emociones.html` |
+| ♟️ Estrategia contra el jaguar (Nim y cuatro en línea) | Pensamiento lógico | 1° a 6° | `public/juegos/estrategia.html` |
+| 🪐 El sistema solar y la Tierra | Ciencias | 3° a 6° | `public/juegos/espacio.html` |
+| 🌋 Volcanes, ríos y regiones | Estudios Sociales | 3° a 6° | `public/juegos/paisajes.html` |
+| 🌦️ My day in English | Inglés | 2° a 6° | `public/juegos/my-day.html` |
 
 ## 📝 Preparate para el examen
 
@@ -95,6 +102,8 @@ aprendo-a-lo-tico/
 │   │                       # ✏️ Clases de palabras, sílabas y tildes (200 palabras curadas), 27 textos originales
 │   ├── js/cuerpo.js, cadenas.js, historia.js, rumbos.js
 │   │                       # 🌱🗺️ Cuerpo humano (con dibujo), cadenas alimenticias, historia de Costa Rica, mapas
+│   ├── js/silabas.js, numeros.js, emociones.js, estrategia.js, espacio.js, paisajes.js, my-day.js
+│   │                       # 🔤💯💭♟️🪐🌋🌦️ Lote 3 (paisajes.js reusa el mapa de provincias y su proyección)
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"

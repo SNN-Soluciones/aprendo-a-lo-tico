@@ -126,9 +126,10 @@ const esperar = ms => new Promise(r => setTimeout(r, ms));
 function parejaConocida() {
   const quedan = cartas.filter(c => vistas.has(c.i) && !esHecha(c.i));
   const abierta = abiertas[0];
+  // Con una carta abierta, solo sirve señalar su pareja: otra pareja daría un error seguro
   if (abierta) {
     const otra = quedan.find(c => c.k === abierta.k && c.i !== abierta.i);
-    if (otra) return [otra];
+    return otra ? [otra] : null;
   }
   for (const c of quedan) {
     const otra = quedan.find(x => x.k === c.k && x.i !== c.i);

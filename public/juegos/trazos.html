@@ -24,6 +24,10 @@
   .herr button { font-size: 2rem; padding: 2px 22px; }
   .herr #listoBtn { background: #C9F2D6; }
   .pizarra.gano { animation: pulse .6s ease-in-out 2; }
+  /* 👆 El dedito que muestra el camino de la letra */
+  .dedo { position: absolute; left: 0; top: 0; font-size: 2.6rem; line-height: 1; pointer-events: none; transform: translate(-30%, -10%); z-index: 2; }
+  .dedo.arriba { opacity: .55; transform: translate(-30%, -45%) scale(1.1); } /* levantó el dedo entre un trazo y otro */
+  .dedo[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -38,10 +42,12 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-nivel="vocales" aria-pressed="true">A e i</button>
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="vocales">A e i</button>
     <button data-nivel="numeros">1 2 3</button>
     <button data-nivel="letras">m p s</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -50,6 +56,7 @@
   <canvas id="guia" aria-hidden="true"></canvas>
   <canvas id="tinta" aria-label="Pizarra para trazar con el dedo"></canvas>
   <div class="ayuda" id="ayuda" aria-hidden="true"></div>
+  <div class="dedo" id="dedo" aria-hidden="true" hidden>👆</div>
 </div>
 <div class="herr">
   <button id="borrarBtn" aria-label="Borrar">🧽</button>
@@ -60,7 +67,9 @@
 
 <script type="module">
 import { elogio } from "../js/voz.js";
-import { decir, instruccion, feedback, estrellas, niveles, alEmpezar } from "../js/prepa.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { trazosDe, caja, RENGLON } from "../js/trazos.js";
 
 const $ = id => document.getElementById(id);
 
@@ -87,14 +96,40 @@ const SETS = {
   ],
 };
 
+// 🪜 De a poquito: primero las vocales grandes con el puntito de inicio y mucha tolerancia;
+// después números y consonantes, y al final todo revuelto y más exigente.
+// tol = [cuánto de la letra hay que cubrir, cuánto del trazo tiene que quedar dentro de la letra]
+// punto = se ven los puntitos de inicio · orden = se pide empezar en el puntito 1 (se avisa con un «¡Casi!»)
+const VOC_MAY = SETS.vocales.filter(x => x.ch === x.ch.toUpperCase());
+const VOC_MIN = SETS.vocales.filter(x => x.ch !== x.ch.toUpperCase());
+const NUM_1_5 = SETS.numeros.filter(x => x.n >= 1 && x.n <= 5);
+const NUM_6_0 = SETS.numeros.filter(x => x.n > 5 || x.n === 0);
+const ESCALONES = [
+  { lista: VOC_MAY, tol: [0.6, 0.75], punto: true },                               // 1. A E I O U, con puntito de inicio
+  { lista: VOC_MIN, tol: [0.62, 0.78], punto: true },                              // 2. a e i o u
+  { lista: NUM_1_5, tol: [0.65, 0.8], punto: true },                               // 3. 1 al 5
+  { lista: NUM_6_0, tol: [0.68, 0.82], punto: true },                              // 4. 6 al 9 y el 0
+  { lista: SETS.letras.slice(0, 3), tol: [0.7, 0.84], punto: true },               // 5. m p s
+  { lista: SETS.letras.slice(3), tol: [0.72, 0.85], orden: true },                 // 6. l t n d
+  { lista: [...SETS.vocales, ...SETS.numeros], tol: [0.74, 0.86], orden: true },  // 7. vocales y números revueltos
+  { lista: [...SETS.vocales, ...SETS.numeros, ...SETS.letras], tol: [0.76, 0.88], orden: true }, // 8. todo revuelto, más exigente
+];
+const TOL_MANUAL = [0.72, 0.85];
+const esc = escalera("trazos", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 5 ? 0 : edad === 6 ? 2 : 4 });
+
 const S = 600;            // tamaño interno de la pizarra
 const Q = 0.2;            // escala de las máscaras para evaluar (120×120)
-const FONT = '"Baloo 2", "Trebuchet MS", system-ui, sans-serif';
+const G = 56;             // grosor de la letra guía
 const TINTA = 34;         // grosor del trazo del niño
 const COLOR_TINTA = "#E8574A";
+const VERDE = "#2FA85A";
+const VEL = 380;          // qué tan rápido traza el dedito (pixeles por segundo)
+const FONT = '"Baloo 2", "Trebuchet MS", system-ui, sans-serif';
 
-let nivel = "vocales", idx = 0, item = null, trazos = [], actual = null, listo = false, fallos = 0;
-let geo = null;           // posición y tamaño de la letra
+let nivel = "auto", idx = 0, item = null, trazos = [], actual = null, listo = false, fallos = 0;
+let tol = TOL_MANUAL, conPunto = false, mostroCamino = false, ronda = 0, pelicula = 0;
+let pideOrden = false, avisoOrden = false;
+let geo = null;           // la letra en la pizarra: sus trazos, el renglón y los puntitos de inicio
 const stars = estrellas("trazos-stars");
 
 const guia = $("guia"), tinta = $("tinta");
@@ -102,43 +137,90 @@ const guia = $("guia"), tinta = $("tinta");
 const gctx = guia.getContext("2d"), tctx = tinta.getContext("2d");
 
 // ---------- Letra ----------
+// Se dibuja a partir de sus trazos (js/trazos.js), no de una fuente: la guía, la tolerancia,
+// los puntitos de inicio y el dedito salen de los mismos datos, así coinciden siempre.
 function medir(ch) {
-  const c = document.createElement("canvas").getContext("2d");
-  c.font = `800 400px ${FONT}`;
-  const m = c.measureText(ch);
-  const w = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
-  const h = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
-  const size = 400 * Math.min((S * 0.62) / h, (S * 0.72) / w);
-  const k = size / 400;
-  return {
-    size,
-    x: S / 2 + (m.actualBoundingBoxLeft - m.actualBoundingBoxRight) * k / 2,
-    y: S / 2 + 20 + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) * k / 2,
-    grosor: size * 0.14, // grosor aproximado del trazo de la letra
-  };
+  const c = caja(ch);
+  const h = c.y1 - c.y0, w = Math.max(c.x1 - c.x0, 0.3); // la i y la l son flaquitas
+  const k = Math.min((S * 0.62) / h, (S * 0.72) / w);
+  const ox = S / 2 - ((c.x0 + c.x1) / 2) * k, oy = S / 2 + 18 - ((c.y0 + c.y1) / 2) * k;
+  const ts = trazosDe(ch).map(t => t.map(([x, y]) => [ox + x * k, oy + y * k]));
+  return { trazos: ts, inicio: ts[0][0], renglon: oy + RENGLON * k, marcas: marcasDe(ts) };
 }
 
-function letra(ctx, modo, extra = 0) {
-  ctx.font = `800 ${geo.size}px ${FONT}`;
-  ctx.textAlign = "left"; ctx.textBaseline = "alphabetic";
-  const x = geo.x - 0, y = geo.y;
-  if (modo === "fill") ctx.fillText(item.ch, x, y);
-  if (modo === "stroke") { ctx.lineWidth = extra; ctx.lineJoin = "round"; ctx.strokeText(item.ch, x, y); }
+const largoDe = t => t.reduce((s, p, i) => (i ? s + Math.hypot(p[0] - t[i - 1][0], p[1] - t[i - 1][1]) : 0), 0);
+
+// 🟢 Dónde va el puntito de cada trazo y hacia dónde apunta su flechita
+function marcasDe(ts) {
+  const marcas = [];
+  ts.forEach(t => {
+    // Si dos trazos empiezan en el mismo lugar (la punta de la A), el puntito del segundo se corre por su camino
+    // hasta que no tape el puntito ni la flechita de otro
+    const tapa = ([x, y]) => marcas.some(m => Math.hypot(x - m.x, y - m.y) < 46 || (m.flecha && Math.hypot(x - m.flecha.x, y - m.flecha.y) < 46));
+    let i = 0;
+    while (i < t.length - 1 && tapa(t[i])) i++;
+    // La flechita va un poquito más adelante, en la dirección del trazo
+    let j = i, largo = 0;
+    while (j < t.length - 1 && largo < 52) { largo += Math.hypot(t[j + 1][0] - t[j][0], t[j + 1][1] - t[j][1]); j++; }
+    const a = t[Math.max(i, j - 3)], b = t[Math.min(t.length - 1, j + 3)];
+    marcas.push({ x: t[i][0], y: t[i][1], flecha: j > i ? { x: t[j][0], y: t[j][1], ang: Math.atan2(b[1] - a[1], b[0] - a[0]) } : null });
+  });
+  return marcas;
 }
 
-function pintarGuia(faltantes) {
+/** Pinta los trazos de la letra con un grosor (un trazo de un solo punto es un puntito redondo). */
+function trazarLetra(ctx, ancho, radioPunto) {
+  ctx.lineWidth = ancho; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  geo.trazos.forEach(t => {
+    ctx.beginPath();
+    if (t.length === 1) { ctx.arc(t[0][0], t[0][1], radioPunto, 0, Math.PI * 2); ctx.fill(); return; }
+    t.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    ctx.stroke();
+  });
+}
+
+// Los puntitos se ven mientras el escalón los trae, después del dedito y después de avisarle por dónde se empieza
+const conMarcas = () => conPunto || mostroCamino || avisoOrden;
+
+function pintarGuia(faltantes, marcas = conMarcas()) {
   gctx.clearRect(0, 0, S, S);
-  // renglón
-  gctx.strokeStyle = "#DCE6EF"; gctx.lineWidth = 3; gctx.setLineDash([]);
-  gctx.beginPath(); gctx.moveTo(30, geo.y); gctx.lineTo(S - 30, geo.y); gctx.stroke();
-  // relleno suave + borde punteado
-  gctx.fillStyle = "#EAF1F8"; letra(gctx, "fill");
-  gctx.strokeStyle = "#8FA7BF"; gctx.setLineDash([10, 10]); letra(gctx, "stroke", 4);
   gctx.setLineDash([]);
+  // renglón
+  gctx.strokeStyle = "#DCE6EF"; gctx.lineWidth = 3;
+  gctx.beginPath(); gctx.moveTo(30, geo.renglon); gctx.lineTo(S - 30, geo.renglon); gctx.stroke();
+  // la letra, suavecita
+  gctx.fillStyle = gctx.strokeStyle = "#EAF1F8"; trazarLetra(gctx, G, G * 0.5);
   if (faltantes) {
     gctx.fillStyle = "rgba(255, 200, 61, .85)";
     faltantes.forEach(([x, y]) => gctx.fillRect(x / Q - 2.5, y / Q - 2.5, 1 / Q + 5, 1 / Q + 5));
   }
+  // y punteada por el medio, por donde va el dedo
+  gctx.fillStyle = gctx.strokeStyle = "#8FA7BF"; gctx.setLineDash([0.1, 17]);
+  trazarLetra(gctx, 9, 9);
+  gctx.setLineDash([]);
+  if (marcas) pintarMarcas();
+}
+
+/** 🟢 El puntito de inicio de cada trazo (con su número si hay varios) y una flechita que dice para dónde ir. */
+function pintarMarcas() {
+  const varios = geo.marcas.length > 1;
+  gctx.lineJoin = "round";
+  geo.marcas.forEach(({ flecha: f }) => {
+    if (!f) return;
+    gctx.save(); gctx.translate(f.x, f.y); gctx.rotate(f.ang);
+    gctx.beginPath(); gctx.moveTo(15, 0); gctx.lineTo(-10, -14); gctx.lineTo(-4, 0); gctx.lineTo(-10, 14); gctx.closePath();
+    gctx.fillStyle = VERDE; gctx.strokeStyle = "#FFFFFF"; gctx.lineWidth = 4;
+    gctx.stroke(); gctx.fill();
+    gctx.restore();
+  });
+  geo.marcas.forEach(({ x, y }, k) => {
+    gctx.fillStyle = VERDE; gctx.strokeStyle = "#FFFFFF"; gctx.lineWidth = 5;
+    gctx.beginPath(); gctx.arc(x, y, 21, 0, Math.PI * 2); gctx.fill(); gctx.stroke();
+    if (varios) {
+      gctx.fillStyle = "#FFFFFF"; gctx.font = `800 28px ${FONT}`; gctx.textAlign = "center"; gctx.textBaseline = "middle";
+      gctx.fillText(String(k + 1), x, y + 2);
+    }
+  });
 }
 
 function pintarTinta() {
@@ -165,26 +247,94 @@ function mascara(dibujar) {
 }
 
 function evaluar(ts = trazos) {
-  const letraM = mascara(x => letra(x, "fill"));
-  const tolM = mascara(x => { letra(x, "fill"); letra(x, "stroke", geo.grosor * 0.9); });
+  // centro: el medio de cada trazo, lo que hay que cubrir · margen: hasta dónde se vale salirse
+  geo.centro ||= mascara(x => trazarLetra(x, G * 0.5, G * 0.3));
+  geo.margen ||= mascara(x => trazarLetra(x, G * 2.4, G * 1.2));
   const tintaM = mascara(x => {
-    x.lineWidth = geo.grosor * 1.3; x.lineCap = "round"; x.lineJoin = "round";
+    x.lineWidth = G * 1.3; x.lineCap = "round"; x.lineJoin = "round";
     ts.forEach(t => { x.beginPath(); t.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); if (t.length === 1) x.lineTo(t[0][0] + .1, t[0][1]); x.stroke(); });
   });
-  const { n } = letraM;
+  const { n } = tintaM;
   let total = 0, cubiertos = 0; const faltantes = [];
-  for (let i = 0; i < n * n; i++) if (letraM.m[i]) {
+  for (let i = 0; i < n * n; i++) if (geo.centro.m[i]) {
     total++;
     if (tintaM.m[i]) cubiertos++; else faltantes.push([i % n, Math.floor(i / n)]);
   }
   let puntos = 0, dentro = 0;
   ts.forEach(t => t.forEach(([a, b]) => {
     puntos++;
-    const i = Math.min(n - 1, Math.floor(b * Q)) * n + Math.min(n - 1, Math.floor(a * Q));
-    if (tolM.m[i]) dentro++;
+    const i = Math.min(n - 1, Math.max(0, Math.floor(b * Q))) * n + Math.min(n - 1, Math.max(0, Math.floor(a * Q)));
+    if (geo.margen.m[i]) dentro++;
   }));
   return { cobertura: total ? cubiertos / total : 0, precision: puntos ? dentro / puntos : 0, faltantes };
 }
+
+// ---------- 👆 El camino de la letra ----------
+/** Todos los puntos de la letra en el orden en que se trazan. */
+const caminoDeLetra = () => (geo ? geo.trazos.flat() : []);
+
+// «en el 2», «en el 2 y en el 3», «en el 2, en el 3 y en el 4»
+function losDemas(n) {
+  const l = Array.from({ length: n - 1 }, (_, i) => `en el ${i + 2}`);
+  return l.length > 1 ? `${l.slice(0, -1).join(", ")} y ${l[l.length - 1]}` : l[0];
+}
+
+/**
+ * El dedito hace la letra trazo por trazo, en orden, dejando un rastro amarillo, y entre un trazo
+ * y otro levanta el dedo (cuenta como ayuda para la escalera).
+ */
+function mostrarCamino() {
+  if (listo || !geo) return;
+  mostroCamino = true;
+  const esta = ronda, mia = ++pelicula, dedo = $("dedo"), ts = geo.trazos;
+  pintarGuia(null, true);
+  feedback("", "👆", "Mirá el dedito");
+  decir(ts.length > 1
+    ? `Mirá el dedito: empezá en el puntito 1. Después levantá el dedo y seguí ${losDemas(ts.length)}.`
+    : `Mirá el dedito: empezá en el puntito verde y seguí ${item.d}.`);
+  const partes = [];
+  ts.forEach((t, k) => {
+    if (k) partes.push({ salto: [ts[k - 1][ts[k - 1].length - 1], t[0]], dura: 550 }); // el dedo va por el aire
+    partes.push({ t, hecho: 0, dura: t.length === 1 ? 350 : Math.max(450, (largoDe(t) / VEL) * 1000) });
+  });
+  const total = partes.reduce((s, p) => s + p.dura, 0);
+  const mover = ([x, y]) => { dedo.style.left = `${(x / S) * 100}%`; dedo.style.top = `${(y / S) * 100}%`; };
+  let pinto = false;
+  const rastro = (p, hasta) => {
+    gctx.fillStyle = "rgba(255, 200, 61, .9)";
+    for (; p.hecho <= hasta; p.hecho++, pinto = true) {
+      const [x, y] = p.t[p.hecho];
+      gctx.beginPath(); gctx.arc(x, y, p.t.length === 1 ? 27 : 9, 0, Math.PI * 2); gctx.fill();
+    }
+  };
+  dedo.classList.remove("arriba"); mover(ts[0][0]); dedo.hidden = false;
+  let t0 = null;
+  const paso = ahora => {
+    if (esta !== ronda || mia !== pelicula || listo) { if (mia === pelicula) dedo.hidden = true; return; } // cambió la ronda: el dedito se va
+    t0 ??= ahora;
+    const pasado = Math.max(0, ahora - t0);
+    let r = pasado;
+    for (const p of partes) {
+      const f = Math.min(1, r / p.dura);
+      if (p.salto) {
+        const [[x0, y0], [x1, y1]] = p.salto;
+        dedo.classList.add("arriba"); mover([x0 + (x1 - x0) * f, y0 + (y1 - y0) * f]);
+      } else {
+        const hasta = Math.round(f * (p.t.length - 1));
+        rastro(p, hasta);
+        dedo.classList.remove("arriba"); mover(p.t[hasta]);
+      }
+      if (f < 1) break;
+      r -= p.dura;
+    }
+    if (pinto) { pintarMarcas(); pinto = false; } // los puntitos quedan encima del rastro
+    if (pasado < total) requestAnimationFrame(paso);
+    else setTimeout(() => { if (esta === ronda && mia === pelicula) dedo.hidden = true; }, 600);
+  };
+  requestAnimationFrame(paso);
+}
+// Si se queda sin trazar: primero se repite la instrucción y después el dedito muestra el camino
+const ayuda = ayudaSiSeQueda({ senalar: mostrarCamino });
 
 // ---------- Dedo ----------
 function punto(e) {
@@ -207,19 +357,47 @@ const soltar = () => {
   if (!actual) return;
   actual = null;
   // Si ya quedó bien, se celebra solo (sin tener que tocar ✅)
-  const r = evaluar();
-  if (r.cobertura >= 0.72 && r.precision >= 0.85) ganar();
+  siQuedoBien(evaluar());
 };
 tinta.addEventListener("pointerup", soltar);
 tinta.addEventListener("pointercancel", soltar);
 
+/** Si el dibujo ya quedó bien, celebra. Devuelve false si todavía no. */
+function siQuedoBien(r) {
+  if (r.cobertura < tol[0] || r.precision < tol[1]) return false;
+  if (empezoEnOtroLado()) avisarOrden(); else ganar();
+  return true;
+}
+
+// En los escalones altos se pide empezar en el puntito 1. Se avisa una sola vez por ronda
+// y la vez siguiente vale como sea: es para ir haciendo el hábito, no para trabarlo.
+function empezoEnOtroLado() {
+  if (!pideOrden || avisoOrden || !trazos.length) return false;
+  const [x, y] = trazos[0][0], [a, b] = geo.inicio;
+  return Math.hypot(x - a, y - b) > 75;
+}
+
+function avisarOrden() {
+  avisoOrden = true; fallos++;
+  pintarGuia(null, true);
+  feedback("almost", "🤏", "¡Casi!");
+  decir(`¡Casi! Te quedó bonita, pero ${item.d} se empieza en el puntito verde. Hacela otra vez desde ahí.`);
+  // Se borra lo que hizo para que la vuelva a hacer (si no empezó ya otra)
+  const esta = ronda, cuantos = trazos.length;
+  setTimeout(() => { if (esta === ronda && !listo && !actual && trazos.length === cuantos) { trazos = []; pintarTinta(); } }, 1800);
+}
+
 function ganar() {
   listo = true;
-  pintarGuia();
+  ayuda.parar();
+  $("dedo").hidden = true;
+  pintarGuia(null, false);
   $("pizarra").classList.remove("gano"); void $("pizarra").offsetWidth; $("pizarra").classList.add("gano");
   const frase = `¡Trazaste ${item.d}!`;
-  if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+  const conAyuda = ayuda.usada || mostroCamino;
+  if (fallos === 0 && !conAyuda) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
   else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+  esc.resultado({ fallos, ayuda: conAyuda });
   $("nextBtn").classList.add("pulse");
 }
 
@@ -227,12 +405,12 @@ $("listoBtn").addEventListener("click", () => {
   if (listo) return;
   if (!trazos.length) { decir(`Pasá el dedo por encima de ${item.d}.`); return; }
   const r = evaluar();
-  if (r.cobertura >= 0.72 && r.precision >= 0.85) return ganar();
+  if (siQuedoBien(r)) return;
   fallos++;
-  if (r.precision < 0.7) {
+  if (r.precision < tol[1] - 0.15) {
     feedback("bad", "🙈", "Te saliste");
     decir("Uy, te saliste mucho de la letra. Borrá y probá otra vez, despacito.");
-  } else if (r.cobertura >= 0.45) {
+  } else if (r.cobertura >= tol[0] - 0.27) {
     pintarGuia(r.faltantes);
     feedback("almost", "🤏", "¡Casi!");
     decir("¡Casi! Te faltó el pedacito amarillo.");
@@ -241,19 +419,31 @@ $("listoBtn").addEventListener("click", () => {
     feedback("bad", "🙈", "Falta");
     decir("Todavía falta. Seguí por la parte amarilla.");
   }
+  // Al segundo intento que no sale, el dedito le enseña el camino (la voz lo dice después de la pista)
+  if (fallos === 2) { const esta = ronda; setTimeout(() => { if (esta === ronda && !listo && fallos === 2) { trazos = []; pintarTinta(); mostrarCamino(); } }, 2200); }
 });
 
 $("borrarBtn").addEventListener("click", () => {
   if (listo) return;
-  trazos = []; pintarTinta(); pintarGuia(); feedback("");
+  trazos = []; pintarTinta(); pintarGuia(null); feedback("");
 });
 
 // ---------- Rondas ----------
 function nuevo() {
-  const lista = SETS[nivel];
-  item = lista[idx % lista.length]; idx++;
+  ronda++;
+  if (nivel === "auto") {
+    // Escalera: una al azar del escalón (sin repetir la de antes)
+    const e = ESCALONES[esc.nivel], antes = item;
+    tol = e.tol; conPunto = !!e.punto; pideOrden = !!e.orden;
+    do item = e.lista[Math.floor(Math.random() * e.lista.length)]; while (item === antes && e.lista.length > 1);
+  } else {
+    const lista = SETS[nivel];
+    tol = TOL_MANUAL; conPunto = false; pideOrden = false;
+    item = lista[idx % lista.length]; idx++;
+  }
   geo = medir(item.ch);
-  trazos = []; actual = null; listo = false; fallos = 0;
+  trazos = []; actual = null; listo = false; fallos = 0; mostroCamino = false; avisoOrden = false;
+  $("dedo").hidden = true;
   pintarGuia(); pintarTinta();
   feedback("");
   $("nextBtn").classList.remove("pulse");
@@ -264,16 +454,19 @@ function nuevo() {
     $("ayuda").innerHTML = item.n ? `<small style="font-size:1.4rem;letter-spacing:-2px">${"🍎".repeat(item.n)}</small>` : "";
     instruccion(`Trazá <b>${item.ch}</b>`, `Trazá ${item.d}.`);
   }
+  ayuda.empezar();
 }
 
-$("nextBtn").addEventListener("click", nuevo);
-niveles(v => { nivel = v; idx = 0; nuevo(); });
+$("nextBtn").addEventListener("click", () => {
+  // Pasar a otra después de que no le salió cuenta como ronda difícil (si no, saltar evitaría bajar)
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  nuevo();
+});
+niveles(v => { nivel = v; esc.activa = v === "auto"; idx = 0; nuevo(); });
 
-// Esperar la fuente (si hay internet) para que la letra tenga la forma redondita de Baloo
-const fuente = document.fonts ? Promise.race([document.fonts.load(`800 100px "Baloo 2"`), new Promise(r => setTimeout(r, 1500))]).catch(() => {}) : Promise.resolve();
-alEmpezar(() => fuente.then(nuevo));
+alEmpezar(nuevo);
 
-if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, get geo() { return geo; }, get item() { return item; }, S, Q };
+if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, caminoDeLetra, get geo() { return geo; }, get trazos() { return geo?.trazos; }, get item() { return item; }, get tol() { return tol; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; }, get listo() { return listo; }, S, Q };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

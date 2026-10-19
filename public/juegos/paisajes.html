@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Volcanes, ríos y regiones</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #F29A1F; --mar: #BFE3F5; --tierra: #FFF3D6; }
+  .ancho { width: min(96vw, 620px); }
+  .levels button { font-size: 1.25rem; padding: 2px 10px; }
+  .instr .txt { font-size: clamp(1.05rem, 4.6vw, 1.35rem); }
+  .instr .txt small { display: block; font-size: .95rem; font-weight: 700; line-height: 1.25; margin-top: 4px; }
+
+  .mapa { margin-top: 10px; background: var(--mar); border: 4px solid var(--rim); border-radius: 22px; overflow: hidden; }
+  .mapa svg { display: block; width: 100%; height: auto; }
+  .prov { fill: var(--tierra); stroke: #1F3A5F; stroke-width: 2.5; stroke-linejoin: round; }
+  .prov.toca { cursor: pointer; }
+  .prov.toca:hover { fill: #FFE3A3; }
+  .prov.marcada { fill: #FFD98A; }
+  .prov.bien { fill: #8FDBA8; }
+  .prov.mal { fill: #F4A69E; }
+  .prov.brilla { fill: #FFE08A; animation: latidoProv .9s ease-in-out infinite; }
+  @keyframes latidoProv { 50% { fill: #FFC83D; } }
+  .prov:focus { outline: none; }
+  .prov:focus-visible { stroke: var(--materia); stroke-width: 7; }
+  .etq { font: 800 34px "Baloo 2", system-ui, sans-serif; fill: #1F3A5F; opacity: .45; text-anchor: middle; pointer-events: none; }
+  .mar { font: italic 700 34px "Baloo 2", system-ui, sans-serif; fill: #5A8FB0; text-anchor: middle; pointer-events: none; }
+  .oculto { display: none; }
+  .coco-caja { fill: none; stroke: #5A8FB0; stroke-width: 2; stroke-dasharray: 6 5; }
+  .coco-lab { font: 700 22px "Baloo 2", system-ui, sans-serif; fill: #3F6F8F; text-anchor: middle; pointer-events: none; }
+
+  /* Lugares marcados */
+  .marca .hit { fill: transparent; }
+  .marca .aro { fill: #FFFFFF; stroke: #1F3A5F; stroke-width: 5; }
+  .marca .emo { font-size: 46px; text-anchor: middle; pointer-events: none; }
+  .marca[data-blanco] { cursor: pointer; }
+  .marca.resalta .aro { stroke: #D9443A; stroke-width: 9; }
+  .marca.bien .aro { fill: #C9F2D6; stroke: #2FA85A; stroke-width: 9; }
+  .marca.mal .aro { fill: #FBD5D1; stroke: #D9443A; }
+  .marca.brilla .aro, .rio.brilla .linea, .cord.brilla .linea { stroke: #FFC83D; animation: latido .9s ease-in-out infinite; }
+  .marca.brilla .aro { stroke-width: 12; }
+  @keyframes latido { 50% { stroke-width: 18; } }
+  .marca:focus { outline: none; }
+  .marca:focus-visible .aro, .rio:focus-visible .linea, .cord:focus-visible .linea { stroke: var(--materia); stroke-width: 12; }
+  .nom { font: 800 30px "Baloo 2", system-ui, sans-serif; fill: #1F3A5F; paint-order: stroke; stroke: #FFFFFF; stroke-width: 8px; stroke-linejoin: round; pointer-events: none; display: none; }
+  .nom.ver { display: inline; }
+
+  /* Ríos y cordilleras (dibujos aproximados) */
+  .rio .hit, .cord .hit { fill: none; stroke: transparent; stroke-width: 44; stroke-linecap: round; stroke-linejoin: round; }
+  .rio .linea { fill: none; stroke: #2F7FD1; stroke-width: 8; stroke-linecap: round; stroke-linejoin: round; }
+  .cord .linea { fill: none; stroke: #8D5B3A; stroke-width: 14; stroke-dasharray: 2 18; stroke-linecap: round; stroke-linejoin: round; }
+  .rio[data-blanco], .cord[data-blanco] { cursor: pointer; }
+  .rio.bien .linea, .cord.bien .linea { stroke: #2FA85A; }
+  .rio.mal .linea, .cord.mal .linea { stroke: #D9443A; }
+  .rio:focus, .cord:focus { outline: none; }
+
+  .opciones { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .opciones:empty { display: none; }
+  .opciones.una { grid-template-columns: 1fr; }
+  .opciones button { border-radius: 18px; font-size: clamp(1rem, 4.3vw, 1.2rem); padding: 8px 6px; line-height: 1.15; }
+  .explica { margin-top: 8px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; line-height: 1.35; }
+  .explica[hidden] { display: none; }
+  .credito { margin-top: 12px; font-size: .8rem; color: var(--page-ink); opacity: .75; text-align: center; }
+  .credito a { color: inherit; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🌋🗺️🌊</div>
+  <h1>Volcanes, ríos y regiones</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Encontrá en el mapa los volcanes, parques, ríos, golfos y cordilleras de Costa Rica, y aprendé de sus regiones. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" role="group" aria-label="Tema">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="volcanes" aria-label="Volcanes y cordilleras">🌋</button>
+    <button data-nivel="parques" aria-label="Parques nacionales">🌳</button>
+    <button data-nivel="agua" aria-label="Mares, golfos y ríos">🌊</button>
+    <button data-nivel="regiones" aria-label="Regiones">🗺️</button>
+    <button data-nivel="mas" aria-label="El más… y todo el mapa">🏆</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="mapa ancho" id="mapa"></div>
+<div class="opciones ancho" id="opciones"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra pregunta">➡️</button></div>
+<p class="credito ancho">Mapa: © colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL), vía geoBoundaries. Los ríos y las cordilleras son dibujos aproximados.</p>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { MAPA_PROVINCIAS, MAPA_COCO, LUGARES, RIOS, CORDILLERAS, ESCALONES, MANUAL, inicioPorEdad, ronda,
+  pos, camino, emojiDe, cap, pistaToque, pistaProvincia } from "../js/paisajes.js";
+
+const $ = id => document.getElementById(id);
+const azar = arr => arr[Math.floor(Math.random() * arr.length)];
+
+const esc = escalera("paisajes", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("paisajes-stars");
+const ayuda = ayudaSiSeQueda({ senalar: () => mostrarRespuesta(), espera: 15000 });
+
+let manual = "volcanes", r = null, fallos = 0, listo = false, ultima = "";
+
+// ---------- Dibujo del mapa ----------
+// Nombre corto en el mapa: «Arenal», «Tortuguero», «Golfo Dulce»…
+const etiqueta = id => {
+  const l = LUGARES[id];
+  if (l?.tipo === "volcan") return l.n.replace("volcán ", "");
+  if (l?.tipo === "parque") return l.n.replace("Parque Nacional ", "");
+  return cap((l || RIOS[id] || CORDILLERAS[id]).n);
+};
+// Texto del nombre, sin salirse por los lados del mapa (xMapa: dónde queda en el mapa, para saber hacia qué lado escribirlo)
+const nombre = (id, x, y, ver, xMapa = x) => {
+  const ancla = xMapa < 160 ? "start" : xMapa > 840 ? "end" : "middle";
+  return `<text class="nom${ver ? " ver" : ""}" x="${x}" y="${y}" text-anchor="${ancla}">${etiqueta(id)}</text>`;
+};
+
+function marca(id, i, { toca = false, ver = false, resalta = false } = {}) {
+  const p = pos(id), arriba = p.y < 80;
+  const atributos = toca ? ` data-blanco="${id}" role="button" tabindex="0" aria-label="Lugar ${i + 1}"` : "";
+  return `<g class="marca${resalta ? " resalta" : ""}"${atributos} transform="translate(${p.x} ${p.y})"><circle class="hit" r="50"/><circle class="aro" r="34"/><text class="emo" y="16">${emojiDe(id)}</text>${
+    nombre(id, 0, arriba ? 78 : -46, ver, p.x)}</g>`;
+}
+function linea(clase, id, i, puntos, { toca = false, ver = false } = {}) {
+  const d = camino(puntos), p = pos(id);
+  const atributos = toca ? ` data-blanco="${id}" role="button" tabindex="0" aria-label="${clase === "rio" ? "Río" : "Cordillera"} ${i + 1}"` : "";
+  return `<g class="${clase}"${atributos}><path class="hit" d="${d}"/><path class="linea" d="${d}"/>${nombre(id, Math.round(p.x), Math.round(p.y) - 22, ver)}</g>`;
+}
+
+function pintarMapa() {
+  const tocaProv = r.tipo === "provincia";
+  const prov = (id, d) => `<path class="prov${tocaProv ? " toca" : ""}${r.provMarcada === id ? " marcada" : ""}" data-prov="${id}" d="${d}"${
+    tocaProv ? ` role="button" tabindex="0" aria-label="${MAPA_PROVINCIAS[id].n}"` : ""}/>`;
+  let s = Object.entries(MAPA_PROVINCIAS).map(([id, p]) => prov(id, p.d)).join("");
+  s += `<rect class="coco-caja" x="${MAPA_COCO.x}" y="${MAPA_COCO.y}" width="${MAPA_COCO.ancho}" height="${MAPA_COCO.alto}" rx="12"/>${prov("puntarenas", MAPA_COCO.d).replace("<path", "<path data-coco=\"1\"")}`;
+  s += `<text class="coco-lab" x="95" y="928">Isla del Coco</text>`;
+  s += `<g class="etqs${r.ocultarProvincias ? " oculto" : ""}">${Object.values(MAPA_PROVINCIAS).map(p => `<text class="etq" x="${p.x}" y="${p.y}">${p.n}</text>`).join("")}</g>`;
+  s += `<g class="mares${r.ocultarMares ? " oculto" : ""}"><text class="mar" x="200" y="600">Océano Pacífico</text><text class="mar" x="820" y="150">Mar Caribe</text></g>`;
+  const toca = r.tipo === "tocar";
+  if (r.capa === "rios") s += (toca ? r.blancos : [r.rio]).map((id, i) => linea("rio", id, i, RIOS[id].puntos, { toca, ver: !toca })).join("");
+  if (r.capa === "cordilleras") s += Object.keys(CORDILLERAS).map((id, i) => linea("cord", id, i, CORDILLERAS[id].puntos, { toca })).join("");
+  if (toca && r.capa === "lugares") s += r.blancos.map((id, i) => marca(id, i, { toca: true })).join("");
+  if (r.lugar) s += marca(r.lugar, 0, { ver: r.mostrarNombre, resalta: true });
+  $("mapa").innerHTML = `<svg viewBox="0 0 1000 953" role="group" aria-label="Mapa de Costa Rica">${s}</svg>`;
+}
+
+// ---------- Rondas ----------
+function nuevo() {
+  const i = esc.activa ? esc.nivel : azar(MANUAL[manual]);
+  // Que no salga la misma pregunta dos veces seguidas
+  for (let k = 0; k < 12; k++) { r = ronda(i); if (`${r.instr}|${r.correcta ?? r.meta}` !== ultima) break; }
+  ultima = `${r.instr}|${r.correcta ?? r.meta}`;
+  fallos = 0; listo = false;
+  pintarMapa();
+  const ops = $("opciones");
+  ops.className = "opciones ancho" + (r.opciones && r.opciones.some(o => o.txt.length > 22) ? " una" : "");
+  ops.innerHTML = r.tipo === "opciones" ? r.opciones.map(o => `<button data-op="${o.id}">${o.txt}</button>`).join("") : "";
+  feedback("");
+  $("explica").hidden = true;
+  $("nextBtn").classList.remove("pulse");
+  instruccion(r.instr, r.voz);
+  ayuda.empezar();
+}
+
+const cuantasOpciones = () => (r.tipo === "tocar" ? r.blancos.length : r.tipo === "provincia" ? 7 : r.opciones.length);
+const elementosMeta = () => r.tipo === "tocar" ? [$("mapa").querySelector(`[data-blanco="${r.meta}"]`)]
+  : r.tipo === "provincia" ? [...$("mapa").querySelectorAll(`.prov[data-prov="${r.meta}"]`)]
+  : [$("opciones").querySelector(`[data-op="${r.correcta}"]`)];
+
+/** Ayuda: hace brillar la respuesta (en el mapa o entre las opciones). */
+function mostrarRespuesta() {
+  if (listo) return;
+  if (r.tipo === "opciones") senalar(elementosMeta()[0]);
+  else elementosMeta().forEach(el => el?.classList.add("brilla"));
+}
+
+function ganar() {
+  listo = true; ayuda.parar();
+  elementosMeta().forEach(el => { el?.classList.remove("brilla", "senal"); el?.classList.add(r.tipo === "opciones" ? "right" : "bien"); });
+  if (r.tipo === "opciones") $("opciones").querySelectorAll("button").forEach(b => { b.disabled = true; });
+  // Se ven todos los nombres, los mares y las provincias
+  $("mapa").querySelectorAll(".nom").forEach(t => t.classList.add("ver"));
+  $("mapa").querySelectorAll(".oculto").forEach(g => g.classList.remove("oculto"));
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); const bien = elogio(); feedback("ok", "🎉", bien); decir(`${bien} ${r.explica}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${r.explica}`); }
+  $("explica").hidden = false; $("explica").textContent = r.explica;
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: cuantasOpciones() });
+  $("nextBtn").classList.add("pulse");
+}
+
+function fallar(pista, casi) {
+  fallos++;
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", casi ? "¡Casi!" : "No es");
+  if (fallos >= 2) { mostrarRespuesta(); decir(`${pista} ¡Mirá, aquí está!`); }
+  else decir(pista);
+}
+
+function tocarBlanco(el) {
+  // Tocar otra vez algo que ya estaba mal no cuenta como otro error
+  if (listo || r.tipo !== "tocar" || el.classList.contains("mal")) return;
+  const id = el.dataset.blanco;
+  if (id === r.meta) return ganar();
+  el.classList.add("mal");
+  el.querySelector(".nom")?.classList.add("ver");
+  const { casi, txt } = pistaToque(r, id);
+  fallar(txt, casi);
+}
+
+function tocarProvincia(el) {
+  if (listo || r.tipo !== "provincia" || el.classList.contains("mal")) return;
+  const prov = el.dataset.prov;
+  if (prov === r.meta) return ganar();
+  $("mapa").querySelectorAll(`.prov[data-prov="${prov}"]`).forEach(p => p.classList.add("mal"));
+  const { casi, txt } = pistaProvincia(r, prov);
+  fallar(txt, casi);
+}
+
+$("mapa").addEventListener("click", e => {
+  const b = e.target.closest("[data-blanco]");
+  if (b) return tocarBlanco(b);
+  const p = e.target.closest(".prov.toca");
+  if (p) tocarProvincia(p);
+});
+$("mapa").addEventListener("keydown", e => {
+  if (e.key !== "Enter" && e.key !== " ") return;
+  const el = e.target.closest("[data-blanco], .prov.toca");
+  if (!el) return;
+  e.preventDefault();
+  if (el.dataset.blanco) tocarBlanco(el); else tocarProvincia(el);
+});
+
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-op]");
+  if (!b || listo || b.disabled) return;
+  if (b.dataset.op === r.correcta) return ganar();
+  b.disabled = true; b.classList.add("wrong", "nope");
+  fallar(r.opciones.find(o => o.id === b.dataset.op).por, false);
+});
+
+$("nextBtn").addEventListener("click", () => {
+  // Pasar a otra después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar de escalón)
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = v;
+  ultima = ""; nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__paisajes = { get r() { return r; }, get fallos() { return fallos; }, get listo() { return listo; }, esc };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

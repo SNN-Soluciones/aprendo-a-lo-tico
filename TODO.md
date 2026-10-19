@@ -48,12 +48,12 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Afinar la 🐢 en Apple con las mediciones de `prueba-voz.html` (hoy 0.25)
 - [ ] Voz grabada por una persona tica (archivos de audio) para cuando el teléfono no tenga voz en español
 - [x] **Trazos de letras:** canvas + pointer events, letra punteada, validación por tolerancia
-- [ ] Trazos: flechas y puntito de inicio con el orden correcto de cada trazo
+- [x] Trazos: cada letra se dibuja con sus trazos en orden (`js/trazos.js`): puntito numerado y flechita por trazo, el dedito levanta el dedo entre trazos y en los escalones altos se pide empezar en el puntito 1
 - [ ] Trazos: el resto del abecedario y mayúsculas de consonantes
 - [ ] Trazar su nombre (lo escribe el papá)
 - [ ] Palabras comunes: mamá, papá, casa, sol, perro…
-- [ ] Método silábico: ma me mi mo mu, pa pe pi po pu…
-- [ ] Armar palabras con sílabas (arrastrar)
+- [x] 🔤 Sílabas mágicas: vocales, ma me mi mo mu, armar la sílaba y la palabra, leer palabras y oraciones
+- [x] Armar palabras con sílabas (tocando)
 - [x] Sonido inicial: ¿cuál empieza como…?
 - [x] 🧠 Parejas: memoria con dibujos y voz al voltear
 - [x] 🔍 ¿Dónde está? (buscar entre 2 a 16 dibujos) y ¿Cuál es diferente?
@@ -68,6 +68,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 - [ ] Sacar los rangos de cada juego a una config por grado (`generate(nivel)`)
 - [x] Sumas llevando con bloques (espejo de las restas)
+- [x] 💯 Números del 1 al 100: antes y después, mayor y menor, pares, series, decenas y la tabla del 100 · 1°–2°
 - [x] 🚌 ¿A qué hora llega el bus? Tiempo transcurrido con rutas ticas, a. m./p. m., horarios y días · 2°–5°
 - [x] 📐 Perímetro y área en la finca: cuadritos, pintar corrales, fórmulas, figuras en L, triángulos y problemas · 3°–6°
 - [x] 📊 Encuesta en la escuela: pictogramas, barras, moda, promedio y probabilidad · 2°–6°
@@ -88,7 +89,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 📦 ¿Qué es? Sustantivo, verbo, adjetivo, concordancia, pronombres, adverbios y sujeto y predicado · 2°–6°
 - [x] 📖 Cuentos ticos: 27 textos originales con preguntas literales, inferenciales, de vocabulario y propósito · 1°–6°
 - [x] ✍️ ¿Dónde suena más fuerte? Sílabas, agudas, graves, esdrújulas, tildes e hiato · 2°–6°
-- [ ] 📖 Más cuentos (la meta: 10 por escalón) y cuentos con audio grabado
+- [x] 📖 Más cuentos: 82 textos (unos 8 por escalón)
+- [ ] Cuentos con audio grabado
 
 ## 🌱 Ciencias
 
@@ -99,19 +101,19 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] 🧊 Sólido, líquido o gaseoso: estados y cambios (derretir, congelar, evaporar, condensar) · 1°–4°
 - [x] 🫀 El cuerpo humano: sentidos y sistemas, tocando cada órgano · 1°–6°
 - [x] 🔗 ¿Quién se come a quién? Cadenas y redes alimenticias de Costa Rica · 2°–6°
-- [ ] 🪐 El sistema solar y la Tierra (día y noche, estaciones secas y lluviosas) · 4°–6°
+- [x] 🪐 El sistema solar y la Tierra (día y noche, fases de la Luna, época seca y lluviosa, eclipses) · 3°–6°
 
 ## 🗺️ Estudios Sociales
 
 - [x] Provincias y cabeceras en mapa interactivo
-- [ ] Mapa: cantones por provincia (5°–6°), volcanes, ríos y parques nacionales
+- [ ] Mapa: cantones por provincia (5°–6°)
 - [x] 🌸 Símbolos patrios: conocer los 12, memoria dibujo–nombre (4, 6 y 8 parejas) y adivinanzas · 1°–4°
 - [x] 🛡️ El escudo nacional: tocar cada parte (estrellas, volcanes, barcos, sol, café…) y su significado · 2°–5°
 - [x] 📅 Efemérides: ¿qué se celebra?, ¿qué día es? y ¿por qué? (15 fechas) · 2°–6°
 - [ ] Mi comunidad: servicios, oficios
 - [x] 🏛️ La historia de Costa Rica: línea del tiempo, pueblos originarios, personajes y gobierno · 2°–6°
 - [x] 🧭 Direcciones a lo tico: rosa de los vientos, «200 metros al este», coordenadas, latitud y longitud · 1°–6°
-- [ ] 🗺️ Regiones de Costa Rica: clima, relieve y producción · 4°–6°
+- [x] 🌋 Volcanes, ríos, parques, golfos, cordilleras y las seis regiones, en el mapa · 3°–6°
 
 ## 💬 Inglés
 
@@ -119,6 +121,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Listen and tap
 - [x] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
 - [x] 🦜 Armo en inglés: escuchar y armar, traducir al inglés y al español, con fichas trampa y repaso de las falladas (tipo Duolingo)
+- [x] 🌦️ My day in English: días, meses, clima, ropa, la hora y la rutina · 2°–6°
 
 ## 💻 Programación (sin servidor: todo corre en el navegador)
 
@@ -138,7 +141,9 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Nota de 0 a 100, resultado por tema, revisión con explicaciones y «practicar lo que fallé»
 - [x] Imprimir el examen con hoja de respuestas
 - [ ] Más temas por grado (según el programa del MEP) y preguntas con dibujos (relojes, figuras, mapas)
-- [ ] Usar los generadores de los juegos nuevos (tiempo, área, gráficos, tildes, historia…) como temas del examen
+- [x] Usar los generadores de los juegos nuevos como temas del examen (14 temas nuevos)
+- [ ] Temas viejos con pocas preguntas distintas: geometría y plata de 1°–2°, límites, provincias, escudo
+- [ ] En el examen, poemas e instrucciones de la comprensión lectora con sus saltos de línea
 - [ ] Compartir el examen por WhatsApp (mismo examen con un enlace)
 
 ## 🎲 Que no siempre sea lo mismo (generadores, sin servidor)
@@ -161,8 +166,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] 🐸 Sudoku: modo con números o letras para 6°, y sudoku del día
 - [x] 📰 ¿Dato u opinión? (4 etapas: clasificar, palabra pista, verdadero/falso y detector de noticias con señales de alerta)
 - [x] ❌⭕ Gato contra el jaguar (fácil, medio, difícil que nunca pierde, 2 jugadores, consejos que explican)
-- [ ] ♟️ Estrategia contra el jaguar: quitar piedras (Nim) y cuatro en línea
-- [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)
+- [x] ♟️ Estrategia contra el jaguar: quitar mangos (Nim) y cuatro en línea, con escalera
+- [x] 💭 ¿Cómo se siente? (emociones y empatía, con rincón de calma, Prepa a 3°)
 
 ## 🪜 De a poquito: por edad y sin frustrarse
 
@@ -172,7 +177,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Escalera en ¡A contar!, Colores y figuras, ¿Con qué empieza?, Sudoku de ranitas y todos los juegos nuevos de Prepa
 - [x] Jaguar detective 🪜 paso a paso: de 2 sospechosos y 1 pista hasta los difíciles, con dibujos en las pistas
 - [x] Perezoso: 💡 pone la siguiente flecha después de 2 intentos fallidos
-- [ ] Escalera en Listen and tap, Trazá letras, Gato (fácil → medio cuando gana seguido) y Memory in English
+- [x] Escalera en Listen and tap, Trazá letras, Gato (de muy fácil a difícil) y Memory in English
 - [x] «📈 Cómo va…» en el inicio: en qué escalón va el niño en cada juego
 - [x] `js/quiz.js` con modo 🪜 y respuestas escritas
 - [ ] Modo papá: mover a mano el escalón de un juego desde el inicio

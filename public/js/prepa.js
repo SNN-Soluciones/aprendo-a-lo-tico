@@ -105,6 +105,7 @@ export function ayudaSiSeQueda({ senalar: mostrar, repetir = () => repetirInstru
   };
   const armar = () => { clearTimeout(t); etapa = 0; if (activa) t = setTimeout(tick, espera); };
   document.addEventListener("pointerdown", armar, true);
+  document.addEventListener("keydown", armar, true); // jugar con teclado también cuenta como tocar
   return {
     /** Al empezar cada ronda. */
     empezar() { activa = true; usada = false; armar(); },

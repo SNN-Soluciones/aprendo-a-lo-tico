@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Estrategia contra el jaguar</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; --rojo: #E53935; --amarillo: #FFC83D; --azul: #1E6FD9; }
+  .ancho { width: min(96vw, 460px); }
+  [hidden] { display: none !important; }
+
+  /* Pestañas: mangos o cuatro en línea */
+  .tabs { display: flex; gap: 6px; }
+  .tabs button { font-size: 1.05rem; padding: 4px 12px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .tabs button[aria-selected="true"] { background: var(--btn); }
+  .barra2 { margin-top: 6px; }
+  .levels { gap: 5px; }
+  .levels button { font-size: .9rem; padding: 3px 8px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+
+  .marcador { margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .marcador div { background: var(--face); border: 3px solid var(--rim); border-radius: 16px; text-align: center; padding: 4px 2px; font-weight: 800; line-height: 1.1; }
+  .marcador .n { font-size: 1.6rem; display: block; }
+  .marcador .turno { outline: 4px solid var(--btn); outline-offset: 2px; }
+  .turnoTxt { margin-top: 8px; text-align: center; font-size: 1.2rem; font-weight: 800; color: var(--page-ink); min-height: 1.6rem; }
+
+  /* 🥭 Mangos */
+  .mangos { margin-top: 6px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px; padding: 8px; display: flex; flex-direction: column; gap: 8px; position: relative; min-height: 90px; }
+  .fila { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; padding: 4px; border-radius: 14px; background: #F4FBF6; min-height: 52px; }
+  .fila .rotulo { font-size: .8rem; font-weight: 800; opacity: .6; margin-right: 2px; }
+  .mango { font-size: 1.65rem; line-height: 1; width: 40px; height: 42px; padding: 0; border-width: 3px; border-radius: 14px; box-shadow: 0 3px 0 var(--rim); background: #FFFDF6; }
+  .mango.cinco { margin-right: 10px; } /* de 5 en 5, para contar más fácil */
+  .fila.grupos { flex-direction: column; align-items: flex-start; }
+  .grupo { display: flex; gap: 4px; }
+  .mango.elegido { background: #FFE3E0; border-color: var(--bad); box-shadow: 0 3px 0 var(--bad); transform: translateY(-3px); }
+  .mango:disabled { opacity: 1; cursor: default; }
+  .fila.vacia::after { content: "—"; opacity: .4; font-weight: 800; padding-left: 8px; }
+  .cuantos { text-align: center; font-weight: 800; font-size: 1.1rem; color: var(--page-ink); margin-top: 4px; }
+  .quitar { margin-top: 8px; display: flex; gap: 8px; }
+  .quitar button { flex: 1; border-radius: 18px; font-size: 1.5rem; padding: 6px 2px; line-height: 1.05; background: var(--btn); }
+  .quitar button small { display: block; font-size: .9rem; }
+  .pensando { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 3.4rem; pointer-events: none; animation: pulse .8s ease-in-out infinite; }
+
+  /* 🔴 Cuatro en línea */
+  .tablero4 { margin-top: 6px; display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; background: var(--azul); padding: 6px; border-radius: 18px; border: 4px solid var(--rim); position: relative; }
+  .col { display: flex; flex-direction: column; gap: 4px; padding: 2px; border: none; border-radius: 12px; background: transparent; box-shadow: none; }
+  .col:active { transform: none; box-shadow: none; }
+  .col:hover:not(:disabled), .col:focus-visible { background: rgba(255, 255, 255, .22); }
+  .col:disabled { opacity: 1; cursor: default; }
+  .celda { aspect-ratio: 1; width: 100%; border-radius: 50%; background: #F7FBFF; display: block; box-shadow: inset 0 3px 0 rgba(0, 0, 0, .18); }
+  .celda.R { background: var(--rojo); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .2); }
+  .celda.A { background: var(--amarillo); box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .15); }
+  .celda.cae { animation: cae .35s ease-in; }
+  .celda.gana { outline: 4px solid #fff; outline-offset: -4px; animation: pulse .8s ease-in-out 3; }
+  @keyframes cae { from { transform: translateY(-260%); } }
+  .ficha { display: inline-block; width: 1em; height: 1em; border-radius: 50%; vertical-align: -.15em; border: 2px solid var(--rim); }
+  .ficha.R { background: var(--rojo); } .ficha.A { background: var(--amarillo); }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { font-size: 1.1rem; padding: 6px 0; border-radius: 16px; flex: 1; }
+  #nuevaBtn.pulse { animation: pulse 1s ease-in-out infinite; background: var(--btn); }
+  .explica { margin-top: 10px; background: #FFF6DA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 700; color: #3B2F00; }
+  @media (prefers-reduced-motion: reduce) { .celda.cae { animation: none; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🥭🔴🐆</div>
+  <h1>Estrategia contra el jaguar</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Dos juegos para pensar: quitar mangos y cuatro en línea. ¡Ganale al jaguar! Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="tabs" id="tabs" role="tablist" aria-label="Juego">
+    <button role="tab" data-juego="nim" aria-selected="true">🥭 Mangos</button>
+    <button role="tab" data-juego="cuatro" aria-selected="false"><span class="ficha R" aria-hidden="true"></span> Cuatro en línea</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+<div class="wrap top ancho barra2">
+  <div class="levels" id="niveles" role="group" aria-label="Nivel del jaguar">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="facil" aria-pressed="false" aria-label="Jaguar fácil">Fácil</button>
+    <button data-nivel="medio" aria-pressed="false" aria-label="Jaguar medio">Medio</button>
+    <button data-nivel="dificil" aria-pressed="false" aria-label="Jaguar difícil">Difícil</button>
+    <button data-nivel="dos" aria-pressed="false" aria-label="Dos jugadores">👫</button>
+  </div>
+  <div class="escalera" id="escaleraNim"></div>
+  <div class="escalera" id="escaleraCuatro"></div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="marcador ancho" id="marcador"></div>
+<div class="turnoTxt ancho" id="turnoTxt" aria-live="polite"></div>
+
+<section id="panelNim" class="ancho" aria-label="Mangos">
+  <div class="mangos" id="mangos"></div>
+  <div class="cuantos" id="cuantos" aria-live="polite"></div>
+  <div class="quitar" id="quitar"></div>
+</section>
+<section id="panelCuatro" class="ancho" aria-label="Cuatro en línea" hidden>
+  <div class="tablero4" id="tablero4" role="group" aria-label="Tablero de cuatro en línea"></div>
+</section>
+
+<div class="acciones ancho">
+  <button id="pistaBtn" aria-label="Pedir una pista">💡 Pista</button>
+  <button id="nuevaBtn" aria-label="Otra partida">🔄 Otra partida</button>
+</div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import {
+  ESCALONES_NIM, partidaNim, partidaDos, jugadaNim, aplicar, vacia, buenas, pistaNim, leccionNim, reglaNim, mangos,
+  ESCALONES_CUATRO, COLS, FILAS, NINO, JAGUAR, otro, vacio, caeEn, cuatroCon, ganaEn, jugadaCuatro, consejoCuatro,
+} from "../js/estrategia.js";
+
+const $ = id => document.getElementById(id);
+
+// 🪜 Una escalera para cada juego (los mangos usan el id del catálogo, así salen en «Cómo va…»)
+const escNim = escalera("estrategia", { escalones: ESCALONES_NIM.length, meta: 3, el: "escaleraNim",
+  inicio: edad => edad === null || edad <= 7 ? 0 : edad === 8 ? 1 : edad === 9 ? 2 : edad === 10 ? 3 : 4 });
+const escCuatro = escalera("estrategia-cuatro", { escalones: ESCALONES_CUATRO.length, meta: 2, el: "escaleraCuatro",
+  inicio: edad => edad === null || edad <= 7 ? 0 : edad === 8 ? 1 : edad <= 10 ? 2 : 3 });
+// Niveles a mano (para el papá o la maestra): cada uno escoge al azar entre estos escalones
+const MANUAL = {
+  nim: { facil: [0, 1, 2], medio: [3, 4, 6, 8], dificil: [5, 7, 9, 10, 11] },
+  cuatro: { facil: [0, 1], medio: [2, 3, 4], dificil: [5, 6] },
+};
+const stars = estrellas("estrategia-stars");
+const elegir = arr => arr[Math.floor(Math.random() * arr.length)];
+
+let juego = "nim";
+const modo = { nim: "auto", cuatro: "auto" };
+let partida = null;           // la partida en curso (las esperas revisan que siga siendo la misma)
+let marcador = { nim: [0, 0], cuatro: [0, 0, 0] };
+try { marcador = { ...marcador, ...JSON.parse(localStorage.getItem("estrategia-marcador")) }; } catch (_) {}
+const guardar = () => { try { localStorage.setItem("estrategia-marcador", JSON.stringify(marcador)); } catch (_) {} };
+const perdidas = {};          // derrotas por variante de mangos (para las lecciones de a poquito)
+const dos = () => modo[juego] === "dos";
+const esc = () => (juego === "nim" ? escNim : escCuatro);
+
+const ayuda = ayudaSiSeQueda({ espera: 15000, senalar: () => mostrarPista(true) });
+
+// ---------- Modo, pestañas y marcador ----------
+function aplicarModo() {
+  escNim.activa = juego === "nim" && modo.nim === "auto";
+  escCuatro.activa = juego === "cuatro" && modo.cuatro === "auto";
+  document.querySelectorAll("#niveles [data-nivel]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.nivel === modo[juego])));
+  document.querySelectorAll("#tabs [data-juego]").forEach(b => b.setAttribute("aria-selected", String(b.dataset.juego === juego)));
+  $("panelNim").hidden = juego !== "nim";
+  $("panelCuatro").hidden = juego !== "cuatro";
+}
+function escalonDe() {
+  if (modo[juego] === "auto" || modo[juego] === "dos") return esc().nivel;
+  return elegir(MANUAL[juego][modo[juego]]);
+}
+function pintarMarcador() {
+  const p = partida;
+  const yo = dos() ? (juego === "nim" ? "🧒 Jugador 1" : `<span class="ficha R"></span> Rojo`) : "🧒 Vos";
+  const el = dos() ? (juego === "nim" ? "🧒 Jugador 2" : `<span class="ficha A"></span> Amarillo`) : "🐆 Jaguar";
+  const m = dos() ? [p?.puntos?.[0] || 0, p?.puntos?.[1] || 0] : juego === "nim" ? marcador.nim : [marcador.cuatro[0], marcador.cuatro[2]];
+  $("marcador").innerHTML = `<div class="${p && !p.fin && p.turno === 0 ? "turno" : ""}">${yo}<span class="n">${m[0]}</span></div>
+    <div class="${p && !p.fin && p.turno === 1 ? "turno" : ""}">${el}<span class="n">${m[1]}</span></div>`;
+}
+function pintarTurno() {
+  const p = partida;
+  if (!p || p.fin) { $("turnoTxt").textContent = ""; return; }
+  if (dos()) $("turnoTxt").textContent = `👉 Le toca al ${p.turno === 0 ? "jugador 1" : "jugador 2"}`;
+  else $("turnoTxt").textContent = p.turno === 0 ? "👉 Te toca a vos" : "🐆 El jaguar está pensando…";
+  if (dos() && juego === "cuatro") $("turnoTxt").textContent = `👉 Le toca a ${p.turno === 0 ? "rojo" : "amarillo"}`;
+}
+
+// =============== 🥭 MANGOS ===============
+const nombreFila = (pos, i) => {
+  const n = pos.filas.length;
+  return n === 1 ? "" : n === 2 ? (i === 0 ? "de arriba" : "de abajo") : ["de arriba", "del medio", "de abajo"][i];
+};
+function nuevaNim(voz = true) {
+  const escalon = escalonDe();
+  const pos = dos() ? partidaDos(escalon) : partidaNim(escalon);
+  // En 2 jugadores empieza uno y otro, por turnos
+  const empieza = dos() ? (partida?.juego === "nim" && partida.dos ? 1 - partida.empezo : 0) : 0;
+  partida = { juego: "nim", dos: dos(), escalon, pos, inicio: pos, turno: empieza, empezo: empieza, fin: false, ayuda: false, sel: null,
+    puntos: partida?.juego === "nim" && partida.dos && dos() ? partida.puntos : [0, 0] };
+  limpiar();
+  pintarNim(); pintarMarcador(); pintarTurno();
+  if (voz) {
+    const quien = dos() ? `Empieza el jugador ${empieza + 1}.` : "Empezás vos.";
+    instruccion(`<span class="big">🥭</span> ${reglaNim(pos)}`, `Hay ${cuantosTexto(pos)}. ${reglaNim(pos)} ${quien}`);
+  }
+  if (!dos()) ayuda.empezar();
+}
+const total = pos => pos.filas.reduce((a, b) => a + b, 0);
+const cuantosTexto = pos => pos.filas.length === 1 ? mangos(pos.filas[0])
+  : `${pos.filas.length === 2 ? "dos" : "tres"} filas de mangos: ${pos.filas.map(mangos).join(", ")}`;
+
+function pintarNim(pensando = false) {
+  const p = partida, pos = p.pos, puedeTocar = !p.fin && !pensando && (dos() || p.turno === 0);
+  const varias = pos.filas.length > 1;
+  const mango = (f, j, n) => {
+    const elegido = p.sel && p.sel.fila === f && j >= n - p.sel.cuantos;
+    return `<button class="mango${varias && (j + 1) % 5 === 0 && j + 1 < n ? " cinco" : ""}${elegido ? " elegido" : ""}" data-f="${f}" data-j="${j}"
+      ${varias && puedeTocar ? "" : "disabled"} aria-label="Fila ${f + 1}, mango ${j + 1}">🥭</button>`;
+  };
+  // Una sola fila: en grupitos de 5 (como los dedos de la mano), para contar fácil. Varias filas: cada una en su renglón.
+  $("mangos").innerHTML = (varias
+    ? pos.filas.map((n, f) => `<div class="fila${n ? "" : " vacia"}" role="group" aria-label="Fila ${f + 1}: ${mangos(n)}"><span class="rotulo" aria-hidden="true">${f + 1}</span>${
+      Array.from({ length: n }, (_, j) => mango(f, j, n)).join("")}</div>`).join("")
+    : `<div class="fila grupos${pos.filas[0] ? "" : " vacia"}" role="group" aria-label="${mangos(pos.filas[0])}">${
+      Array.from({ length: Math.ceil(pos.filas[0] / 5) }, (_, g) => `<div class="grupo">${
+        Array.from({ length: Math.min(5, pos.filas[0] - g * 5) }, (_, k) => mango(0, g * 5 + k, pos.filas[0])).join("")}</div>`).join("")}</div>`)
+    + (pensando ? `<div class="pensando" aria-hidden="true">🐆💭</div>` : "");
+  $("cuantos").textContent = p.fin ? "" : varias ? `Quedan ${total(pos)} 🥭` : `Quedan ${pos.filas[0]} 🥭`;
+  // Una fila: botones «quitar 1, 2, 3». Varias filas: tocar un mango (y los de su derecha) y después ✋ Quitar
+  if (!varias) {
+    $("quitar").innerHTML = Array.from({ length: pos.max }, (_, k) => k + 1).map(k =>
+      `<button data-quitar="${k}" ${puedeTocar && k <= pos.filas[0] ? "" : "disabled"} aria-label="Quitar ${k === 1 ? "uno" : k === 2 ? "dos" : "tres"}">${"🥭".repeat(k)}<small>Quitar ${k}</small></button>`).join("");
+  } else {
+    $("quitar").innerHTML = `<button data-quitar="sel" ${puedeTocar && p.sel ? "" : "disabled"} aria-label="Quitar los mangos marcados">✋<small>${p.sel ? `Quitar ${p.sel.cuantos}` : "Tocá un mango"}</small></button>`;
+  }
+}
+
+$("mangos").addEventListener("click", e => {
+  const b = e.target.closest("[data-f]");
+  const p = partida;
+  if (!b || !p || p.juego !== "nim" || p.fin || (!dos() && p.turno !== 0)) return;
+  const f = Number(b.dataset.f), j = Number(b.dataset.j), n = p.pos.filas[f];
+  p.sel = { fila: f, cuantos: n - j };
+  sonido("tap");
+  const cuantos = mangos(p.sel.cuantos);
+  decir(`${cuantos[0].toUpperCase() + cuantos.slice(1)} de la fila ${nombreFila(p.pos, f)}. Tocá la mano para ${p.sel.cuantos === 1 ? "quitarlo" : "quitarlos"}.`);
+  pintarNim();
+});
+$("quitar").addEventListener("click", e => {
+  const b = e.target.closest("[data-quitar]");
+  const p = partida;
+  if (!b || b.disabled || !p || p.juego !== "nim" || p.fin || (!dos() && p.turno !== 0)) return;
+  const m = b.dataset.quitar === "sel" ? p.sel : { fila: 0, cuantos: Number(b.dataset.quitar) };
+  if (!m) return;
+  jugarNim(m);
+});
+
+function jugarNim(m) {
+  const p = partida;
+  p.pos = aplicar(p.pos, m); p.sel = null;
+  $("explica").hidden = true;
+  sonido("tap");
+  const quien = p.turno;
+  if (vacia(p.pos)) return terminarNim(quien);
+  p.turno = 1 - p.turno;
+  pintarNim(); pintarMarcador(); pintarTurno();
+  if (dos()) { decir(`Quedan ${cuantosTexto(p.pos)}. Le toca al jugador ${p.turno + 1}.`); return; }
+  ayuda.parar();
+  // Turno del jaguar (si el niño toca ➡️ o cambia de juego mientras tanto, esta partida ya no es la actual)
+  pintarNim(true);
+  setTimeout(() => {
+    if (p !== partida || p.fin) return;
+    const e = ESCALONES_NIM[p.escalon];
+    const j = jugadaNim(p.pos, e.p);
+    p.pos = aplicar(p.pos, j);
+    const deDonde = nombreFila(p.pos, j.fila);
+    if (vacia(p.pos)) return terminarNim(1);
+    p.turno = 0;
+    pintarNim(); pintarMarcador(); pintarTurno();
+    decir(`El jaguar se llevó ${mangos(j.cuantos)}${deDonde ? ` de la fila ${deDonde}` : ""}. Quedan ${p.pos.filas.length === 1 ? mangos(p.pos.filas[0]) : mangos(total(p.pos))}. Te toca.`);
+    ayuda.empezar();
+  }, 1100);
+}
+
+function terminarNim(ultimo) {
+  const p = partida;
+  p.fin = true; ayuda.parar();
+  // Si «el último gana», ganó el que se llevó el último; si no, el otro
+  const gana = p.pos.ultimaGana ? ultimo : 1 - ultimo;
+  pintarNim(); pintarTurno();
+  const como = p.pos.ultimaGana ? "se llevó el último mango" : "le tocó llevarse el último mango";
+  if (dos()) {
+    p.puntos[gana]++;
+    feedback("ok", "🎉", `¡Ganó el jugador ${gana + 1}!`);
+    decir(`¡Ganó el jugador ${gana + 1}! El jugador ${ultimo + 1} ${como}.`);
+  } else if (gana === 0) {
+    marcador.nim[0]++;
+    if (!p.ayuda) stars.sumar();
+    feedback("ok", "🎉", "¡Le ganaste al jaguar!");
+    decir(`${elogio()} ${p.pos.ultimaGana ? "Te llevaste el último mango." : "El jaguar tuvo que llevarse el último mango."} ¡Le ganaste al jaguar!`);
+    esc().resultado({ fallos: 0, ayuda: p.ayuda });
+  } else {
+    marcador.nim[1]++;
+    const v = `${p.inicio.filas.length}-${p.inicio.max}-${p.inicio.ultimaGana}`;
+    perdidas[v] = (perdidas[v] || 0) + 1;
+    const leccion = leccionNim(p.inicio, perdidas[v]);
+    feedback("bad", "🐆", "Ganó el jaguar");
+    $("explica").hidden = false; $("explica").textContent = `💡 ${leccion}`;
+    decir(`${p.pos.ultimaGana ? "El jaguar se llevó el último mango." : "Te tocó llevarte el último mango."} ¡Ganó el jaguar! ${leccion}`);
+    esc().resultado({ fallos: 2, ayuda: p.ayuda });
+  }
+  guardar(); pintarMarcador();
+  $("nuevaBtn").classList.add("pulse");
+}
+
+// =============== 🔴 CUATRO EN LÍNEA ===============
+const NOMBRE = { R: "rojo", A: "amarillo" };
+const ficha = turno => (turno === 0 ? NINO : JAGUAR);
+function nuevaCuatro(voz = true) {
+  const escalon = escalonDe();
+  const empieza = dos() ? (partida?.juego === "cuatro" && partida.dos ? 1 - partida.empezo : 0) : 0;
+  partida = { juego: "cuatro", dos: dos(), escalon, t: vacio(), turno: empieza, empezo: empieza, fin: false, ayuda: false, ultima: -1,
+    puntos: partida?.juego === "cuatro" && partida.dos && dos() ? partida.puntos : [0, 0] };
+  limpiar();
+  pintarCuatro(); pintarMarcador(); pintarTurno();
+  if (voz) {
+    const quien = dos() ? `Empieza ${NOMBRE[ficha(empieza)]}.` : "Vos sos rojo y empezás vos.";
+    instruccion(`<span class="ficha R"></span><span class="ficha R"></span><span class="ficha R"></span><span class="ficha R"></span> Hacé <b>cuatro en fila</b>`,
+      `Hacé cuatro en fila: de lado, para arriba o en diagonal. Tocá una columna para dejar caer tu ficha. ${quien}`);
+  }
+  if (!dos()) ayuda.empezar();
+}
+
+function pintarCuatro(marcas = {}, pensando = false) {
+  const p = partida, t = p.t, puedeTocar = !p.fin && !pensando && (dos() || p.turno === 0);
+  $("tablero4").innerHTML = Array.from({ length: COLS }, (_, c) => {
+    const llenas = Array.from({ length: FILAS }, (_, f) => t[f * COLS + c]).filter(Boolean).length;
+    return `<button class="col" data-c="${c}" ${puedeTocar && llenas < FILAS ? "" : "disabled"} aria-label="Columna ${c + 1}: ${llenas ? `${llenas} ${llenas === 1 ? "ficha" : "fichas"}` : "vacía"}">${
+      Array.from({ length: FILAS }, (_, f) => { const i = f * COLS + c, v = t[i];
+        return `<span class="celda ${v || ""}${i === p.ultima ? " cae" : ""}${marcas[i] ? ` ${marcas[i]}` : ""}" aria-hidden="true"></span>`; }).join("")}</button>`;
+  }).join("") + (pensando ? `<div class="pensando" aria-hidden="true">🐆💭</div>` : "");
+}
+
+$("tablero4").addEventListener("click", e => {
+  const b = e.target.closest("[data-c]");
+  const p = partida;
+  if (!b || b.disabled || !p || p.juego !== "cuatro" || p.fin || (!dos() && p.turno !== 0)) return;
+  soltar(Number(b.dataset.c));
+});
+
+function soltar(c) {
+  const p = partida, s = ficha(p.turno), i = caeEn(p.t, c);
+  if (i < 0) return;
+  p.t[i] = s; p.ultima = i;
+  $("explica").hidden = true; feedback("");
+  sonido("tap");
+  const linea = cuatroCon(p.t, i);
+  if (linea) return terminarCuatro(s, linea);
+  if (p.t.slice(0, COLS).every(Boolean)) return terminarCuatro("empate");
+  p.turno = 1 - p.turno;
+  pintarCuatro(); pintarMarcador(); pintarTurno();
+  if (dos()) return;
+  ayuda.parar();
+  pintarCuatro({}, true);
+  // La jugada del jaguar va después de pintar «pensando» (si cambia la partida, se descarta)
+  setTimeout(() => {
+    if (p !== partida || p.fin) return;
+    const col = jugadaCuatro(p.t, JAGUAR, p.escalon);
+    const k = caeEn(p.t, col);
+    p.t[k] = JAGUAR; p.ultima = k;
+    const l = cuatroCon(p.t, k);
+    if (l) return terminarCuatro(JAGUAR, l);
+    if (p.t.slice(0, COLS).every(Boolean)) return terminarCuatro("empate");
+    p.turno = 0;
+    pintarCuatro(); pintarMarcador(); pintarTurno();
+    // En los primeros escalones, el jaguar avisa cuando tiene tres en fila
+    if (p.escalon <= 3 && ganaEn(p.t, JAGUAR) >= 0) {
+      feedback("almost", "👀", "¡Ojo!");
+      decir("¡Ojo! El jaguar tiene tres en fila: ¡tapalo!");
+    }
+    ayuda.empezar();
+  }, 750);
+}
+
+function terminarCuatro(quien, linea = []) {
+  const p = partida;
+  p.fin = true; ayuda.parar();
+  const marcas = {};
+  linea.forEach(i => { marcas[i] = "gana"; });
+  pintarCuatro(marcas); pintarTurno();
+  if (dos()) {
+    if (quien === "empate") { feedback("almost", "🤝", "¡Empate!"); decir("¡Empate! Se llenó el tablero."); }
+    else { p.puntos[quien === NINO ? 0 : 1]++; feedback("ok", "🎉", `¡Ganó ${NOMBRE[quien]}!`); decir(`¡Ganó ${NOMBRE[quien]}! Cuatro en fila.`); }
+  } else if (quien === NINO) {
+    marcador.cuatro[0]++;
+    if (!p.ayuda) stars.sumar();
+    feedback("ok", "🎉", "¡Le ganaste al jaguar!");
+    decir(`${elogio()} ¡Cuatro en fila! Le ganaste al jaguar.`);
+    esc().resultado({ fallos: 0, ayuda: p.ayuda });
+  } else if (quien === "empate") {
+    marcador.cuatro[1]++;
+    feedback("almost", "🤝", "¡Empate!");
+    decir("¡Empate! Se llenó el tablero y nadie hizo cuatro en fila.");
+    esc().resultado({ fallos: 1, ayuda: p.ayuda });
+  } else {
+    marcador.cuatro[2]++;
+    feedback("bad", "🐆", "Ganó el jaguar");
+    const consejo = "La próxima, antes de jugar fijate si el jaguar tiene tres en fila y tapale el camino. Y no pongás tu ficha justo debajo de donde el jaguar ganaría.";
+    $("explica").hidden = false; $("explica").textContent = `💡 ${consejo}`;
+    decir(`¡Ganó el jaguar! ${consejo}`);
+    esc().resultado({ fallos: 2, ayuda: p.ayuda });
+  }
+  guardar(); pintarMarcador();
+  $("nuevaBtn").classList.add("pulse");
+}
+
+// =============== 💡 Pista (y la ayuda cuando el niño se queda quieto) ===============
+function mostrarPista(sola = false) {
+  const p = partida;
+  if (!p || p.fin || (!dos() && p.turno !== 0)) return;
+  p.ayuda = true;
+  let texto;
+  if (p.juego === "nim") {
+    const q = pistaNim(p.pos);
+    texto = q.texto;
+    if (p.pos.filas.length === 1) {
+      pintarNim();
+      senalar($("quitar").querySelector(`[data-quitar="${q.movida.cuantos}"]`));
+    } else {
+      p.sel = q.movida;
+      pintarNim();
+      senalar($("quitar").querySelector("[data-quitar]"));
+    }
+  } else {
+    const s = ficha(p.turno), c = consejoCuatro(p.t, s);
+    const rival = dos() ? NOMBRE[otro(s)] : "el jaguar";
+    texto = {
+      ganar: "¡Podés hacer cuatro en fila ya! Poné tu ficha en la columna marcada.",
+      tapar: `¡Cuidado! ${rival[0].toUpperCase() + rival.slice(1)} tiene tres en fila y gana en la columna marcada. ¡Tapale el camino!`,
+      noRegales: `Ojo con la columna ${c.evitar + 1}: si ponés ahí, ${rival} gana justo encima. Mejor probá en la marcada.`,
+      centro: "La columna del centro es la más poderosa: desde ahí se pueden hacer más líneas.",
+      mejor: "Esta columna es buena: te ayuda a armar tus líneas sin dejarle el camino libre a tu rival.",
+    }[c.tipo];
+    pintarCuatro();
+    senalar($("tablero4").querySelector(`[data-c="${c.columna}"]`));
+  }
+  $("explica").hidden = false; $("explica").textContent = `💡 ${texto}`;
+  if (!sola) sonido("tap");
+  decir(texto);
+}
+$("pistaBtn").addEventListener("click", () => mostrarPista(false));
+
+// =============== Controles ===============
+function limpiar() {
+  $("explica").hidden = true; feedback(""); $("nuevaBtn").classList.remove("pulse");
+}
+const nueva = (voz = true) => (juego === "nim" ? nuevaNim(voz) : nuevaCuatro(voz));
+$("nuevaBtn").addEventListener("click", () => { sonido("tap"); nueva(); });
+
+$("tabs").addEventListener("click", e => {
+  const b = e.target.closest("[data-juego]");
+  if (!b || b.dataset.juego === juego) return;
+  sonido("tap");
+  juego = b.dataset.juego;
+  partida = null;
+  aplicarModo();
+  nueva();
+});
+
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-nivel]");
+  if (!b) return;
+  sonido("tap");
+  modo[juego] = b.dataset.nivel;
+  partida = null;
+  aplicarModo();
+  nueva(false);
+  const txt = { auto: "De a poquito: el jaguar se pone más difícil cuando le ganás.", facil: "Jaguar fácil.", medio: "Jaguar medio.",
+    dificil: "Jaguar difícil: ¡a pensar bien cada jugada!", dos: "Dos jugadores en el mismo celular: se turnan." }[modo[juego]];
+  if (juego === "nim") instruccion(`<span class="big">🥭</span> ${txt}`, `${txt} ${reglaNim(partida.pos)}`);
+  else instruccion(`<b>${txt}</b> Hacé cuatro en fila.`, `${txt} Hacé cuatro en fila: de lado, para arriba o en diagonal.`);
+});
+
+const repetir = lento => {
+  const p = partida;
+  const t = !p ? "" : p.juego === "nim" ? `Quedan ${cuantosTexto(p.pos)}. ${reglaNim(p.pos)}`
+    : "Hacé cuatro en fila: de lado, para arriba o en diagonal. Si tu rival tiene tres en fila, ¡tapale el camino!";
+  return decir(t, lento ? { rate: LENTO } : undefined);
+};
+alEmpezar(() => { aplicarModo(); nueva(); }, repetir);
+aplicarModo();
+pintarMarcador();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__estrategia = {
+  get partida() { return partida; }, get juego() { return juego; },
+  get nivelNim() { return escNim.nivel; }, get nivelCuatro() { return escCuatro.nivel; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

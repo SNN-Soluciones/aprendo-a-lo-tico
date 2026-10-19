@@ -131,6 +131,10 @@ function serie({ saltos, libre }, rnd) {
     pista: `Sumale ${s} al número de antes.` };
 }
 
+// «1 decena», «4 decenas», «1 unidad», «7 unidades»
+const decenas = n => { const d = Math.floor(n / 10); return `${d} ${d === 1 ? "decena" : "decenas"}`; };
+const unidades = n => { const u = n % 10; return `${u} ${u === 1 ? "unidad" : "unidades"}`; };
+
 /** Armar un número con barras (decenas) y cubitos (unidades). */
 function armar({ max }, rnd) {
   let n;
@@ -138,7 +142,7 @@ function armar({ max }, rnd) {
   return { tipo: "armar", modo: "decenas", n, instr: `Armá el <b>${n}</b>`,
     voz: `Armá el ${n} con barras de diez y cubitos de uno.`,
     explica: `${n} = <b>${Math.floor(n / 10)} ${Math.floor(n / 10) === 1 ? "decena" : "decenas"}</b> y <b>${n % 10} ${n % 10 === 1 ? "unidad" : "unidades"}</b>: ${Math.floor(n / 10)} ${Math.floor(n / 10) === 1 ? "barra" : "barras"} de 10 y ${n % 10} ${n % 10 === 1 ? "cubito" : "cubitos"}.`,
-    pista: `El ${n} tiene ${Math.floor(n / 10)} decenas: poné esas barras primero.` };
+    pista: `El ${n} tiene ${decenas(n)}: poné ${Math.floor(n / 10) === 1 ? "esa barra" : "esas barras"} primero.` };
 }
 
 /** <, > o = : la boca del lagarto. */
@@ -155,7 +159,7 @@ function signo({ max }, rnd) {
   const porque = correcta === "="
     ? `${a} y ${b} son el mismo número.`
     : Math.floor(a / 10) !== Math.floor(b / 10)
-      ? `Primero se miran las decenas: ${Math.floor(Math.max(a, b) / 10)} decenas es más que ${Math.floor(Math.min(a, b) / 10)}.`
+      ? `Primero se miran las decenas: ${decenas(Math.max(a, b))} es más que ${decenas(Math.min(a, b))}.`
       : `Las decenas son iguales; entonces se miran las unidades: ${Math.max(a, b) % 10} es más que ${Math.min(a, b) % 10}.`;
   return { tipo: "opciones", modo: "signo", instr: `<span class="tira"><b>${a}</b><b class="hueco">?</b><b>${b}</b></span>`,
     voz: `¿Qué signo va entre el ${a} y el ${b}? ¿Menor que, mayor que o igual?`,
@@ -185,7 +189,7 @@ function tablaDonde(_, rnd) {
   do n = entre(12, 99, rnd); while (n % 10 === 0 || n % 10 === 1);
   return { tipo: "tabla", modo: "tabla", n, instr: `¿Dónde va el <b>${n}</b>?`,
     voz: `Tocá en la tabla dónde va el ${n}.`,
-    explica: `El ${n} va en la fila que empieza con el ${Math.floor((n - 1) / 10) * 10 + 1}, en la columna del ${(n - 1) % 10 + 1}: ${Math.floor(n / 10)} decenas y ${n % 10} unidades.`,
+    explica: `El ${n} va en la fila que empieza con el ${Math.floor((n - 1) / 10) * 10 + 1}, en la columna del ${(n - 1) % 10 + 1}: ${decenas(n)} y ${unidades(n)}.`,
     pista: `Buscá la fila que empieza con el ${Math.floor((n - 1) / 10) * 10 + 1}.` };
 }
 
@@ -213,7 +217,7 @@ function palabras(_, rnd) {
   if (rnd() < 0.5) {
     return { tipo: "opciones", modo: "palabras", instr: `<span class="palabra">${enPalabras(n)}</span>`, voz: `¿Qué número es ${enPalabras(n)}?`,
       opciones: opcionesNum(n, otrosNum, 4, rnd, 1, 100), correcta: String(n), cols: 2,
-      explica: `«${enPalabras(n)}» es el <b>${n}</b>: ${Math.floor(n / 10)} decenas y ${n % 10} unidades.`,
+      explica: `«${enPalabras(n)}» es el <b>${n}</b>: ${decenas(n)} y ${unidades(n)}.`,
       pista: "La primera palabra dice las decenas; la que va después de la «y», las unidades." };
   }
   const malas = [...new Set(otrosNum)].slice(0, 3);
@@ -221,7 +225,7 @@ function palabras(_, rnd) {
   return { tipo: "opciones", modo: "palabras", instr: `¿Cómo se dice el <b class="grande-num">${n}</b>?`, voz: `¿Cuál de estas palabras es el ${n}?`,
     opciones: ops, correcta: String(n), cols: 1,
     explica: `El <b>${n}</b> se dice «${enPalabras(n)}».`,
-    pista: `El ${n} empieza con ${Math.floor(n / 10)} decenas.` };
+    pista: `El ${n} empieza con ${decenas(n)}.` };
 }
 
 /** Redondear a la decena más cercana. */
@@ -278,7 +282,7 @@ export function revisarRonda(q) {
   const mal = [];
   const texto = JSON.stringify(q);
   if (/undefined|NaN|null/.test(texto)) mal.push("undefined/NaN");
-  if (/de el |\buno (zapatos|decenas|unidades|barras|cubitos)/.test(texto)) mal.push("gramática");
+  if (/de el |\buno (zapatos|decenas|unidades|barras|cubitos)|(^|[^\d])1 (decenas|unidades|barras|cubitos)/.test(texto)) mal.push("gramática");
   if (q.tipo === "opciones") {
     const ids = q.opciones.map(o => o.id);
     if (new Set(ids).size !== ids.length) mal.push("opciones repetidas");

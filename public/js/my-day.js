@@ -465,11 +465,11 @@ function escribirHora(rnd) {
   };
 }
 
-/** ¿Lo que escribió vale? (sin mayúsculas ni espacios de más; la hora con : o .) */
+/** ¿Lo que escribió vale? (sin mayúsculas ni espacios de más; la hora con : o ., o con coma: el teclado decimal del celular no tiene :) */
 export function acepta(q, texto) {
   const t = String(texto).trim().toLowerCase().replace(/\s+/g, " ");
   if (q.clase === "hora") {
-    const k = t.match(/^(\d{1,2})\s*[:.h ]\s*(\d{2})$/);
+    const k = t.match(/^(\d{1,2})\s*[:.,h ]\s*(\d{2})$/);
     return !!k && Number(k[1]) === q.hora.h && Number(k[2]) === q.hora.m;
   }
   const limpio = t.replace(/^it'?s\s+/, "").replace(/^(a|an)\s+/, "").replace(/[.!]$/, "").trim();
@@ -567,6 +567,7 @@ export function revisarPregunta(q) {
     else if (!acepta(q, q.respuesta)) mal.push(`no acepta su propia respuesta: ${q.respuesta}`);
     else if (q.clase === "palabra" && !acepta(q, q.respuesta.toUpperCase())) mal.push("no acepta mayúsculas");
     if (q.clase === "hora" && !acepta(q, `0${q.respuesta}`) && q.hora.h < 10) mal.push("no acepta 03:45");
+    if (q.clase === "hora" && !acepta(q, q.respuesta.replace(":", ","))) mal.push("no acepta 3,45");
     if (q.clase === "hora" && acepta(q, digital(sig(q.hora.h), q.hora.m))) mal.push("acepta otra hora");
   } else mal.push(`tipo raro: ${q.tipo}`);
   return mal;

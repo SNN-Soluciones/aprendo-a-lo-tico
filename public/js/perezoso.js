@@ -75,29 +75,78 @@ export function ejecutar(juego, programa) {
   return { pasos, resultado: faltan.size === 0 ? "gano" : "incompleto", x, y, faltan: faltan.size };
 }
 
-/** Menor cantidad de pasos para comerse todas las hojas (búsqueda a lo ancho). */
-export function minimo(juego) {
-  const idx = new Map(juego.hojas.map((h, i) => [`${h.x},${h.y}`, i]));
+// Hojas comidas como bits: la hoja i está comida si el bit i está prendido.
+const indiceHojas = juego => new Map(juego.hojas.map((h, i) => [`${h.x},${h.y}`, i]));
+
+/**
+ * Búsqueda a lo ancho desde una posición (x, y) con unas hojas ya comidas (m):
+ * devuelve las flechas de un camino más corto que se come las que faltan, o null si no se puede.
+ */
+function buscar(juego, x0, y0, m0) {
+  const idx = indiceHojas(juego);
   const meta = (1 << juego.hojas.length) - 1;
-  const inicio = [juego.salida.x, juego.salida.y, 0];
-  const visto = new Set([inicio.join()]);
-  let frente = [inicio], pasos = 0;
+  const inicio = `${x0},${y0},${m0}`;
+  const vino = new Map([[inicio, null]]); // estado → [estado anterior, flecha]
+  let frente = [[x0, y0, m0]];
   while (frente.length) {
     const sig = [];
     for (const [x, y, m] of frente) {
-      if (m === meta) return pasos;
-      for (const d of Object.values(DIRS)) {
+      if (m === meta) {
+        const flechas = [];
+        for (let k = `${x},${y},${m}`; vino.get(k); k = vino.get(k)[0]) flechas.unshift(vino.get(k)[1]);
+        return flechas;
+      }
+      for (const [nombre, d] of Object.entries(DIRS)) {
         const nx = x + d.dx, ny = y + d.dy;
         if (nx < 0 || ny < 0 || nx >= juego.ancho || ny >= juego.alto || juego.tipo(nx, ny) !== "libre") continue;
         const h = idx.get(`${nx},${ny}`);
         const nm = h === undefined ? m : m | (1 << h);
         const k = `${nx},${ny},${nm}`;
-        if (!visto.has(k)) { visto.add(k); sig.push([nx, ny, nm]); }
+        if (!vino.has(k)) { vino.set(k, [`${x},${y},${m}`, nombre]); sig.push([nx, ny, nm]); }
       }
     }
-    frente = sig; pasos++;
+    frente = sig;
   }
-  return Infinity;
+  return null;
+}
+
+/** Dónde queda el perezoso y qué hojas lleva después de correr un programa (null si choca). */
+function despuesDe(juego, programa) {
+  const r = ejecutar(juego, programa);
+  if (r.resultado === "choco") return null;
+  const idx = indiceHojas(juego);
+  const m = r.pasos.reduce((m, p) => (p.comio ? m | (1 << idx.get(p.comio)) : m), 0);
+  return { x: r.x, y: r.y, m };
+}
+
+/** Menor cantidad de pasos para comerse todas las hojas (búsqueda a lo ancho). */
+export function minimo(juego) {
+  const c = buscar(juego, juego.salida.x, juego.salida.y, 0);
+  return c ? c.length : Infinity;
+}
+
+/** Flechas de un camino más corto, desde la salida o desde donde deja al perezoso un programa (null si choca o no se puede). */
+export function caminoCorto(juego, programa = []) {
+  const e = despuesDe(juego, programa);
+  return e ? buscar(juego, e.x, e.y, e.m) : null;
+}
+
+/**
+ * 💡 Pista: arregla el programa del niño de a una flecha, siguiendo un camino más corto.
+ * - Si lo que lleva va bien (todavía se puede terminar con el mínimo de flechas), agrega la que sigue.
+ * - Si no, quita las flechas desde la primera que se sale del camino más corto.
+ * @returns {{ programa: string[], accion: "agrega" | "quita" | "listo", flecha?: string }}
+ */
+export function pista(juego, programa) {
+  const total = minimo(juego);
+  const bien = k => { const c = caminoCorto(juego, programa.slice(0, k)); return c !== null && k + c.length === total; };
+  // Si un pedazo va bien, todos los más cortos también: se busca el primero que se sale
+  let k = 0;
+  while (k < programa.length && bien(k + 1)) k++;
+  if (k < programa.length) return { programa: programa.slice(0, k), accion: "quita" };
+  const resto = caminoCorto(juego, programa);
+  if (!resto || !resto.length) return { programa: [...programa], accion: "listo" };
+  return { programa: [...programa, resto[0]], accion: "agrega", flecha: resto[0] };
 }
 
 // ---------- 🎲 Niveles al azar ----------

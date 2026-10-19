@@ -13,7 +13,7 @@
 <link rel="stylesheet" href="../css/prepa.css">
 <style>
   :root { --materia: #2F7FD1; }
-  .opciones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 14px; }
+  .opciones { display: grid; grid-template-columns: repeat(var(--cols, 2), 1fr); gap: 14px; margin-top: 14px; }
   .opciones button { border-radius: 26px; padding: 10px; aspect-ratio: 1 / .82; display: flex; align-items: center; justify-content: center; }
   .opciones svg { width: 78%; height: 100%; display: block; overflow: visible; }
   .opciones svg * { stroke: #1F3A5F; stroke-width: 4; stroke-linejoin: round; }
@@ -32,10 +32,12 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-nivel="color" aria-pressed="true" aria-label="Colores">🎨</button>
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="color" aria-label="Colores">🎨</button>
     <button data-nivel="figura" aria-label="Figuras">🔺</button>
     <button data-nivel="ambos" aria-label="Colores y figuras">🎨🔺</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -46,7 +48,8 @@
 
 <script type="module">
 import { elogio } from "../js/voz.js";
-import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 
@@ -71,8 +74,30 @@ const COLORES = [
   { id: "cafe", m: "café", f: "café", c: "#795548" },
 ];
 
+// Los primeros escalones usan solo estos (los más fáciles de reconocer)
+const COLORES_BASICOS = COLORES.filter(c => ["rojo", "azul", "amarillo", "verde"].includes(c.id));
+const FIGURAS_BASICAS = FIGURAS.filter(f => ["circulo", "cuadrado", "triangulo", "estrella"].includes(f.id));
+
+// 🪜 De a poquito: primero colores, después figuras y al final los dos juntos; cada uno de 2 a 4 opciones
+const ESCALONES = [
+  { modo: "color", ops: 2, basicos: true },
+  { modo: "color", ops: 3, basicos: true },
+  { modo: "color", ops: 4 },
+  { modo: "figura", ops: 2, basicos: true },
+  { modo: "figura", ops: 3, basicos: true },
+  { modo: "figura", ops: 4 },
+  { modo: "ambos", ops: 3 },   // la correcta, una que comparte figura o color y una distinta
+  { modo: "ambos", ops: 4 },   // la correcta, una con la misma figura, una con el mismo color y una distinta
+];
+const esc = escalera("colores-figuras", {
+  escalones: ESCALONES.length,
+  inicio: edad => edad === null || edad <= 3 ? 0 : edad === 4 ? 1 : edad === 5 ? 2 : 3,
+});
+
 let modo = "color", meta = null, opciones = [], fallos = 0, listo = false, ultimo = "";
 const stars = estrellas("figuras-stars");
+const botonDe = o => $("opciones").querySelector(`[data-i="${opciones.indexOf(o)}"]`);
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(botonDe(meta)) });
 
 const art = (fig, def = true) => def ? (fig.f ? "la" : "el") : (fig.f ? "una" : "un");
 const nombre = (o, def = true) => `${art(o.fig, def)} ${o.fig.n} ${o.fig.f ? o.col.f : o.col.m}`;
@@ -81,24 +106,30 @@ const dibujo = o => `<svg viewBox="0 0 100 100" aria-hidden="true">${o.fig.svg(o
 
 function nuevo() {
   fallos = 0; listo = false;
+  // En 🪜 manda el escalón; con un nivel a mano, siempre 4 opciones con todos los colores y figuras
+  const e = esc.activa ? ESCALONES[esc.nivel] : { modo, ops: 4 };
+  modo = e.modo;
+  const cuantas = e.ops;
+  const colores = e.basicos ? COLORES_BASICOS : COLORES, figuras = e.basicos ? FIGURAS_BASICAS : FIGURAS;
   let ops;
   if (modo === "color") {
-    const fig = azar(FIGURAS);
-    const cols = barajar(COLORES).slice(0, 4);
+    const fig = azar(figuras);
+    const cols = barajar(colores).slice(0, cuantas);
     ops = cols.map(col => ({ fig, col }));
   } else if (modo === "figura") {
-    const figs = barajar(FIGURAS).slice(0, 4);
+    const figs = barajar(figuras).slice(0, cuantas);
     const cols = barajar(COLORES);
     ops = figs.map((fig, i) => ({ fig, col: cols[i] }));
   } else {
-    // Una correcta, una con la misma figura, una con el mismo color y una distinta
+    // Una correcta, una con la misma figura, una con el mismo color y una distinta (con 3: solo una de las dos parecidas)
     const fig = azar(FIGURAS), col = azar(COLORES);
     const otraFig = () => azar(FIGURAS.filter(x => x !== fig));
     const otroCol = () => azar(COLORES.filter(x => x !== col));
     ops = [{ fig, col }, { fig, col: otroCol() }, { fig: otraFig(), col }];
+    if (cuantas === 3) ops.splice(1 + Math.floor(Math.random() * 2), 1);
     let d;
     do d = { fig: otraFig(), col: otroCol() };
-    while (ops.some(o => o.fig === d.fig && o.col === d.col));
+    while (ops.some(o => o.fig === d.fig || o.col === d.col));
     ops.push(d);
   }
   meta = ops[0];
@@ -108,6 +139,7 @@ function nuevo() {
   ultimo = clave;
 
   opciones = barajar(ops);
+  $("opciones").style.setProperty("--cols", cuantas === 4 ? 2 : cuantas);
   $("opciones").innerHTML = opciones.map((o, i) => `<button data-i="${i}" aria-label="${nombre(o, false)}">${dibujo(o)}</button>`).join("");
   feedback("");
   $("nextBtn").classList.remove("pulse");
@@ -119,6 +151,7 @@ function nuevo() {
   } else {
     instruccion(`${meta.fig.n} ${meta.fig.f ? meta.col.f : meta.col.m}`, `Tocá ${nombre(meta)}.`);
   }
+  ayuda.empezar();
 }
 
 function queEs(o) {
@@ -133,11 +166,14 @@ $("opciones").addEventListener("click", e => {
   const o = opciones[Number(b.dataset.i)];
   if (o === meta) {
     listo = true;
+    ayuda.parar();
+    b.classList.remove("senal");
     b.classList.add("right");
     $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
     const dicho = modo === "color" ? `Ese es el ${meta.col.m}` : modo === "figura" ? `${ese(meta.fig)} ${art(meta.fig)} ${meta.fig.n}` : `${ese(meta.fig)} ${nombre(meta)}`;
-    if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${dicho}.`); }
+    if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${dicho}.`); }
     else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${dicho}.`); }
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones: opciones.length });
     $("nextBtn").classList.add("pulse");
   } else {
     fallos++;
@@ -151,12 +187,20 @@ $("opciones").addEventListener("click", e => {
       feedback("bad", "🙈", "No es");
       decir(`${queEs(o)}. Probá otra vez.`);
     }
+    // Al segundo error se le señala cuál es
+    if (fallos >= 2) senalar(botonDe(meta));
   }
 });
 
 $("nextBtn").addEventListener("click", nuevo);
-niveles(v => { modo = v; ultimo = ""; nuevo(); });
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") modo = v;
+  ultimo = ""; nuevo();
+});
 alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__colores = { get correcta() { return opciones.indexOf(meta); }, get modo() { return modo; }, get cuantas() { return opciones.length; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

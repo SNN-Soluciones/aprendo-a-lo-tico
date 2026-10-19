@@ -53,13 +53,14 @@ if (puedeHablar) try { speechSynthesis.getVoices(); } catch (_) {}
 const ELOGIOS = ["¡Muy bien!", "¡Pura vida!", "¡Excelente!", "¡Qué tuanis!", "¡Lo lograste!", "¡Buenísimo!"];
 export const elogio = () => ELOGIOS[Math.floor(Math.random() * ELOGIOS.length)];
 
-// 🎵 Sonidos cortos (sin archivos de audio): "ok" sube, "casi" queda igual, "mal" baja, "tap" es un clic suave.
+// 🎵 Sonidos cortos (sin archivos de audio): "ok" sube, "casi" queda igual, "mal" baja, "tap" es un clic suave
+// y "sube" es la fanfarria de subir un escalón 🪜.
 let ctx = null;
 export function sonido(tipo = "tap") {
   try {
     ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === "suspended") ctx.resume();
-    const notas = { ok: [523, 659, 784], casi: [523, 523], mal: [392, 262], tap: [880] }[tipo] || [880];
+    const notas = { ok: [523, 659, 784], casi: [523, 523], mal: [392, 262], tap: [880], sube: [523, 659, 784, 1047, 784, 1047] }[tipo] || [880];
     const t0 = ctx.currentTime;
     notas.forEach((f, i) => {
       const o = ctx.createOscillator(), g = ctx.createGain();

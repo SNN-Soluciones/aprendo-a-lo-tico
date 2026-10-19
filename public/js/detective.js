@@ -30,8 +30,21 @@ export const ETAPAS = [
   { id: "dificiles", nombre: "Casos difíciles", emoji: "🏆" },
 ];
 
+// 🖼️ Dibujos de las pistas, para los que todavía no leen (la voz dice la pista y el dibujo la recuerda).
+// Una pista tiene `ico`: una lista de piezas. "!x" = x tachado (pista con NO), "@color" = un círculo de ese color,
+// y "o", "y", "→" son palabritas que unen las piezas («tiene pelo o plumas», «si tiene pelo → sale de noche»).
+// Solo emojis hasta Unicode 13, para que se vean en celulares viejos.
+export const ICO = {
+  pelo: "🧸", plumas: "🪶", escamas: "🐟", caparazon: "🐚", piel: "✋",
+  vuela: "✈️", patas: "🐾", arbol: "🌳", agua: "🌊", suelo: "🟫",
+  plantas: "🌿", animales: "🍖", noche: "🌙", dia: "☀️", lento: "🐌",
+};
+export const COLORES = { cafe: "#8D5B3A", negro: "#2B2B2B", rojo: "#E53935", verde: "#2FA85A", gris: "#9AA3AD", azul: "#1E6FD9" };
+const no = x => "!" + x;
+const patas = n => `${n}${ICO.patas}`;
+
 // Atajos para escribir pistas
-const p = (txt, f) => ({ txt, f });
+const p = (txt, f, ico = []) => ({ txt, f, ico });
 
 // ---------- Casos ----------
 // sospechosos: ids de ANIMALES · culpable: id · pistas · trampa: índice de la pista que no sirve (🐞)
@@ -41,45 +54,45 @@ export const CASOS = [
   { id: "mangos", etapa: "pistas", tipo: "sospechosos", titulo: "Los mangos de la pulpería",
     historia: "¡Desaparecieron los mangos de la pulpería de doña Rosa! El jaguar encontró una pista.",
     sospechosos: ["perezoso", "lapa", "rana"], culpable: "lapa",
-    pistas: [p("Tiene plumas.", a => a.cubierta === "plumas")] },
+    pistas: [p("Tiene plumas.", a => a.cubierta === "plumas", [ICO.plumas])] },
   { id: "ruido", etapa: "pistas", tipo: "sospechosos", titulo: "Un ruido en la noche",
     historia: "Anoche alguien hizo mucho ruido cerca de la escuela. ¿Quién andaba despierto?",
     sospechosos: ["mono", "lapa", "rana"], culpable: "rana",
-    pistas: [p("Sale de noche.", a => a.noche === true)] },
+    pistas: [p("Sale de noche.", a => a.noche === true, [ICO.noche])] },
   { id: "huellas", etapa: "pistas", tipo: "sospechosos", titulo: "Huellas junto al río",
     historia: "Hay huellas enormes en la orilla del río. El jaguar sacó su lupa.",
     sospechosos: ["perezoso", "cocodrilo", "lapa"], culpable: "cocodrilo",
-    pistas: [p("Vive en el agua.", a => a.vive === "agua")] },
+    pistas: [p("Vive en el agua.", a => a.vive === "agua", [ICO.agua])] },
   { id: "hoja", etapa: "pistas", tipo: "sospechosos", titulo: "La hoja mordida",
     historia: "Alguien mordió las hojas del jardín de la escuela. ¡Dos pistas esta vez!",
     sospechosos: ["iguana", "rana", "lapa"], culpable: "iguana",
-    pistas: [p("Come plantas.", a => a.come === "plantas"), p("Es verde.", a => a.color === "verde")] },
+    pistas: [p("Come plantas.", a => a.come === "plantas", [ICO.plantas]), p("Es verde.", a => a.color === "verde", ["@verde"])] },
   { id: "campana", etapa: "pistas", tipo: "sospechosos", titulo: "¿Quién tocó la campana?",
     historia: "La campana de la iglesia sonó a medianoche. ¡Alguien voló hasta arriba!",
     sospechosos: ["murcielago", "mapache", "perezoso", "lapa"], culpable: "murcielago",
-    pistas: [p("Tiene pelo.", a => a.cubierta === "pelo"), p("Puede volar.", a => a.vuela)] },
+    pistas: [p("Tiene pelo.", a => a.cubierta === "pelo", [ICO.pelo]), p("Puede volar.", a => a.vuela, [ICO.vuela])] },
 
   // 🚫 Pistas con NO
   { id: "banano", etapa: "no", tipo: "sospechosos", titulo: "El banano perdido",
     historia: "¡Se perdió el banano del recreo! Ahora las pistas dicen lo que el culpable NO es.",
     sospechosos: ["perezoso", "mono", "lapa", "iguana"], culpable: "mono",
-    pistas: [p("No tiene plumas.", a => a.cubierta !== "plumas"), p("No es verde.", a => a.color !== "verde"), p("No es lento.", a => !a.lento)] },
+    pistas: [p("No tiene plumas.", a => a.cubierta !== "plumas", [no(ICO.plumas)]), p("No es verde.", a => a.color !== "verde", [no("@verde")]), p("No es lento.", a => !a.lento, [no(ICO.lento)])] },
   { id: "grillo", etapa: "no", tipo: "sospechosos", titulo: "¿Quién se comió al grillo?",
     historia: "El grillo que cantaba en el aula desapareció. Alguien se lo comió.",
     sospechosos: ["rana", "serpiente", "mono", "mapache"], culpable: "rana",
-    pistas: [p("No tiene pelo.", a => a.cubierta !== "pelo"), p("No tiene escamas.", a => a.cubierta !== "escamas")] },
+    pistas: [p("No tiene pelo.", a => a.cubierta !== "pelo", [no(ICO.pelo)]), p("No tiene escamas.", a => a.cubierta !== "escamas", [no(ICO.escamas)])] },
   { id: "sobra", etapa: "no", tipo: "sospechosos", titulo: "🐞 La pista que sobra", trampa: 0,
     historia: "Alguien se llevó el néctar de las flores. Pero ojo: una de las pistas no sirve para nada.",
     sospechosos: ["lapa", "yiguirro", "murcielago", "mariposa"], culpable: "mariposa",
-    pistas: [p("Puede volar.", a => a.vuela), p("No tiene plumas.", a => a.cubierta !== "plumas"), p("Tiene seis patas.", a => a.patas === 6)] },
+    pistas: [p("Puede volar.", a => a.vuela, [ICO.vuela]), p("No tiene plumas.", a => a.cubierta !== "plumas", [no(ICO.plumas)]), p("Tiene seis patas.", a => a.patas === 6, [patas(6)])] },
   { id: "charco", etapa: "no", tipo: "sospechosos", titulo: "El charco revuelto",
     historia: "Alguien se bañó en el charco y dejó todo lleno de barro.",
     sospechosos: ["cocodrilo", "tortuga", "delfin", "rana"], culpable: "rana",
-    pistas: [p("No tiene escamas.", a => a.cubierta !== "escamas"), p("No tiene caparazón.", a => a.cubierta !== "caparazon"), p("Tiene cuatro patas.", a => a.patas === 4)] },
+    pistas: [p("No tiene escamas.", a => a.cubierta !== "escamas", [no(ICO.escamas)]), p("No tiene caparazón.", a => a.cubierta !== "caparazon", [no(ICO.caparazon)]), p("Tiene cuatro patas.", a => a.patas === 4, [patas(4)])] },
   { id: "almendro", etapa: "no", tipo: "sospechosos", titulo: "Las semillas del almendro",
     historia: "Alguien se comió todas las semillas del almendro de montaña. ¡Cinco sospechosos!",
     sospechosos: ["lapa", "yiguirro", "mono", "perezoso", "iguana"], culpable: "lapa",
-    pistas: [p("Come plantas.", a => a.come === "plantas"), p("No tiene pelo.", a => a.cubierta !== "pelo"), p("No es verde.", a => a.color !== "verde")] },
+    pistas: [p("Come plantas.", a => a.come === "plantas", [ICO.plantas]), p("No tiene pelo.", a => a.cubierta !== "pelo", [no(ICO.pelo)]), p("No es verde.", a => a.color !== "verde", [no("@verde")])] },
 
   // 📋 La libreta del detective
   { id: "frutas", etapa: "libreta", tipo: "libreta", titulo: "¿Qué fruta comió cada uno?",
@@ -87,64 +100,64 @@ export const CASOS = [
     filas: ["mono", "lapa", "perezoso"],
     columnas: [{ id: "mango", e: "🥭", n: "mango" }, { id: "banano", e: "🍌", n: "banano" }, { id: "sandia", e: "🍉", n: "sandía" }],
     solucion: { mono: "banano", lapa: "mango", perezoso: "sandia" },
-    pistas: [p("El mono comió banano.", s => s.de("mono") === "banano"), p("La lapa no comió sandía.", s => s.de("lapa") !== "sandia")] },
+    pistas: [p("El mono comió banano.", s => s.de("mono") === "banano", ["🐒", "→", "🍌"]), p("La lapa no comió sandía.", s => s.de("lapa") !== "sandia", ["🦜", no("🍉")])] },
   { id: "dormir", etapa: "libreta", tipo: "libreta", titulo: "¿Dónde durmió cada uno?",
     historia: "Cada uno durmió en un lugar distinto. ¡A llenar la libreta!",
     filas: ["rana", "iguana", "perezoso"],
     columnas: [{ id: "arbol", e: "🌳", n: "árbol" }, { id: "piedra", e: "🪨", n: "piedra" }, { id: "hoja", e: "🍃", n: "hoja" }],
     solucion: { rana: "hoja", iguana: "piedra", perezoso: "arbol" },
-    pistas: [p("El que durmió en la piedra tiene escamas.", s => ANIMALES[s.quien("piedra")].cubierta === "escamas"), p("La rana no durmió en el árbol.", s => s.de("rana") !== "arbol")] },
+    pistas: [p("El que durmió en la piedra tiene escamas.", s => ANIMALES[s.quien("piedra")].cubierta === "escamas", ["🪨", "→", ICO.escamas]), p("La rana no durmió en el árbol.", s => s.de("rana") !== "arbol", ["🐸", no("🌳")])] },
   { id: "festival", etapa: "libreta", tipo: "libreta", titulo: "El festival de música",
     historia: "En el festival de la escuela, cada uno tocó un instrumento distinto.",
     filas: ["lapa", "mono", "rana"],
     columnas: [{ id: "tambor", e: "🥁", n: "tambor" }, { id: "guitarra", e: "🎸", n: "guitarra" }, { id: "trompeta", e: "🎺", n: "trompeta" }],
     solucion: { lapa: "trompeta", mono: "guitarra", rana: "tambor" },
     pistas: [
-      p("El que tocó el tambor no tiene plumas.", s => ANIMALES[s.quien("tambor")].cubierta !== "plumas"),
-      p("La rana tocó la trompeta o el tambor.", s => ["trompeta", "tambor"].includes(s.de("rana"))),
-      p("El mono no tocó la trompeta.", s => s.de("mono") !== "trompeta"),
-      p("La lapa no tocó la guitarra.", s => s.de("lapa") !== "guitarra"),
+      p("El que tocó el tambor no tiene plumas.", s => ANIMALES[s.quien("tambor")].cubierta !== "plumas", ["🥁", "→", no(ICO.plumas)]),
+      p("La rana tocó la trompeta o el tambor.", s => ["trompeta", "tambor"].includes(s.de("rana")), ["🐸", "→", "🎺", "o", "🥁"]),
+      p("El mono no tocó la trompeta.", s => s.de("mono") !== "trompeta", ["🐒", no("🎺")]),
+      p("La lapa no tocó la guitarra.", s => s.de("lapa") !== "guitarra", ["🦜", no("🎸")]),
     ] },
   { id: "almuerzo", etapa: "libreta", tipo: "libreta", titulo: "🐞 El almuerzo", trampa: 2,
     historia: "Cada uno almorzó algo distinto. Una pista no hace falta: ¿cuál será?",
     filas: ["cocodrilo", "lapa", "perezoso"],
     columnas: [{ id: "hojas", e: "🍃", n: "hojas" }, { id: "semillas", e: "🌰", n: "semillas" }, { id: "pescado", e: "🐟", n: "pescado" }],
     solucion: { cocodrilo: "pescado", lapa: "semillas", perezoso: "hojas" },
-    pistas: [p("El cocodrilo comió pescado.", s => s.de("cocodrilo") === "pescado"), p("La lapa no comió hojas.", s => s.de("lapa") !== "hojas"), p("El perezoso no comió pescado.", s => s.de("perezoso") !== "pescado")] },
+    pistas: [p("El cocodrilo comió pescado.", s => s.de("cocodrilo") === "pescado", ["🐊", "→", "🐟"]), p("La lapa no comió hojas.", s => s.de("lapa") !== "hojas", ["🦜", no("🍃")]), p("El perezoso no comió pescado.", s => s.de("perezoso") !== "pescado", ["🦥", no("🐟")])] },
 
   // 🏆 Casos difíciles
   { id: "robo", etapa: "dificiles", tipo: "sospechosos", titulo: "El gran robo de la pulpería",
     historia: "¡Alguien se robó el queso de la pulpería! Estas pistas usan «o» y «si… entonces». Leelas con calma.",
     sospechosos: ["mono", "lapa", "rana", "iguana", "mapache", "murcielago"], culpable: "mapache",
     pistas: [
-      p("Tiene pelo o plumas.", a => a.cubierta === "pelo" || a.cubierta === "plumas"),
-      p("Si tiene pelo, entonces sale de noche.", a => a.cubierta !== "pelo" || a.noche === true),
-      p("No puede volar.", a => !a.vuela),
+      p("Tiene pelo o plumas.", a => a.cubierta === "pelo" || a.cubierta === "plumas", [ICO.pelo, "o", ICO.plumas]),
+      p("Si tiene pelo, entonces sale de noche.", a => a.cubierta !== "pelo" || a.noche === true, [ICO.pelo, "→", ICO.noche]),
+      p("No puede volar.", a => !a.vuela, [no(ICO.vuela)]),
     ] },
   { id: "rio", etapa: "dificiles", tipo: "sospechosos", titulo: "El misterio del río",
     historia: "Alguien desordenó las piedras del río. Seis sospechosos, pocas pistas.",
     sospechosos: ["cocodrilo", "tortuga", "delfin", "rana", "serpiente", "iguana"], culpable: "rana",
     pistas: [
-      p("No tiene ni caparazón ni escamas.", a => a.cubierta !== "caparazon" && a.cubierta !== "escamas"),
-      p("Si no tiene patas, entonces vive en el suelo.", a => a.patas > 0 || a.vive === "suelo"),
+      p("No tiene ni caparazón ni escamas.", a => a.cubierta !== "caparazon" && a.cubierta !== "escamas", [no(ICO.caparazon), no(ICO.escamas)]),
+      p("Si no tiene patas, entonces vive en el suelo.", a => a.patas > 0 || a.vive === "suelo", [no(ICO.patas), "→", ICO.suelo]),
     ] },
   { id: "tramposa", etapa: "dificiles", tipo: "sospechosos", titulo: "🐞 La pista tramposa", trampa: 2,
     historia: "Alguien voló por la ventana y se comió la fruta. Una de estas pistas es tramposa: no descarta a nadie.",
     sospechosos: ["lapa", "yiguirro", "murcielago", "mariposa", "mono", "perezoso"], culpable: "murcielago",
     pistas: [
-      p("Puede volar.", a => a.vuela),
-      p("No tiene plumas.", a => a.cubierta !== "plumas"),
-      p("Si es rojo, entonces tiene plumas.", a => a.color !== "rojo" || a.cubierta === "plumas"),
-      p("No es azul.", a => a.color !== "azul"),
+      p("Puede volar.", a => a.vuela, [ICO.vuela]),
+      p("No tiene plumas.", a => a.cubierta !== "plumas", [no(ICO.plumas)]),
+      p("Si es rojo, entonces tiene plumas.", a => a.color !== "rojo" || a.cubierta === "plumas", ["@rojo", "→", ICO.plumas]),
+      p("No es azul.", a => a.color !== "azul", [no("@azul")]),
     ] },
   { id: "final", etapa: "dificiles", tipo: "sospechosos", titulo: "El caso final",
     historia: "¡El último caso! Alguien se comió el pescado del festival. Ocho sospechosos y cuatro pistas.",
     sospechosos: ["perezoso", "mono", "lapa", "rana", "iguana", "cocodrilo", "serpiente", "murcielago"], culpable: "cocodrilo",
     pistas: [
-      p("No tiene plumas ni piel lisa.", a => a.cubierta !== "plumas" && a.cubierta !== "piel"),
-      p("Tiene cuatro patas o puede volar.", a => a.patas === 4 || a.vuela),
-      p("Si tiene escamas, entonces vive en el agua.", a => a.cubierta !== "escamas" || a.vive === "agua"),
-      p("No come plantas y no puede volar.", a => a.come !== "plantas" && !a.vuela),
+      p("No tiene plumas ni piel lisa.", a => a.cubierta !== "plumas" && a.cubierta !== "piel", [no(ICO.plumas), no(ICO.piel)]),
+      p("Tiene cuatro patas o puede volar.", a => a.patas === 4 || a.vuela, [patas(4), "o", ICO.vuela]),
+      p("Si tiene escamas, entonces vive en el agua.", a => a.cubierta !== "escamas" || a.vive === "agua", [ICO.escamas, "→", ICO.agua]),
+      p("No come plantas y no puede volar.", a => a.come !== "plantas" && !a.vuela, [no(ICO.plantas), "y", no(ICO.vuela)]),
     ] },
 ];
 
@@ -208,31 +221,32 @@ const VIVE = { arbol: "los árboles", agua: "el agua", suelo: "el suelo" };
 function pistasPara(culpable, ids) {
   const c = ANIMALES[culpable], out = [];
   const definido = k => ids.every(id => ANIMALES[id][k] !== null && ANIMALES[id][k] !== undefined);
-  const add = (txt, f, no = false) => out.push({ txt, f, no });
+  const add = (txt, f, ico, conNo = false) => out.push({ txt, f, ico, no: conNo });
   if (definido("cubierta")) {
-    if (CUBIERTAS[c.cubierta]) add(`Tiene ${CUBIERTAS[c.cubierta]}.`, a => a.cubierta === c.cubierta);
-    for (const [v, n] of Object.entries(CUBIERTAS)) if (v !== c.cubierta) add(`No tiene ${n}.`, a => a.cubierta !== v, true);
+    if (CUBIERTAS[c.cubierta]) add(`Tiene ${CUBIERTAS[c.cubierta]}.`, a => a.cubierta === c.cubierta, [ICO[c.cubierta]]);
+    for (const [v, n] of Object.entries(CUBIERTAS)) if (v !== c.cubierta) add(`No tiene ${n}.`, a => a.cubierta !== v, [no(ICO[v])], true);
   }
-  if (definido("vuela")) add(c.vuela ? "Puede volar." : "No puede volar.", a => a.vuela === c.vuela, !c.vuela);
+  if (definido("vuela")) add(c.vuela ? "Puede volar." : "No puede volar.", a => a.vuela === c.vuela, [c.vuela ? ICO.vuela : no(ICO.vuela)], !c.vuela);
   if (definido("patas")) {
-    add(PATAS[c.patas], a => a.patas === c.patas, c.patas === 0);
-    for (const v of [0, 2, 4, 6]) if (v !== c.patas) add(PATAS_NO[v], a => a.patas !== v, v !== 0);
+    add(PATAS[c.patas], a => a.patas === c.patas, [c.patas ? patas(c.patas) : no(ICO.patas)], c.patas === 0);
+    for (const v of [0, 2, 4, 6]) if (v !== c.patas) add(PATAS_NO[v], a => a.patas !== v, [v ? no(patas(v)) : ICO.patas], v !== 0);
   }
   if (definido("vive")) {
-    add(`Vive en ${VIVE[c.vive]}.`, a => a.vive === c.vive);
-    for (const [v, n] of Object.entries(VIVE)) if (v !== c.vive) add(`No vive en ${n}.`, a => a.vive !== v, true);
+    add(`Vive en ${VIVE[c.vive]}.`, a => a.vive === c.vive, [ICO[c.vive]]);
+    for (const [v, n] of Object.entries(VIVE)) if (v !== c.vive) add(`No vive en ${n}.`, a => a.vive !== v, [no(ICO[v])], true);
   }
   // «Come de todo» también come plantas: para no confundir, solo se usa si nadie come de todo
   if (definido("come") && ids.every(id => ANIMALES[id].come !== "todo")) {
-    add(c.come === "plantas" ? "Come plantas." : "Come otros animales.", a => a.come === c.come);
-    add(c.come === "plantas" ? "No come otros animales." : "No come plantas.", a => a.come === c.come, true);
+    const otro = c.come === "plantas" ? "animales" : "plantas";
+    add(c.come === "plantas" ? "Come plantas." : "Come otros animales.", a => a.come === c.come, [ICO[c.come]]);
+    add(c.come === "plantas" ? "No come otros animales." : "No come plantas.", a => a.come === c.come, [no(ICO[otro])], true);
   }
   if (definido("color")) {
-    add(`Es de color ${COLOR[c.color]}.`, a => a.color === c.color);
-    for (const [v, n] of Object.entries(COLOR)) if (v !== c.color) add(`No es de color ${n}.`, a => a.color !== v, true);
+    add(`Es de color ${COLOR[c.color]}.`, a => a.color === c.color, ["@" + c.color]);
+    for (const [v, n] of Object.entries(COLOR)) if (v !== c.color) add(`No es de color ${n}.`, a => a.color !== v, [no("@" + v)], true);
   }
-  if (definido("noche")) add(c.noche ? "Sale de noche." : "Sale de día.", a => a.noche === c.noche);
-  if (definido("lento")) add(c.lento ? "Se mueve muy despacio." : "No se mueve despacio.", a => a.lento === c.lento, !c.lento);
+  if (definido("noche")) add(c.noche ? "Sale de noche." : "Sale de día.", a => a.noche === c.noche, [c.noche ? ICO.noche : ICO.dia]);
+  if (definido("lento")) add(c.lento ? "Se mueve muy despacio." : "No se mueve despacio.", a => a.lento === c.lento, [c.lento ? ICO.lento : no(ICO.lento)], !c.lento);
   return out;
 }
 
@@ -252,14 +266,40 @@ export const DIFICULTADES = [
   { id: "dificil", nombre: "Difícil", sospechosos: [5, 6], pistas: [3, 4], no: true },
 ];
 
+// 🪜 Paso a paso: escalones finos para la escalera (js/escalera.js), sin el salto grande de fácil a medio.
+// todas: se ven todas las pistas de una vez (sin «Ver otra pista») · aviso: se dice al presentar el caso
+// libreta: probabilidad de que salga una libreta en vez de sospechosos
+export const PASOS = [
+  { sospechosos: [2, 2], pistas: [1, 1], no: false, todas: true },
+  { sospechosos: [3, 3], pistas: [1, 1], no: false, todas: true },
+  { sospechosos: [3, 3], pistas: [2, 2], no: false, todas: true },
+  { sospechosos: [4, 4], pistas: [2, 2], no: false, todas: true },
+  { sospechosos: [4, 4], pistas: [1, 2], no: true, todas: true, aviso: "¡Ojo! Ahora hay pistas con NO: dicen cómo NO es el culpable." },
+  { sospechosos: [4, 4], pistas: [2, 2], no: true, todas: true },
+  { sospechosos: [5, 5], pistas: [2, 3], no: true },
+  { sospechosos: [5, 6], pistas: [3, 3], no: true },
+  { libreta: 1, aviso: "¡Ahora con la libreta del detective!" },
+  { sospechosos: [5, 6], pistas: [3, 4], no: true, libreta: 0.4 },
+];
+
+/** Un caso nuevo para el escalón i de la escalera. */
+export function casoDelPaso(i, rnd = Math.random) {
+  const d = PASOS[Math.max(0, Math.min(PASOS.length - 1, i))];
+  const caso = d.libreta && rnd() < d.libreta ? libretaAlAzar(rnd) : casoAlAzar({ ...d, id: "paso" }, rnd);
+  return { ...caso, id: "azar-paso", azar: "paso", paso: i, todas: !!d.todas, aviso: d.aviso || "" };
+}
+
 const barajar = (arr, rnd) => { const a = [...arr]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const entre = ([a, b], rnd) => a + Math.floor(rnd() * (b - a + 1));
 // El título y la historia usan la misma cosa y el mismo lugar
 const llenar = (textos, rnd) => { const cosa = COSAS[Math.floor(rnd() * COSAS.length)], lugar = LUGARES[Math.floor(rnd() * LUGARES.length)]; return textos.map(t => t.replace("{cosa}", cosa).replace("{lugar}", lugar)); };
 
-/** Un caso de sospechosos nuevo, con una sola respuesta. dificultad: "facil" | "medio" | "dificil" */
+/**
+ * Un caso de sospechosos nuevo, con una sola respuesta.
+ * dificultad: "facil" | "medio" | "dificil", o un objeto { id, sospechosos: [min, max], pistas: [min, max], no }
+ */
 export function casoAlAzar(dificultad = "facil", rnd = Math.random) {
-  const d = DIFICULTADES.find(x => x.id === dificultad);
+  const d = typeof dificultad === "string" ? DIFICULTADES.find(x => x.id === dificultad) : dificultad;
   for (let intento = 0; intento < 300; intento++) {
     const ids = barajar(Object.keys(ANIMALES), rnd).slice(0, entre(d.sospechosos, rnd));
     const culpable = ids[0];
@@ -283,11 +323,11 @@ export function casoAlAzar(dificultad = "facil", rnd = Math.random) {
     if (pistas.length < d.pistas[0]) continue;
     if (d.no && !pistas.some(q => q.no)) continue;
     const [titulo, historia] = llenar(HISTORIAS[Math.floor(rnd() * HISTORIAS.length)], rnd);
-    const caso = { id: `azar-${dificultad}`, azar: dificultad, etapa: "azar", tipo: "sospechosos", titulo, historia,
-      sospechosos: barajar(ids, rnd), culpable, pistas: barajar(pistas, rnd).map(({ txt, f }) => ({ txt, f })) };
+    const caso = { id: `azar-${d.id}`, azar: d.id, etapa: "azar", tipo: "sospechosos", titulo, historia,
+      sospechosos: barajar(ids, rnd), culpable, pistas: barajar(pistas, rnd).map(({ txt, f, ico }) => ({ txt, f, ico })) };
     if (!revisarCaso(caso).length) return caso;
   }
-  return { ...CASOS[0], id: `azar-${dificultad}`, azar: dificultad };
+  return { ...CASOS[0], id: `azar-${d.id}`, azar: d.id };
 }
 
 // Libretas al azar: tres animales y tres cosas; pistas directas, con NO, o por características
@@ -316,13 +356,13 @@ export function libretaAlAzar(rnd = Math.random) {
     // Pistas candidatas (todas verdaderas para la solución)
     const cand = [];
     for (const f of filas) for (const c of columnas) {
-      if (solucion[f] === c.id) cand.push(p(`${Q(nom(f))} ${tema.verbo} ${cosa(c.id)}.`, s => s.de(f) === c.id));
-      else cand.push(p(`${Q(nom(f))} no ${tema.verbo} ${cosa(c.id)}.`, s => s.de(f) !== c.id));
+      if (solucion[f] === c.id) cand.push(p(`${Q(nom(f))} ${tema.verbo} ${cosa(c.id)}.`, s => s.de(f) === c.id, [ANIMALES[f].e, "→", c.e]));
+      else cand.push(p(`${Q(nom(f))} no ${tema.verbo} ${cosa(c.id)}.`, s => s.de(f) !== c.id, [ANIMALES[f].e, no(c.e)]));
     }
     for (const c of columnas) {
       const a = ANIMALES[filas.find(f => solucion[f] === c.id)];
       if (CUBIERTAS[a.cubierta] && filas.filter(f => ANIMALES[f].cubierta === a.cubierta).length === 1)
-        cand.push(p(`El que ${tema.verbo} ${cosa(c.id)} tiene ${CUBIERTAS[a.cubierta]}.`, s => ANIMALES[s.quien(c.id)].cubierta === a.cubierta));
+        cand.push(p(`El que ${tema.verbo} ${cosa(c.id)} tiene ${CUBIERTAS[a.cubierta]}.`, s => ANIMALES[s.quien(c.id)].cubierta === a.cubierta, [c.e, "→", ICO[a.cubierta]]));
     }
     // Se agregan pistas al azar hasta que haya una sola solución, y después se quitan las que sobran
     const caso = { id: "azar-libreta", azar: "libreta", etapa: "azar", tipo: "libreta", titulo: tema.titulo, historia: tema.historia, filas, columnas, solucion, pistas: [] };

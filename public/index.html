@@ -41,8 +41,20 @@
       <p>Juegos gratis para aprender jugando, con colones, pulpería y la hora como la decimos aquí.</p>
     </header>
 
+    <!-- 👧 ¿Quién juega? Edad y si ya lee → juegos sugeridos (js/perfil.js) -->
+    <section class="quien" id="quien" aria-label="¿Quién juega?"></section>
+    <section class="sugeridos" id="sugeridos" hidden>
+      <h2 class="titulo-seccion" id="sugTitulo"></h2>
+      <p class="sug-nota" id="sugNota"></p>
+      <div class="sug-lista" id="sugLista"></div>
+      <details class="con-ayuda" id="conAyuda" hidden>
+        <summary id="conAyudaTitulo"></summary>
+        <div class="sug-lista" id="conAyudaLista"></div>
+      </details>
+    </section>
+
     <a class="reto-dia" id="retoDia" hidden></a>
-    <a class="reto-dia examen" href="examen.html">
+    <a class="reto-dia examen" id="examen" href="examen.html">
       <span class="rd-emoji" aria-hidden="true">📝</span>
       <span class="rd-texto"><small>¿Tenés examen?</small><b>Preparate: elegí la materia y los temas</b></span>
       <span class="rd-ir" aria-hidden="true">▶️</span>
@@ -55,7 +67,7 @@
       </div>
     </section>
 
-    <h2 class="titulo-seccion">¿Qué querés aprender hoy?</h2>
+    <h2 class="titulo-seccion" id="tituloCategorias">¿Qué querés aprender hoy?</h2>
     <section class="categorias" id="categorias" aria-label="Categorías"></section>
 
     <section class="support">

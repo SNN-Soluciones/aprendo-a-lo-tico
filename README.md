@@ -4,6 +4,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 
 - Sin anuncios.
 - Sin cuentas ni datos personales: el progreso queda en el dispositivo (`localStorage`).
+- Pregunta la edad y si el niño ya lee, y sugiere sus juegos. Los juegos suben de nivel **de a poquito** 🪜 según cómo le va, y ayudan solos cuando se queda pegado.
 - Funciona sin internet (PWA).
 - Donaciones voluntarias por SINPE Móvil.
 
@@ -40,6 +41,12 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🐝 Ortografía | Español | 3° a 6° | `public/juegos/ortografia.html` |
 | 📅 Efemérides | Estudios Sociales | 2° a 6° | `public/juegos/efemerides.html` |
 | 🧠 Memory in English | Inglés | 1° a 4° | `public/juegos/memory-ingles.html` |
+| 🔍 ¿Dónde está? | Pensamiento lógico | Prepa y 1° (3 a 7 años) | `public/juegos/buscar.html` |
+| 🧩 ¿Qué sigue? (patrones) | Matemáticas | Prepa y 1° (4 a 7 años) | `public/juegos/patrones.html` |
+| 🃏 Parejas | Pensamiento lógico | Prepa a 2° (3 a 8 años) | `public/juegos/parejas.html` |
+| 📏 Grande y pequeño | Matemáticas | Prepa y 1° (3 a 6 años) | `public/juegos/tamanos.html` |
+| 🐮 ¿Quién hace así? | Ciencias | Prepa (3 a 6 años) | `public/juegos/sonidos.html` |
+| 🧺 ¿Dónde va? (clasificar) | Ciencias | Prepa y 1° (3 a 7 años) | `public/juegos/clasificar.html` |
 
 ## 📝 Preparate para el examen
 
@@ -65,7 +72,10 @@ aprendo-a-lo-tico/
 │   ├── js/catalog.js       # 📚 Materias, grados y lista de juegos
 │   ├── js/home.js          # Lógica del inicio
 │   ├── js/voz.js           # 🔊 Voz (speechSynthesis) y sonidos compartidos
-│   ├── js/prepa.js         # Piezas comunes de los juegos de Prepa
+│   ├── js/prepa.js         # Piezas comunes de los juegos de Prepa (y las ayudas: senalar, ayudaSiSeQueda)
+│   ├── js/perfil.js        # 👧 Perfiles: edad, si ya lee, animalito; juegos sugeridos para cada uno
+│   ├── js/escalera.js      # 🪜 Sube y baja el nivel de a poquito según cómo le va (por perfil y por juego)
+│   ├── js/patrones.js      # 🧩 Patrones de «¿Qué sigue?» por escalón (siempre una sola respuesta)
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"
@@ -183,6 +193,28 @@ const VERSION = "v2";
 
 Si agregás archivos nuevos, sumalos también a la lista `SHELL` para que funcionen sin internet.
 
+## 👧 Para cada edad: perfil, escalera 🪜 y ayudas
+
+La primera vez, el inicio pregunta **cuántos años tiene** quien va a jugar, **si ya lee** (todavía no, un poquito o sí), un animalito y un nombre opcional. Se pueden tener varios perfiles (hermanos) y se cambia tocando el animalito. Todo queda en el dispositivo (`js/perfil.js`).
+
+- **Juegos sugeridos:** cada juego del catálogo dice `edad: [desde, hasta]` y `leer: "no" | "poco" | "si"`. Si el niño no lee, solo se le sugieren los de `leer: "no"` (los demás quedan aparte, «con un adulto que le lea»). Cada tarjeta tiene 🔊 para oír el nombre del juego. A los que no leen no se les muestra el reto del día ni el examen.
+- **Escalera 🪜 (`js/escalera.js`):** los juegos con `escalera: true` tienen niveles chiquitos (escalones). Cada ronda bien al primer intento suma una hojita 🍃; con 4 sube un escalón, con fiesta 🎉. Una ronda con un error no suma ni resta. Si una ronda le costó mucho (2 errores o más, o hubo que señalarle la respuesta) pierde una hojita, y con dos rondas así seguidas baja un escalón, sin regaños. Mientras nunca se haya equivocado en ese juego, cada acierto vale doble, para llegar rápido a su nivel. El escalón inicial depende de la edad. Se guarda por perfil y por juego. El papá puede escoger un nivel a mano (los botones de nivel); el 🪜 vuelve al modo automático.
+- **Ayudas sin pedirlas (`js/prepa.js`):** `ayudaSiSeQueda()` repite la instrucción si el niño pasa un rato sin tocar nada y, si sigue sin tocar, `senalar()` hace brillar la respuesta con una manito 👆. Después del 2.º error también se señala la correcta. Así nunca se queda pegado ni se frustra.
+
+Para pasar un juego a la escalera (ver `juegos/contar.html`):
+
+```js
+import { escalera } from "../js/escalera.js";
+import { senalar, ayudaSiSeQueda } from "../js/prepa.js";
+const ESCALONES = [{ max: 3, ops: 2 }, { max: 4, ops: 3 } /* … de a poquito */];
+const esc = escalera("contar", { escalones: ESCALONES.length, inicio: edad => (edad <= 4 ? 0 : 1) });
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(botonCorrecto) });
+// en cada ronda: ayuda.empezar(); usar ESCALONES[esc.nivel]
+// al acertar:    ayuda.parar(); esc.resultado({ fallos, ayuda: ayuda.usada });
+```
+
+El HTML lleva `<div class="escalera" id="escalera"></div>` en la barra de arriba y un botón `🪜` con `data-nivel="auto"` en `.levels`.
+
 ## Agregar un juego
 
 1. Creá `public/juegos/mi-juego.html`. Copiá el `<head>`, el botón 🏠 y el registro del service worker de cualquier juego existente.
@@ -196,6 +228,9 @@ Si agregás archivos nuevos, sumalos también a la lista `SHELL` para que funcio
   emoji: "🦥",
   materia: "espanol",   // mate | espanol | ciencias | sociales | ingles
   grados: [0, 1],       // 0 = Preparatoria, 1..6 = grados
+  edad: [4, 7],         // edades para las que se sugiere
+  leer: "no",           // "no" se juega sin leer · "poco" · "si" hay que leer
+  escalera: true,       // si sube de nivel solo (js/escalera.js)
   url: "juegos/mi-juego.html",
 },
 ```
@@ -224,7 +259,9 @@ Los tres juegos de programación suben de a poquito: cada concepto se practica v
 
 ### Agregar niveles al perezoso
 
-Los niveles están en `public/js/perezoso.js` como mapas de texto: `S` perezoso, `H` hoja, `#` árbol, `~` río y `.` camino. Las 3 estrellas se ganan con el camino más corto, que el juego calcula solo.
+Los niveles están en `public/js/perezoso.js` como mapas de texto: `S` perezoso, `H` hoja, `#` árbol, `~` río y `.` camino. Las 3 estrellas se ganan con el camino más corto, que el juego calcula solo (`caminoCorto`).
+
+Después de 2 intentos fallidos aparece el 💡: `pista(juego, programa)` agrega la siguiente flecha del camino más corto o, si el programa se desvió, quita lo que sobra desde el primer error. Con el 💡 se ganan 2 ⭐ como máximo.
 
 ### Agregar niveles a «Repetí y decidí»
 
@@ -240,6 +277,8 @@ node --input-type=module -e 'import { NIVELES, leer, ejecutar } from "./js/decid
 Usa [Blockly](https://github.com/google/blockly), la librería de bloques de Google (licencia Apache 2.0). Está copiada en `public/vendor/blockly/` (núcleo, español y `media/`), sin descargar nada de internet. Los bloques propios (`avanzar`, `girar`, `repetir`, `color`, `lápiz`, `grosor`) se definen en `juegos/lapa.html`. La lógica está en `js/lapa.js`: cada reto trae una `solucion` que dibuja la meta y fija las 3 estrellas. El dibujo del niño se compara con la meta sin importar el orden ni los colores.
 
 ### Casos del jaguar detective
+
+**🪜 Paso a paso** (el modo con que arranca un niño que no lee del todo o de 7 años o menos): casos al azar que suben de a poquito con la escalera, de 2 sospechosos y 1 pista hasta los difíciles y la libreta (`PASOS` y `casoDelPaso` en `js/detective.js`). En los primeros escalones se ven todas las pistas de una vez, y si el niño se queda pegado se le señala a quién tachar. Cada pista lleva un dibujo (`ico`, ver `ICO`) para entenderla sin leer: `"!x"` sale tachado (pista con NO) y `"@color"` es un círculo de ese color.
 
 En `public/js/detective.js`. Cada animal tiene sus características (`cubierta`, `vuela`, `patas`, `vive`, `come`, `color`, `noche`), y cada pista es una frase más una función que dice si el animal la cumple. Hay dos tipos de caso: **sospechosos** (tachar y acusar) y **libreta** (cuadro de doble entrada). `trampa` marca la pista 🐞 que no sirve. Para comprobar que cada caso tiene una sola respuesta y que ninguna pista sobra:
 

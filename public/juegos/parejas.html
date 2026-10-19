@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parejas</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; }
+  .tablero {
+    margin: 12px auto 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    max-width: calc(var(--cols, 4) * 150px); perspective: 900px;
+  }
+  .carta {
+    width: calc((100% - (var(--cols, 4) - 1) * 10px) / var(--cols, 4)); aspect-ratio: 4 / 5;
+    padding: 0; border: none; box-shadow: none; background: none; border-radius: 18px; position: relative;
+  }
+  .carta:active { transform: none; box-shadow: none; }
+  .carta .in { position: absolute; inset: 0; transition: transform .35s; transform-style: preserve-3d; }
+  .carta.abierta .in, .carta.hecha .in { transform: rotateY(180deg); }
+  .carta .cara {
+    position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+    border: 4px solid var(--rim); border-radius: 18px; box-shadow: 0 4px 0 var(--rim);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+  }
+  .carta .dorso { background: repeating-linear-gradient(45deg, #D9731F 0 14px, #F0A04B 14px 28px); font-size: calc(var(--tam, 2.6rem) * .7); }
+  .carta .frente { background: var(--face); transform: rotateY(180deg); font-size: var(--tam, 2.6rem); line-height: 1; }
+  .carta.hecha .frente { background: #CFF5DC; border-color: var(--ok); }
+  .carta.hecha.brilla .frente { animation: pop .45s ease-out; }
+  .carta.nope .frente { background: #FFE3E0; }
+  @media (prefers-reduced-motion: reduce) { .carta .in { transition: none; } }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🦥🃏🦥</div>
+  <h1>Parejas</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Tocá dos cartas y buscá las que son iguales. Al voltear cada carta, se escucha qué es.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="4" aria-label="4 parejas">🃏4</button>
+    <button data-nivel="6" aria-label="6 parejas">🃏6</button>
+    <button data-nivel="8" aria-label="8 parejas">🃏8</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap tablero" id="tablero"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro tablero">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+
+const $ = id => document.getElementById(id);
+
+// Cartas por tema: [dibujo, cómo se dice, en plural]. Solo emojis comunes (Unicode 13 o antes).
+const TEMAS = [
+  { id: "animales", cosas: [
+    ["🦥", "perezoso", "perezosos"], ["🐸", "rana", "ranas"], ["🐒", "mono", "monos"], ["🦜", "lapa", "lapas"],
+    ["🐢", "tortuga", "tortugas"], ["🦋", "mariposa", "mariposas"], ["🐊", "cocodrilo", "cocodrilos"], ["🦎", "iguana", "iguanas"],
+    ["🐬", "delfín", "delfines"], ["🦝", "mapache", "mapaches"], ["🐆", "jaguar", "jaguares"], ["🦇", "murciélago", "murciélagos"],
+    ["🐝", "abeja", "abejas"], ["🐦", "yigüirro", "yigüirros"]] },
+  { id: "frutas", cosas: [
+    ["🥭", "mango", "mangos"], ["🍌", "banano", "bananos"], ["🍍", "piña", "piñas"], ["🍉", "sandía", "sandías"],
+    ["🍓", "fresa", "fresas"], ["🍊", "naranja", "naranjas"], ["🍋", "limón", "limones"], ["🍇", "uvas", "racimos de uvas"],
+    ["🍎", "manzana", "manzanas"], ["🥥", "pipa", "pipas"], ["🍐", "pera", "peras"], ["🍒", "cerezas", "pares de cerezas"],
+    ["🥑", "aguacate", "aguacates"]] },
+  { id: "juguetes", cosas: [
+    ["⚽", "bola", "bolas"], ["🪁", "papalote", "papalotes"], ["🧸", "osito", "ositos"], ["🎈", "globo", "globos"],
+    ["🚗", "carrito", "carritos"], ["🪀", "yoyo", "yoyos"], ["🎲", "dado", "dados"], ["🥁", "tambor", "tambores"],
+    ["🚂", "tren", "trenes"], ["🛹", "patineta", "patinetas"], ["🧩", "rompecabezas", "rompecabezas"], ["🪅", "piñata", "piñatas"],
+    ["🚲", "bici", "bicis"]] },
+  { id: "casa", cosas: [
+    ["🛏️", "cama", "camas"], ["🪑", "silla", "sillas"], ["🚪", "puerta", "puertas"], ["🥄", "cuchara", "cucharas"],
+    ["☕", "taza", "tazas"], ["🧹", "escoba", "escobas"], ["💡", "foco", "focos"], ["📺", "tele", "teles"],
+    ["🔑", "llave", "llaves"], ["⏰", "reloj", "relojes"], ["🧼", "jabón", "jabones"], ["🪥", "cepillo de dientes", "cepillos de dientes"],
+    ["🍳", "sartén", "sartenes"]] },
+  { id: "transporte", cosas: [
+    ["🚌", "bus", "buses"], ["🚗", "carro", "carros"], ["✈️", "avión", "aviones"], ["🚂", "tren", "trenes"],
+    ["🚲", "bici", "bicis"], ["⛵", "barco", "barcos"], ["🚁", "helicóptero", "helicópteros"], ["🚑", "ambulancia", "ambulancias"],
+    ["🚒", "camión de bomberos", "camiones de bomberos"], ["🏍️", "moto", "motos"], ["🚜", "tractor", "tractores"], ["🛶", "canoa", "canoas"]] },
+];
+
+// 🪜 De a poquito: cuántas parejas hay y si se ven un ratito (ms) antes de esconderse
+const ESCALONES = [
+  { parejas: 2, ver: 3000 },  // 1. dos parejas, se ven antes de voltearse
+  { parejas: 3, ver: 3000 },  // 2. tres parejas, se ven
+  { parejas: 3, ver: 0 },     // 3. tres parejas, sin verlas antes
+  { parejas: 4, ver: 3500 },  // 4. cuatro parejas, se ven
+  { parejas: 4, ver: 0 },     // 5. cuatro parejas, sin verlas
+  { parejas: 5, ver: 0 },     // 6. cinco parejas
+  { parejas: 6, ver: 3500 },  // 7. seis parejas, se ven
+  { parejas: 6, ver: 0 },     // 8. seis parejas, sin verlas
+  { parejas: 8, ver: 0 },     // 9. ocho parejas
+  { parejas: 10, ver: 0 },    // 10. diez parejas
+];
+// Cada tablero es una ronda larga: con 2 tableros bien se sube un escalón
+const esc = escalera("parejas", { escalones: ESCALONES.length, meta: 2,
+  inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : edad === 6 ? 2 : edad === 7 ? 3 : 4 });
+
+let manual = 4, cartas = [], abiertas = [], hechas = 0, intentos = 0, seguidos = 0, vistas = new Set();
+let total = 0, listo = false, ocupado = false, ayudado = false, turno = 0, temaAnterior = null;
+const stars = estrellas("parejas-stars");
+const btn = i => $("tablero").querySelector(`[data-i="${i}"]`);
+const esHecha = i => btn(i)?.classList.contains("hecha");
+const esperar = ms => new Promise(r => setTimeout(r, ms));
+
+// 🤝 Una pareja que ya vio (las dos cartas) y todavía no encontró. Si tiene una carta abierta, primero la de esa.
+function parejaConocida() {
+  const quedan = cartas.filter(c => vistas.has(c.i) && !esHecha(c.i));
+  const abierta = abiertas[0];
+  if (abierta) {
+    const otra = quedan.find(c => c.k === abierta.k && c.i !== abierta.i);
+    if (otra) return [otra];
+  }
+  for (const c of quedan) {
+    const otra = quedan.find(x => x.k === c.k && x.i !== c.i);
+    if (otra) return [c, otra];
+  }
+  return null;
+}
+function ayudar() {
+  const par = parejaConocida();
+  if (!par) return false;
+  ayudado = true; seguidos = 0;
+  par.forEach(c => senalar(btn(c.i)));
+  decir(par.length === 1 ? "Te ayudo: ¡la otra está aquí!" : "Te ayudo: ¡fijate en estas dos!");
+  return true;
+}
+// Si se queda sin tocar: primero se repite la instrucción y después se señala una pareja conocida
+// (o, si todavía no ha visto ninguna, una carta para que se anime a tocarla).
+const ayuda = ayudaSiSeQueda({ senalar: () => {
+  if (ocupado || listo || ayudar()) return;
+  const cerrada = cartas.find(c => !vistas.has(c.i) && !esHecha(c.i)) || cartas.find(c => !esHecha(c.i) && !abiertas.includes(c));
+  if (cerrada) senalar(btn(cerrada.i));
+} });
+
+async function nuevo() {
+  const t = ++turno;
+  const cfg = esc.activa ? ESCALONES[esc.nivel] : { parejas: manual, ver: 0 };
+  let tema;
+  do tema = azar(TEMAS); while (tema.id === temaAnterior);
+  temaAnterior = tema.id;
+  total = cfg.parejas;
+  const cosas = barajar(tema.cosas).slice(0, total);
+  cartas = barajar(cosas.flatMap((c, k) => [{ k, c }, { k, c }])).map((x, i) => ({ ...x, i }));
+  abiertas = []; hechas = 0; intentos = 0; seguidos = 0; vistas = new Set();
+  listo = false; ayudado = false; ocupado = !!cfg.ver;
+  ayuda.parar();
+
+  const cols = cartas.length <= 4 ? 2 : cartas.length <= 6 ? 3 : 4;
+  $("tablero").style.setProperty("--cols", cols);
+  $("tablero").style.setProperty("--tam", cols === 2 ? "clamp(3.4rem, 18vw, 4.6rem)" : cols === 3 ? "clamp(2.8rem, 14vw, 3.8rem)" : "clamp(2.1rem, 11vw, 3.2rem)");
+  $("tablero").innerHTML = cartas.map(c => `<button class="carta${cfg.ver ? " abierta" : ""}" data-i="${c.i}" aria-label="Carta ${c.i + 1}">
+    <span class="in"><span class="cara dorso" aria-hidden="true">❓</span><span class="cara frente" aria-hidden="true">${c.c[0]}</span></span></button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+
+  if (cfg.ver) {
+    cartas.forEach(c => vistas.add(c.i));
+    await Promise.all([instruccion("👀 Mirá bien dónde está cada uno", "Mirá bien dónde está cada dibujo."), esperar(cfg.ver)]);
+    if (t !== turno) return;
+    $("tablero").querySelectorAll(".carta").forEach(b => b.classList.remove("abierta"));
+    ocupado = false;
+    instruccion("🃏 Buscá las parejas", "¡Se escondieron! Tocá dos cartas y buscá las que son iguales.");
+  } else {
+    instruccion("🃏 Buscá las parejas", "Tocá dos cartas y buscá las que son iguales.");
+  }
+  ayuda.empezar();
+}
+
+$("tablero").addEventListener("click", e => {
+  const b = e.target.closest(".carta");
+  if (!b || ocupado || listo || b.classList.contains("abierta") || b.classList.contains("hecha")) return;
+  const c = cartas[Number(b.dataset.i)];
+  b.classList.remove("senal");
+  b.classList.add("abierta");
+  b.setAttribute("aria-label", c.c[1]);
+  sonido("tap");
+  vistas.add(c.i);
+  abiertas.push(c);
+  if (abiertas.length === 1) { hablar(c.c[1]); return; }
+
+  intentos++;
+  const [x, y] = abiertas;
+  abiertas = [];
+  if (x.k === y.k) {
+    hechas++; seguidos = 0;
+    [x, y].forEach(o => { const el = btn(o.i); el.classList.remove("abierta", "senal"); el.classList.add("hecha", "brilla"); });
+    if (hechas === total) return terminar(y.c);
+    feedback("ok", y.c[0], "¡Pareja!");
+    hablar(`${y.c[1]}. ¡Pareja! Dos ${y.c[2]}.`);
+  } else {
+    seguidos++;
+    hablar(y.c[1]);
+    ocupado = true;
+    [x, y].forEach(o => btn(o.i).classList.add("nope"));
+    setTimeout(() => {
+      [x, y].forEach(o => { const el = btn(o.i); el.classList.remove("abierta", "nope"); el.setAttribute("aria-label", `Carta ${o.i + 1}`); });
+      ocupado = false;
+      // Varios intentos sin pareja: se le muestra una que ya vio, sin regaños
+      if (seguidos >= 3) ayudar();
+    }, 1300);
+  }
+});
+
+function terminar(ultima) {
+  listo = true;
+  ayuda.parar();
+  // Intentos de más: con memoria perfecta igual hacen falta algunos para descubrir las cartas
+  const extra = intentos - total, tolerancia = Math.max(1, Math.floor(total * 0.75));
+  const fallos = extra <= tolerancia ? 0 : extra <= tolerancia + total ? 1 : 2;
+  const ganadas = fallos === 0 && !ayudado ? 3 : fallos <= 1 ? 2 : 1;
+  for (let i = 0; i < ganadas; i++) stars.sumar();
+  feedback("ok", "🎉", `¡Todas las parejas! ${"⭐".repeat(ganadas)}`);
+  decir(`¡Pareja! Dos ${ultima[2]}. ${elogio()} ¡Encontraste todas las parejas!`);
+  esc.resultado({ fallos, ayuda: ayudado });
+  $("nextBtn").classList.add("pulse");
+}
+
+$("nextBtn").addEventListener("click", () => { sonido("tap"); nuevo(); });
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = Number(v);
+  nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__parejas = {
+  get cartas() { return cartas; }, get esc() { return esc; },
+  get estado() { return { hechas, intentos, total, listo, ocupado, ayudado }; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grande y pequeño</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  /* Todas las casillas miden lo mismo: lo único que cambia es el tamaño del dibujo */
+  .opciones { display: grid; grid-template-columns: repeat(var(--cols), 1fr); gap: 12px; margin-top: 14px; }
+  .opciones.n2 { --cols: 2; --max: min(30vw, 130px); --alto: min(46vw, 200px); }
+  .opciones.n3 { --cols: 3; --max: min(19vw, 84px); --alto: min(34vw, 150px); }
+  .opciones.n4 { --cols: 2; --max: min(25vw, 108px); --alto: min(36vw, 156px); }
+  /* Los dibujos se paran sobre un «piso» verde, así se comparan mejor */
+  .opciones .cosa {
+    height: var(--alto); border-radius: 24px; padding: 4px 4px 12px; position: relative;
+    display: flex; align-items: flex-end; justify-content: center;
+    background: linear-gradient(to top, #DDF3E6 0 12px, var(--face) 12px);
+  }
+  .opciones .cosa .dib { font-size: calc(var(--max) * var(--s)); line-height: 1; display: block; }
+  .opciones .cosa.puesto { background: linear-gradient(to top, #FFE08A 0 12px, #FFF1C2 12px); }
+  .opciones .cosa .n {
+    position: absolute; top: 6px; left: 8px; min-width: 30px; height: 30px; border-radius: 15px;
+    background: var(--materia); color: #fff; font-size: 1.1rem; line-height: 30px; text-align: center; padding: 0 4px;
+  }
+  /* Dibujito de la instrucción: qué se pide (encerrado), sin tener que leer */
+  .picto { display: inline-flex; align-items: flex-end; gap: 4px; vertical-align: middle; }
+  .picto span { font-size: calc(2.4rem * var(--s)); line-height: 1; padding: 2px; border-radius: 12px; border: 3px solid transparent; }
+  .picto span.meta { border-color: var(--materia); background: #E4F0FF; }
+  .picto .flecha { font-size: 1.4rem; border: none; padding: 0; align-self: center; }
+  .instr small { display: block; font-size: 1rem; font-weight: 700; opacity: .75; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true"><span style="font-size:.5em">🐘</span>🐘</div>
+  <h1>Grande y pequeño</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Escuchá y tocá el más grande, el más pequeño, el mediano… ¡y después ordenalos!</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="3" aria-label="Grande o pequeño">Grande</button>
+    <button data-nivel="5" aria-label="El mediano">Mediano</button>
+    <button data-nivel="7" aria-label="Ordenar de pequeño a grande">Ordenar</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap opciones n2" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { hablar, elogio, sonido, numeroEnPalabras as enPalabras } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+
+const $ = id => document.getElementById(id);
+
+// f = femenino · real = qué tan grande es de verdad (para «¿cuál se ve más grande?»): 1 hormiga … 8 ballena
+const COSAS = [
+  { e: "🐘", s: "elefante", p: "elefantes", f: false, real: 7 },
+  { e: "🐭", s: "ratón", p: "ratones", f: false, real: 2 },
+  { e: "🐶", s: "perro", p: "perros", f: false, real: 4 },
+  { e: "🐱", s: "gato", p: "gatos", f: false, real: 3 },
+  { e: "🐢", s: "tortuga", p: "tortugas", f: true, real: 3 },
+  { e: "🍎", s: "manzana", p: "manzanas", f: true, real: 2 },
+  { e: "⚽", s: "bola", p: "bolas", f: true, real: 3 },
+  { e: "🌳", s: "árbol", p: "árboles", f: false, real: 7 },
+  { e: "🏠", s: "casa", p: "casas", f: true, real: 7 },
+  { e: "🚗", s: "carro", p: "carros", f: false, real: 6 },
+  { e: "⭐", s: "estrella", p: "estrellas", f: true, real: 0 },
+  { e: "🐟", s: "pez", p: "peces", f: false, real: 2 },
+  { e: "🦋", s: "mariposa", p: "mariposas", f: true, real: 1 },
+  { e: "🍉", s: "sandía", p: "sandías", f: true, real: 3 },
+  { e: "🐸", s: "rana", p: "ranas", f: true, real: 2 },
+  { e: "🎈", s: "globo", p: "globos", f: false, real: 3 },
+  { e: "🐻", s: "oso", p: "osos", f: false, real: 6 },
+  { e: "🚌", s: "bus", p: "buses", f: false, real: 7 },
+  { e: "🐜", s: "hormiga", p: "hormigas", f: true, real: 1 },
+  { e: "🐋", s: "ballena", p: "ballenas", f: true, real: 8 },
+  { e: "🦒", s: "jirafa", p: "jirafas", f: true, real: 7 },
+];
+
+// 🪜 De a poquito.
+// tipo: "grande" | "pequeno" | "uno" (grande o pequeño: hay que escuchar cuál) | "mediano" | "ordenar"
+//       | "se-ve" (cosas distintas: ¿cuál se VE más grande o más pequeña en la pantalla?)
+// n: cuántos dibujos · r: cuántas veces más grande es cada uno que el que le sigue (más alto = más fácil de ver)
+const ESCALONES = [
+  { tipo: "grande", n: 2, r: 2.4 },  // 1. el más grande entre 2, con mucha diferencia
+  { tipo: "pequeno", n: 2, r: 2.4 }, // 2. el más pequeño entre 2
+  { tipo: "uno", n: 2, r: 1.7 },     // 3. grande o pequeño, entre 2, con menos diferencia
+  { tipo: "uno", n: 3, r: 1.8 },     // 4. grande o pequeño entre 3
+  { tipo: "uno", n: 3, r: 1.4 },     // 5. entre 3, con diferencias más chicas
+  { tipo: "mediano", n: 3, r: 1.7 }, // 6. el mediano: ni el más grande ni el más pequeño
+  { tipo: "ordenar", n: 3, r: 1.7 }, // 7. ordenar 3 de pequeño a grande
+  { tipo: "ordenar", n: 4, r: 1.5 }, // 8. ordenar 4
+  { tipo: "se-ve", n: 2, r: 1.9 },   // 9. un ratón grande y un elefante chiquito: ¿cuál se ve más grande?
+  { tipo: "se-ve", n: 3, r: 1.6 },   // 10. lo mismo, entre 3
+];
+const esc = escalera("tamanos", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : 3 });
+
+let manual = 3, modo = "grande", seVe = false, items = [], meta = 0, orden = [], puestos = 0, fallos = 0, listo = false, ultima = null;
+const stars = estrellas("tamanos-stars");
+
+// Palabras con género: «el carro más pequeño», «la sandía más pequeña»
+const art = c => c.f ? "la" : "el";
+const los = c => c.f ? "las" : "los";
+const ese = c => c.f ? "Esa" : "Ese";
+const o = c => c.f ? "a" : "o";
+const ladoDe = c => modo === "grande" ? "más grande" : `más pequeñ${o(c)}`;
+
+const correcto = () => modo === "ordenar" ? orden[puestos] : meta;
+const boton = i => $("opciones").querySelector(`[data-i="${i}"]`);
+const ayuda = ayudaSiSeQueda({ senalar: () => senalar(boton(correcto())) });
+
+/** Cosas distintas, cada una de un tamaño real distinto (para «¿cuál se ve más grande?»). */
+function distintas(n) {
+  const elegidas = [];
+  for (const c of barajar(COSAS.filter(x => x.real > 0))) {
+    if (elegidas.every(x => Math.abs(x.real - c.real) >= 2)) elegidas.push(c);
+    if (elegidas.length === n) break;
+  }
+  return elegidas.sort((a, b) => a.real - b.real);
+}
+
+function nuevo() {
+  const conf = ESCALONES[esc.activa ? esc.nivel : manual];
+  const { n } = conf;
+  seVe = conf.tipo === "se-ve";
+  modo = conf.tipo === "uno" || seVe ? azar(["grande", "pequeno"]) : conf.tipo;
+  fallos = 0; puestos = 0; listo = false;
+
+  // Tamaños: el más grande es 1 y cada uno es r veces más pequeño que el anterior
+  const escalas = Array.from({ length: n }, (_, k) => 1 / conf.r ** k);
+  if (seVe) {
+    // Casi siempre al revés de la realidad: el más chiquito de verdad se dibuja más grande
+    const cosas = distintas(n);
+    const tam = Math.random() < 0.7 ? escalas : barajar(escalas);
+    items = barajar(cosas.map((cosa, k) => ({ cosa, s: tam[k] })));
+  } else {
+    const cosa = azar(COSAS.filter(c => c !== ultima));
+    ultima = cosa;
+    items = barajar(escalas.map(s => ({ cosa, s })));
+  }
+  const porTam = items.map((_, i) => i).sort((a, b) => items[a].s - items[b].s);
+  orden = porTam;
+  meta = modo === "grande" ? porTam[n - 1] : modo === "pequeno" ? porTam[0] : porTam[1];
+
+  $("opciones").className = `wrap opciones n${n}`;
+  $("opciones").innerHTML = items.map((it, i) =>
+    `<button class="cosa" data-i="${i}" style="--s:${it.s.toFixed(3)}" aria-label="${it.cosa.s}"><span class="dib" aria-hidden="true">${it.cosa.e}</span></button>`).join("");
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  decirInstruccion();
+  ayuda.empezar();
+}
+
+// Dibujito de la instrucción: la misma cosa en tamaños, con lo que se pide encerrado
+function picto(e) {
+  const t = (s, m = false) => `<span class="${m ? "meta" : ""}" style="--s:${s}">${e}</span>`;
+  if (modo === "grande") return `<span class="picto">${t(.45)}${t(1, true)}</span>`;
+  if (modo === "pequeno") return `<span class="picto">${t(.45, true)}${t(1)}</span>`;
+  if (modo === "mediano") return `<span class="picto">${t(.4)}${t(.68, true)}${t(1)}</span>`;
+  return `<span class="picto">${t(.4)}<span class="flecha">→</span>${t(.68)}<span class="flecha">→</span>${t(1)}</span>`;
+}
+
+function decirInstruccion() {
+  const c = items[0].cosa;
+  if (seVe) {
+    const que = modo === "grande" ? "más grande" : "más pequeño";
+    instruccion(`${picto("👀")}<small>¿Cuál se ve ${que}?</small>`,
+      `¡Ojo! Son cosas distintas. ¿Cuál dibujo se ve ${que}? Tocalo.`);
+  } else if (modo === "grande" || modo === "pequeno") {
+    instruccion(`${picto(c.e)}<small>${art(c)} ${ladoDe(c)}</small>`, `Tocá ${art(c)} ${c.s} ${ladoDe(c)}.`);
+  } else if (modo === "mediano") {
+    instruccion(`${picto(c.e)}<small>${art(c)} median${o(c)}</small>`,
+      `Tocá ${art(c)} ${c.s} median${o(c)}: ni ${art(c)} más grande, ni ${art(c)} más pequeñ${o(c)}.`);
+  } else {
+    instruccion(`${picto(c.e)}<small>de pequeñ${o(c)} a grande</small>`,
+      `Ordená ${los(c)} ${c.p}: tocá primero ${art(c)} más pequeñ${o(c)}, y al final ${art(c)} más grande.`);
+  }
+}
+
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-i]");
+  if (!b || listo || b.disabled || b.classList.contains("puesto")) return;
+  const i = Number(b.dataset.i);
+  if (modo === "ordenar") return tocarEnOrden(b, i);
+  if (i === meta) acierto(b);
+  else error(b, i);
+});
+
+/** ¿Quedó cerca? (el que tocó está justo al lado del correcto en tamaño) */
+const cerca = (i, j) => items.length > 2 && Math.abs(orden.indexOf(i) - orden.indexOf(j)) === 1;
+
+function error(b, i) {
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  const c = items[i].cosa, m = items[meta].cosa;
+  let txt;
+  if (seVe) {
+    txt = `Mirá bien: hay un dibujo que se ve ${modo === "grande" ? "más grande" : "más pequeño"} que ${art(c)} ${c.s}. ¡Buscalo!`;
+  } else if (modo === "mediano") {
+    const grande = items[i].s > items[meta].s;
+    txt = `${ese(c)} es ${art(c)} más ${grande ? "grande" : `pequeñ${o(c)}`}. ${art(m) === "la" ? "La mediana" : "El mediano"} es un poquito más ${grande ? `pequeñ${o(m)}` : "grande"}.`;
+  } else {
+    txt = `Hay ${c.f ? "una" : "uno"} ${ladoDe(c)} que ${ese(c).toLowerCase()}. ¡Buscal${o(c)}!`;
+  }
+  if (cerca(i, meta)) feedback("almost", "🤏", "¡Casi!");
+  else feedback("bad", "🙈", "No es");
+  if (fallos >= 2) { senalar(boton(meta)); txt += " ¡Es este! Tocalo."; }
+  decir(txt);
+}
+
+function acierto(b) {
+  listo = true;
+  ayuda.parar();
+  b.classList.remove("senal");
+  b.classList.add("right");
+  $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+  const c = items[meta].cosa;
+  let frase;
+  if (seVe) {
+    // Si de verdad hay otra cosa más grande (o más pequeña), se dice: lo que importa es cómo se ve
+    const otras = items.map(x => x.cosa).filter(x => x !== c);
+    const truco = modo === "grande" ? otras.filter(x => x.real > c.real).sort((a, b) => b.real - a.real)[0]
+      : otras.filter(x => x.real < c.real).sort((a, b) => a.real - b.real)[0];
+    frase = `Aquí ${art(c)} ${c.s} se ve ${modo === "grande" ? "más grande" : `más pequeñ${o(c)}`}.`;
+    if (truco) frase += ` ¡Aunque de verdad ${art(truco)} ${truco.s} es mucho más ${modo === "grande" ? "grande" : `pequeñ${o(truco)}`}!`;
+  } else if (modo === "mediano") frase = `${ese(c)} es ${art(c)} ${c.s} median${o(c)}.`;
+  else frase = `${ese(c)} es ${art(c)} ${c.s} ${ladoDe(c)}.`;
+  ganar(frase);
+}
+
+function tocarEnOrden(b, i) {
+  const esperado = orden[puestos];
+  if (i === esperado) {
+    puestos++;
+    b.classList.remove("senal");
+    b.classList.add("puesto");
+    b.insertAdjacentHTML("beforeend", `<span class="n">${puestos}</span>`);
+    sonido("tap");
+    if (puestos < items.length) { hablar(enPalabras(puestos)); return; }
+    // ¡Listo! Se acomodan en fila, de pequeño a grande
+    listo = true;
+    ayuda.parar();
+    $("opciones").innerHTML = orden.map((j, k) =>
+      `<button class="cosa puesto right" data-i="${j}" style="--s:${items[j].s.toFixed(3)}" disabled aria-label="${items[j].cosa.s}"><span class="dib" aria-hidden="true">${items[j].cosa.e}</span><span class="n">${k + 1}</span></button>`).join("");
+    const c = items[0].cosa;
+    ganar(`¡${c.f ? "De la más pequeña a la más grande" : "Del más pequeño al más grande"}!`);
+  } else {
+    fallos++;
+    b.classList.remove("nope"); void b.offsetWidth; b.classList.add("nope");
+    const c = items[i].cosa;
+    if (cerca(i, esperado)) feedback("almost", "🤏", "¡Casi!");
+    else feedback("bad", "🙈", "No es");
+    let txt = `${ese(c)} no. Hay ${c.f ? "una" : "uno"} más pequeñ${o(c)}. Buscá ${art(c)} más pequeñ${o(c)} de ${los(c)} que quedan.`;
+    if (fallos >= 2) { senalar(boton(esperado)); txt += " ¡Es este! Tocalo."; }
+    decir(txt);
+  }
+}
+
+function ganar(frase) {
+  if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: modo === "ordenar" ? 0 : items.length });
+  $("nextBtn").classList.add("pulse");
+}
+
+$("nextBtn").addEventListener("click", nuevo);
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = Number(v);
+  ultima = null; nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__tamanos = {
+  get modo() { return seVe ? `se-ve-${modo}` : modo; },
+  get nivel() { return esc.nivel; },
+  get items() { return items.map(x => ({ e: x.cosa.e, s: x.s })); },
+  /** Lo que falta tocar, en orden (índices de data-i) */
+  get respuesta() { return modo === "ordenar" ? orden.slice(puestos) : [meta]; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

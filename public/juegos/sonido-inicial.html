@@ -16,7 +16,7 @@
   .modelo { display: flex; align-items: center; justify-content: center; gap: 10px; }
   .modelo .big { font-size: clamp(3.4rem, 17vw, 4.6rem); }
   .modelo .pal { font-size: 1.1rem; color: var(--materia); display: block; line-height: 1; }
-  .opciones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 14px; }
+  .opciones { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 12px; margin-top: 14px; }
   .opciones button {
     border-radius: 24px; padding: 8px 2px 6px; display: flex; flex-direction: column; align-items: center; gap: 2px;
     font-size: clamp(3.2rem, 17vw, 4.6rem); line-height: 1.05;
@@ -37,9 +37,11 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-nivel="vocales" aria-pressed="true">A E I O U</button>
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="vocales">A E I O U</button>
     <button data-nivel="consonantes">M S P L…</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
@@ -50,7 +52,8 @@
 
 <script type="module">
 import { hablar, elogio, LENTO } from "../js/voz.js";
-import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar } from "../js/prepa.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, barajar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
 
 const $ = id => document.getElementById(id);
 
@@ -80,26 +83,50 @@ const GRUPOS = {
   },
 };
 
+// Consonantes que se oyen bien al principio y se pueden alargar: «mmmano», «sssol»
+const FACILES = Object.fromEntries(["m", "s", "p", "l"].map(k => [k, GRUPOS.consonantes[k]]));
+const MEZCLA = { ...GRUPOS.vocales, ...GRUPOS.consonantes };
+
+// 🪜 De a poquito: vocales, consonantes fáciles, todas las consonantes y al final todo mezclado
+const ESCALONES = [
+  { grupos: GRUPOS.vocales, ops: 2 },
+  { grupos: GRUPOS.vocales, ops: 3 },
+  { grupos: FACILES, ops: 2 },
+  { grupos: FACILES, ops: 3 },
+  { grupos: GRUPOS.consonantes, ops: 3 },
+  { grupos: MEZCLA, ops: 3 },
+];
+const esc = escalera("sonido-inicial", {
+  escalones: ESCALONES.length,
+  inicio: edad => edad === null || edad <= 4 ? 0 : edad === 5 ? 1 : edad === 6 ? 2 : 4,
+});
+
 let turno = 0; // cambia cuando el niño toca, para dejar de leer las opciones
 let nivel = "vocales", modelo = null, meta = null, opciones = [], fallos = 0, listo = false, ultimoSonido = "";
 const stars = estrellas("sonidos-stars");
+const botonDe = o => $("opciones").querySelector(`[data-i="${opciones.indexOf(o)}"]`);
+// Si se queda pegado: se vuelven a decir el modelo y las opciones, y después se le señala la correcta
+const ayuda = ayudaSiSeQueda({ repetir: () => presentar(false), senalar: () => senalar(botonDe(meta)) });
 
 function nuevo() {
-  const grupos = GRUPOS[nivel];
+  // En 🪜 manda el escalón; con un nivel a mano, 3 opciones de ese grupo
+  const { grupos, ops } = esc.activa ? ESCALONES[esc.nivel] : { grupos: GRUPOS[nivel], ops: 3 };
   let sonido;
   do sonido = azar(Object.keys(grupos)); while (sonido === ultimoSonido);
   ultimoSonido = sonido;
   const [m, c] = barajar(grupos[sonido]);
   modelo = m; meta = c;
-  const otros = barajar(Object.keys(grupos).filter(k => k !== sonido)).slice(0, 2).map(k => azar(grupos[k]));
+  const otros = barajar(Object.keys(grupos).filter(k => k !== sonido)).slice(0, ops - 1).map(k => azar(grupos[k]));
   opciones = barajar([meta, ...otros]);
   fallos = 0; listo = false;
 
+  $("opciones").style.setProperty("--n", ops);
   $("opciones").innerHTML = opciones.map((o, i) =>
     `<button data-i="${i}" aria-label="${o[1]}"><span aria-hidden="true">${o[0]}</span><span class="pal">${o[1]}</span></button>`).join("");
   feedback("");
   $("nextBtn").classList.remove("pulse");
   presentar(false);
+  ayuda.empezar();
 }
 
 // Dice el modelo y después cada opción, resaltándola, para que el niño escuche todas.
@@ -130,23 +157,34 @@ $("opciones").addEventListener("click", e => {
   $("opciones").querySelectorAll(".dicho").forEach(x => x.classList.remove("dicho"));
   if (o === meta) {
     listo = true;
+    ayuda.parar();
+    b.classList.remove("senal");
     b.classList.add("right");
     $("opciones").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
     const frase = `${modelo[1]}, ${meta[1]}. ¡Empiezan igual!`;
-    if (fallos === 0) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+    if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
     else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
+    esc.resultado({ fallos, ayuda: ayuda.usada, opciones: opciones.length });
     $("nextBtn").classList.add("pulse");
   } else {
     fallos++;
     b.classList.add("wrong", "nope"); b.disabled = true;
     feedback("bad", "🙈", "No es");
     decir(`${o[1]}... ${modelo[1]}. No empiezan igual. Probá otra vez.`);
+    // Al segundo error se le señala cuál es
+    if (fallos >= 2) senalar(botonDe(meta));
   }
 });
 
 $("nextBtn").addEventListener("click", nuevo);
-niveles(v => { nivel = v; ultimoSonido = ""; nuevo(); });
+niveles(v => {
+  esc.activa = v === "auto";
+  if (v !== "auto") nivel = v;
+  ultimoSonido = ""; nuevo();
+});
 alEmpezar(nuevo, presentar);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__sonido = { get correcta() { return opciones.indexOf(meta); }, get cuantas() { return opciones.length; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

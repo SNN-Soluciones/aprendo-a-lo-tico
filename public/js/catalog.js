@@ -693,4 +693,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/leo.html",
   },
+  {
+    id: "comunidad",
+    titulo: "Mi comunidad",
+    descripcion: "Quién nos ayuda, los lugares del barrio, los servicios, cómo cuidar el barrio y cómo cuidarnos en la calle. Todo con voz y dibujos.",
+    emoji: "🏘️",
+    materia: "sociales",
+    grados: [0, 1, 2, 3],
+    edad: [4, 9],
+    leer: "no",
+    escalera: true,
+    url: "juegos/comunidad.html",
+  },
 ];

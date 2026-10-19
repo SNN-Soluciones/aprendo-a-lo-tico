@@ -55,12 +55,12 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Método silábico: ma me mi mo mu, pa pe pi po pu…
 - [ ] Armar palabras con sílabas (arrastrar)
 - [x] Sonido inicial: ¿cuál empieza como…?
-- [ ] 🧠 Memoria de parejas (animales, frutas) con voz al voltear
-- [ ] 🔍 ¿Cuál es diferente? / ¿Qué falta? (atención visual)
-- [ ] 📏 Grande, mediano y pequeño; ordenar por tamaño
-- [ ] 🧩 Secuencias y patrones (🔴🔵🔴🔵…)
-- [ ] 🐮 ¿Quién hace este sonido? (sonidos de animales)
-- [ ] 🧺 Clasificar: frutas, animales, ropa (arrastrar a la canasta)
+- [x] 🧠 Parejas: memoria con dibujos y voz al voltear
+- [x] 🔍 ¿Dónde está? (buscar entre 2 a 16 dibujos) y ¿Cuál es diferente?
+- [x] 📏 Grande y pequeño: el más grande, el más pequeño, el mediano y ordenar
+- [x] 🧩 ¿Qué sigue? Secuencias y patrones (🔴🔵🔴🔵…), ¿qué falta? y completar dos
+- [x] 🐮 ¿Quién hace así? (sonidos de animales con la voz)
+- [x] 🧺 ¿Dónde va? Clasificar en canastas tocando (frutas, animales, agua/tierra/aire…)
 - [x] Contar objetos del 1 al 20
 - [x] Colores y figuras
 
@@ -155,9 +155,21 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] ♟️ Estrategia contra el jaguar: quitar piedras (Nim) y cuatro en línea
 - [ ] 💭 ¿Cómo se siente? (emociones y empatía, Prepa a 3°)
 
+## 🪜 De a poquito: por edad y sin frustrarse
+
+- [x] Preguntar la edad y si ya lee; sugerir los juegos de su edad (sin leer, si no lee) con 🔊 en cada tarjeta
+- [x] `js/escalera.js`: escalones chiquitos que suben con 4 aciertos y bajan si le cuesta, por perfil y por juego
+- [x] Ayudas sin pedirlas: repetir la instrucción si se queda quieto, señalar la respuesta 👆, señalar tras el 2.º error
+- [x] Escalera en ¡A contar!, Colores y figuras, ¿Con qué empieza?, Sudoku de ranitas y todos los juegos nuevos de Prepa
+- [x] Jaguar detective 🪜 paso a paso: de 2 sospechosos y 1 pista hasta los difíciles, con dibujos en las pistas
+- [x] Perezoso: 💡 pone la siguiente flecha después de 2 intentos fallidos
+- [ ] Escalera en Listen and tap, Trazá letras, Gato (fácil → medio cuando gana seguido) y Memory in English
+- [ ] Modo papá: ver en qué escalón va cada juego y moverlo a mano
+- [ ] Voz grabada para las onomatopeyas de «¿Quién hace así?» (la voz del teléfono no siempre las dice bien)
+
 ## 👨‍👩‍👧 Perfiles y progreso (local)
 
-- [ ] Perfiles por niño (nombre + avatar) en `localStorage`
+- [x] Perfiles por niño (nombre opcional, edad, si lee y animalito) en `localStorage`
 - [ ] Estrellas y logros por perfil
 - [ ] Modo papá con PIN: ver progreso, cambiar grado, reiniciar
 - [ ] Superhéroes ticos **originales** como mascotas/avatares (no personajes con derechos de autor)

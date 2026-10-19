@@ -669,4 +669,16 @@ export const JUEGOS = [
     escalera: true,
     url: "juegos/paisajes.html",
   },
+  {
+    id: "alcancia",
+    titulo: "La alcancía",
+    descripcion: "Contar monedas y billetes ticos, pagar exacto, ¿me alcanza?, cambiar billetes, dar el vuelto contando hacia arriba y ahorrar.",
+    emoji: "🐷",
+    materia: "mate",
+    grados: [1, 2, 3, 4],
+    edad: [6, 10],
+    leer: "poco",
+    escalera: true,
+    url: "juegos/alcancia.html",
+  },
 ];

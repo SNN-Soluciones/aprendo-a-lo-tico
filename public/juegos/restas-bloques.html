@@ -95,6 +95,7 @@
   .num { font-size: clamp(2rem, 9vw, 2.8rem); font-weight: 800; line-height: 1; padding-top: 8px; position: relative; }
   .num .orig { display: block; font-size: .45em; color: var(--bad); text-decoration: line-through; text-decoration-thickness: 3px; height: 1.1em; }
   .num .orig:empty::after { content: "\00a0"; }
+  .num .orig:empty { visibility: hidden; }
   .num .cur.changed { color: var(--bad); }
 
   .take { font-size: clamp(1.4rem, 6vw, 1.9rem); font-weight: 800; line-height: 1.1; border-bottom: 4px solid var(--rim); padding-bottom: 6px; }
@@ -167,6 +168,51 @@
     .blk.new, .blk.out, .blk.breaking, .blk.gather, .blk.nope, .tools button.pulse, .bottom button.pulse { animation-duration: .01s; animation-iteration-count: 1; }
   }
 
+  /* 🪜 Escalera, fiesta al subir y ayuda señalada (igual que en css/prepa.css; este juego no usa ese archivo) */
+  .levels button.auto { font-size: 1.15rem; }
+  .marcador { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .escalera { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--page-ink); }
+  .escalera[hidden] { display: none; }
+  .escalera .esc-num { font-size: 1.3rem; white-space: nowrap; }
+  .escalera .esc-num b { font-size: 1.05rem; margin-left: 2px; }
+  .escalera .hojas { display: flex; gap: 3px; }
+  .escalera .hojas i { width: 16px; height: 16px; border-radius: 0 60% 0 60%; border: 2px solid var(--rim); background: var(--face); display: block; transform: rotate(45deg); }
+  .escalera .hojas i.llena { background: var(--ok); }
+  .escalera .hojas i.nueva { animation: hoja .5s ease-out; }
+  @keyframes hoja { 0% { transform: rotate(45deg) scale(.3); } 70% { transform: rotate(45deg) scale(1.4); } 100% { transform: rotate(45deg) scale(1); } }
+  .subio { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+  .subio .cartel {
+    position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    background: var(--btn); border: 4px solid var(--rim); border-radius: 26px; box-shadow: 0 5px 0 var(--rim);
+    padding: 8px 22px; font-size: clamp(1.8rem, 9vw, 2.6rem); font-weight: 800; color: var(--ink); white-space: nowrap;
+    animation: cartel 2.6s ease-out forwards;
+  }
+  .subio i { position: absolute; top: -3rem; left: var(--x); font-style: normal; font-size: 2rem; animation: cae 2.2s ease-in var(--d) forwards; }
+  @keyframes cartel { 0% { transform: translateX(-50%) scale(.3); opacity: 0; } 15% { transform: translateX(-50%) scale(1.15); opacity: 1; } 25%, 80% { transform: translateX(-50%) scale(1); opacity: 1; } 100% { opacity: 0; } }
+  @keyframes cae { to { transform: translateY(110vh) rotate(260deg); } }
+  .senal { position: relative; outline: 6px solid var(--btn) !important; outline-offset: 3px; animation: brinco .9s ease-in-out infinite; z-index: 1; }
+  .senal::after { content: "👆"; position: absolute; right: -4px; bottom: -14px; font-size: 2.2rem; line-height: 1; animation: toca .9s ease-in-out infinite; pointer-events: none; }
+  @keyframes brinco { 50% { transform: translateY(-6px) scale(1.04); } }
+  @keyframes toca { 50% { transform: translate(-4px, -8px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .senal, .senal::after, .subio .cartel, .subio i, .escalera .hojas i.nueva { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+  }
+
+  /* 🔊 y la pregunta del final de la escalera: ¿cuánto da? */
+  .fila-msg { display: flex; align-items: center; gap: 6px; margin: 8px auto; }
+  .fila-msg .msg { flex: 1; margin: 0; }
+  .fila-msg .oir, .fila-msg .lento { font-size: 1.15rem; padding: 2px 9px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); flex: none; }
+  .opciones { display: flex; justify-content: center; gap: 12px; margin: 0 auto 10px; flex-wrap: wrap; }
+  .opciones[hidden] { display: none; }
+  .opciones button { font-size: clamp(1.8rem, 8vw, 2.4rem); min-width: 4.4rem; padding: 2px 18px; border-radius: 18px; }
+  .opciones button:disabled { opacity: 1; }
+  .opciones button.bien { background: #CFF5DC; border-color: var(--ok); }
+  .opciones button.mal { background: #FFE3E0; border-color: var(--bad); opacity: .55; }
+  /* Con una sola columna (los más chiquitos) los bloques son grandes, para contarlos con el dedo */
+  .mat.n1 .uni { width: 44px; height: 44px; border-radius: 8px; }
+  .mat.n1 .blocks { min-height: 110px; gap: 8px; }
+  .mat.n1 .tray { gap: 8px; }
+
   .home-link {
     position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     z-index: 50; width: 52px; height: 52px; border-radius: 50%;
@@ -182,232 +228,349 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-n="2">Decenas</button>
-    <button data-n="3" aria-pressed="true">Centenas</button>
-    <button data-n="4">Miles</button>
+    <button class="auto" data-n="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-n="2" aria-pressed="false">Decenas</button>
+    <button data-n="3" aria-pressed="false">Centenas</button>
+    <button data-n="4" aria-pressed="false">Miles</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
 <div class="wrap equation" id="equation"></div>
-<div class="wrap msg" id="msg" aria-live="polite"></div>
+<div class="wrap fila-msg">
+  <button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button>
+  <button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button>
+  <div class="msg" id="msg" aria-live="polite"></div>
+</div>
+<div class="wrap opciones" id="opciones" role="group" aria-label="¿Cuánto da?" hidden></div>
 <div class="wrap mat" id="mat"></div>
 <div class="wrap bottom"><button id="nextBtn">Otro problema</button></div>
 
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const mat = $("mat"), msg = $("msg"), eqEl = $("equation"), nextBtn = $("nextBtn"), starsEl = $("stars");
+<script type="module">
+import { escalera } from "../js/escalera.js";
+import { ayudaSiSeQueda, senalar } from "../js/prepa.js";
+import { hablar, sonido, elogio, LENTO } from "../js/voz.js";
+import { ESCALONES_RESTA as ESCALONES, problema, opcionesResultado, inicioBloques } from "../js/bloques.js";
 
-  const NAME = ["Unidades", "Decenas", "Centenas", "Miles"];
-  const SHORT = ["U", "D", "C", "UM"];
-  const SING = ["unidad", "decena", "centena", "mil"];
-  const PL = ["unidades", "decenas", "centenas", "miles"];
-  const CLS = ["uni", "dec", "cen", "mil"];
+const $ = id => document.getElementById(id);
+const mat = $("mat"), msg = $("msg"), eqEl = $("equation"), nextBtn = $("nextBtn"), starsEl = $("stars"), opsEl = $("opciones");
 
-  let n = 3;                 // cantidad de columnas
-  let a = 0, b = 0;          // a − b
-  let counts = [], orig = [], toRemove = [], take = [];
-  let newIn = [0, 0, 0, 0];
-  let busy = false, won = false;
-  let stars = 0;
-  try { stars = Number(localStorage.getItem("restas-stars")) || 0; } catch (_) {}
+const NAME = ["Unidades", "Decenas", "Centenas", "Miles"];
+const SHORT = ["U", "D", "C", "UM"];
+const SING = ["unidad", "decena", "centena", "mil"];
+const PL = ["unidades", "decenas", "centenas", "miles"];
+const CLS = ["uni", "dec", "cen", "mil"];
 
-  const digits = (x, len) => Array.from({ length: len }, (_, p) => Math.floor(x / 10 ** p) % 10);
-  const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+// 🪜 De a poquito (los escalones están en js/bloques.js): de quitar unos pocos bloques a prestar con ceros y miles.
+// Decenas, Centenas y Miles son los niveles de siempre, a mano: ahí la escalera no cuenta.
+const esc = escalera("restas-bloques", { escalones: ESCALONES.length, inicio: edad => inicioBloques("resta", edad) });
+let auto = true;
+let n = 3;                 // cantidad de columnas
+let a = 0, b = 0;          // a − b
+let counts = [], orig = [], toRemove = [], take = [];
+let newIn = [0, 0, 0, 0];
+let busy = false, won = false;
+// En la escalera, al terminar con los bloques se pregunta «¿cuánto da?»: fase "bloques" → "respuesta" → "listo"
+let fase = "bloques", fallos = 0, ayudada = false, turno = 0, anterior = null, voz = "";
+let stars = 0;
+try { stars = Number(localStorage.getItem("restas-stars")) || 0; } catch (_) {}
 
-  // ---------- Problemas (siempre con al menos un "préstamo") ----------
-  function generate() {
-    for (let t = 0; t < 1000; t++) {
-      const A = rand(10 ** (n - 1), 10 ** n - 1);
-      const lo = n === 2 ? 3 : 10 ** (n - 2);
-      if (A - 1 < lo) continue;
-      const B = rand(lo, A - 1);
-      const da = digits(A, n), db = digits(B, n);
-      if (da.some((d, p) => db[p] > d)) return [A, B];
+const digits = (x, len) => Array.from({ length: len }, (_, p) => Math.floor(x / 10 ** p) % 10);
+const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+// ---------- Problemas a mano (siempre con al menos un "préstamo") ----------
+function generate() {
+  for (let t = 0; t < 1000; t++) {
+    const A = rand(10 ** (n - 1), 10 ** n - 1);
+    const lo = n === 2 ? 3 : 10 ** (n - 2);
+    if (A - 1 < lo) continue;
+    const B = rand(lo, A - 1);
+    const da = digits(A, n), db = digits(B, n);
+    if (da.some((d, p) => db[p] > d)) return [A, B];
+  }
+  return [n === 2 ? 42 : n === 3 ? 352 : 4305, n === 2 ? 17 : n === 3 ? 127 : 1528];
+}
+
+const decirVoz = (lento = false) => hablar(voz, lento ? { rate: LENTO } : undefined);
+const bloques = k => k === 1 ? "un bloque" : `${k} bloques`;
+
+function newProblem() {
+  turno++;
+  esc.activa = auto;
+  if (auto) {
+    n = ESCALONES[esc.nivel].n;
+    [a, b] = problema("resta", esc.nivel, anterior);
+    anterior = [a, b];
+  } else [a, b] = generate();
+  counts = digits(a, n);
+  orig = counts.slice();
+  take = digits(b, n);
+  toRemove = take.slice();
+  newIn = [0, 0, 0, 0];
+  newIn.forEach((_, p) => newIn[p] = p < n ? counts[p] : 0);
+  won = false; busy = false;
+  fase = "bloques"; fallos = 0; ayudada = false;
+  opsEl.hidden = true; opsEl.innerHTML = "";
+  nextBtn.classList.remove("pulse");
+  say("Quitá los bloques de abajo. ¡Tocá uno para quitarlo!", "", n === 1
+    ? `Hay ${bloques(a)}. Quitá ${b === 1 ? "uno" : b}: tocá los bloques de abajo para quitarlos.`
+    : `¿Cuánto es ${a} menos ${b}? Tocá los bloques de abajo para quitarlos.`);
+  render();
+  if (auto) { decirVoz(); ayuda.empezar(); } else ayuda.parar();
+}
+
+/** Muestra un mensaje; `v` es lo que dice 🔊 (si no se da, sigue el de antes). */
+function say(text, cls = "", v) { msg.className = "msg " + cls; msg.innerHTML = text; if (v) voz = v; }
+
+// ---------- Dibujo ----------
+const MIL_SVG = (c, d) => `<svg viewBox="0 0 40 40" aria-hidden="true">
+  <polygon points="20,2 38,11 20,20 2,11" fill="${c}" stroke="${d}" stroke-width="1.5" style="filter:brightness(1.25)"/>
+  <polygon points="2,11 20,20 20,38 2,29" fill="${c}" stroke="${d}" stroke-width="1.5"/>
+  <polygon points="38,11 20,20 20,38 38,29" fill="${d}" stroke="${d}" stroke-width="1.5"/>
+  <path d="M11,6.5 L29,15.5 M29,6.5 L11,15.5 M2,20 L20,29 M11,15.5 L11,33.5 M38,20 L20,29 M29,15.5 L29,33.5" stroke="${d}" stroke-width="1" fill="none" opacity=".7"/>
+</svg>`;
+
+function blockHTML(p, isNew, delay) {
+  const inner = p === 3 ? MIL_SVG("var(--m)", "var(--md)") : "";
+  return `<button class="blk ${CLS[p]}${isNew ? " new" : ""}" data-p="${p}" style="${isNew ? `animation-delay:${delay}ms` : ""}" aria-label="Quitar ${SING[p] === "mil" ? "un mil" : "una " + SING[p]}">${inner}</button>`;
+}
+
+function colDone(p) { return toRemove[p] === 0; }
+function allDone() { return toRemove.slice(0, n).every(x => x === 0) && counts.slice(0, n).every(x => x <= 9); }
+function result() { return counts.slice(0, n).reduce((s, c, p) => s + c * 10 ** p, 0); }
+
+function colored(x) {
+  const ds = String(x).split("");
+  return ds.map((d, i) => `<span class="p${ds.length - 1 - i}">${d}</span>`).join("");
+}
+
+function render() {
+  const places = [];
+  for (let p = n - 1; p >= 0; p--) places.push(p);
+  mat.className = "wrap mat n" + n;
+  mat.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  // En la escalera el resultado no se ve hasta que el niño dice cuánto da
+  const ocultar = auto && fase !== "listo";
+
+  // ¿Qué columna necesita préstamo y quién se lo puede dar?
+  const needs = places.filter(p => toRemove[p] > counts[p]);
+  const lenders = new Set();
+  needs.forEach(p => {
+    for (let q = p + 1; q < n; q++) if (counts[q] > 0) { lenders.add(q); break; }
+  });
+  const joiners = new Set(places.filter(p => counts[p] >= 10 && toRemove[p] === 0 && p < n - 1));
+
+  let html = "";
+  places.forEach((p, i) => html += `<div class="cell lab p${p}${i === 0 ? " first" : ""}">${NAME[p]}<small>${SHORT[p]}</small></div>`);
+  places.forEach((p, i) => {
+    const changed = counts[p] !== orig[p];
+    // Con una sola columna se cuentan los bloques que quedan: el número no se ve (el resultado es contarlos)
+    const cur = n === 1 && ocultar ? `<span class="cur">&nbsp;</span>` : `<span class="cur p${p}${changed ? " changed" : ""}">${counts[p]}</span>`;
+    html += `<div class="cell num${i === 0 ? " first" : ""}"><span class="orig">${changed && !(n === 1 && ocultar) ? orig[p] : ""}</span>${cur}</div>`;
+  });
+  places.forEach((p, i) => {
+    const removed = take[p] - toRemove[p];
+    let dots = "";
+    for (let k = 0; k < take[p]; k++) dots += `<span class="dot${k < removed ? " done" : ""}"></span>`;
+    const status = take[p] === 0 ? "" : colDone(p) ? `<span class="check">✓</span>` :
+      (toRemove[p] > counts[p] ? `<span class="warn">¡No alcanza!</span>` : "");
+    html += `<div class="cell take${i === 0 ? " first" : ""}"><span class="op">−</span><span class="p${p}">${take[p]}</span><div class="dots">${dots}</div>${status}</div>`;
+  });
+  places.forEach((p, i) => {
+    const show = !ocultar && colDone(p) && counts[p] <= 9;
+    html += `<div class="cell res${i === 0 ? " first" : ""}">${show ? `<span class="p${p}">${counts[p]}</span>` : `<span class="q">?</span>`}</div>`;
+  });
+  places.forEach((p, i) => {
+    let tools = "";
+    if (p > 0) tools += `<button data-break="${p}" ${counts[p] === 0 || won ? "disabled" : ""} class="${lenders.has(p) && !won ? "pulse" : ""}" aria-label="Romper una ${SING[p]} en 10 ${PL[p - 1]}">🔨 1 → 10</button>`;
+    if (p < n - 1) tools += `<button data-join="${p}" ${counts[p] < 10 || won ? "disabled" : ""} class="${joiners.has(p) && !won ? "pulse" : ""}" aria-label="Juntar 10 ${PL[p]} en una ${SING[p + 1]}">🧲 10 → 1</button>`;
+    html += `<div class="cell tools${i === 0 ? " first" : ""}">${tools}</div>`;
+  });
+  places.forEach((p, i) => {
+    let blocks = "";
+    const start = counts[p] - newIn[p];
+    for (let k = 0; k < counts[p]; k++) {
+      const isNew = k >= start;
+      blocks += blockHTML(p, isNew, (k - start) * 45);
     }
-    return [n === 2 ? 42 : n === 3 ? 352 : 4305, n === 2 ? 17 : n === 3 ? 127 : 1528];
+    html += `<div class="cell blocks${i === 0 ? " first" : ""}" data-col="${p}">${blocks}</div>`;
+  });
+  mat.innerHTML = html;
+  newIn = [0, 0, 0, 0];
+
+  // Ecuación
+  const done = allDone();
+  eqEl.innerHTML = `${colored(a)}<span class="op">−</span>${colored(b)}<span class="op">=</span>${done && !ocultar ? colored(result()) : `<span class="q">?</span>`}`;
+
+  if (done && !won) {
+    if (!auto) win();
+    else if (fase === "bloques") preguntar();
+  } else if (!won && toRemove.slice(0, n).every(x => x === 0)) {
+    const p = counts.findIndex((c, i) => i < n && c > 9);
+    if (p >= 0) say(`Tenés ${counts[p]} ${PL[p]}. ¡Juntá 10 para hacer ${p + 1 === 3 ? "un mil" : "una " + SING[p + 1]}! 🧲`);
   }
+}
 
-  function newProblem() {
-    [a, b] = generate();
-    counts = digits(a, n);
-    orig = counts.slice();
-    take = digits(b, n);
-    toRemove = take.slice();
-    newIn = [0, 0, 0, 0];
-    newIn.forEach((_, p) => newIn[p] = p < n ? counts[p] : 0);
-    won = false; busy = false;
-    nextBtn.classList.remove("pulse");
-    say("Quita los bloques de abajo. ¡Toca uno para quitarlo!");
-    render();
-  }
+// 🪜 ¿Cuánto da? Tres respuestas: la buena y errores comunes (restar el pequeño del grande en cada columna…)
+function preguntar() {
+  fase = "respuesta";
+  opsEl.innerHTML = opcionesResultado("resta", a, b, n).map(x => `<button data-r="${x}">${x}</button>`).join("");
+  opsEl.hidden = false;
+  say(n === 1 ? "¿Cuántos bloques quedaron? 🤔" : "¿Cuánto da? 🤔", "", n === 1
+    ? "¡Listo! Contá los bloques que quedaron. ¿Cuántos hay?"
+    : `¿Cuánto da ${a} menos ${b}? Leé el número de cada columna.`);
+  decirVoz();
+  ayuda.empezar();
+}
 
-  function say(text, cls = "") { msg.className = "wrap msg " + cls; msg.innerHTML = text; }
+opsEl.addEventListener("click", e => {
+  const btn = e.target.closest("[data-r]");
+  if (!btn || btn.disabled || fase !== "respuesta") return;
+  const r = a - b;
+  if (Number(btn.dataset.r) === r) { btn.classList.add("bien"); return terminar(true); }
+  // Cada respuesta mala se tacha: tocarla otra vez no cuenta como otro error
+  btn.disabled = true; btn.classList.add("mal"); sonido("mal");
+  fallos++;
+  if (fallos >= 2) { opsEl.querySelector(`[data-r="${r}"]`)?.classList.add("bien"); return terminar(false); }
+  say("¡Casi! 🤔 Probá otra vez", "", n === 1 ? "¡Casi! Contá otra vez los bloques que quedaron, uno por uno." : "¡Casi! Leé el número de cada columna, de izquierda a derecha.");
+  decirVoz();
+});
 
-  // ---------- Dibujo ----------
-  const MIL_SVG = (c, d) => `<svg viewBox="0 0 40 40" aria-hidden="true">
-    <polygon points="20,2 38,11 20,20 2,11" fill="${c}" stroke="${d}" stroke-width="1.5" style="filter:brightness(1.25)"/>
-    <polygon points="2,11 20,20 20,38 2,29" fill="${c}" stroke="${d}" stroke-width="1.5"/>
-    <polygon points="38,11 20,20 20,38 38,29" fill="${d}" stroke="${d}" stroke-width="1.5"/>
-    <path d="M11,6.5 L29,15.5 M29,6.5 L11,15.5 M2,20 L20,29 M11,15.5 L11,33.5 M38,20 L20,29 M29,15.5 L29,33.5" stroke="${d}" stroke-width="1" fill="none" opacity=".7"/>
-  </svg>`;
-
-  function blockHTML(p, isNew, delay) {
-    const inner = p === 3 ? MIL_SVG("var(--m)", "var(--md)") : "";
-    return `<button class="blk ${CLS[p]}${isNew ? " new" : ""}" data-p="${p}" style="${isNew ? `animation-delay:${delay}ms` : ""}" aria-label="Quitar ${SING[p] === "mil" ? "un mil" : "una " + SING[p]}">${inner}</button>`;
-  }
-
-  function colDone(p) { return toRemove[p] === 0; }
-  function allDone() { return toRemove.slice(0, n).every(x => x === 0) && counts.slice(0, n).every(x => x <= 9); }
-  function result() { return counts.slice(0, n).reduce((s, c, p) => s + c * 10 ** p, 0); }
-
-  function colored(x, len) {
-    const ds = String(x).split("");
-    return ds.map((d, i) => `<span class="p${ds.length - 1 - i}">${d}</span>`).join("");
-  }
-
-  function render() {
-    const places = [];
-    for (let p = n - 1; p >= 0; p--) places.push(p);
-    mat.className = "wrap mat n" + n;
-    mat.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
-
-    // ¿Qué columna necesita préstamo y quién se lo puede dar?
-    const needs = places.filter(p => toRemove[p] > counts[p]);
-    const lenders = new Set();
-    needs.forEach(p => {
-      for (let q = p + 1; q < n; q++) if (counts[q] > 0) { lenders.add(q); break; }
-    });
-    const joiners = new Set(places.filter(p => counts[p] >= 10 && toRemove[p] === 0 && p < n - 1));
-
-    let html = "";
-    places.forEach((p, i) => html += `<div class="cell lab p${p}${i === 0 ? " first" : ""}">${NAME[p]}<small>${SHORT[p]}</small></div>`);
-    places.forEach((p, i) => {
-      const changed = counts[p] !== orig[p];
-      html += `<div class="cell num${i === 0 ? " first" : ""}"><span class="orig">${changed ? orig[p] : ""}</span><span class="cur p${p}${changed ? " changed" : ""}">${counts[p]}</span></div>`;
-    });
-    places.forEach((p, i) => {
-      const removed = take[p] - toRemove[p];
-      let dots = "";
-      for (let k = 0; k < take[p]; k++) dots += `<span class="dot${k < removed ? " done" : ""}"></span>`;
-      const status = take[p] === 0 ? "" : colDone(p) ? `<span class="check">✓</span>` :
-        (toRemove[p] > counts[p] ? `<span class="warn">¡No alcanza!</span>` : "");
-      html += `<div class="cell take${i === 0 ? " first" : ""}"><span class="op">−</span><span class="p${p}">${take[p]}</span><div class="dots">${dots}</div>${status}</div>`;
-    });
-    places.forEach((p, i) => {
-      const show = colDone(p) && counts[p] <= 9;
-      html += `<div class="cell res${i === 0 ? " first" : ""}">${show ? `<span class="p${p}">${counts[p]}</span>` : `<span class="q">?</span>`}</div>`;
-    });
-    places.forEach((p, i) => {
-      let tools = "";
-      if (p > 0) tools += `<button data-break="${p}" ${counts[p] === 0 || won ? "disabled" : ""} class="${lenders.has(p) && !won ? "pulse" : ""}" aria-label="Romper una ${SING[p]} en 10 ${PL[p - 1]}">🔨 1 → 10</button>`;
-      if (p < n - 1) tools += `<button data-join="${p}" ${counts[p] < 10 || won ? "disabled" : ""} class="${joiners.has(p) && !won ? "pulse" : ""}" aria-label="Juntar 10 ${PL[p]} en una ${SING[p + 1]}">🧲 10 → 1</button>`;
-      html += `<div class="cell tools${i === 0 ? " first" : ""}">${tools}</div>`;
-    });
-    places.forEach((p, i) => {
-      let blocks = "";
-      const start = counts[p] - newIn[p];
-      for (let k = 0; k < counts[p]; k++) {
-        const isNew = k >= start;
-        blocks += blockHTML(p, isNew, (k - start) * 45);
-      }
-      html += `<div class="cell blocks${i === 0 ? " first" : ""}" data-col="${p}">${blocks}</div>`;
-    });
-    mat.innerHTML = html;
-    newIn = [0, 0, 0, 0];
-
-    // Ecuación
-    const done = allDone();
-    eqEl.innerHTML = `${colored(a)}<span class="op">−</span>${colored(b)}<span class="op">=</span>${done ? colored(result()) : `<span class="q">?</span>`}`;
-
-    if (done && !won) win();
-    else if (!won && toRemove.slice(0, n).every(x => x === 0)) {
-      const p = counts.findIndex((c, i) => i < n && c > 9);
-      if (p >= 0) say(`Tienes ${counts[p]} ${PL[p]}. ¡Junta 10 para hacer ${p + 1 === 3 ? "un mil" : "una " + SING[p + 1]}! 🧲`);
-    }
-  }
-
-  function win() {
+function terminar(acerto) {
+  fase = "listo";
+  ayuda.parar();
+  opsEl.querySelectorAll("button").forEach(x => x.disabled = true);
+  if (acerto) win();
+  else {
     won = true;
-    stars++;
-    try { localStorage.setItem("restas-stars", stars); } catch (_) {}
-    starsEl.textContent = "⭐ " + stars;
-    say(`¡Lo lograste! 🎉 Quedaron ${result()}`, "win");
+    const r = a - b;
+    say(`💡 ${a} − ${b} = ${r}`, "", `${a} menos ${b} ${r === 1 ? "es" : "son"} ${r}.`);
+    decirVoz();
     nextBtn.classList.add("pulse");
     render();
   }
+  esc.resultado({ fallos, ayuda: ayudada, opciones: 3 }); // después de la voz: «¡Subiste!» se dice en cola
+}
 
-  // ---------- Acciones ----------
-  mat.addEventListener("click", e => {
-    if (busy || won) return;
-    const br = e.target.closest("[data-break]");
-    const jn = e.target.closest("[data-join]");
-    const blk = e.target.closest(".blk");
-    if (br) return breakOne(Number(br.dataset.break));
-    if (jn) return joinTen(Number(jn.dataset.join));
-    if (blk) return removeOne(Number(blk.dataset.p), blk);
-  });
-
-  function removeOne(p, el) {
-    if (toRemove[p] === 0) {
-      el.classList.remove("nope"); void el.offsetWidth; el.classList.add("nope");
-      say(take[p] === 0
-        ? `En las ${PL[p]} no hay que quitar nada 😉`
-        : `En las ${PL[p]} ya quitaste ${take[p]} 👍`);
-      return;
-    }
-    busy = true;
-    el.classList.add("out");
-    setTimeout(() => {
-      counts[p]--; toRemove[p]--;
-      busy = false;
-      if (toRemove[p] === 0) say(`¡Listo las ${PL[p]}! Quedan ${counts[p]}.`);
-      else if (counts[p] === 0) say(`¡Se acabaron las ${PL[p]}! Rompe un bloque de la izquierda 🔨`);
-      else say(`Faltan ${toRemove[p]} ${toRemove[p] === 1 ? SING[p] : PL[p]} por quitar`);
-      render();
-    }, 300);
-  }
-
-  function breakOne(p) {
-    if (counts[p] === 0) return;
-    const col = mat.querySelector(`.blocks[data-col="${p}"]`);
-    const el = col && col.lastElementChild;
-    busy = true;
-    if (el) el.classList.add("breaking");
-    setTimeout(() => {
-      counts[p]--; counts[p - 1] += 10; newIn[p - 1] = 10;
-      busy = false;
-      say(`¡1 ${SING[p]} = 10 ${PL[p - 1]}! <span class="p${p - 1}">+10</span>`);
-      render();
-    }, 450);
-  }
-
-  function joinTen(p) {
-    if (counts[p] < 10) return;
-    const col = mat.querySelector(`.blocks[data-col="${p}"]`);
-    busy = true;
-    if (col) Array.from(col.children).slice(-10).forEach(el => el.classList.add("gather"));
-    setTimeout(() => {
-      counts[p] -= 10; counts[p + 1]++; newIn[p + 1] = 1;
-      busy = false;
-      say(`¡10 ${PL[p]} = 1 ${SING[p + 1]}!`);
-      render();
-    }, 400);
-  }
-
-  document.querySelectorAll(".levels button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      n = Number(btn.dataset.n);
-      document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
-      newProblem();
-    });
-  });
-  nextBtn.addEventListener("click", newProblem);
-
+function win() {
+  won = true;
+  stars++;
+  try { localStorage.setItem("restas-stars", stars); } catch (_) {}
   starsEl.textContent = "⭐ " + stars;
-  newProblem();
-})();
+  const r = result();
+  say(`¡Lo lograste! 🎉 Quedaron ${r}`, "win", `${elogio()} ${a} menos ${b} ${r === 1 ? "es" : "son"} ${r}.`);
+  if (auto) decirVoz();
+  nextBtn.classList.add("pulse");
+  render();
+}
+
+// ---------- Acciones ----------
+mat.addEventListener("click", e => {
+  if (busy || won) return;
+  const br = e.target.closest("[data-break]");
+  const jn = e.target.closest("[data-join]");
+  const blk = e.target.closest(".blk");
+  if (br) return breakOne(Number(br.dataset.break));
+  if (jn) return joinTen(Number(jn.dataset.join));
+  if (blk) return removeOne(Number(blk.dataset.p), blk);
+});
+
+function removeOne(p, el) {
+  if (toRemove[p] === 0) {
+    el.classList.remove("nope"); void el.offsetWidth; el.classList.add("nope");
+    say(take[p] === 0
+      ? `En las ${PL[p]} no hay que quitar nada 😉`
+      : `En las ${PL[p]} ya quitaste ${take[p]} 👍`);
+    return;
+  }
+  busy = true;
+  el.classList.add("out");
+  const t = turno;
+  setTimeout(() => {
+    if (t !== turno) return; // ya es otro problema
+    counts[p]--; toRemove[p]--;
+    busy = false;
+    if (toRemove[p] === 0) say(n === 1 && auto ? "¡Listo! 👏" : `¡Listo las ${PL[p]}! Quedan ${counts[p]}.`);
+    else if (counts[p] === 0) say(`¡Se acabaron las ${PL[p]}! Rompé un bloque de la izquierda 🔨`, "", `¡Se acabaron las ${PL[p]}! Rompé un bloque de la izquierda con el martillo.`);
+    else say(`Faltan ${toRemove[p]} ${toRemove[p] === 1 ? SING[p] : PL[p]} por quitar`);
+    render();
+  }, 300);
+}
+
+function breakOne(p) {
+  if (counts[p] === 0) return;
+  const col = mat.querySelector(`.blocks[data-col="${p}"]`);
+  const el = col && col.lastElementChild;
+  busy = true;
+  if (el) el.classList.add("breaking");
+  const t = turno;
+  setTimeout(() => {
+    if (t !== turno) return;
+    counts[p]--; counts[p - 1] += 10; newIn[p - 1] = 10;
+    busy = false;
+    say(`¡1 ${SING[p]} = 10 ${PL[p - 1]}! <span class="p${p - 1}">+10</span>`);
+    render();
+  }, 450);
+}
+
+function joinTen(p) {
+  if (counts[p] < 10) return;
+  const col = mat.querySelector(`.blocks[data-col="${p}"]`);
+  busy = true;
+  if (col) Array.from(col.children).slice(-10).forEach(el => el.classList.add("gather"));
+  const t = turno;
+  setTimeout(() => {
+    if (t !== turno) return;
+    counts[p] -= 10; counts[p + 1]++; newIn[p + 1] = 1;
+    busy = false;
+    say(`¡10 ${PL[p]} = 1 ${SING[p + 1]}!`);
+    render();
+  }, 400);
+}
+
+// 🤝 Si se queda sin tocar: se repite lo que hay que hacer y después se le señala qué tocar.
+// Señalar un bloque o el martillo es solo mostrar el camino; señalar la respuesta sí cuenta como ayuda.
+function siguientePaso() {
+  const herramienta = mat.querySelector("[data-break].pulse:not(:disabled), [data-join].pulse:not(:disabled)");
+  if (herramienta) return herramienta;
+  for (let p = 0; p < n; p++) {
+    if (toRemove[p] > 0 && counts[p] > 0) return mat.querySelector(`.blocks[data-col="${p}"] .blk:last-child`);
+  }
+  return null;
+}
+const ayuda = ayudaSiSeQueda({
+  repetir: () => decirVoz(),
+  senalar: () => {
+    if (!auto || won || busy) return;
+    if (fase === "respuesta") {
+      ayudada = true;
+      senalar(opsEl.querySelector(`[data-r="${a - b}"]`));
+      hablar("Te ayudo: ¡es esta!");
+    } else senalar(siguientePaso());
+  },
+});
+
+// Pasar a otro después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar)
+const saltar = () => { if (auto && fase === "respuesta" && fallos > 0) esc.resultado({ fallos: 2, opciones: 3 }); };
+
+document.querySelectorAll(".levels button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    saltar();
+    auto = btn.dataset.n === "auto";
+    if (!auto) n = Number(btn.dataset.n);
+    document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
+    newProblem();
+  });
+});
+nextBtn.addEventListener("click", () => { saltar(); newProblem(); });
+$("oir").addEventListener("click", () => decirVoz());
+$("lento").addEventListener("click", () => decirVoz(true));
+
+starsEl.textContent = "⭐ " + stars;
+newProblem();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__bloques = { get a() { return a; }, get b() { return b; }, get n() { return n; }, get fase() { return fase; }, get fallos() { return fallos; }, get nivel() { return esc.nivel; }, get auto() { return auto; }, get won() { return won; }, get estado() { return { counts: counts.slice(0, n), falta: toRemove.slice(0, n) }; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

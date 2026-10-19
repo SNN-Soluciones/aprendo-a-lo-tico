@@ -159,7 +159,12 @@ import { MATERIAS_EXAMEN, temasPara, armarExamen, revisar, nota } from "./js/exa
 const $ = id => document.getElementById(id);
 const GRADOS = [[1, "6–7 años"], [2, "7–8 años"], [3, "8–9 años"], [4, "9–10 años"], [5, "10–11 años"], [6, "11–12 años"]];
 const CANTIDADES = [3, 5, 10];
-const limpio = t => t.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+// Lo que dice la voz: el texto sin etiquetas ni los números de los dibujos (SVG)
+const limpio = html => {
+  const d = new DOMParser().parseFromString(html, "text/html");
+  d.querySelectorAll("svg").forEach(x => x.remove());
+  return d.body.textContent.replace(/\s+/g, " ").trim();
+};
 const soloTexto = html => new DOMParser().parseFromString(html, "text/html").body.textContent.replace(/\s+/g, " ").trim();
 /** La lectura va antes de la primera pregunta de su texto. */
 const lecturaAntes = (qs, qi) => (qs[qi].lectura && qs[qi].lectura !== qs[qi - 1]?.lectura ? qs[qi].lectura : "");
@@ -242,7 +247,7 @@ $("secciones").addEventListener("click", e => {
   const lect = e.target.closest("[data-lectura]");
   if (lect) { decir(soloTexto(pregunta(lect.dataset.lectura).lectura)); return; }
   const leer = e.target.closest("[data-leer]");
-  if (leer) { const q = pregunta(leer.dataset.leer); decir(limpio(q.texto) + (q.opciones ? ". Las opciones son: " + q.opciones.map(limpio).join(", ") : "")); return; }
+  if (leer) { const q = pregunta(leer.dataset.leer); decir(limpio(q.texto).replace(/[^.?!:]$/, "$&.") + (q.opciones ? " Las opciones son: " + q.opciones.map(limpio).join(", ") : "")); return; }
   const b = e.target.closest("[data-o]");
   if (!b) return;
   const id = b.dataset.q;

@@ -3,6 +3,8 @@
 //
 // Un perfil: { id, nombre, edad, lee: "no" | "poco" | "si", avatar }
 
+import { borrarAlbum } from "./album.js";
+
 const KEY = "alt-perfiles";
 export const AVATARES = ["🦥", "🐸", "🐆", "🦜", "🐢", "🦋", "🐬", "🐒", "🦝", "🐊", "🐝", "🦄"];
 export const EDADES = [3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
@@ -50,11 +52,37 @@ export function borrarPerfil(id) {
   if (d.activo === id) d.activo = d.lista[0]?.id || null;
   guardarTodo(d);
   try { localStorage.removeItem(`alt-escalera-${id}`); } catch (_) {}
+  borrarAlbum(id);
 }
 
 /** 📈 En qué escalón va un perfil en cada juego con escalera: { juego: { n, de } } (n empieza en 0). */
 export function progresoDe(id) {
   try { return JSON.parse(localStorage.getItem(`alt-escalera-${id}`) || "{}"); } catch (_) { return {}; }
+}
+
+function guardarProgreso(id, prog) {
+  try { localStorage.setItem(`alt-escalera-${id}`, JSON.stringify(prog)); } catch (_) {}
+}
+
+/**
+ * 👨‍👩‍👧 Modo papá: pone a mano el escalón de un juego (n empieza en 0). Queda como si recién llegara a ese escalón:
+ * sin hojitas, sin rondas difíciles y sin el «nuevo» (que suma doble), igual que lo guarda js/escalera.js.
+ * @param {number} [de] cuántos escalones tiene el juego, si se sabe
+ */
+export function ponerEscalon(id, juego, n, de) {
+  const prog = progresoDe(id), antes = prog[juego] || {};
+  const total = de ?? antes.de;
+  const tope = total ? Math.min(total - 1, n) : n;
+  prog[juego] = { ...antes, n: Math.max(0, tope), hojas: 0, duros: 0, nuevo: false, ...(total ? { de: total } : {}) };
+  guardarProgreso(id, prog);
+  return prog[juego];
+}
+
+/** Borra lo que lleva en un juego: la próxima vez empieza como nuevo, según su edad. */
+export function reiniciarJuego(id, juego) {
+  const prog = progresoDe(id);
+  delete prog[juego];
+  guardarProgreso(id, prog);
 }
 
 /** Grados que suelen tener los niños de esa edad (0 = Preparatoria). En Costa Rica se entra a 1° con 6 años y medio. */

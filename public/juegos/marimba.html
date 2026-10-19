@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La marimba</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #D9731F; --alto: clamp(118px, 30vh, 210px); }
+  @media (orientation: landscape) and (max-height: 520px) { :root { --alto: clamp(96px, 34vh, 150px); } }
+  [hidden] { display: none !important; }
+  .instr .txt b { color: var(--materia); }
+
+  /* 🎹 La marimba: teclas de madera de colores sobre su marco, con los tubos abajo */
+  .marimba {
+    margin-top: 12px; position: relative; border: 4px solid var(--rim); border-radius: 22px;
+    background: linear-gradient(#9A6334, #6B3F1D); padding: 14px 10px 0; box-shadow: 0 5px 0 var(--rim);
+  }
+  .teclas { display: flex; justify-content: center; align-items: center; gap: 6px; height: var(--alto); position: relative; }
+  .tecla {
+    flex: 1 1 0; max-width: 92px; min-width: 0; height: calc(var(--alto) * var(--k)); padding: 0; position: relative;
+    border-radius: 12px; border: 3px solid var(--rim); box-shadow: 0 5px 0 var(--rim);
+    background:
+      linear-gradient(90deg, rgba(255,255,255,.35), rgba(255,255,255,0) 35%, rgba(0,0,0,.14)),
+      repeating-linear-gradient(176deg, rgba(0,0,0,.07) 0 3px, rgba(0,0,0,0) 3px 11px),
+      var(--c);
+    transition: filter .12s, box-shadow .12s, transform .08s;
+  }
+  /* los clavitos de donde cuelga la tecla */
+  .tecla::before, .tecla::after {
+    content: ""; position: absolute; left: 50%; width: 9px; height: 9px; margin-left: -4.5px; border-radius: 50%;
+    background: #3E2410; box-shadow: inset 0 1px 1px rgba(255,255,255,.4);
+  }
+  .tecla::before { top: 14%; } .tecla::after { bottom: 14%; }
+  .tecla .n { display: none; position: absolute; left: 0; right: 0; bottom: 30%; text-align: center; font-size: .95rem; color: rgba(0,0,0,.55); }
+  @media (hover: hover) and (pointer: fine) { .tecla .n { display: block; } }
+  .tecla.suena { filter: brightness(1.35) saturate(1.2); box-shadow: 0 0 0 4px #FFFFFF, 0 0 26px 10px var(--c); transform: translateY(4px); z-index: 2; }
+  .tecla.suena.tenue { filter: brightness(1.12); box-shadow: 0 0 0 2px rgba(255,255,255,.55), 0 5px 0 var(--rim); transform: none; }
+  .tecla.inicio > .estrella { position: absolute; top: -30px; left: 50%; transform: translateX(-50%); font-size: 1.5rem; line-height: 1; }
+  .tecla:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--rim); }
+  .tubos { display: flex; justify-content: center; gap: 6px; height: 34px; align-items: flex-start; margin-top: 4px; }
+  .tubos i { flex: 1 1 0; max-width: 92px; display: flex; justify-content: center; }
+  .tubos i::before { content: ""; width: 46%; height: calc(34px * var(--k)); background: linear-gradient(90deg, #6D6D6D, #BDBDBD 40%, #616161); border-radius: 0 0 8px 8px; }
+  /* 👂 Mientras la marimba toca, se escucha: las teclas no responden */
+  .escuchando .teclas, .escuchando .resp, .escuchando .tambor-caja { opacity: .78; }
+  .escuchando .teclas .tecla, .escuchando .resp button, .escuchando #tambor { cursor: default; }
+  .oreja { display: none; position: absolute; top: -24px; right: -8px; font-size: 2.4rem; line-height: 1; z-index: 3; }
+  .escuchando .oreja { display: block; animation: pulse 1s ease-in-out infinite; }
+
+  /* 🐦🐸 Dos notas · 👂 dos melodías · 🥁 ritmo */
+  .escena {
+    margin-top: 12px; background: var(--face); border: 4px solid var(--rim); border-radius: 22px; padding: 12px;
+    position: relative; min-height: 120px; display: flex; align-items: center; justify-content: center;
+  }
+  .dos { display: flex; gap: 22%; align-items: center; height: 130px; }
+  .nota-b {
+    width: 74px; height: 74px; flex: none; border-radius: 50%; border: 4px solid var(--rim); background: #FFE8A3;
+    display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; position: relative;
+    transition: transform .6s ease-out;
+  }
+  .nota-b .bicho { position: absolute; right: -26px; top: -18px; font-size: 2rem; }
+  .nota-b.arriba { transform: translateY(-34px); }
+  .nota-b.abajo { transform: translateY(34px); }
+  .late { animation: late .45s ease-out; }
+  @keyframes late { 40% { transform: scale(1.25); box-shadow: 0 0 0 8px rgba(255, 200, 61, .7); } }
+  .nota-b.arriba.late { animation: none; }
+  .nota-b.abajo.late { animation: none; }
+
+  .melos { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+  .melo { border: 3px solid var(--rim); border-radius: 16px; padding: 6px; background: #F3F7FB; position: relative; }
+  .melo .num { position: absolute; left: 8px; top: 4px; font-weight: 800; font-size: 1.2rem; }
+  .melo .puntos { height: 96px; position: relative; margin-left: 22px; }
+  .melo .puntos i {
+    position: absolute; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--rim);
+    background: var(--soft); top: calc(50% - 10px); transition: top .5s ease-out, background .3s;
+  }
+  .melo .puntos i.cambio { box-shadow: 0 0 0 4px var(--btn); }
+  .melo.late { animation: late .45s ease-out; }
+
+  .golpes { display: flex; align-items: center; justify-content: center; min-height: 64px; }
+  .golpes i { width: 34px; height: 34px; border-radius: 50%; border: 4px solid var(--rim); background: #FFFFFF; flex: none; }
+  .golpes i.demo { background: var(--btn); }
+  .golpes i.tuyo { background: var(--ok); }
+
+  /* Respuestas grandes, sin letras */
+  .resp { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .resp button { border-radius: 22px; font-size: clamp(2.2rem, 11vw, 3rem); padding: 8px 4px; line-height: 1.1; display: flex; flex-direction: column; align-items: center; }
+  .resp button small { font-size: 1.3rem; }
+
+  .tambor-caja { display: flex; justify-content: center; margin-top: 12px; }
+  #tambor {
+    width: clamp(130px, 38vw, 170px); height: clamp(130px, 38vw, 170px); border-radius: 50%; padding: 0;
+    font-size: clamp(4rem, 18vw, 5.4rem); background: radial-gradient(circle at 50% 40%, #FFF3D6, #F2C879 70%, #C98E3A);
+  }
+  #tambor.golpe { transform: translateY(4px) scale(.96); box-shadow: 0 1px 0 var(--rim); }
+
+  .canciones { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 12px; }
+  .canciones button { border-radius: 20px; padding: 6px 8px; display: flex; align-items: center; gap: 8px; text-align: left; font-size: 1rem; line-height: 1.15; }
+  .canciones button .e { font-size: 2rem; flex: none; }
+  .canciones button[aria-pressed="true"] { background: var(--btn); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tecla, .nota-b, .melo .puntos i { transition: none; }
+  }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🎶🥁</div>
+  <h1>La marimba</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. La marimba toca y vos repetís: con el oído, la memoria y el ritmo.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" role="group" aria-label="Nivel">
+    <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-nivel="simon" aria-label="Repetí la melodía">🎹</button>
+    <button data-nivel="agudo" aria-label="¿Más aguda o más grave?">🐦</button>
+    <button data-nivel="igual" aria-label="¿Iguales o distintas?">👯</button>
+    <button data-nivel="ritmo" aria-label="Ritmo con el tambor">🥁</button>
+    <button data-nivel="libre" aria-label="Tocar libre y canciones">🎶</button>
+  </div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="wrap escena" id="escena" hidden></div>
+
+<div class="wrap marimba" id="marimba" hidden>
+  <span class="oreja" aria-hidden="true">👂</span>
+  <div class="teclas" id="teclas" role="group" aria-label="Marimba"></div>
+  <div class="tubos" id="tubos" aria-hidden="true"></div>
+</div>
+
+<div class="wrap resp" id="resp" hidden></div>
+<div class="wrap tambor-caja" id="tamborCaja" hidden><button id="tambor" aria-label="Tambor: tocá el ritmo"><span aria-hidden="true">🥁</span></button></div>
+<div class="wrap canciones" id="canciones" role="group" aria-label="Canciones" hidden></div>
+
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda, repetirInstruccion } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { TECLAS, ESCALONES, MODOS, CANCIONES, inicio, ronda, compararRitmo, frecuencia, instrHtml, vozDe, explica } from "../js/marimba.js";
+
+const $ = id => document.getElementById(id);
+const esperar = ms => new Promise(res => setTimeout(res, ms));
+
+// 🪜 De a poquito: de una nota con tres teclas hasta melodías solo con el oído (ver ESCALONES en js/marimba.js)
+const esc = escalera("marimba", { escalones: ESCALONES.length, inicio });
+const stars = estrellas("marimba-stars");
+
+// ---------- 🔊 Sonido: marimba y tambor sintetizados (sin archivos de audio) ----------
+// El AudioContext se crea con el primer toque (▶️): los navegadores no dejan sonar nada antes.
+let ac = null, salidaGeneral = null, ruidoBuf = null;
+const sonando = new Set();
+function audio() {
+  if (!ac) {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return null;
+    try {
+      ac = new AC();
+      const comp = ac.createDynamicsCompressor();
+      salidaGeneral = ac.createGain();
+      salidaGeneral.gain.value = 0.9;
+      salidaGeneral.connect(comp).connect(ac.destination);
+    } catch (_) { ac = null; return null; }
+  }
+  if (ac.state === "suspended") ac.resume().catch(() => {});
+  return ac;
+}
+document.addEventListener("pointerdown", () => { if (ac) audio(); }, true);
+
+function salida(dur) {
+  const g = ac.createGain();
+  g.connect(salidaGeneral);
+  sonando.add(g);
+  setTimeout(() => sonando.delete(g), dur * 1000 + 200);
+  return g;
+}
+function ruido(t, dur, amp, frec, destino) {
+  if (!ruidoBuf) {
+    ruidoBuf = ac.createBuffer(1, Math.floor(ac.sampleRate * 0.2), ac.sampleRate);
+    const d = ruidoBuf.getChannelData(0);
+    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+  }
+  const s = ac.createBufferSource(), f = ac.createBiquadFilter(), g = ac.createGain();
+  s.buffer = ruidoBuf; f.type = "bandpass"; f.frequency.value = frec; f.Q.value = 1.2;
+  g.gain.setValueAtTime(amp, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+  s.connect(f).connect(g).connect(destino); s.start(t); s.stop(t + dur + 0.02);
+}
+/** Un golpe de marimba: la nota con un armónico 4 veces más agudo que se apaga rápido, y el clic del mazo. */
+function golpe(midi, vol = 0.5) {
+  if (!audio()) return;
+  const t = ac.currentTime + 0.005, f = frecuencia(midi);
+  const dur = Math.max(0.55, 1.5 - (midi - 60) * 0.03); // las graves suenan más tiempo
+  const out = salida(dur);
+  const parcial = (mult, amp, d) => {
+    if (f * mult > 14000) return;
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.value = f * mult;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.004);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(out); o.start(t); o.stop(t + d + 0.05);
+  };
+  parcial(1, vol, dur);
+  parcial(4, vol * 0.22, 0.2);
+  parcial(9.9, vol * 0.05, 0.06);
+  ruido(t, 0.018, vol * 0.2, f * 2, out);
+}
+function tamborazo(vol = 0.85) {
+  if (!audio()) return;
+  const t = ac.currentTime + 0.005;
+  const out = salida(0.5);
+  [[160, 70, 0.45, vol], [280, 180, 0.16, vol * 0.45]].forEach(([f0, f1, d, amp]) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine";
+    o.frequency.setValueAtTime(f0, t); o.frequency.exponentialRampToValueAtTime(f1, t + d);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g).connect(out); o.start(t); o.stop(t + d + 0.05);
+  });
+  ruido(t, 0.07, vol * 0.35, 1600, out);
+}
+/** Calla lo que esté sonando (al cambiar de nivel o de ronda, la melodía vieja no sigue). */
+function callarMusica() {
+  if (!ac) return;
+  const t = ac.currentTime;
+  for (const g of sonando) {
+    try { g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value, t); g.gain.linearRampToValueAtTime(0, t + 0.05); } catch (_) {}
+  }
+  sonando.clear();
+}
+
+// Para las pruebas (?prueba): qué notas tocó cada demostración
+const registro = new URLSearchParams(location.search).has("prueba") ? [] : null;
+
+// ---------- Estado ----------
+let manual = "simon", libre = false, r = null, clave = "";
+let estado = "presentando";  // "presentando" (la marimba toca: no se cuenta nada) · "turno" · "listo"
+let fallos = 0, entrada = [], tiempos = [], turno = 0, ayudaArrancada = false, verDibujo = false, tReinicio = 0;
+let cancion = null, pos = 0;
+
+const teclaEl = i => $("teclas").querySelector(`[data-t="${i}"]`);
+const respEl = v => $("resp").querySelector(`[data-resp="${v}"]`);
+function quitarSenales() { document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal")); }
+function ponerEstado(e) {
+  estado = e;
+  document.body.classList.toggle("escuchando", e === "presentando");
+}
+
+// 🤝 Si se queda pegado: se repite (la voz y la marimba), y después se le señala qué tocar
+const ayuda = ayudaSiSeQueda({
+  espera: 10000,
+  repetir: () => presentar(false),
+  senalar: () => {
+    if (!r || estado !== "turno") return;
+    if (r.modo === "simon") senalar(teclaEl(r.melodia[entrada.length]));
+    else if (r.modo === "ritmo") { verDibujo = true; tiempos = []; pintarGolpes(); senalar($("tambor")); }
+    else senalar(respEl(r.respuesta));
+  },
+});
+
+// ---------- Dibujar ----------
+function pintarTeclas(teclas, inicioEnDo = false) {
+  const k = i => (1 - (i / 7) * 0.4).toFixed(3); // las graves son más largas, como en la marimba de verdad
+  $("teclas").innerHTML = teclas.map((i, n) => {
+    const t = TECLAS[i];
+    const estrella = inicioEnDo && i === 0 ? `<span class="estrella" aria-hidden="true">⭐</span>` : "";
+    return `<button class="tecla${estrella ? " inicio" : ""}" data-t="${i}" style="--c:${t.color};--k:${k(i)}" aria-label="Tecla ${t.nombreColor}, ${t.nota}">${estrella}<span class="n" aria-hidden="true">${n + 1}</span></button>`;
+  }).join("");
+  $("tubos").innerHTML = teclas.map(i => `<i style="--k:${k(i)}"></i>`).join("");
+}
+
+function pintarEscena() {
+  const e = $("escena");
+  if (r.modo === "agudo") {
+    e.innerHTML = `<div class="dos" role="img" aria-label="Dos notas"><div class="nota-b" id="b1"><span aria-hidden="true">1</span></div><div class="nota-b" id="b2"><span aria-hidden="true">2</span></div></div>`;
+  } else if (r.modo === "igual") {
+    e.innerHTML = `<div class="melos" role="img" aria-label="Dos melodías">${[0, 1].map(m => `<div class="melo" id="m${m}"><span class="num" aria-hidden="true">${m + 1}</span><div class="puntos"></div></div>`).join("")}</div>`;
+  } else if (r.modo === "ritmo") {
+    e.innerHTML = `<div class="golpes" id="golpes" role="img" aria-label="${r.golpes} golpes de tambor"></div>`;
+    pintarGolpes();
+  }
+}
+
+function pintarGolpes() {
+  const g = $("golpes");
+  if (!g) return;
+  const dibujo = r.dibujo || verDibujo;
+  g.innerHTML = Array.from({ length: r.golpes }, (_, k) =>
+    `<i style="margin-left:${k ? (dibujo ? r.patron[k - 1] * 26 : 22) : 0}px"></i>`).join("");
+}
+const circulo = k => $("golpes")?.children[k];
+
+/** Después de contestar (o al equivocarse): se ve por qué. */
+function revelar() {
+  if (r.modo === "agudo") {
+    const b2 = $("b2");
+    if (!b2 || b2.querySelector(".bicho")) return;
+    b2.classList.add(r.respuesta === "sube" ? "arriba" : "abajo");
+    b2.insertAdjacentHTML("beforeend", `<span class="bicho" aria-hidden="true">${r.respuesta === "sube" ? "🐦" : "🐸"}</span>`);
+  } else if (r.modo === "igual") {
+    const lo = 72, hi = 84, cambio = r.cambio;
+    r.melodias.forEach((mel, m) => {
+      const caja = $(`m${m}`)?.querySelector(".puntos");
+      if (!caja) return;
+      caja.innerHTML = mel.map((t, k) => `<i style="left:${k * 24}px"></i>`).join("");
+      // un tiquito después, para que se vea cómo se acomodan
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        [...caja.children].forEach((p, k) => {
+          const t = mel[k];
+          p.style.top = `${(1 - (TECLAS[t].midi - lo) / (hi - lo)) * 76}px`;
+          p.style.background = TECLAS[t].color;
+          if (m === 1 && cambio.includes(k)) p.classList.add("cambio");
+        });
+      }));
+    });
+  }
+}
+
+function pintar() {
+  const modo = libre ? "libre" : r.modo;
+  $("marimba").hidden = !(modo === "simon" || modo === "libre");
+  $("escena").hidden = !(modo === "agudo" || modo === "igual" || modo === "ritmo");
+  $("resp").hidden = !(modo === "agudo" || modo === "igual");
+  $("tamborCaja").hidden = modo !== "ritmo";
+  $("canciones").hidden = modo !== "libre";
+  $("nextBtn").hidden = modo === "libre";
+  if (modo === "simon") pintarTeclas(r.teclas, r.brillo === "nada");
+  if (modo === "libre") pintarTeclas(TECLAS.map((_, i) => i));
+  if (!libre) pintarEscena();
+  if (modo === "agudo") $("resp").innerHTML =
+    `<button data-resp="sube" aria-label="Más aguda, finita como un pajarito"><span aria-hidden="true">🐦</span><small aria-hidden="true">⬆️</small></button>` +
+    `<button data-resp="baja" aria-label="Más grave, gruesa como un sapo"><span aria-hidden="true">🐸</span><small aria-hidden="true">⬇️</small></button>`;
+  if (modo === "igual") $("resp").innerHTML =
+    `<button data-resp="igual" aria-label="Iguales"><span aria-hidden="true">🐥🐥</span></button>` +
+    `<button data-resp="distinto" aria-label="Distintas"><span aria-hidden="true">🐥🐸</span></button>`;
+}
+
+// ---------- La marimba toca ----------
+function iluminar(i, brillo = "fuerte") {
+  const el = teclaEl(i);
+  if (!el || brillo === "nada") return;
+  el.classList.remove("suena", "tenue");
+  void el.offsetWidth;
+  el.classList.add("suena");
+  if (brillo === "tenue") el.classList.add("tenue");
+  clearTimeout(el._apagar);
+  el._apagar = setTimeout(() => el.classList.remove("suena", "tenue"), 360);
+}
+function latir(el) {
+  if (!el) return;
+  el.classList.remove("late"); void el.offsetWidth; el.classList.add("late");
+}
+
+/** La demostración de la ronda. Devuelve false si mientras tanto cambió algo (otra ronda, otro nivel, 🔊). */
+async function demo(t, lento) {
+  const k = lento ? 1.6 : 1;
+  const rr = r; // la ronda de esta demostración (si mientras tanto cambia, se deja de tocar)
+  const sigue = () => t === turno && r === rr;
+  if (!rr || !sigue()) return false;
+  if (rr.modo === "simon") {
+    const brillo = fallos >= 2 ? "fuerte" : rr.brillo; // después de dos errores, con lucecitas
+    for (const [n, i] of rr.melodia.entries()) {
+      if (!sigue()) return false;
+      registro?.push([t, i]);
+      golpe(TECLAS[i].midi);
+      iluminar(i, brillo === "primera" ? (n === 0 ? "fuerte" : "nada") : brillo);
+      await esperar(620 * k);
+    }
+  } else if (rr.modo === "agudo") {
+    for (const [n, midi] of rr.notas.entries()) {
+      if (!sigue()) return false;
+      golpe(midi);
+      latir($(`b${n + 1}`));
+      await esperar(1000 * k);
+    }
+  } else if (rr.modo === "igual") {
+    const yaVisto = !!$("m1")?.querySelector(".puntos i[style*='background']");
+    for (const [m, mel] of rr.melodias.entries()) {
+      if (!sigue()) return false;
+      const caja = $(`m${m}`).querySelector(".puntos");
+      if (!yaVisto) caja.innerHTML = "";
+      latir($(`m${m}`));
+      for (const [n, i] of mel.entries()) {
+        if (!sigue()) return false;
+        golpe(TECLAS[i].midi);
+        if (!yaVisto) caja.insertAdjacentHTML("beforeend", `<i style="left:${n * 24}px"></i>`);
+        else latir(caja.children[n]);
+        await esperar(500 * k);
+      }
+      await esperar(550 * k);
+    }
+  } else {
+    [...($("golpes")?.children || [])].forEach(c => c.classList.remove("demo", "tuyo"));
+    for (let g = 0; g < rr.golpes; g++) {
+      if (!sigue()) return false;
+      tamborazo();
+      circulo(g)?.classList.add("demo");
+      if (g < rr.patron.length) await esperar(rr.patron[g] * 400 * k);
+    }
+    await esperar(600);
+    if (!sigue()) return false;
+    [...$("golpes").children].forEach(c => c.classList.remove("demo"));
+  }
+  return sigue();
+}
+
+/**
+ * Presenta la ronda: la voz explica, la marimba toca (la voz nunca habla encima) y le toca al niño.
+ * @param {boolean} lento  🐢: la voz y la música más despacio
+ * @param {string} [antes] lo que se dice antes (si no, la instrucción de la ronda)
+ */
+async function presentar(lento = false, antes = null) {
+  if (libre) return cancion ? empezarCancion(cancion, lento) : repetirInstruccion(lento);
+  if (!r) return false;
+  const t = ++turno, actual = r;
+  callarMusica();
+  clearTimeout(tReinicio);
+  quitarSenales();
+  const yaListo = estado === "listo";
+  if (!yaListo) { ponerEstado("presentando"); entrada = []; tiempos = []; }
+  const v = vozDe(r);
+  if (antes) await decir(antes, lento ? { rate: LENTO } : undefined);
+  else await instruccion(instrHtml(r), v.antes, lento);
+  if (t !== turno || r !== actual) return false;
+  // después de dos errores en el ritmo, se ve el dibujo de los golpes cortos y largos
+  if (r.modo === "ritmo" && fallos >= 2 && !verDibujo) { verDibujo = true; pintarGolpes(); }
+  await esperar(250);
+  if (t !== turno || r !== actual) return false;
+  if (!(await demo(t, lento)) || r !== actual) return false;
+  if (yaListo) return true; // ya contestó: solo se vuelve a oír
+  ponerEstado("turno");
+  if (r.modo === "simon" && fallos >= 2) senalar(teclaEl(r.melodia[0]));
+  if (r.modo !== "simon" && r.modo !== "ritmo" && fallos >= 1) senalar(respEl(r.respuesta));
+  if (!ayudaArrancada) { ayudaArrancada = true; ayuda.empezar(); }
+  decir(v.despues, lento ? { rate: LENTO } : undefined);
+  return true;
+}
+
+function nuevo() {
+  libre = false; cancion = null;
+  const i = esc.activa ? esc.nivel : azar(MODOS[manual]);
+  r = ronda(i, Math.random, clave);
+  clave = r.clave;
+  fallos = 0; entrada = []; tiempos = []; verDibujo = false; ayudaArrancada = false;
+  ayuda.parar();
+  ponerEstado("presentando");
+  pintar();
+  feedback("");
+  $("nextBtn").classList.remove("pulse");
+  presentar(false);
+}
+
+function ganar() {
+  ponerEstado("listo");
+  ayuda.parar();
+  clearTimeout(tReinicio);
+  quitarSenales();
+  revelar();
+  const extra = explica(r);
+  if (fallos === 0 && !ayuda.usada) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${extra}`); }
+  else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${extra}`); }
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: r.opciones });
+  $("nextBtn").classList.add("pulse");
+}
+
+/** Se equivocó: un error, y la marimba vuelve a tocar (después de dos errores, con lucecitas y señalando). */
+function errorRonda(emo, texto, voz) {
+  fallos++;
+  ponerEstado("presentando");
+  quitarSenales();
+  feedback("almost", emo, texto);
+  const actual = r;
+  setTimeout(() => { if (r === actual && estado === "presentando") presentar(false, voz); }, 650);
+}
+
+// ---------- Tocar ----------
+function tocarTecla(i) {
+  if (estado === "presentando") return; // mientras la marimba toca, se escucha
+  golpe(TECLAS[i].midi);
+  iluminar(i, "fuerte");
+  if (libre) return seguirCancion(i);
+  if (!r || r.modo !== "simon" || estado !== "turno") return;
+  teclaEl(i)?.classList.remove("senal");
+  if (i === r.melodia[entrada.length]) {
+    entrada.push(i);
+    if (entrada.length === r.melodia.length) {
+      // ¡completa! Se deja sonar la última nota antes de celebrar (y ya no se cuentan más toques)
+      ponerEstado("listo");
+      const actual = r;
+      setTimeout(() => { if (r === actual) ganar(); }, 250);
+    } else if (fallos >= 2) senalar(teclaEl(r.melodia[entrada.length]));
+  } else {
+    errorRonda("🤏", "¡Casi!", "¡Casi! Escuchá otra vez.");
+  }
+}
+
+function tocarTambor() {
+  if (estado === "presentando" || !r || r.modo !== "ritmo") return;
+  tamborazo();
+  const b = $("tambor");
+  b.classList.remove("golpe"); void b.offsetWidth; b.classList.add("golpe");
+  setTimeout(() => b.classList.remove("golpe"), 120);
+  if (estado !== "turno") return;
+  b.classList.remove("senal");
+  tiempos.push(performance.now());
+  circulo(tiempos.length - 1)?.classList.add("tuyo");
+  clearTimeout(tReinicio);
+  if (tiempos.length === r.golpes) {
+    if (compararRitmo(r.patron, tiempos)) ganar();
+    else errorRonda("🤏", "¡Casi!", "¡Casi! Escuchá otra vez el ritmo.");
+  } else {
+    // Si se queda a medias, se empieza otra vez (sin contarlo como error)
+    tReinicio = setTimeout(() => {
+      if (estado !== "turno" || !tiempos.length) return;
+      tiempos = [];
+      [...$("golpes").children].forEach(c => c.classList.remove("tuyo"));
+      decir("Empezá otra vez desde el primer golpe.");
+    }, 3000);
+  }
+}
+
+$("resp").addEventListener("click", e => {
+  const b = e.target.closest("[data-resp]");
+  if (!b || b.disabled || estado !== "turno" || !r) return;
+  if (b.dataset.resp === r.respuesta) {
+    b.classList.add("right");
+    $("resp").querySelectorAll("button").forEach(x => { if (x !== b) x.disabled = true; });
+    ganar();
+  } else {
+    b.classList.add("wrong", "nope");
+    b.disabled = true;
+    revelar();
+    errorRonda("🤔", "Escuchá otra vez", r.modo === "agudo" ? "Escuchá otra vez y mirá las notas." : "Escuchá otra vez y mirá los puntitos.");
+  }
+});
+
+// El toque suena en cuanto el dedo toca la tecla (pointerdown); el clic que viene después no cuenta otra vez.
+// Con teclado o lector de pantalla llega solo el clic, y ese sí cuenta.
+function alTocar(contenedor, selector, fn) {
+  let ultimo = null;
+  contenedor.addEventListener("pointerdown", e => {
+    const b = e.target.closest(selector);
+    if (!b || e.button > 0) return;
+    ultimo = { b, t: performance.now() };
+    fn(b);
+  });
+  contenedor.addEventListener("click", e => {
+    const b = e.target.closest(selector);
+    if (!b) return;
+    if (ultimo && ultimo.b === b && performance.now() - ultimo.t < 2000) { ultimo = null; return; }
+    fn(b);
+  });
+}
+alTocar($("teclas"), "[data-t]", b => tocarTecla(Number(b.dataset.t)));
+alTocar($("tamborCaja"), "#tambor", () => tocarTambor());
+
+// ⌨️ Teclas 1 a 8 = las teclas de la marimba, de izquierda a derecha
+addEventListener("keydown", e => {
+  if (e.repeat || e.altKey || e.ctrlKey || e.metaKey) return;
+  const n = Number(e.key);
+  if (!Number.isInteger(n) || n < 1 || n > 8 || $("marimba").hidden) return;
+  const btns = $("teclas").querySelectorAll("[data-t]");
+  if (n > btns.length) return;
+  e.preventDefault();
+  tocarTecla(Number(btns[n - 1].dataset.t));
+});
+
+// ---------- 🎶 Tocar libre y canciones (sin escalera) ----------
+function entrarLibre() {
+  libre = true; r = null; cancion = null;
+  turno++;
+  callarMusica();
+  ayuda.parar();
+  clearTimeout(tReinicio);
+  ponerEstado("turno");
+  quitarSenales();
+  feedback("");
+  pintar();
+  $("canciones").innerHTML = CANCIONES.map(c => `<button data-c="${c.id}" aria-pressed="false"><span class="e" aria-hidden="true">${c.e}</span><span>${c.nombre}</span></button>`).join("");
+  instruccion(`<span class="big" aria-hidden="true">🎶</span> Tocá libre o escogé una canción`,
+    "Tocá la marimba como querás, o escogé una canción para tocarla siguiendo las lucecitas.");
+}
+
+async function empezarCancion(c, lento = false) {
+  const t = ++turno;
+  cancion = c; pos = 0;
+  callarMusica();
+  quitarSenales();
+  feedback("");
+  $("canciones").querySelectorAll("[data-c]").forEach(b => b.setAttribute("aria-pressed", b.dataset.c === c.id ? "true" : "false"));
+  ponerEstado("presentando");
+  await instruccion(`<span class="big" aria-hidden="true">${c.e}</span> ${c.nombre}`, `${c.nombre}. Escuchá, y después tocala siguiendo las lucecitas.`, lento);
+  if (t !== turno) return;
+  for (const [i, dur] of c.notas) {
+    if (t !== turno) return;
+    golpe(TECLAS[i].midi);
+    iluminar(i);
+    await esperar(dur * (lento ? 560 : 400));
+  }
+  if (t !== turno) return;
+  ponerEstado("turno");
+  decir("¡Tu turno! Tocá la tecla que tiene la manito.");
+  senalar(teclaEl(c.notas[0][0]));
+}
+
+function seguirCancion(i) {
+  if (!cancion || estado !== "turno") return;
+  if (i !== cancion.notas[pos][0]) return; // en el modo libre no hay errores: solo suena
+  teclaEl(i)?.classList.remove("senal");
+  pos++;
+  if (pos < cancion.notas.length) { senalar(teclaEl(cancion.notas[pos][0])); return; }
+  const c = cancion;
+  cancion = null;
+  stars.sumar();
+  feedback("ok", "🎉", `¡Tocaste ${c.nombre}!`);
+  decir(`¡Tocaste ${c.nombre}! ¡Qué tuanis!`);
+  $("canciones").querySelectorAll("[data-c]").forEach(b => b.setAttribute("aria-pressed", "false"));
+}
+
+$("canciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-c]");
+  if (!b) return;
+  sonido("tap");
+  empezarCancion(CANCIONES.find(c => c.id === b.dataset.c));
+});
+
+// ---------- Botones ----------
+$("nextBtn").addEventListener("click", () => {
+  // Pasar a otra después de equivocarse cuenta como ronda difícil
+  if (r && estado !== "listo" && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap");
+  nuevo();
+});
+niveles(v => {
+  if (v === "libre") { esc.activa = false; entrarLibre(); return; }
+  esc.activa = v === "auto";
+  if (v !== "auto") manual = v;
+  clave = "";
+  nuevo();
+});
+
+// El primer toque (▶️) crea el sonido: así suena en celulares
+alEmpezar(() => { audio(); nuevo(); }, lento => presentar(lento));
+
+if (registro) window.__marimba = {
+  get r() { return r; }, get nivel() { return esc.nivel; }, get estado() { return estado; }, get fallos() { return fallos; },
+  get audio() { return ac ? ac.state : null; }, get libre() { return libre; }, get pos() { return pos; }, get cancion() { return cancion?.id || null; },
+  get turno() { return turno; }, registro,
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

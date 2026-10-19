@@ -23,11 +23,35 @@
   .herr { display: flex; justify-content: center; gap: 14px; margin-top: 12px; }
   .herr button { font-size: 2rem; padding: 2px 22px; }
   .herr #listoBtn { background: #C9F2D6; }
+  /* En el celular, la fila se corre a la derecha para que el 🏠 (fijo abajo a la izquierda) no tape la 🧽 */
+  @media (max-width: 480px) { .herr { gap: 10px; padding-left: 58px; } }
   .pizarra.gano { animation: pulse .6s ease-in-out 2; }
   /* 👆 El dedito que muestra el camino de la letra */
   .dedo { position: absolute; left: 0; top: 0; font-size: 2.6rem; line-height: 1; pointer-events: none; transform: translate(-30%, -10%); z-index: 2; }
   .dedo.arriba { opacity: .55; transform: translate(-30%, -45%) scale(1.1); } /* levantó el dedo entre un trazo y otro */
   .dedo[hidden] { display: none; }
+  /* La palabra que se va armando: las letras ya trazadas quedan chiquitas, con la tinta del niño */
+  .palabra {
+    margin-top: 10px; width: min(96vw, 460px); min-height: 64px; padding: 4px 10px;
+    background: var(--face); border: 4px solid var(--rim); border-radius: 18px;
+    display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; row-gap: 2px;
+  }
+  .palabra[hidden] { display: none; }
+  .palabra { column-gap: 18px; }
+  .palabra .grupo { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; max-width: 100%; } /* cada palabra junta */
+  .palabra canvas { display: block; border-radius: 10px; }
+  .palabra canvas.actual { background: #FFF3C4; }
+  /* Mi nombre: el papá lo escribe una vez y queda guardado en este dispositivo */
+  .nombre { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 8px; width: min(96vw, 460px); }
+  .nombre[hidden], .nombre [hidden] { display: none; }
+  .nombre form { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 8px; background: var(--face); border: 4px solid var(--rim); border-radius: 18px; padding: 10px; }
+  .nombre label { font-weight: 800; width: 100%; text-align: center; }
+  .nombre input {
+    font: inherit; font-size: 1.4rem; font-weight: 700; color: var(--ink); width: 12em; max-width: 100%;
+    border: 3px solid var(--soft); border-radius: 12px; padding: 4px 10px; user-select: text; -webkit-user-select: text;
+  }
+  .nombre input:focus-visible { outline: 3px dashed var(--materia); outline-offset: 2px; }
+  .nombre button { font-size: 1.1rem; }
 </style>
 </head>
 <body>
@@ -37,7 +61,7 @@
   <div class="big" aria-hidden="true">✍️</div>
   <h1>Trazá letras y números</h1>
   <button id="startBtn" aria-label="Empezar">▶️</button>
-  <p>Subile el volumen 🔊. Pasá el dedo por encima de la letra punteada, sin salirte.</p>
+  <p>Subile el volumen 🔊. Pasá el dedo por encima de la letra punteada, sin salirte. Al final vienen palabras, y con «Mi nombre» se escribe el nombre.</p>
 </div>
 
 <div class="wrap top">
@@ -45,13 +69,17 @@
     <button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
     <button data-nivel="vocales">A e i</button>
     <button data-nivel="numeros">1 2 3</button>
-    <button data-nivel="letras">m p s</button>
+    <button data-nivel="minus" aria-label="Letras minúsculas">b c d</button>
+    <button data-nivel="mayus" aria-label="Letras mayúsculas">B C D</button>
+    <button data-nivel="palabras" aria-label="Palabras">sol</button>
+    <button data-nivel="nombre">Mi nombre</button>
   </div>
   <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
 <div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="palabra" id="palabra" aria-hidden="true" hidden></div>
 <div class="pizarra" id="pizarra">
   <canvas id="guia" aria-hidden="true"></canvas>
   <canvas id="tinta" aria-label="Pizarra para trazar con el dedo"></canvas>
@@ -63,15 +91,48 @@
   <button id="listoBtn" aria-label="¡Ya terminé!">✅</button>
   <button id="nextBtn" aria-label="Otra">➡️</button>
 </div>
+<div class="nombre" id="nombreZona" hidden>
+  <form id="nombreForm" hidden>
+    <label for="nombreIn">✍️ Nombre para trazar (lo escribe un adulto)</label>
+    <input id="nombreIn" maxlength="20" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done">
+    <button type="submit">✅ Listo</button>
+  </form>
+  <button id="cambiarNombre" type="button">✏️ Cambiar el nombre</button>
+</div>
 <div class="wrap feedback" id="feedback" aria-live="polite"></div>
 
 <script type="module">
 import { elogio } from "../js/voz.js";
 import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, ayudaSiSeQueda } from "../js/prepa.js";
 import { escalera } from "../js/escalera.js";
-import { trazosDe, caja, RENGLON } from "../js/trazos.js";
+import { perfilActivo } from "../js/perfil.js";
+import { trazosDe, caja, RENGLON, tieneTrazos } from "../js/trazos.js";
 
 const $ = id => document.getElementById(id);
+const ESCAPE = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
+const escapar = t => String(t).replace(/[&<>"']/g, c => ESCAPE[c]);
+
+// 🗣️ Cómo se dice cada letra
+const NOMBRE = { a: "a", b: "be", c: "ce", d: "de", e: "e", f: "efe", g: "ge", h: "hache", i: "i", j: "jota", k: "ka", l: "ele", m: "eme", n: "ene", ñ: "eñe",
+  o: "o", p: "pe", q: "cu", r: "erre", s: "ese", t: "te", u: "u", v: "ve", w: "doble ve", x: "equis", y: "ye", z: "zeta" };
+const NUMEROS = ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"];
+const MARCA = { á: ["a", "con tilde"], é: ["e", "con tilde"], í: ["i", "con tilde"], ó: ["o", "con tilde"], ú: ["u", "con tilde"], ü: ["u", "con diéresis"] };
+function decirLetra(ch) {
+  if (ch >= "0" && ch <= "9") return `el ${NUMEROS[ch]}`;
+  const min = ch.toLowerCase(), [base, marca] = MARCA[min] || [min, ""];
+  return ["la", NOMBRE[base] || ch, ch !== min ? "mayúscula" : "", marca].filter(Boolean).join(" ");
+}
+
+// 🖼️ Un dibujo y una palabra de ejemplo para cada letra
+const EJEMPLO = {
+  m: ["✋", "mano"], p: ["🦆", "pato"], s: ["☀️", "sol"], l: ["🌙", "luna"], t: ["🍅", "tomate"], n: ["☁️", "nube"], d: ["🎲", "dado"],
+  b: ["🐋", "ballena"], c: ["🏠", "casa"], f: ["🍓", "fresa"], g: ["🐱", "gato"], h: ["🍦", "helado"], j: ["🦒", "jirafa"], k: ["🐨", "koala"],
+  ñ: ["🍍", "piña"], q: ["🧀", "queso"], r: ["🐭", "ratón"], v: ["🐮", "vaca"], w: ["🥝", "kiwi"], x: ["🚕", "taxi"], y: ["🪀", "yoyo"], z: ["👟", "zapato"],
+  á: ["🌳", "árbol"], é: ["☕", "café"], í: ["🥜", "maní"], ó: ["🚚", "camión"], ú: ["🦉", "búho"],
+};
+const letra = ch => { const [e, pal] = EJEMPLO[ch.toLowerCase()]; return { ch, d: decirLetra(ch), e, pal }; };
+// Palabras: [palabra, dibujo, palabra de ejemplo (en las sílabas)]
+const palabra = ([p, e, pal]) => ({ palabra: p, letras: Array.from(p), d: p, e, pal: pal || p });
 
 // ✏️ Qué se traza. d = cómo se dice, e/pal = dibujo y palabra de ejemplo
 const SETS = {
@@ -82,22 +143,32 @@ const SETS = {
     { ch: "O", d: "la o", e: "🐻", pal: "oso" }, { ch: "o", d: "la o", e: "🐻", pal: "oso" },
     { ch: "U", d: "la u", e: "🍇", pal: "uvas" }, { ch: "u", d: "la u", e: "🍇", pal: "uvas" },
   ],
-  numeros: ["cero", "uno", "dos", "tres", "cuatro", "cinco", "seis", "siete", "ocho", "nueve"]
+  numeros: NUMEROS
     .map((d, i) => ({ ch: String(i), d: `el ${d}`, n: i }))
     .slice(1).concat([{ ch: "0", d: "el cero", n: 0 }]),
-  letras: [
-    { ch: "m", d: "la eme", e: "✋", pal: "mano" },
-    { ch: "p", d: "la pe", e: "🦆", pal: "pato" },
-    { ch: "s", d: "la ese", e: "☀️", pal: "sol" },
-    { ch: "l", d: "la ele", e: "🌙", pal: "luna" },
-    { ch: "t", d: "la te", e: "🍅", pal: "tomate" },
-    { ch: "n", d: "la ene", e: "☁️", pal: "nube" },
-    { ch: "d", d: "la de", e: "🎲", pal: "dado" },
-  ],
+  letras: Array.from("mpsltnd").map(letra),
+  minus: Array.from("bcdfghjklmnñpqrstvwxyz").map(letra),
+  mayus: Array.from("BCDFGHJKLMNÑPQRSTVWXYZ").map(letra),
+  tildes: Array.from("áéíóú").map(letra),
+  silabas: [["ma", "👩", "mamá"], ["pa", "👨", "papá"], ["mi", "🍯", "miel"], ["mo", "🐒", "mono"], ["pe", "🐶", "perro"], ["pi", "🍍", "piña"],
+    ["po", "🐥", "pollito"], ["sa", "🐸", "sapo"], ["so", "☀️", "sol"], ["si", "🪑", "silla"], ["lo", "🦜", "loro"], ["lu", "🌙", "luna"], ["li", "🍋", "limón"],
+    ["le", "🦁", "león"], ["ta", "☕", "taza"], ["ti", "🐯", "tigre"], ["to", "🍅", "tomate"], ["nu", "☁️", "nube"], ["da", "🎲", "dado"], ["de", "☝️", "dedo"],
+    ["do", "🍩", "dona"], ["di", "🦕", "dinosaurio"]].map(palabra),
+  p3: [["sol", "☀️"], ["oso", "🐻"], ["ola", "🌊"], ["pan", "🍞"], ["uva", "🍇"], ["sal", "🧂"], ["ojo", "👁️"], ["pez", "🐟"], ["pie", "🦶"], ["luz", "💡"], ["rey", "👑"]].map(palabra),
+  p4: [["mamá", "👩"], ["papá", "👨"], ["casa", "🏠"], ["luna", "🌙"], ["pato", "🦆"], ["sapo", "🐸"], ["dedo", "☝️"], ["nube", "☁️"], ["gato", "🐱"],
+    ["vaca", "🐮"], ["mano", "✋"], ["sopa", "🍲"], ["piña", "🍍"], ["taza", "☕"], ["lupa", "🔍"], ["bebé", "👶"]].map(palabra),
+  p5: [["perro", "🐶"], ["queso", "🧀"], ["ratón", "🐭"], ["fresa", "🍓"], ["mango", "🥭"], ["árbol", "🌳"], ["lápiz", "✏️"], ["tigre", "🐯"], ["limón", "🍋"],
+    ["conejo", "🐰"], ["zapato", "👟"], ["helado", "🍦"], ["volcán", "🌋"], ["jirafa", "🦒"], ["banano", "🍌"], ["ballena", "🐋"], ["tortuga", "🐢"], ["gallina", "🐔"]].map(palabra),
 };
+for (const lista of Object.values(SETS)) lista.forEach(x => { x.letras ||= [x.ch]; });
+SETS.palabras = [...SETS.p3, ...SETS.p4, ...SETS.p5];
+const de = (lista, chars) => Array.from(chars).map(ch => lista.find(x => x.ch === ch));
+const minus = chars => de([...SETS.vocales, ...SETS.minus, ...SETS.tildes], chars);
+const mayus = chars => de([...SETS.vocales, ...SETS.mayus], chars);
 
 // 🪜 De a poquito: primero las vocales grandes con el puntito de inicio y mucha tolerancia;
-// después números y consonantes, y al final todo revuelto y más exigente.
+// después números y consonantes, el resto del abecedario, mayúsculas, sílabas y palabras.
+// Los escalones nuevos van siempre al final: el progreso guardado es el número del escalón.
 // tol = [cuánto de la letra hay que cubrir, cuánto del trazo tiene que quedar dentro de la letra]
 // punto = se ven los puntitos de inicio · orden = se pide empezar en el puntito 1 (se avisa con un «¡Casi!»)
 const VOC_MAY = SETS.vocales.filter(x => x.ch === x.ch.toUpperCase());
@@ -113,6 +184,19 @@ const ESCALONES = [
   { lista: SETS.letras.slice(3), tol: [0.72, 0.85], orden: true },                 // 6. l t n d
   { lista: [...SETS.vocales, ...SETS.numeros], tol: [0.74, 0.86], orden: true },  // 7. vocales y números revueltos
   { lista: [...SETS.vocales, ...SETS.numeros, ...SETS.letras], tol: [0.76, 0.88], orden: true }, // 8. todo revuelto, más exigente
+  { lista: minus("bhkfldt"), tol: [0.7, 0.84], punto: true, orden: true },         // 9. con palito alto: b h k f
+  { lista: minus("cgqaoe"), tol: [0.7, 0.84], punto: true, orden: true },          // 10. con curva: c g q
+  { lista: minus("rñjnmhu"), tol: [0.72, 0.85], punto: true, orden: true },        // 11. con puente o colita: r ñ j
+  { lista: minus("vwxyzk"), tol: [0.72, 0.85], punto: true, orden: true },         // 12. en diagonal: v w x y z
+  { lista: SETS.tildes, tol: [0.72, 0.85], punto: true, orden: true },             // 13. con tilde: á é í ó ú
+  { lista: [...VOC_MIN, ...SETS.minus, ...SETS.tildes], tol: [0.76, 0.88], orden: true }, // 14. todas las minúsculas revueltas
+  { lista: mayus("LTHFEI"), tol: [0.72, 0.85], punto: true, orden: true },         // 15. mayúsculas rectas
+  { lista: mayus("VWXYZKMNA"), tol: [0.72, 0.85], punto: true, orden: true },      // 16. mayúsculas en diagonal
+  { lista: mayus("CGOQSUJDBPRÑ"), tol: [0.72, 0.85], punto: true, orden: true },   // 17. mayúsculas con curva
+  { lista: SETS.silabas, tol: [0.72, 0.85], punto: true },                         // 18. sílabas: ma, pa, so…
+  { lista: SETS.p3, tol: [0.72, 0.85], punto: true, orden: true },                 // 19. palabras de 3 letras
+  { lista: SETS.p4, tol: [0.74, 0.86], orden: true },                              // 20. palabras de 4 letras
+  { lista: SETS.p5, tol: [0.76, 0.88], orden: true },                              // 21. palabras largas
 ];
 const TOL_MANUAL = [0.72, 0.85];
 const esc = escalera("trazos", { escalones: ESCALONES.length, inicio: edad => edad === null || edad <= 5 ? 0 : edad === 6 ? 2 : 4 });
@@ -130,6 +214,8 @@ let nivel = "auto", idx = 0, item = null, trazos = [], actual = null, listo = fa
 let tol = TOL_MANUAL, conPunto = false, mostroCamino = false, ronda = 0, pelicula = 0;
 let pideOrden = false, avisoOrden = false;
 let geo = null;           // la letra en la pizarra: sus trazos, el renglón y los puntitos de inicio
+// Una ronda puede ser una letra o una palabra (o el nombre): se traza letra por letra
+let letras = [], li = 0, hechas = [], fallosMax = 0, ayudaRonda = false, rondaLista = false, turno = 0, nombre = "";
 const stars = estrellas("trazos-stars");
 
 const guia = $("guia"), tinta = $("tinta");
@@ -145,7 +231,7 @@ function medir(ch) {
   const k = Math.min((S * 0.62) / h, (S * 0.72) / w);
   const ox = S / 2 - ((c.x0 + c.x1) / 2) * k, oy = S / 2 + 18 - ((c.y0 + c.y1) / 2) * k;
   const ts = trazosDe(ch).map(t => t.map(([x, y]) => [ox + x * k, oy + y * k]));
-  return { trazos: ts, inicio: ts[0][0], renglon: oy + RENGLON * k, marcas: marcasDe(ts) };
+  return { trazos: ts, inicio: ts[0][0], renglon: oy + RENGLON * k, marcas: marcasDe(ts), ox, oy, k };
 }
 
 const largoDe = t => t.reduce((s, p, i) => (i ? s + Math.hypot(p[0] - t[i - 1][0], p[1] - t[i - 1][1]) : 0), 0);
@@ -168,16 +254,17 @@ function marcasDe(ts) {
   return marcas;
 }
 
-/** Pinta los trazos de la letra con un grosor (un trazo de un solo punto es un puntito redondo). */
-function trazarLetra(ctx, ancho, radioPunto) {
+/** Pinta trazos con un grosor (un trazo de un solo punto es un puntito redondo). */
+function pintarTrazos(ctx, ts, ancho, radioPunto) {
   ctx.lineWidth = ancho; ctx.lineCap = "round"; ctx.lineJoin = "round";
-  geo.trazos.forEach(t => {
+  ts.forEach(t => {
     ctx.beginPath();
     if (t.length === 1) { ctx.arc(t[0][0], t[0][1], radioPunto, 0, Math.PI * 2); ctx.fill(); return; }
     t.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
     ctx.stroke();
   });
 }
+const trazarLetra = (ctx, ancho, radioPunto) => pintarTrazos(ctx, geo.trazos, ancho, radioPunto);
 
 // Los puntitos se ven mientras el escalón los trae, después del dedito y después de avisarle por dónde se empieza
 const conMarcas = () => conPunto || mostroCamino || avisoOrden;
@@ -234,6 +321,36 @@ function pintarTinta() {
   });
 }
 
+/**
+ * 🔤 La palabra (o el nombre) que se va armando, arriba de la pizarra: las letras ya trazadas
+ * quedan chiquitas con la tinta del niño, la que toca se marca en amarillo y las que faltan, en gris.
+ */
+function pintarPalabra() {
+  const zona = $("palabra");
+  zona.hidden = letras.length < 2;
+  if (zona.hidden) return;
+  const ALTO = 56, K = ALTO / 1.04, dpr = window.devicePixelRatio || 1;
+  const grupos = [];
+  letras.forEach((ch, n) => {
+    if (ch === " " || !grupos.length) { const g = document.createElement("span"); g.className = "grupo"; grupos.push(g); }
+    if (ch !== " ") grupos[grupos.length - 1].append(letraChiquita(ch, n));
+  });
+  zona.replaceChildren(...grupos);
+  function letraChiquita(ch, n) {
+    const b = caja(ch), ancho = Math.max(0.22, b.x1 - b.x0) + 0.14;
+    const c = document.createElement("canvas");
+    c.width = Math.round(ancho * K * dpr); c.height = Math.round(ALTO * dpr);
+    c.style.width = `${ancho * K}px`; c.style.height = `${ALTO}px`;
+    if (n === li && !rondaLista) c.className = "actual";
+    const x = c.getContext("2d");
+    x.scale(K * dpr, K * dpr);
+    x.translate(ancho / 2 - (b.x0 + b.x1) / 2, 0.02);
+    if (hechas[n]) { x.strokeStyle = x.fillStyle = COLOR_TINTA; pintarTrazos(x, hechas[n], 0.075, 0.04); }
+    else { x.strokeStyle = x.fillStyle = n === li ? "#8FA7BF" : "#C9D6E3"; pintarTrazos(x, trazosDe(ch), 0.06, 0.035); }
+    return c;
+  }
+}
+
 // ---------- Evaluación ----------
 function mascara(dibujar) {
   const n = Math.round(S * Q);
@@ -246,10 +363,25 @@ function mascara(dibujar) {
   return { m, n };
 }
 
+// Cada trazo tiene que quedar cubierto al menos en esta parte (si no, la «a» valía sin el palito y la «t» sin la cruz).
+// Se mira la parte de cada trazo que la tinta de los otros no alcanza a tapar: el palito de la «a» pega con la bolita,
+// así que lo que cuenta son sus puntas.
+const POR_TRAZO = 0.5;
+function propiosDe(ts) {
+  return ts.map((t, k) => {
+    const propio = mascara(x => pintarTrazos(x, [t], G * 0.5, G * 0.3)).m;
+    if (ts.length < 2) return propio;
+    const otros = mascara(x => pintarTrazos(x, ts.filter((_, j) => j !== k), G * 1.8, G * 0.9)).m;
+    const solo = propio.map((v, i) => (v && !otros[i] ? 1 : 0));
+    return solo.reduce((a, b) => a + b, 0) >= 4 ? solo : propio;
+  });
+}
+
 function evaluar(ts = trazos) {
   // centro: el medio de cada trazo, lo que hay que cubrir · margen: hasta dónde se vale salirse
   geo.centro ||= mascara(x => trazarLetra(x, G * 0.5, G * 0.3));
   geo.margen ||= mascara(x => trazarLetra(x, G * 2.4, G * 1.2));
+  geo.porTrazo ||= propiosDe(geo.trazos);
   const tintaM = mascara(x => {
     x.lineWidth = G * 1.3; x.lineCap = "round"; x.lineJoin = "round";
     ts.forEach(t => { x.beginPath(); t.forEach(([a, b], i) => i ? x.lineTo(a, b) : x.moveTo(a, b)); if (t.length === 1) x.lineTo(t[0][0] + .1, t[0][1]); x.stroke(); });
@@ -266,12 +398,21 @@ function evaluar(ts = trazos) {
     const i = Math.min(n - 1, Math.max(0, Math.floor(b * Q))) * n + Math.min(n - 1, Math.max(0, Math.floor(a * Q)));
     if (geo.margen.m[i]) dentro++;
   }));
-  return { cobertura: total ? cubiertos / total : 0, precision: puntos ? dentro / puntos : 0, faltantes };
+  // el trazo menos cubierto
+  const minTrazo = Math.min(...geo.porTrazo.map(m => {
+    let t = 0, c = 0;
+    for (let i = 0; i < n * n; i++) if (m[i]) { t++; if (tintaM.m[i]) c++; }
+    return t ? c / t : 1;
+  }));
+  return { cobertura: total ? cubiertos / total : 0, precision: puntos ? dentro / puntos : 0, minTrazo, faltantes };
 }
 
 // ---------- 👆 El camino de la letra ----------
 /** Todos los puntos de la letra en el orden en que se trazan. */
 const caminoDeLetra = () => (geo ? geo.trazos.flat() : []);
+
+// En una letra sola se dice como en el escalón («la a», «el uno»); en una palabra, el nombre de la letra
+const dLetra = () => (letras.length > 1 || item?.esNombre ? decirLetra(letras[li]) : item.d);
 
 // «en el 2», «en el 2 y en el 3», «en el 2, en el 3 y en el 4»
 function losDemas(n) {
@@ -291,7 +432,7 @@ function mostrarCamino() {
   feedback("", "👆", "Mirá el dedito");
   decir(ts.length > 1
     ? `Mirá el dedito: empezá en el puntito 1. Después levantá el dedo y seguí ${losDemas(ts.length)}.`
-    : `Mirá el dedito: empezá en el puntito verde y seguí ${item.d}.`);
+    : `Mirá el dedito: empezá en el puntito verde y seguí ${dLetra()}.`);
   const partes = [];
   ts.forEach((t, k) => {
     if (k) partes.push({ salto: [ts[k - 1][ts[k - 1].length - 1], t[0]], dura: 550 }); // el dedo va por el aire
@@ -364,12 +505,12 @@ tinta.addEventListener("pointercancel", soltar);
 
 /** Si el dibujo ya quedó bien, celebra. Devuelve false si todavía no. */
 function siQuedoBien(r) {
-  if (r.cobertura < tol[0] || r.precision < tol[1]) return false;
-  if (empezoEnOtroLado()) avisarOrden(); else ganar();
+  if (r.cobertura < tol[0] || r.precision < tol[1] || r.minTrazo < POR_TRAZO) return false;
+  if (empezoEnOtroLado()) avisarOrden(); else ganarLetra();
   return true;
 }
 
-// En los escalones altos se pide empezar en el puntito 1. Se avisa una sola vez por ronda
+// En los escalones altos se pide empezar en el puntito 1. Se avisa una sola vez por letra
 // y la vez siguiente vale como sea: es para ir haciendo el hábito, no para trabarlo.
 function empezoEnOtroLado() {
   if (!pideOrden || avisoOrden || !trazos.length) return false;
@@ -381,29 +522,45 @@ function avisarOrden() {
   avisoOrden = true; fallos++;
   pintarGuia(null, true);
   feedback("almost", "🤏", "¡Casi!");
-  decir(`¡Casi! Te quedó bonita, pero ${item.d} se empieza en el puntito verde. Hacela otra vez desde ahí.`);
+  decir(`¡Casi! Te quedó bonita, pero ${dLetra()} se empieza en el puntito verde. Hacela otra vez desde ahí.`);
   // Se borra lo que hizo para que la vuelva a hacer (si no empezó ya otra)
   const esta = ronda, cuantos = trazos.length;
   setTimeout(() => { if (esta === ronda && !listo && !actual && trazos.length === cuantos) { trazos = []; pintarTinta(); } }, 1800);
 }
 
-function ganar() {
+/** Terminó una letra: si es una palabra, se guarda chiquita y sigue la otra; si no, ganó la ronda. */
+function ganarLetra() {
   listo = true;
   ayuda.parar();
   $("dedo").hidden = true;
   pintarGuia(null, false);
+  fallosMax = Math.max(fallosMax, fallos);
+  ayudaRonda ||= ayuda.usada || mostroCamino;
+  // La tinta se guarda en las coordenadas de la letra (0 a 1), para dibujarla chiquita en la palabra
+  hechas[li] = trazos.map(t => t.map(([x, y]) => [(x - geo.ox) / geo.k, (y - geo.oy) / geo.k]));
+  let sig = li + 1;
+  while (letras[sig] === " ") sig++;
+  if (sig >= letras.length) { ganarRonda(); return; }
+  pintarPalabra();
+  feedback("ok", "👍", "¡Bien!");
+  const t = turno;
+  setTimeout(() => { if (t === turno) { li = sig; empezarLetra(); } }, 900);
+}
+
+function ganarRonda() {
+  rondaLista = true;
+  pintarPalabra();
   $("pizarra").classList.remove("gano"); void $("pizarra").offsetWidth; $("pizarra").classList.add("gano");
-  const frase = `¡Trazaste ${item.d}!`;
-  const conAyuda = ayuda.usada || mostroCamino;
-  if (fallos === 0 && !conAyuda) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
+  const frase = item.esNombre ? `¡Escribiste tu nombre: ${nombre}!` : letras.length > 1 ? `¡Escribiste ${item.palabra}!` : `¡Trazaste ${item.d}!`;
+  if (fallosMax === 0 && !ayudaRonda) { const bien = elogio(); stars.sumar(); feedback("ok", "🎉", bien); decir(`${bien} ${frase}`); }
   else { feedback("almost", "🤏", "¡Ahora sí!"); decir(`¡Ahora sí! ${frase}`); }
-  esc.resultado({ fallos, ayuda: conAyuda });
+  esc.resultado({ fallos: fallosMax, ayuda: ayudaRonda });
   $("nextBtn").classList.add("pulse");
 }
 
 $("listoBtn").addEventListener("click", () => {
   if (listo) return;
-  if (!trazos.length) { decir(`Pasá el dedo por encima de ${item.d}.`); return; }
+  if (!trazos.length) { decir(`Pasá el dedo por encima de ${dLetra()}.`); return; }
   const r = evaluar();
   if (siQuedoBien(r)) return;
   fallos++;
@@ -428,10 +585,64 @@ $("borrarBtn").addEventListener("click", () => {
   trazos = []; pintarTinta(); pintarGuia(null); feedback("");
 });
 
+// ---------- ✍️ Mi nombre ----------
+// Sale del perfil, o lo escribe el papá. Se guarda solo en este dispositivo, por perfil.
+const claveNombre = () => `alt-trazos-nombre-${perfilActivo()?.id || "sin-perfil"}`;
+function leerNombre() {
+  let n = "";
+  try { n = localStorage.getItem(claveNombre()) || ""; } catch (_) {}
+  return (n || perfilActivo()?.nombre || "").trim().slice(0, 20);
+}
+/** Las letras que se pueden trazar (con espacios entre palabras) y lo que se salta. */
+function partirNombre(n) {
+  const ls = [], omitidas = [];
+  for (const c of Array.from(String(n).normalize("NFC"))) {
+    // Una letra con una marca que no tenemos (è, ö, ç…) se traza sin la marca
+    const ch = tieneTrazos(c) ? c : c.normalize("NFD")[0];
+    if (/\s/.test(c) || c === "-") { if (ls.length && ls[ls.length - 1] !== " ") ls.push(" "); } // Ana-Sofía: un huequito
+    else if (/\p{L}/u.test(c) && tieneTrazos(ch)) ls.push(ch);
+    else if (!omitidas.includes(c)) omitidas.push(c);
+  }
+  while (ls[ls.length - 1] === " ") ls.pop();
+  return { letras: ls, omitidas };
+}
+
+function pedirNombre() {
+  turno++; ronda++;
+  listo = true; letras = []; geo = null; item = null;
+  ayuda.parar();
+  $("dedo").hidden = true;
+  gctx.clearRect(0, 0, S, S); tctx.clearRect(0, 0, S, S);
+  $("palabra").hidden = true;
+  $("ayuda").replaceChildren();
+  $("nombreForm").hidden = false; $("cambiarNombre").hidden = true;
+  $("nombreIn").value = leerNombre();
+  feedback("");
+  instruccion("✍️ ¿Cómo se llama? Un adulto lo escribe abajo.", "Pedile a un adulto que escriba tu nombre abajo, y después lo trazás vos.");
+  $("nombreIn").focus();
+}
+
+$("nombreForm").addEventListener("submit", e => {
+  e.preventDefault();
+  const n = $("nombreIn").value.trim().slice(0, 20);
+  if (!partirNombre(n).letras.length) { feedback("almost", "✍️", "Escribí un nombre con letras"); $("nombreIn").focus(); return; }
+  try { localStorage.setItem(claveNombre(), n); } catch (_) {}
+  nuevo();
+});
+$("cambiarNombre").addEventListener("click", pedirNombre);
+
 // ---------- Rondas ----------
 function nuevo() {
-  ronda++;
-  if (nivel === "auto") {
+  turno++;
+  if (nivel === "nombre") {
+    nombre = leerNombre();
+    const p = partirNombre(nombre);
+    if (!p.letras.length) { pedirNombre(); return; }
+    $("nombreForm").hidden = true; $("cambiarNombre").hidden = false;
+    nombre = p.letras.join(""); // lo que se traza (sin lo que se salta)
+    item = { esNombre: true, letras: p.letras, palabra: nombre, omitidas: p.omitidas };
+    tol = TOL_MANUAL; conPunto = true; pideOrden = false;
+  } else if (nivel === "auto") {
     // Escalera: una al azar del escalón (sin repetir la de antes)
     const e = ESCALONES[esc.nivel], antes = item;
     tol = e.tol; conPunto = !!e.punto; pideOrden = !!e.orden;
@@ -441,32 +652,69 @@ function nuevo() {
     tol = TOL_MANUAL; conPunto = false; pideOrden = false;
     item = lista[idx % lista.length]; idx++;
   }
-  geo = medir(item.ch);
-  trazos = []; actual = null; listo = false; fallos = 0; mostroCamino = false; avisoOrden = false;
-  $("dedo").hidden = true;
-  pintarGuia(); pintarTinta();
+  letras = item.letras; li = 0; hechas = []; fallosMax = 0; ayudaRonda = false; rondaLista = false;
+  pintarAyuda();
   feedback("");
   $("nextBtn").classList.remove("pulse");
-  if (item.e) {
-    $("ayuda").innerHTML = `${item.e}<small>${item.pal}</small>`;
-    instruccion(`Trazá <b>${item.ch}</b>`, `Trazá ${item.d}, de ${item.pal}.`);
+  empezarLetra();
+}
+
+// El dibujito de la esquina: el ejemplo, las manzanas del número o el avatar con el nombre
+function pintarAyuda() {
+  const caja = $("ayuda"), dibujo = document.createElement("span"), texto = document.createElement("small");
+  if (item.esNombre) { dibujo.textContent = perfilActivo()?.avatar || "✍️"; texto.textContent = nombre; }
+  else if (item.e) { dibujo.textContent = item.e; texto.textContent = item.pal; }
+  else if (item.n) { texto.textContent = "🍎".repeat(item.n); texto.style.cssText = "font-size:1.4rem;letter-spacing:-2px"; }
+  caja.replaceChildren(dibujo, texto);
+}
+
+function empezarLetra() {
+  ronda++;
+  const ch = letras[li];
+  geo = medir(ch);
+  trazos = []; actual = null; listo = false; fallos = 0; mostroCamino = false; avisoOrden = false;
+  $("dedo").hidden = true;
+  pintarGuia(); pintarTinta(); pintarPalabra();
+  const primera = li === 0, d = dLetra();
+  if (item.esNombre) {
+    const salta = primera && item.omitidas.length ? ` Nos saltamos «${item.omitidas.join(" ")}»: aquí solo trazamos letras.` : "";
+    instruccion(`Trazá tu nombre: <b>${escapar(nombre)}</b>`, primera ? `Vamos a escribir tu nombre: ${nombre}.${salta} Empezá por ${d}.` : `Ahora ${d}.`);
+    if (salta) feedback("", "💡", escapar(salta.trim()));
+  } else if (letras.length > 1) {
+    const cual = item.pal !== item.palabra ? `${item.palabra}, de ${item.pal}` : item.palabra;
+    instruccion(`Trazá <b>${escapar(item.palabra)}</b>`, primera ? `Vamos a escribir ${cual}. Empezá por ${d}.` : `Ahora ${d}.`);
+  } else if (item.e) {
+    instruccion(`Trazá <b>${escapar(ch)}</b>`, `Trazá ${d}, de ${item.pal}.`);
   } else {
-    $("ayuda").innerHTML = item.n ? `<small style="font-size:1.4rem;letter-spacing:-2px">${"🍎".repeat(item.n)}</small>` : "";
-    instruccion(`Trazá <b>${item.ch}</b>`, `Trazá ${item.d}.`);
+    instruccion(`Trazá <b>${escapar(ch)}</b>`, `Trazá ${d}.`);
   }
   ayuda.empezar();
 }
 
 $("nextBtn").addEventListener("click", () => {
   // Pasar a otra después de que no le salió cuenta como ronda difícil (si no, saltar evitaría bajar)
-  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  if (item && !rondaLista && (fallos > 0 || fallosMax > 0)) esc.resultado({ fallos: 2 });
   nuevo();
 });
-niveles(v => { nivel = v; esc.activa = v === "auto"; idx = 0; nuevo(); });
+niveles(v => {
+  nivel = v; esc.activa = v === "auto"; idx = 0;
+  $("nombreZona").hidden = v !== "nombre";
+  nuevo();
+});
 
 alEmpezar(nuevo);
 
-if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, caminoDeLetra, get geo() { return geo; }, get trazos() { return geo?.trazos; }, get item() { return item; }, get tol() { return tol; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; }, get listo() { return listo; }, S, Q };
+if (new URLSearchParams(location.search).has("prueba")) window.__trazos = { evaluar, caminoDeLetra, decirLetra, partirNombre, ESCALONES, SETS,
+  get geo() { return geo; }, get trazos() { return geo?.trazos; }, get item() { return item; }, get tol() { return tol; }, get nivel() { return esc.nivel; },
+  get fallos() { return fallos; }, get listo() { return listo; }, get letras() { return letras; }, get li() { return li; }, get rondaLista() { return rondaLista; },
+  get hechas() { return hechas; }, S, Q,
+  // Para las pruebas: cómo evalúa una letra trazada completa y quitándole cada trazo
+  probarLetra(ch) {
+    const antes = geo; geo = medir(ch);
+    const r = { completa: evaluar(geo.trazos), sinUno: geo.trazos.length > 1 ? geo.trazos.map((_, k) => evaluar(geo.trazos.filter((_, j) => j !== k))) : [] };
+    geo = antes;
+    return r;
+  } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

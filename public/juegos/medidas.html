@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Medidas en la feria</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .levels button { font-size: .95rem; padding: 3px 10px; }
+  .levels button.auto { font-size: 1.2rem; }
+  .instr .txt { font-size: clamp(1rem, 4.4vw, 1.25rem); }
+  .tarjeta { font-size: clamp(1.05rem, 4.6vw, 1.3rem); }
+  .tarjeta b { color: var(--materia); }
+  .tarjeta .big { font-size: 1.9rem; vertical-align: middle; }
+
+  /* Dibujos */
+  .dibujo { display: flex; justify-content: center; margin: 10px 0 2px; }
+  .dibujo svg { display: block; height: auto; }
+  svg.regla { width: 100%; max-width: 460px; }
+  svg.balanza { width: min(78vw, 300px); }
+  svg.termometro { width: 110px; }
+  .opciones button svg.lapices { width: 100%; height: 30px; display: block; }
+  .opciones button svg.vaso { width: 62px; height: 82px; display: block; margin: 0 auto; }
+  .opciones button .emo-op { font-size: 2.6rem; line-height: 1.1; }
+  .opciones button small { font-weight: 700; opacity: .8; }
+
+  .pistita { margin-top: 10px; background: #EAF3FF; color: var(--ink); border: 3px dashed var(--materia); border-radius: 14px; padding: 8px 12px; font-weight: 700; }
+  .explica b { color: inherit; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">📏⚖️🧃</div>
+  <h1>Medidas en la feria</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Largo, peso, capacidad, tiempo y temperatura: comparar, medir con la regla, estimar, convertir y resolver problemas. Sube de nivel de a poquito. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="levels" id="niveles" role="group" aria-label="Qué practicar"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tarjeta ancho" id="tarjeta" aria-live="polite"></div>
+<div class="ancho" id="zona"></div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="pistita ancho" id="pistita" hidden aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otra pregunta">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido, LENTO } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, GRUPOS, inicioPorEdad, pregunta, paraVoz, sinEtiquetas, leer, bienEscrito, num } from "../js/medidas.js";
+
+const $ = id => document.getElementById(id);
+const esc = escalera("medidas", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("medidas-stars");
+
+let grupo = null;           // null = 🪜 automático; si no, el grupo que escogió el papá o la maestra
+let p = null, fallos = 0, listo = false, ultimo = "", ultimoMal = null, ronda = 0;
+
+// 🤝 Si se queda pegado: se repite la pregunta y después se ayuda (señalar la respuesta o dar la pista)
+const ayuda = ayudaSiSeQueda({
+  repetir: () => leerPregunta(),
+  senalar: () => { if (p.tipo === "opciones") senalar(botonCorrecto()); else darPista(); },
+});
+const botonCorrecto = () => $("zona").querySelector(`[data-id="${p.correcta}"]`);
+
+// ---------- Botones de arriba ----------
+$("niveles").innerHTML = `<button class="auto" data-g="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>`
+  + GRUPOS.map(g => `<button data-g="${g.id}" aria-pressed="false">${g.nombre}</button>`).join("");
+$("niveles").addEventListener("click", e => {
+  const b = e.target.closest("[data-g]");
+  if (!b) return;
+  $("niveles").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  grupo = b.dataset.g === "auto" ? null : GRUPOS.find(g => g.id === b.dataset.g);
+  esc.activa = !grupo;
+  sonido("tap"); nueva();
+});
+
+// ---------- Preguntas ----------
+function escalonActual() {
+  if (!grupo) return esc.nivel;
+  return grupo.escalones[Math.floor(Math.random() * grupo.escalones.length)];
+}
+const vozDe = q => q.voz || paraVoz(q.html);
+
+function nueva() {
+  let i, intentos = 0;
+  do { i = escalonActual(); p = pregunta(i); } while (p.html === ultimo && ++intentos < 10);
+  ultimo = p.html;
+  fallos = 0; listo = false; ultimoMal = null; ronda++;
+  feedback(""); $("pistita").hidden = true; $("explica").hidden = true;
+  $("nextBtn").classList.remove("pulse");
+  $("tarjeta").innerHTML = p.html + (p.dibujo ? `<div class="dibujo">${p.dibujo}</div>` : "");
+  pintarZona();
+  instruccion(`<b>${grupo ? grupo.nombre : "🪜"}</b> · ${ESCALONES[i].nombre} <small>(${ESCALONES[i].grado})</small>`, vozDe(p));
+  ayuda.empezar();
+}
+const leerPregunta = (lento = false) => p && decir(vozDe(p), lento ? { rate: LENTO } : undefined);
+
+function pintarZona() {
+  const z = $("zona");
+  if (p.tipo === "opciones") {
+    z.innerHTML = `<div class="opciones" style="grid-template-columns:repeat(${p.cols || Math.min(p.opciones.length, 3)}, 1fr)">${
+      p.opciones.map(o => `<button data-id="${o.id}"${o.aria ? ` aria-label="${o.aria}"` : ""}>${o.html}</button>`).join("")}</div>`;
+  } else {
+    z.innerHTML = `<div class="opciones"><form class="escribir" novalidate>
+      <input id="respuesta" autocomplete="off" aria-label="Tu respuesta" inputmode="decimal">
+      ${p.sufijo ? `<span class="sufijo">${p.sufijo}</span>` : ""}<button type="submit" aria-label="Revisar">✔️</button></form></div>`;
+    setTimeout(() => $("respuesta")?.focus({ preventScroll: true }), 50);
+  }
+}
+
+// ---------- Opciones ----------
+$("zona").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!p || listo || !b || b.disabled || p.tipo !== "opciones") return;
+  if (b.dataset.id === p.correcta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    $("zona").querySelectorAll("[data-id]").forEach(x => { x.disabled = true; });
+    return terminar(true);
+  }
+  b.classList.add("wrong", "nope"); b.disabled = true; // ya no se puede tocar otra vez: el mismo error cuenta una sola vez
+  error(null, () => senalar(botonCorrecto()), true);
+});
+
+// ---------- Escribir ----------
+$("zona").addEventListener("submit", e => {
+  e.preventDefault();
+  const campo = $("respuesta");
+  if (!p || listo || !campo || !campo.value.trim()) return;
+  if (bienEscrito(p, campo.value)) { campo.classList.add("right"); campo.disabled = true; return terminar(true); }
+  const v = leer(campo.value);
+  if (Number.isNaN(v)) { decir("Escribí solo el número. Para los decimales usá la coma, por ejemplo 2,5."); return; }
+  // El mismo número otra vez no cuenta como otro error: se repite la pista
+  if (ultimoMal !== null && Math.abs(v - ultimoMal) < 1e-9) { darPista(); campo.select(); return; }
+  ultimoMal = v;
+  campo.classList.add("wrong");
+  const r = ronda;
+  error(p.casi?.(v), () => {
+    listo = true; campo.disabled = true;
+    campo.closest("form").insertAdjacentHTML("beforeend", `<span class="era">✔️ ${num(p.respuesta)}${p.sufijo ? " " + p.sufijo : ""}</span>`);
+  });
+  setTimeout(() => { if (r === ronda && !listo) { campo.classList.remove("wrong"); campo.select(); } }, 900);
+});
+
+// ---------- Errores, pistas y aciertos ----------
+function darPista() {
+  $("pistita").hidden = false;
+  $("pistita").textContent = `💡 ${sinEtiquetas(p.pista)}`;
+  decir(paraVoz(p.pista));
+}
+
+/**
+ * Un error: el primero da una pista y deja probar otra vez; el segundo muestra la respuesta.
+ * @param {string|null} casi   mensaje si estuvo cerca
+ * @param {Function} mostrar   enseña la respuesta (o la señala)
+ * @param {boolean} seguir     opciones: después de señalar, el niño todavía la toca
+ */
+function error(casi, mostrar, seguir = false) {
+  fallos++;
+  if (fallos === 1) {
+    feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "No es");
+    $("pistita").hidden = false;
+    $("pistita").textContent = `💡 ${casi ? casi + " " : ""}${sinEtiquetas(p.pista)}`;
+    decir(paraVoz(`${casi || "No es."} ${p.pista} Probá otra vez.`));
+    return;
+  }
+  mostrar();
+  if (seguir) {
+    feedback("almost", "👆", "Es este");
+    decir("Mirá, es este. Tocalo.");
+    return;
+  }
+  terminar(false);
+}
+
+function terminar(bien) {
+  listo = true;
+  ayuda.parar();
+  const limpio = bien && fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); }
+  else if (bien) feedback("almost", "🤏", "¡Ahora sí!");
+  else feedback("bad", "💡", "Así se hace");
+  $("pistita").hidden = true;
+  $("explica").hidden = false;
+  $("explica").innerHTML = p.explica;
+  decir(`${limpio ? elogio() + " " : bien ? "¡Ahora sí! " : ""}${paraVoz(p.explica)}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: p.tipo === "opciones" ? p.opciones.length : 0 });
+  $("nextBtn").classList.add("pulse");
+}
+
+$("nextBtn").addEventListener("click", () => {
+  sonido("tap");
+  ayuda.parar();
+  // Pasar a otra después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar)
+  if (p && !listo && fallos > 0) esc.resultado({ fallos: 2 });
+  nueva();
+});
+alEmpezar(nueva, lento => leerPregunta(lento));
+
+if (new URLSearchParams(location.search).has("prueba")) window.__medidas = {
+  get p() { return p; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; }, get listo() { return listo; },
+};
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

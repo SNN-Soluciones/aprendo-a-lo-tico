@@ -249,3 +249,76 @@ body.con-perfil .hero h1 { font-size: clamp(2rem, 9vw, 3.2rem); }
 .sug-materia:first-child { margin-top: 0; }
 .con-ayuda { margin-top: 14px; }
 .con-ayuda summary { cursor: pointer; font-weight: 800; font-size: 1.1rem; color: var(--page-ink); padding: 6px 0 10px; }
+
+/* ---------- 🏆 Álbum de stickers (js/album.js) ---------- */
+.album-btn {
+  display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 10px; padding: 8px 14px; cursor: pointer;
+  font: inherit; color: var(--ink); text-align: left; border: 4px solid var(--rim); border-radius: 22px; box-shadow: 0 5px 0 var(--rim);
+  background: linear-gradient(135deg, #FFF3C4, #FFD86B);
+}
+.album-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--rim); }
+.album-trofeo { font-size: 2.4rem; line-height: 1; }
+.album-txt { display: flex; flex-direction: column; line-height: 1.1; }
+.album-txt b { font-size: 1.25rem; }
+.album-txt small { font-weight: 800; font-size: .9rem; color: #8A5A00; }
+.album-ultimos { margin-left: auto; display: flex; gap: 4px; }
+.album-ultimos .stk-emoji { font-size: 1.9rem; line-height: 1; }
+.album-ultimos .stk-svg svg { width: 2.1rem; height: 2.1rem; display: block; }
+
+.album {
+  width: min(96vw, 720px); max-height: 92vh; padding: 0; overflow-y: auto; color: var(--ink);
+  background: var(--face); border: 4px solid var(--rim); border-radius: 24px; box-shadow: 0 6px 0 var(--rim);
+}
+.album::backdrop { background: rgba(15, 30, 45, .55); }
+.album-dentro { padding: 0 14px 18px; }
+.album-cab {
+  position: sticky; top: 0; z-index: 2; display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  padding: 12px 0 6px; background: var(--face);
+}
+.album-cab h2 { margin: 0; font-size: 1.45rem; line-height: 1.1; overflow-wrap: anywhere; }
+.album-cuenta { margin: 0 0 8px; font-weight: 800; color: #8A5A00; }
+.album-ficha {
+  display: flex; align-items: center; gap: 12px; min-height: 84px; padding: 8px 12px; font-weight: 700; line-height: 1.3;
+  background: #FFF6D6; border: 3px solid var(--rim); border-radius: 18px;
+}
+.album-ficha .stk-emoji { font-size: 3.4rem; line-height: 1; }
+.album-ficha .stk-svg svg { width: 4rem; height: 4rem; display: block; }
+.album-ficha b { font-size: 1.2rem; }
+.album h3 { margin: 16px 0 6px; font-size: 1.15rem; }
+.album-grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(82px, 1fr)); }
+.stk {
+  position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 96px;
+  padding: 6px 4px 4px; font: inherit; color: var(--ink); cursor: pointer;
+  background: #FFFFFF; border: 3px solid var(--rim); border-radius: 18px; box-shadow: 0 3px 0 var(--rim);
+}
+.stk:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--rim); }
+.stk .stk-emoji { font-size: 2.6rem; line-height: 1.1; }
+.stk .stk-svg svg { width: 3.1rem; height: 3.1rem; display: block; }
+.stk-nombre { font-size: .8rem; font-weight: 800; line-height: 1.05; text-align: center; }
+.stk.falta { background: #EEF3F8; border-style: dashed; box-shadow: none; }
+.stk.falta .stk-emoji, .stk.falta .stk-svg { filter: brightness(0); opacity: .13; }
+.stk-q { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 800; color: var(--soft); }
+.stk.nuevo { background: #FFF3C4; }
+.stk.nuevo::after {
+  content: "✨ nuevo"; position: absolute; top: -10px; right: -6px; padding: 0 6px; font-size: .75rem; font-weight: 800;
+  background: var(--btn); border: 2px solid var(--rim); border-radius: 999px;
+}
+
+/* 👨‍👩‍👧 Modo papá: mover a mano el escalón de cada juego */
+.progreso p { margin: 8px 0; }
+.papa-pregunta { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px; margin: 8px 0 10px; font-weight: 700; }
+.papa-pregunta label { display: flex; flex-direction: column; gap: 4px; }
+.papa-pregunta .nombre { margin: 0; width: 7rem; }
+.papa-botones { display: flex; gap: 8px; }
+.papa-pregunta .editor-falta { flex-basis: 100%; margin: 0; }
+.papa-cab { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.papa-lista { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 8px; }
+.papa-lista li { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 10px; font-weight: 700; }
+.papa-lista .pj { min-width: 0; flex: 1 1 12rem; }
+.papa-ctrl { display: flex; align-items: center; gap: 6px; }
+.papa-ctrl .mini { min-width: 38px; min-height: 34px; font-size: 1.05rem; }
+.papa-ctrl .mini:disabled { opacity: .35; cursor: default; box-shadow: none; }
+.papa-n { min-width: 6.2rem; text-align: center; font-weight: 800; white-space: nowrap; }
+.papa-nota { flex-basis: 100%; font-weight: 600; opacity: .7; }
+.papa-otros summary { cursor: pointer; font-weight: 800; padding: 4px 0; }
+

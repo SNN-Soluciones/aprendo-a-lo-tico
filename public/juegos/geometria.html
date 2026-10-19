@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Geometría: figuras, ángulos y cuerpos</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; }
+  .ancho { width: min(96vw, 540px); }
+  /* Modos en una sola fila que se desliza con el dedo */
+  .top .modos { display: flex; gap: 6px; flex-basis: 100%; overflow-x: auto; padding: 2px 2px 8px; scrollbar-width: none; }
+  .top .modos::-webkit-scrollbar { display: none; }
+  .modos button { flex: none; padding: 2px 9px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .modos button[aria-pressed="true"] { background: var(--btn); }
+  .instr .titulo { font-size: clamp(1.05rem, 4.6vw, 1.3rem); color: var(--materia); }
+
+  .tarjeta { margin-top: 10px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 10px 12px; box-shadow: 0 5px 0 var(--rim); }
+  .preg { margin: 0 0 6px; font-size: clamp(1.1rem, 4.8vw, 1.3rem); font-weight: 800; line-height: 1.3; text-align: center; }
+  .preg small { display: block; font-size: .85rem; font-weight: 700; opacity: .75; }
+  .preg .big { font-size: 2.2rem; line-height: 1; vertical-align: middle; margin-right: 4px; }
+  .dib { display: block; width: 100%; max-height: 34vh; margin: 0 auto; overflow: visible; font-family: "Baloo 2", system-ui, sans-serif; }
+
+  .opciones { margin-top: 12px; display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 10px; }
+  .opciones button { font-size: 1.2rem; padding: 10px 4px; border-radius: 18px; line-height: 1.1; overflow-wrap: anywhere; }
+  .opciones.largas button { font-size: 1.05rem; }
+  .opciones button.item { padding: 4px; border-radius: 20px; background: var(--face); }
+  .opciones button.item .dib { max-height: none; }
+  .opciones.grandes { grid-template-columns: repeat(4, 1fr); }
+  .opciones.grandes button { grid-column: span 2; }
+  .opciones.grandes button:last-child:nth-child(odd) { grid-column: 2 / span 2; }
+  .escribiendo .dib { max-height: 28vh; }
+  .opciones button.wrong { background: #FFE3E0; }
+  .opciones button:disabled:not(.right) { opacity: .55; }
+
+  .respuesta { margin-top: 10px; text-align: center; }
+  .respuesta .caja { display: inline-flex; align-items: baseline; gap: 6px; min-width: 6em; justify-content: center; border: 4px solid var(--rim); background: var(--face); color: var(--ink); border-radius: 16px; padding: 0 14px; font-size: 1.8rem; font-weight: 800; }
+  .respuesta .caja .ph { opacity: .35; }
+  .respuesta .caja:focus { outline: none; }
+  .respuesta .caja small { font-size: 1.2rem; }
+  .respuesta .caja.ok { background: #CFF5DC; border-color: var(--ok); }
+  .respuesta .caja.mal { background: #FFE3E0; border-color: var(--bad); animation: nope .3s; }
+  .teclado { margin-top: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .teclado button { font-size: 1.45rem; padding: 0; height: 46px; border-radius: 14px; }
+  .teclado .ok { background: var(--btn); }
+
+  /* Simetría: la cuadrícula para pintar la otra mitad */
+  .grilla { position: relative; display: grid; grid-template-columns: repeat(var(--w), 1fr); gap: 0; width: min(100%, calc(var(--w) * 46px)); margin: 4px auto; border: 2px solid #CBD6E2; }
+  .grilla .c { aspect-ratio: 1; border: 1px solid #CBD6E2; background: #fff; padding: 0; border-radius: 0; box-shadow: none; min-width: 0; }
+  .grilla button.c { cursor: pointer; }
+  .grilla button.c:active { transform: none; box-shadow: none; }
+  .grilla button.c:focus-visible { outline: 4px solid #7CC4F2; outline-offset: -4px; z-index: 2; }
+  .grilla .dada, .grilla .pintada { background: #8FD16F; }
+  .grilla .fantasma { background-image: radial-gradient(circle, #5E9E45 18%, transparent 20%); background-size: 33% 33%; }
+  .grilla .sol { background: #CFF5DC; outline: 3px dashed var(--ok); outline-offset: -5px; }
+  .grilla .sobra { background: #FBD5D1; }
+  .grilla .linea { position: absolute; pointer-events: none; border: 0 dashed #E8574A; }
+  .grilla .linea.v { top: -10px; bottom: -10px; border-left-width: 4px; transform: translateX(-2px); }
+  .grilla .linea.h { left: -10px; right: -10px; border-top-width: 4px; transform: translateY(-2px); }
+
+  .acciones { display: flex; gap: 8px; margin-top: 10px; }
+  .acciones button { flex: 1; font-size: 1.2rem; padding: 6px 0; border-radius: 16px; }
+  #listoBtn { flex: 2; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 12px; font-weight: 700; line-height: 1.35; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🔺📐🧊</div>
+  <h1>Geometría</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Figuras, líneas, ángulos, simetría, triángulos, la circunferencia y los cuerpos sólidos. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Qué practicar"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div class="tarjeta ancho" id="tarjeta"><p class="preg" id="preg" aria-live="polite"></p><div id="dibujo"></div><div id="zonaGrilla" hidden></div></div>
+
+<div class="ancho" id="zonaOpciones" hidden><div class="opciones" id="opciones" role="group" aria-label="Respuestas"></div></div>
+<div class="ancho" id="zonaEscribir" hidden>
+  <div class="respuesta"><span class="caja" id="caja" aria-live="polite" tabindex="-1"></span></div>
+  <div class="teclado" id="teclado">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="borrar" aria-label="Borrar">⌫</button><button data-k="0">0</button><button data-k="ok" class="ok" aria-label="Revisar">✔️</button>
+  </div>
+</div>
+<div class="ancho" id="zonaPintar" hidden>
+  <div class="acciones"><button id="limpiarBtn">🧽 Borrar</button><button id="listoBtn">✔️ Listo</button></div>
+</div>
+
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { ESCALONES, ronda as generar, inicioPorEdad, marcado, htmlDe, aVoz, azar } from "../js/geometria.js";
+
+const $ = id => document.getElementById(id);
+
+// Modos a mano (para el papá o la maestra): cada ronda sale de uno de estos escalones
+const MODOS = [
+  { id: "figuras", nombre: "🔷 Figuras", esc: [0, 1, 2, 3] },
+  { id: "angulos", nombre: "📏 Rectas y ángulos", esc: [5, 6, 7, 14, 15] },
+  { id: "poligonos", nombre: "🔺 Triángulos y cuadriláteros", esc: [10, 11, 12] },
+  { id: "simetria", nombre: "🦋 Simetría", esc: [8, 9] },
+  { id: "circulo", nombre: "⭕ Circunferencia", esc: [13] },
+  { id: "cuerpos", nombre: "🧊 Cuerpos", esc: [4, 16] },
+];
+
+const esc = escalera("geometria", { escalones: ESCALONES.length, inicio: inicioPorEdad });
+const stars = estrellas("geometria-stars");
+let modo = "auto", nivel = 0, r = null, fallos = 0, listo = false, tecleado = "", pintadas = new Set(), ayudaDada = false, fantasma = false, vuelta = 0;
+
+const ayuda = ayudaSiSeQueda({
+  espera: 15000,
+  senalar: () => {
+    if (listo) return;
+    if (r.tipo === "pintar") { fantasma = true; pintarGrilla(); decir("Te ayudo: los cuadritos con puntitos son los que faltan."); return; }
+    if (r.tipo === "escribir") { mostrarExplica(r.pista); decir(aVoz(r.pista)); return; }
+    senalar($("opciones").querySelector(`[data-v="${r.respuesta}"]`));
+  },
+});
+
+const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+function mostrarExplica(t) { $("explica").hidden = false; $("explica").innerHTML = `💡 ${marcado(t)}`; }
+
+// ---------- Rondas ----------
+function nuevo() {
+  vuelta++;
+  nivel = modo === "auto" ? esc.nivel : azar(MODOS.find(m => m.id === modo).esc);
+  r = generar(nivel);
+  fallos = 0; listo = false; tecleado = ""; pintadas = new Set(); ayudaDada = false; fantasma = false;
+  $("preg").innerHTML = htmlDe(r.texto);
+  $("dibujo").innerHTML = r.svg || ""; $("dibujo").hidden = !r.svg;
+  $("zonaOpciones").hidden = !["opciones", "tocar"].includes(r.tipo);
+  $("zonaEscribir").hidden = r.tipo !== "escribir";
+  document.body.classList.toggle("escribiendo", r.tipo === "escribir");
+  $("zonaPintar").hidden = $("zonaGrilla").hidden = r.tipo !== "pintar";
+  const op = $("opciones");
+  if (r.tipo === "tocar") {
+    op.className = "opciones" + (r.grandes ? " grandes" : "");
+    op.style.setProperty("--cols", r.items.length === 4 ? 2 : r.items.length);
+    op.innerHTML = r.items.map((it, i) => `<button class="item" data-v="${it.v}" aria-label="Dibujo ${i + 1}">${it.svg}</button>`).join("");
+  } else if (r.tipo === "opciones") {
+    const largo = Math.max(...r.opciones.map(o => o.t.length));
+    op.className = "opciones" + (largo > 9 ? " largas" : "");
+    op.style.setProperty("--cols", largo > 12 ? 1 : r.opciones.length === 4 ? 2 : r.opciones.length);
+    op.innerHTML = r.opciones.map(o => `<button data-v="${o.v}">${escapar(o.t)}</button>`).join("");
+  }
+  if (r.tipo === "pintar") pintarGrilla();
+  pintarCaja();
+  feedback(""); $("explica").hidden = true;
+  $("nextBtn").classList.remove("pulse");
+  instruccion(`<span class="titulo">📐 ${ESCALONES[nivel].nombre}</span>`, r.voz);
+  // Con teclado: si quedó enfocado ➡️, Enter pasaría de ronda en vez de revisar el número
+  if (r.tipo === "escribir" && document.activeElement === $("nextBtn")) $("caja").focus({ preventScroll: true });
+  ayuda.empezar();
+}
+
+function pintarCaja(estado = "") {
+  if (r.tipo !== "escribir") return;
+  $("caja").className = "caja" + (estado ? " " + estado : "");
+  $("caja").innerHTML = `${tecleado || `<span class="ph">?</span>`}${r.sufijo ? (r.sufijo === "°" ? "°" : ` <small>${escapar(r.sufijo)}</small>`) : ""}`;
+}
+
+// ---------- Simetría: pintar la otra mitad ----------
+const k = ([x, y]) => `${x},${y}`;
+function pintarGrilla(final = false) {
+  const c = r.cuadricula, dadas = new Set(c.dados.map(k)), faltan = new Set(c.falta.map(k));
+  const otraMitad = (x, y) => (c.dir === "v" ? x >= c.pos : y >= c.pos);
+  let s = "";
+  for (let y = 0; y < c.H; y++) for (let x = 0; x < c.W; x++) {
+    const id = k([x, y]);
+    if (!otraMitad(x, y)) { s += `<div class="c${dadas.has(id) ? " dada" : ""}"></div>`; continue; }
+    const pint = pintadas.has(id);
+    let cls = pint ? " pintada" : "";
+    if (final) cls = pint ? (faltan.has(id) ? " pintada" : " sobra") : faltan.has(id) ? " sol" : "";
+    else if (fantasma && !pint && faltan.has(id)) cls += " fantasma";
+    s += final ? `<div class="c${cls}"></div>`
+      : `<button class="c${cls}" data-c="${id}" aria-pressed="${pint}" aria-label="Fila ${y + 1}, columna ${x + 1}"></button>`;
+  }
+  const pos = `${(100 * c.pos / (c.dir === "v" ? c.W : c.H)).toFixed(3)}%`;
+  s += `<div class="linea ${c.dir}" style="${c.dir === "v" ? "left" : "top"}:${pos}"></div>`;
+  $("zonaGrilla").innerHTML = `<div class="grilla" style="--w:${c.W}">${s}</div>`;
+}
+$("zonaGrilla").addEventListener("click", e => {
+  const b = e.target.closest("[data-c]");
+  if (!b || listo) return;
+  const id = b.dataset.c;
+  if (pintadas.has(id)) pintadas.delete(id); else pintadas.add(id);
+  sonido("tap");
+  pintarGrilla();
+  $("zonaGrilla").querySelector(`[data-c="${id}"]`)?.focus({ preventScroll: true });
+});
+$("limpiarBtn").addEventListener("click", () => { if (listo || r.tipo !== "pintar") return; pintadas = new Set(); sonido("tap"); pintarGrilla(); });
+$("listoBtn").addEventListener("click", () => {
+  if (listo || r.tipo !== "pintar") return;
+  if (!pintadas.size) { decir("Primero tocá los cuadritos de la otra mitad para pintarlos."); return; }
+  const faltan = new Set(r.cuadricula.falta.map(k));
+  const sobran = [...pintadas].filter(id => !faltan.has(id)).length, quedan = [...faltan].filter(id => !pintadas.has(id)).length;
+  if (!sobran && !quedan) return terminar(true);
+  fallos++;
+  const partes = [];
+  if (quedan) partes.push(quedan === 1 ? "te falta 1 cuadrito" : `te faltan ${quedan} cuadritos`);
+  if (sobran) partes.push(sobran === 1 ? "hay 1 cuadrito que no va" : `hay ${sobran} cuadritos que no van`);
+  const msg = `Casi: ${partes.join(" y ")}. ${r.pista}`;
+  feedback("almost", "🤏", "¡Casi!");
+  mostrarExplica(msg);
+  if (fallos >= 3) return terminar(false);
+  if (fallos >= 2 && !fantasma) { fantasma = true; ayudaDada = true; pintarGrilla(); decir(`${aVoz(msg)} Te ayudo: los cuadritos con puntitos son los que faltan.`); }
+  else decir(aVoz(msg));
+});
+
+// ---------- Terminar la ronda ----------
+function terminar(bien) {
+  listo = true; ayuda.parar();
+  const limpio = bien && fallos === 0 && !ayuda.usada && !ayudaDada, elo = elogio();
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elo); }
+  else if (bien) feedback("almost", "🤏", "¡Ahora sí!");
+  else feedback("almost", "🤔", "Mirá cuál era");
+  if (r.svgMarcado) $("dibujo").innerHTML = r.svgMarcado;
+  if (r.tipo === "pintar") pintarGrilla(true);
+  if (r.tipo === "tocar" || r.tipo === "opciones") {
+    $("opciones").querySelectorAll("button").forEach(b => { b.disabled = true; b.classList.remove("senal"); if (b.dataset.v === String(r.respuesta)) b.classList.add("right"); });
+  }
+  if (r.tipo === "escribir" && !bien) { tecleado = String(r.respuesta); pintarCaja("ok"); }
+  mostrarExplica(r.explica);
+  decir(`${limpio ? elo : bien ? "¡Ahora sí!" : ""} ${aVoz(r.explica)}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada || ayudaDada, opciones: (r.items || r.opciones || []).length });
+  $("nextBtn").classList.add("pulse");
+}
+
+/** Primer error: decir por qué (la confusión de siempre, o una pista) y dejar probar otra vez. Segundo: se muestra. */
+function equivocado(v) {
+  fallos++;
+  const quedan = r.tipo === "escribir" ? 9 : $("opciones").querySelectorAll("button:not(:disabled)").length;
+  if (fallos >= 2 || quedan <= 1) return terminar(false);
+  const conf = (r.confusiones || []).find(c => String(c.v) === String(v));
+  const msg = conf ? conf.msg : r.pista;
+  feedback(conf ? "almost" : "bad", conf ? "🤏" : "🙈", conf ? "¡Casi!" : "No es");
+  mostrarExplica(msg);
+  decir(`${aVoz(msg)} Probá otra vez.`);
+}
+
+// Tocar un dibujo o una opción
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-v]");
+  if (!b || listo || b.disabled) return;
+  if (b.dataset.v === String(r.respuesta)) {
+    b.classList.remove("senal"); sonido("tap");
+    return terminar(true);
+  }
+  b.classList.add("wrong", "nope"); b.disabled = true; // dos toques al mismo error cuentan como uno
+  equivocado(b.dataset.v);
+});
+
+// Teclado
+function tecla(t) {
+  if (listo || r.tipo !== "escribir") return;
+  if (t === "borrar") tecleado = tecleado.slice(0, -1);
+  else if (t === "ok") {
+    if (!tecleado) { decir("Primero escribí el número con el teclado."); return; }
+    const v = Number(tecleado);
+    if (v === r.respuesta) { pintarCaja("ok"); return terminar(true); }
+    pintarCaja("mal");
+    equivocado(v);
+    if (!listo) { const esta = vuelta; tecleado = ""; setTimeout(() => { if (!listo && esta === vuelta) pintarCaja(); }, 600); }
+    return;
+  } else if (tecleado.length < 4) tecleado = (tecleado === "0" ? "" : tecleado) + t;
+  sonido("tap");
+  pintarCaja();
+}
+$("teclado").addEventListener("click", e => { const b = e.target.closest("[data-k]"); if (b) tecla(b.dataset.k); });
+addEventListener("keydown", e => {
+  if ($("zonaEscribir").hidden || !$("start").hidden || listo) return;
+  // Con un botón enfocado, Enter es de ese botón (➡️, 🔊, las teclas en pantalla…); los números sí se escriben
+  if (e.key === "Enter" && e.target.closest?.("button, a, input")) return;
+  if (/^\d$/.test(e.key)) tecla(e.key);
+  else if (e.key === "Backspace") tecla("borrar");
+  else if (e.key === "Enter") { e.preventDefault(); tecla("ok"); }
+});
+
+// ---------- Modos ----------
+function pintarModos() {
+  $("modos").innerHTML = `<button data-m="auto" aria-pressed="${modo === "auto"}" aria-label="De a poquito: sube solo">🪜</button>`
+    + MODOS.map(m => `<button data-m="${m.id}" aria-pressed="${modo === m.id}">${m.nombre}</button>`).join("");
+}
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-m]");
+  if (!b) return;
+  saltar();
+  modo = b.dataset.m; esc.activa = modo === "auto";
+  sonido("tap"); pintarModos(); nuevo();
+});
+/** Pasar a otra después de equivocarse (o de que hubo que señalar) cuenta como ronda difícil: si no, saltar evitaría bajar. */
+function saltar() { if (r && !listo && (fallos > 0 || ayuda.usada || ayudaDada)) esc.resultado({ fallos: 2 }); }
+$("nextBtn").addEventListener("click", () => { saltar(); sonido("tap"); nuevo(); });
+
+pintarModos();
+alEmpezar(nuevo);
+if (new URLSearchParams(location.search).has("prueba")) window.__geo = { get r() { return r; }, get nivel() { return esc.nivel; }, get modo() { return modo; }, get listo() { return listo; }, get fallos() { return fallos; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

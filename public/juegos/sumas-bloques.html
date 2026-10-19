@@ -180,6 +180,51 @@
     .blk.new, .blk.out, .blk.breaking, .blk.gather, .blk.nope, .tray .blk.fly, .tools button.pulse, .bottom button.pulse { animation-duration: .01s; animation-iteration-count: 1; }
   }
 
+  /* 🪜 Escalera, fiesta al subir y ayuda señalada (igual que en css/prepa.css; este juego no usa ese archivo) */
+  .levels button.auto { font-size: 1.15rem; }
+  .marcador { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+  .escalera { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--page-ink); }
+  .escalera[hidden] { display: none; }
+  .escalera .esc-num { font-size: 1.3rem; white-space: nowrap; }
+  .escalera .esc-num b { font-size: 1.05rem; margin-left: 2px; }
+  .escalera .hojas { display: flex; gap: 3px; }
+  .escalera .hojas i { width: 16px; height: 16px; border-radius: 0 60% 0 60%; border: 2px solid var(--rim); background: var(--face); display: block; transform: rotate(45deg); }
+  .escalera .hojas i.llena { background: var(--ok); }
+  .escalera .hojas i.nueva { animation: hoja .5s ease-out; }
+  @keyframes hoja { 0% { transform: rotate(45deg) scale(.3); } 70% { transform: rotate(45deg) scale(1.4); } 100% { transform: rotate(45deg) scale(1); } }
+  .subio { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+  .subio .cartel {
+    position: absolute; left: 50%; top: 22%; transform: translateX(-50%);
+    background: var(--btn); border: 4px solid var(--rim); border-radius: 26px; box-shadow: 0 5px 0 var(--rim);
+    padding: 8px 22px; font-size: clamp(1.8rem, 9vw, 2.6rem); font-weight: 800; color: var(--ink); white-space: nowrap;
+    animation: cartel 2.6s ease-out forwards;
+  }
+  .subio i { position: absolute; top: -3rem; left: var(--x); font-style: normal; font-size: 2rem; animation: cae 2.2s ease-in var(--d) forwards; }
+  @keyframes cartel { 0% { transform: translateX(-50%) scale(.3); opacity: 0; } 15% { transform: translateX(-50%) scale(1.15); opacity: 1; } 25%, 80% { transform: translateX(-50%) scale(1); opacity: 1; } 100% { opacity: 0; } }
+  @keyframes cae { to { transform: translateY(110vh) rotate(260deg); } }
+  .senal { position: relative; outline: 6px solid var(--btn) !important; outline-offset: 3px; animation: brinco .9s ease-in-out infinite; z-index: 1; }
+  .senal::after { content: "👆"; position: absolute; right: -4px; bottom: -14px; font-size: 2.2rem; line-height: 1; animation: toca .9s ease-in-out infinite; pointer-events: none; }
+  @keyframes brinco { 50% { transform: translateY(-6px) scale(1.04); } }
+  @keyframes toca { 50% { transform: translate(-4px, -8px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .senal, .senal::after, .subio .cartel, .subio i, .escalera .hojas i.nueva { animation-duration: .01s !important; animation-iteration-count: 1 !important; }
+  }
+
+  /* 🔊 y la pregunta del final de la escalera: ¿cuánto da? */
+  .fila-msg { display: flex; align-items: center; gap: 6px; margin: 8px auto; }
+  .fila-msg .msg { flex: 1; margin: 0; }
+  .fila-msg .oir, .fila-msg .lento { font-size: 1.15rem; padding: 2px 9px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); flex: none; }
+  .opciones { display: flex; justify-content: center; gap: 12px; margin: 0 auto 10px; flex-wrap: wrap; }
+  .opciones[hidden] { display: none; }
+  .opciones button { font-size: clamp(1.8rem, 8vw, 2.4rem); min-width: 4.4rem; padding: 2px 18px; border-radius: 18px; }
+  .opciones button:disabled { opacity: 1; }
+  .opciones button.bien { background: #CFF5DC; border-color: var(--ok); }
+  .opciones button.mal { background: #FFE3E0; border-color: var(--bad); opacity: .55; }
+  /* Con una sola columna (los más chiquitos) los bloques son grandes, para contarlos con el dedo */
+  .mat.n1 .uni { width: 44px; height: 44px; border-radius: 8px; }
+  .mat.n1 .blocks { min-height: 110px; gap: 8px; }
+  .mat.n1 .tray { gap: 8px; }
+
   .home-link {
     position: fixed; left: max(10px, env(safe-area-inset-left, 0px)); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     z-index: 50; width: 52px; height: 52px; border-radius: 50%;
@@ -195,205 +240,319 @@
 
 <div class="wrap top">
   <div class="levels" role="group" aria-label="Nivel">
-    <button data-n="2" aria-pressed="true">Decenas</button>
-    <button data-n="3">Centenas</button>
-    <button data-n="4">Miles</button>
+    <button class="auto" data-n="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>
+    <button data-n="2" aria-pressed="false">Decenas</button>
+    <button data-n="3" aria-pressed="false">Centenas</button>
+    <button data-n="4" aria-pressed="false">Miles</button>
   </div>
+  <div class="escalera" id="escalera"></div>
   <div class="stars" id="stars">⭐ 0</div>
 </div>
 
 <div class="wrap equation" id="equation"></div>
-<div class="wrap msg" id="msg" aria-live="polite"></div>
+<div class="wrap fila-msg">
+  <button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button>
+  <button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button>
+  <div class="msg" id="msg" aria-live="polite"></div>
+</div>
+<div class="wrap opciones" id="opciones" role="group" aria-label="¿Cuánto da?" hidden></div>
 <div class="wrap mat" id="mat"></div>
 <div class="wrap bottom"><button id="nextBtn">Otro problema</button></div>
 
-<script>
-(() => {
-  const $ = id => document.getElementById(id);
-  const mat = $("mat"), msg = $("msg"), eqEl = $("equation"), nextBtn = $("nextBtn"), starsEl = $("stars");
+<script type="module">
+import { escalera } from "../js/escalera.js";
+import { ayudaSiSeQueda, senalar } from "../js/prepa.js";
+import { hablar, sonido, elogio, LENTO } from "../js/voz.js";
+import { ESCALONES_SUMA as ESCALONES, problema, opcionesResultado, inicioBloques } from "../js/bloques.js";
 
-  const NAME = ["Unidades", "Decenas", "Centenas", "Miles"];
-  const SHORT = ["U", "D", "C", "UM"];
-  const SING = ["unidad", "decena", "centena", "mil"];
-  const PL = ["unidades", "decenas", "centenas", "miles"];
-  const CLS = ["uni", "dec", "cen", "mil"];
+const $ = id => document.getElementById(id);
+const mat = $("mat"), msg = $("msg"), eqEl = $("equation"), nextBtn = $("nextBtn"), starsEl = $("stars"), opsEl = $("opciones");
 
-  let n = 2;                 // cantidad de columnas
-  let a = 0, b = 0;          // a + b
-  let counts = [], orig = [], toAdd = [];
-  let newIn = [0, 0, 0, 0];
-  let busy = false, won = false;
-  let stars = 0;
-  try { stars = Number(localStorage.getItem("sumas-stars")) || 0; } catch (_) {}
+const NAME = ["Unidades", "Decenas", "Centenas", "Miles"];
+const SHORT = ["U", "D", "C", "UM"];
+const SING = ["unidad", "decena", "centena", "mil"];
+const PL = ["unidades", "decenas", "centenas", "miles"];
+const CLS = ["uni", "dec", "cen", "mil"];
 
-  const digits = (x, len) => Array.from({ length: len }, (_, p) => Math.floor(x / 10 ** p) % 10);
-  const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+// 🪜 De a poquito (los escalones están en js/bloques.js): de contar unos pocos bloques a llevar con miles.
+// Decenas, Centenas y Miles son los niveles de siempre, a mano: ahí la escalera no cuenta.
+const esc = escalera("sumas-bloques", { escalones: ESCALONES.length, inicio: edad => inicioBloques("suma", edad) });
+let auto = true;
+let n = 2;                 // cantidad de columnas
+let a = 0, b = 0;          // a + b
+let counts = [], orig = [], toAdd = [];
+let newIn = [0, 0, 0, 0];
+let busy = false, won = false;
+// En la escalera, al terminar con los bloques se pregunta «¿cuánto da?»: fase "bloques" → "respuesta" → "listo"
+let fase = "bloques", fallos = 0, ayudada = false, turno = 0, anterior = null, voz = "";
+let stars = 0;
+try { stars = Number(localStorage.getItem("sumas-stars")) || 0; } catch (_) {}
 
-  // ---------- Problemas (siempre "llevando" al menos una vez y sin pasarse de columnas) ----------
-  function generate() {
-    const lo = 10 ** (n - 1);
-    for (let t = 0; t < 1000; t++) {
-      const A = rand(lo, 10 ** n - 1 - lo);
-      const B = rand(n === 2 ? 3 : 10 ** (n - 2), 10 ** n - 1 - A);
-      if (B < 1) continue;
-      const da = digits(A, n), db = digits(B, n);
-      if (da.some((d, p) => d + db[p] > 9)) return [A, B];
+const digits = (x, len) => Array.from({ length: len }, (_, p) => Math.floor(x / 10 ** p) % 10);
+const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+
+// ---------- Problemas a mano (siempre "llevando" al menos una vez y sin pasarse de columnas) ----------
+function generate() {
+  const lo = 10 ** (n - 1);
+  for (let t = 0; t < 1000; t++) {
+    const A = rand(lo, 10 ** n - 1 - lo);
+    const B = rand(n === 2 ? 3 : 10 ** (n - 2), 10 ** n - 1 - A);
+    if (B < 1) continue;
+    const da = digits(A, n), db = digits(B, n);
+    if (da.some((d, p) => d + db[p] > 9)) return [A, B];
+  }
+  return [n === 2 ? 38 : n === 3 ? 457 : 2768, n === 2 ? 25 : n === 3 ? 186 : 1459];
+}
+
+const decirVoz = (lento = false) => hablar(voz, lento ? { rate: LENTO } : undefined);
+const bloques = k => k === 1 ? "un bloque" : `${k} bloques`;
+
+function newProblem() {
+  turno++;
+  esc.activa = auto;
+  if (auto) {
+    n = ESCALONES[esc.nivel].n;
+    [a, b] = problema("suma", esc.nivel, anterior);
+    anterior = [a, b];
+  } else [a, b] = generate();
+  counts = digits(a, n);
+  orig = counts.slice();
+  toAdd = digits(b, n);
+  newIn = [0, 0, 0, 0];
+  newIn.forEach((_, p) => newIn[p] = p < n ? counts[p] : 0);
+  won = false; busy = false;
+  fase = "bloques"; fallos = 0; ayudada = false;
+  opsEl.hidden = true; opsEl.innerHTML = "";
+  nextBtn.classList.remove("pulse");
+  say("Tocá los bloques amarillos de arriba para agregarlos 👇", "", n === 1
+    ? `Tenés ${bloques(a)}. Agregá ${b === 1 ? "uno más" : b + " más"}: tocá los bloques amarillos de arriba.`
+    : `¿Cuánto es ${a} más ${b}? Tocá los bloques amarillos de arriba para agregarlos.`);
+  render();
+  if (auto) { decirVoz(); ayuda.empezar(); } else ayuda.parar();
+}
+
+/** Muestra un mensaje; `v` es lo que dice 🔊 (si no se da, sigue el de antes). */
+function say(text, cls = "", v) { msg.className = "msg " + cls; msg.innerHTML = text; if (v) voz = v; }
+
+// ---------- Dibujo ----------
+const MIL_SVG = (c, d) => `<svg viewBox="0 0 40 40" aria-hidden="true">
+  <polygon points="20,2 38,11 20,20 2,11" fill="${c}" stroke="${d}" stroke-width="1.5" style="filter:brightness(1.25)"/>
+  <polygon points="2,11 20,20 20,38 2,29" fill="${c}" stroke="${d}" stroke-width="1.5"/>
+  <polygon points="38,11 20,20 20,38 38,29" fill="${d}" stroke="${d}" stroke-width="1.5"/>
+  <path d="M11,6.5 L29,15.5 M29,6.5 L11,15.5 M2,20 L20,29 M11,15.5 L11,33.5 M38,20 L20,29 M29,15.5 L29,33.5" stroke="${d}" stroke-width="1" fill="none" opacity=".7"/>
+</svg>`;
+
+const una = p => p === 3 ? "un mil" : "una " + SING[p];
+
+function blockHTML(p, isNew, delay, label) {
+  const inner = p === 3 ? MIL_SVG("var(--m)", "var(--md)") : "";
+  return `<button class="blk ${CLS[p]}${isNew ? " new" : ""}" data-p="${p}" style="${isNew ? `animation-delay:${delay}ms` : ""}" aria-label="${label}">${inner}</button>`;
+}
+
+function allDone() { return toAdd.slice(0, n).every(x => x === 0) && counts.slice(0, n).every(x => x <= 9); }
+function result() { return counts.slice(0, n).reduce((s, c, p) => s + c * 10 ** p, 0); }
+
+function colored(x) {
+  const ds = String(x).split("");
+  return ds.map((d, i) => `<span class="p${ds.length - 1 - i}">${d}</span>`).join("");
+}
+
+function render() {
+  const places = [];
+  for (let p = n - 1; p >= 0; p--) places.push(p);
+  mat.className = "wrap mat n" + n;
+  mat.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+  const joiners = new Set(places.filter(p => counts[p] >= 10 && p < n - 1));
+  const f = i => i === 0 ? " first" : "";
+  // En la escalera el resultado no se ve hasta que el niño dice cuánto da
+  const ocultar = auto && fase !== "listo";
+
+  let html = "";
+  places.forEach((p, i) => html += `<div class="cell lab p${p}${f(i)}">${NAME[p]}<small>${SHORT[p]}</small></div>`);
+  places.forEach((p, i) => {
+    html += `<div class="cell add${f(i)}"><span class="op">+</span><span class="p${p}">${digits(b, n)[p]}</span>${toAdd[p] === 0 && digits(b, n)[p] > 0 ? ` <span class="check">✓</span>` : ""}</div>`;
+  });
+  places.forEach((p, i) => {
+    let blocks = "";
+    for (let k = 0; k < toAdd[p]; k++) blocks += blockHTML(p, false, 0, `Agregar ${una(p)}`);
+    html += `<div class="cell tray${f(i)}" data-tray="${p}">${blocks}</div>`;
+  });
+  places.forEach((p, i) => {
+    const changed = counts[p] !== orig[p];
+    const warn = counts[p] > 9 ? `<span class="warn">¡Más de 9!</span>` : "";
+    // Con una sola columna se cuentan los bloques: el número no se ve (el resultado es contarlos todos)
+    const cur = n === 1 && ocultar ? `<span class="cur">&nbsp;</span>` : `<span class="cur p${p}${counts[p] > 9 ? " changed" : ""}">${counts[p]}</span>`;
+    html += `<div class="cell num${f(i)}"><span class="orig">${changed && !(n === 1 && ocultar) ? orig[p] : ""}</span>${cur}${warn}</div>`;
+  });
+  places.forEach((p, i) => {
+    const show = !ocultar && toAdd[p] === 0 && counts[p] <= 9 && (p === 0 || toAdd.slice(0, p).every(x => x === 0) && counts.slice(0, p).every(x => x <= 9));
+    html += `<div class="cell res${f(i)}">${show ? `<span class="p${p}">${counts[p]}</span>` : `<span class="q">?</span>`}</div>`;
+  });
+  places.forEach((p, i) => {
+    const tools = p < n - 1
+      ? `<button data-join="${p}" ${counts[p] < 10 || won ? "disabled" : ""} class="${joiners.has(p) && !won ? "pulse" : ""}" aria-label="Juntar 10 ${PL[p]} en ${una(p + 1)}">🧲 10 → 1</button>`
+      : "";
+    html += `<div class="cell tools${f(i)}">${tools}</div>`;
+  });
+  places.forEach((p, i) => {
+    let blocks = "";
+    const start = counts[p] - newIn[p];
+    for (let k = 0; k < counts[p]; k++) {
+      const isNew = k >= start;
+      blocks += blockHTML(p, isNew, (k - start) * 45, `${SING[p] === "mil" ? "Un mil" : "Una " + SING[p]}`);
     }
-    return [n === 2 ? 38 : n === 3 ? 457 : 2768, n === 2 ? 25 : n === 3 ? 186 : 1459];
+    html += `<div class="cell blocks${f(i)}" data-col="${p}">${blocks}</div>`;
+  });
+  mat.innerHTML = html;
+  newIn = [0, 0, 0, 0];
+
+  const done = allDone();
+  eqEl.innerHTML = `${colored(a)}<span class="op">+</span>${colored(b)}<span class="op">=</span>${done && !ocultar ? colored(result()) : `<span class="q">?</span>`}`;
+  if (done && !won) {
+    if (!auto) win();
+    else if (fase === "bloques") preguntar();
   }
+}
 
-  function newProblem() {
-    [a, b] = generate();
-    counts = digits(a, n);
-    orig = counts.slice();
-    toAdd = digits(b, n);
-    newIn = [0, 0, 0, 0];
-    newIn.forEach((_, p) => newIn[p] = p < n ? counts[p] : 0);
-    won = false; busy = false;
-    nextBtn.classList.remove("pulse");
-    say("Tocá los bloques amarillos de arriba para agregarlos 👇");
-    render();
-  }
+// 🪜 ¿Cuánto da? Tres respuestas: la buena y errores comunes (sumar sin llevar, olvidar lo que se llevó…)
+function preguntar() {
+  fase = "respuesta";
+  opsEl.innerHTML = opcionesResultado("suma", a, b, n).map(x => `<button data-r="${x}">${x}</button>`).join("");
+  opsEl.hidden = false;
+  say(n === 1 ? "¿Cuántos bloques hay? 🤔" : "¿Cuánto da? 🤔", "", n === 1
+    ? "¡Ya están todos! Contá los bloques. ¿Cuántos hay?"
+    : `¿Cuánto da ${a} más ${b}? Leé el número de cada columna.`);
+  decirVoz();
+  ayuda.empezar();
+}
 
-  function say(text, cls = "") { msg.className = "wrap msg " + cls; msg.innerHTML = text; }
+opsEl.addEventListener("click", e => {
+  const btn = e.target.closest("[data-r]");
+  if (!btn || btn.disabled || fase !== "respuesta") return;
+  const r = a + b;
+  if (Number(btn.dataset.r) === r) { btn.classList.add("bien"); return terminar(true); }
+  // Cada respuesta mala se tacha: tocarla otra vez no cuenta como otro error
+  btn.disabled = true; btn.classList.add("mal"); sonido("mal");
+  fallos++;
+  if (fallos >= 2) { opsEl.querySelector(`[data-r="${r}"]`)?.classList.add("bien"); return terminar(false); }
+  say("¡Casi! 🤔 Probá otra vez", "", n === 1 ? "¡Casi! Contá otra vez los bloques, uno por uno." : "¡Casi! Leé el número de cada columna, de izquierda a derecha.");
+  decirVoz();
+});
 
-  // ---------- Dibujo ----------
-  const MIL_SVG = (c, d) => `<svg viewBox="0 0 40 40" aria-hidden="true">
-    <polygon points="20,2 38,11 20,20 2,11" fill="${c}" stroke="${d}" stroke-width="1.5" style="filter:brightness(1.25)"/>
-    <polygon points="2,11 20,20 20,38 2,29" fill="${c}" stroke="${d}" stroke-width="1.5"/>
-    <polygon points="38,11 20,20 20,38 38,29" fill="${d}" stroke="${d}" stroke-width="1.5"/>
-    <path d="M11,6.5 L29,15.5 M29,6.5 L11,15.5 M2,20 L20,29 M11,15.5 L11,33.5 M38,20 L20,29 M29,15.5 L29,33.5" stroke="${d}" stroke-width="1" fill="none" opacity=".7"/>
-  </svg>`;
-
-  const una = p => p === 3 ? "un mil" : "una " + SING[p];
-
-  function blockHTML(p, isNew, delay, label) {
-    const inner = p === 3 ? MIL_SVG("var(--m)", "var(--md)") : "";
-    return `<button class="blk ${CLS[p]}${isNew ? " new" : ""}" data-p="${p}" style="${isNew ? `animation-delay:${delay}ms` : ""}" aria-label="${label}">${inner}</button>`;
-  }
-
-  function allDone() { return toAdd.slice(0, n).every(x => x === 0) && counts.slice(0, n).every(x => x <= 9); }
-  function result() { return counts.slice(0, n).reduce((s, c, p) => s + c * 10 ** p, 0); }
-
-  function colored(x) {
-    const ds = String(x).split("");
-    return ds.map((d, i) => `<span class="p${ds.length - 1 - i}">${d}</span>`).join("");
-  }
-
-  function render() {
-    const places = [];
-    for (let p = n - 1; p >= 0; p--) places.push(p);
-    mat.className = "wrap mat n" + n;
-    mat.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
-    const joiners = new Set(places.filter(p => counts[p] >= 10 && p < n - 1));
-    const f = i => i === 0 ? " first" : "";
-
-    let html = "";
-    places.forEach((p, i) => html += `<div class="cell lab p${p}${f(i)}">${NAME[p]}<small>${SHORT[p]}</small></div>`);
-    places.forEach((p, i) => {
-      html += `<div class="cell add${f(i)}"><span class="op">+</span><span class="p${p}">${digits(b, n)[p]}</span>${toAdd[p] === 0 && digits(b, n)[p] > 0 ? ` <span class="check">✓</span>` : ""}</div>`;
-    });
-    places.forEach((p, i) => {
-      let blocks = "";
-      for (let k = 0; k < toAdd[p]; k++) blocks += blockHTML(p, false, 0, `Agregar ${una(p)}`);
-      html += `<div class="cell tray${f(i)}" data-tray="${p}">${blocks}</div>`;
-    });
-    places.forEach((p, i) => {
-      const changed = counts[p] !== orig[p];
-      const warn = counts[p] > 9 ? `<span class="warn">¡Más de 9!</span>` : "";
-      html += `<div class="cell num${f(i)}"><span class="orig">${changed ? orig[p] : ""}</span><span class="cur p${p}${counts[p] > 9 ? " changed" : ""}">${counts[p]}</span>${warn}</div>`;
-    });
-    places.forEach((p, i) => {
-      const show = toAdd[p] === 0 && counts[p] <= 9 && (p === 0 || toAdd.slice(0, p).every(x => x === 0) && counts.slice(0, p).every(x => x <= 9));
-      html += `<div class="cell res${f(i)}">${show ? `<span class="p${p}">${counts[p]}</span>` : `<span class="q">?</span>`}</div>`;
-    });
-    places.forEach((p, i) => {
-      const tools = p < n - 1
-        ? `<button data-join="${p}" ${counts[p] < 10 || won ? "disabled" : ""} class="${joiners.has(p) && !won ? "pulse" : ""}" aria-label="Juntar 10 ${PL[p]} en ${una(p + 1)}">🧲 10 → 1</button>`
-        : "";
-      html += `<div class="cell tools${f(i)}">${tools}</div>`;
-    });
-    places.forEach((p, i) => {
-      let blocks = "";
-      const start = counts[p] - newIn[p];
-      for (let k = 0; k < counts[p]; k++) {
-        const isNew = k >= start;
-        blocks += blockHTML(p, isNew, (k - start) * 45, `${SING[p] === "mil" ? "Un mil" : "Una " + SING[p]}`);
-      }
-      html += `<div class="cell blocks${f(i)}" data-col="${p}">${blocks}</div>`;
-    });
-    mat.innerHTML = html;
-    newIn = [0, 0, 0, 0];
-
-    const done = allDone();
-    eqEl.innerHTML = `${colored(a)}<span class="op">+</span>${colored(b)}<span class="op">=</span>${done ? colored(result()) : `<span class="q">?</span>`}`;
-    if (done && !won) win();
-  }
-
-  function win() {
+function terminar(acerto) {
+  fase = "listo";
+  ayuda.parar();
+  opsEl.querySelectorAll("button").forEach(x => x.disabled = true);
+  if (acerto) win();
+  else {
     won = true;
-    stars++;
-    try { localStorage.setItem("sumas-stars", stars); } catch (_) {}
-    starsEl.textContent = "⭐ " + stars;
-    say(`¡Acertado! 🎉 ${a} + ${b} = ${result()}`, "win");
+    const r = a + b;
+    say(`💡 ${a} + ${b} = ${r}`, "", `${a} más ${b} ${r === 1 ? "es" : "son"} ${r}.`);
+    decirVoz();
     nextBtn.classList.add("pulse");
     render();
   }
+  esc.resultado({ fallos, ayuda: ayudada, opciones: 3 }); // después de la voz: «¡Subiste!» se dice en cola
+}
 
-  // ---------- Acciones ----------
-  mat.addEventListener("click", e => {
-    if (busy || won) return;
-    const jn = e.target.closest("[data-join]");
-    const blk = e.target.closest(".blk");
-    if (jn) return joinTen(Number(jn.dataset.join));
-    if (blk && blk.closest(".tray")) return addOne(Number(blk.dataset.p), blk);
-    if (blk) {
-      const p = Number(blk.dataset.p);
-      blk.classList.remove("nope"); void blk.offsetWidth; blk.classList.add("nope");
-      say(counts[p] > 9 && p < n - 1
-        ? `Tenés ${counts[p]} ${PL[p]}. ¡Juntá 10 con el imán 🧲!`
-        : "Estos ya están en el tapete. Agregá los de la bandeja amarilla 👆");
-    }
-  });
-
-  function addOne(p, el) {
-    busy = true;
-    el.classList.add("fly");
-    setTimeout(() => {
-      toAdd[p]--; counts[p]++; newIn[p] = 1;
-      busy = false;
-      if (counts[p] > 9 && p < n - 1) say(`¡Ya tenés ${counts[p]} ${PL[p]}! Juntá 10 para hacer ${una(p + 1)} 🧲`);
-      else if (toAdd[p] === 0) say(`¡Listo las ${PL[p]}! Hay ${counts[p]}.`);
-      else say(`Faltan ${toAdd[p]} ${toAdd[p] === 1 ? SING[p] : PL[p]} por agregar`);
-      render();
-    }, 300);
-  }
-
-  function joinTen(p) {
-    if (counts[p] < 10) return;
-    const col = mat.querySelector(`.blocks[data-col="${p}"]`);
-    busy = true;
-    if (col) Array.from(col.children).slice(-10).forEach(el => el.classList.add("gather"));
-    setTimeout(() => {
-      counts[p] -= 10; counts[p + 1]++; newIn[p + 1] = 1;
-      busy = false;
-      say(`¡10 ${PL[p]} = 1 ${SING[p + 1]}! Se lleva 1 a las ${PL[p + 1]} ➡️`);
-      render();
-    }, 400);
-  }
-
-  document.querySelectorAll(".levels button").forEach(btn => {
-    btn.addEventListener("click", () => {
-      n = Number(btn.dataset.n);
-      document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
-      newProblem();
-    });
-  });
-  nextBtn.addEventListener("click", newProblem);
-
+function win() {
+  won = true;
+  stars++;
+  try { localStorage.setItem("sumas-stars", stars); } catch (_) {}
   starsEl.textContent = "⭐ " + stars;
-  newProblem();
-})();
+  const r = result();
+  say(`¡Acertado! 🎉 ${a} + ${b} = ${r}`, "win", `${elogio()} ${a} más ${b} ${r === 1 ? "es" : "son"} ${r}.`);
+  if (auto) decirVoz();
+  nextBtn.classList.add("pulse");
+  render();
+}
+
+// ---------- Acciones ----------
+mat.addEventListener("click", e => {
+  if (busy || won) return;
+  const jn = e.target.closest("[data-join]");
+  const blk = e.target.closest(".blk");
+  if (jn) return joinTen(Number(jn.dataset.join));
+  if (blk && blk.closest(".tray")) return addOne(Number(blk.dataset.p), blk);
+  if (blk) {
+    const p = Number(blk.dataset.p);
+    blk.classList.remove("nope"); void blk.offsetWidth; blk.classList.add("nope");
+    say(counts[p] > 9 && p < n - 1
+      ? `Tenés ${counts[p]} ${PL[p]}. ¡Juntá 10 con el imán 🧲!`
+      : "Estos ya están en el tapete. Agregá los de la bandeja amarilla 👆");
+  }
+});
+
+function addOne(p, el) {
+  busy = true;
+  el.classList.add("fly");
+  const t = turno;
+  setTimeout(() => {
+    if (t !== turno) return; // ya es otro problema
+    toAdd[p]--; counts[p]++; newIn[p] = 1;
+    busy = false;
+    if (counts[p] > 9 && p < n - 1) say(`¡Ya tenés ${counts[p]} ${PL[p]}! Juntá 10 para hacer ${una(p + 1)} 🧲`, "", `¡Ya tenés ${counts[p]} ${PL[p]}! Juntá diez con el imán para hacer ${una(p + 1)}.`);
+    else if (toAdd[p] === 0) say(n === 1 && auto ? "¡Ya están todos! 👏" : `¡Listo las ${PL[p]}! Hay ${counts[p]}.`);
+    else say(`Faltan ${toAdd[p]} ${toAdd[p] === 1 ? SING[p] : PL[p]} por agregar`);
+    render();
+  }, 300);
+}
+
+function joinTen(p) {
+  if (counts[p] < 10) return;
+  const col = mat.querySelector(`.blocks[data-col="${p}"]`);
+  busy = true;
+  if (col) Array.from(col.children).slice(-10).forEach(el => el.classList.add("gather"));
+  const t = turno;
+  setTimeout(() => {
+    if (t !== turno) return;
+    counts[p] -= 10; counts[p + 1]++; newIn[p + 1] = 1;
+    busy = false;
+    say(`¡10 ${PL[p]} = 1 ${SING[p + 1]}! Se lleva 1 a las ${PL[p + 1]} ➡️`);
+    render();
+  }, 400);
+}
+
+// 🤝 Si se queda sin tocar: se repite lo que hay que hacer y después se le señala qué tocar.
+// Señalar un bloque es solo mostrar el camino; señalar la respuesta sí cuenta como ayuda.
+function siguientePaso() {
+  const iman = mat.querySelector("[data-join].pulse:not(:disabled)");
+  if (iman) return iman;
+  for (let p = 0; p < n; p++) { const blk = mat.querySelector(`.tray[data-tray="${p}"] .blk`); if (blk) return blk; }
+  return null;
+}
+const ayuda = ayudaSiSeQueda({
+  repetir: () => decirVoz(),
+  senalar: () => {
+    if (!auto || won || busy) return;
+    if (fase === "respuesta") {
+      ayudada = true;
+      senalar(opsEl.querySelector(`[data-r="${a + b}"]`));
+      hablar("Te ayudo: ¡es esta!");
+    } else senalar(siguientePaso());
+  },
+});
+
+// Pasar a otro después de equivocarse cuenta como ronda difícil (si no, saltar evitaría bajar)
+const saltar = () => { if (auto && fase === "respuesta" && fallos > 0) esc.resultado({ fallos: 2, opciones: 3 }); };
+
+document.querySelectorAll(".levels button").forEach(btn => {
+  btn.addEventListener("click", () => {
+    saltar();
+    auto = btn.dataset.n === "auto";
+    if (!auto) n = Number(btn.dataset.n);
+    document.querySelectorAll(".levels button").forEach(x => x.setAttribute("aria-pressed", x === btn ? "true" : "false"));
+    newProblem();
+  });
+});
+nextBtn.addEventListener("click", () => { saltar(); newProblem(); });
+$("oir").addEventListener("click", () => decirVoz());
+$("lento").addEventListener("click", () => decirVoz(true));
+
+starsEl.textContent = "⭐ " + stars;
+newProblem();
+
+if (new URLSearchParams(location.search).has("prueba")) window.__bloques = { get a() { return a; }, get b() { return b; }, get n() { return n; }, get fase() { return fase; }, get fallos() { return fallos; }, get nivel() { return esc.nivel; }, get auto() { return auto; }, get won() { return won; }, get estado() { return { counts: counts.slice(0, n), falta: toAdd.slice(0, n) }; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
 </body>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>La alcancía</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<style>
+  :root { --materia: #2F7FD1; --wood: #E9C79A; --wood-d: #B98A52; }
+  .levels button { font-size: 1.2rem; padding: 2px 10px; }
+  .instr .txt { font-size: clamp(1.05rem, 4.6vw, 1.35rem); }
+  .instr .txt b { color: var(--materia); white-space: nowrap; }
+
+  .escena { margin-top: 12px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .escena:empty { display: none; }
+  .escena > p { margin: 0; font-size: 1.2rem; font-weight: 800; color: var(--page-ink); text-align: center; }
+  .escena > p b { white-space: nowrap; }
+
+  /* 🪙 Monedas y 💵 billetes (dibujo propio, no copia de los de verdad) */
+  .monton { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center; }
+  .pieza { padding: 0; border: none; box-shadow: none; background: none; border-radius: 0; flex: none; }
+  .pieza:active { transform: scale(.92); box-shadow: none; }
+  .moneda {
+    width: var(--sz); height: var(--sz); border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #FFF3B0 0 12%, #F2C94C 40%, #C9971C 100%);
+    border: 3px solid #9C7412; color: #6B4E06;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: calc(var(--sz) * .34); line-height: 1;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.35), 0 3px 0 #9C7412;
+  }
+  .moneda.plata { background: radial-gradient(circle at 35% 30%, #FFFFFF 0 12%, #D5DDE5 40%, #98A6B4 100%); border-color: #6F7D8B; color: #36424E;
+    box-shadow: inset 0 0 0 3px rgba(255,255,255,.45), 0 3px 0 #6F7D8B; }
+  .billete {
+    width: 104px; height: 54px; border-radius: 8px; position: relative; overflow: hidden;
+    background: var(--bc); border: 3px solid var(--bd); color: var(--tx, #fff);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 6px;
+    box-shadow: 0 3px 0 var(--bd);
+  }
+  .billete::before { content: ""; position: absolute; inset: 4px; border: 2px dashed rgba(255,255,255,.55); border-radius: 5px; pointer-events: none; }
+  .billete .amt { font-size: 1.05rem; font-weight: 800; text-shadow: 0 1px 0 rgba(0,0,0,.35); position: relative; line-height: 1; }
+  .billete[style*="#3B2F00"] .amt { text-shadow: 0 1px 0 rgba(255,255,255,.5); }
+  .billete .ani { font-size: 1.5rem; position: relative; }
+  .pieza.grande.billete { width: 150px; height: 76px; }
+  .pieza.grande.billete .amt { font-size: 1.5rem; }
+  .pieza.grande.billete .ani { font-size: 2.2rem; }
+  .pieza.grande.moneda { --sz: 92px !important; }
+
+  /* 🐷 La alcancía */
+  .alcancia { display: flex; flex-direction: column; align-items: center; gap: 6px; background: #FFE8EF; border: 4px solid #D9718F; border-radius: 26px; padding: 8px 12px 12px; width: min(96vw, 560px); }
+  .alcancia .cerdo { font-size: 2.6rem; line-height: 1; }
+
+  /* 🧾 Lo que se compra */
+  .compra { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; }
+  .compra .cosa { font-size: 3rem; line-height: 1; }
+  .compra .flecha { font-size: 1.6rem; font-weight: 800; color: var(--page-ink); }
+
+  /* El mostrador (donde se pone la plata) */
+  .mostrador {
+    width: min(96vw, 560px); min-height: 96px; border-radius: 16px; padding: 10px;
+    background: repeating-linear-gradient(90deg, var(--wood) 0 38px, #E3BD8C 38px 40px); border: 3px solid var(--wood-d);
+    display: flex; flex-wrap: wrap; gap: 6px; align-items: center; align-content: flex-start; justify-content: center;
+  }
+  .mostrador:empty::before { content: "Poné la plata aquí"; color: #8A6232; font-weight: 700; margin: auto; text-align: center; }
+  .mostrador .moneda { --sz: 44px !important; }
+  .mostrador .billete { width: 84px; height: 44px; }
+  .mostrador .billete .amt { font-size: .85rem; }
+  .mostrador .billete .ani { font-size: 1.1rem; }
+  .llevas { font-weight: 800; font-size: 1.2rem; color: var(--page-ink); text-align: center; min-height: 1.6rem; }
+  .llevas .cadena { display: block; font-size: 1rem; opacity: .85; word-break: break-word; }
+
+  /* Opciones */
+  .opciones { display: grid; grid-template-columns: repeat(var(--cols, 3), 1fr); gap: 12px; margin-top: 12px; }
+  .opciones button { font-size: clamp(1.4rem, 7vw, 2rem); line-height: 1.15; border-radius: 22px; padding: 8px 4px; }
+  .opciones .cosa-e { display: block; font-size: 2.2rem; line-height: 1.1; }
+  .opciones .cosa-n { display: block; font-size: 1rem; }
+  .opciones button b { display: block; font-size: 1.15rem; color: var(--materia); white-space: nowrap; }
+  /* La billetera para pagar: piezas grandes y el ✔️ */
+  .opciones.pagar { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 10px;
+    background: #F3EBDD; border: 3px dashed var(--wood-d); border-radius: 18px; padding: 10px; }
+  .opciones.pagar #listoBtn { font-size: 2rem; padding: 4px 22px; background: var(--btn); margin-left: 6px; }
+
+  /* Escribir el monto */
+  .escribir { margin-top: 12px; display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .escribir input { width: min(52vw, 200px); font: inherit; font-size: 1.8rem; font-weight: 800; text-align: center; color: var(--ink);
+    border: 4px solid var(--rim); border-radius: 16px; padding: 4px 10px; background: #fff; }
+  .escribir input.wrong { background: #FFE3E0; border-color: var(--bad); }
+  .escribir input.right { background: #CFF5DC; border-color: var(--ok); }
+  .escribir .pre, .escribir .suf { font-size: 1.5rem; font-weight: 800; color: var(--page-ink); }
+  .escribir button { font-size: 1.6rem; padding: 4px 18px; background: var(--btn); }
+
+  .explica { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; font-size: 1.05rem; }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🐷🪙</div>
+  <h1>La alcancía</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Subile el volumen 🔊. Contar monedas y billetes, pagar exacto, ¿me alcanza?, el vuelto y ahorrar.</p>
+</div>
+
+<div class="wrap top">
+  <div class="levels" id="niveles" role="group" aria-label="Nivel"></div>
+  <div class="escalera" id="escalera"></div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+
+<div class="wrap instr"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+<div class="wrap escena" id="escena"></div>
+<div class="wrap opciones" id="opciones"></div>
+<div class="wrap feedback" id="feedback" aria-live="polite"></div>
+<div class="wrap explica" id="explica" hidden aria-live="polite"></div>
+<div class="wrap bottom"><button id="nextBtn" aria-label="Otro">➡️</button></div>
+
+<script type="module">
+import { elogio, sonido } from "../js/voz.js";
+import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, azar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { escalera } from "../js/escalera.js";
+import { igual } from "../js/quiz.js";
+import { ESCALONES, MODOS, inicio, ronda, MONEDAS, BILLETES, esBillete, miles, col, vc, nombrePieza, suma, minimas, alcanzable } from "../js/plata.js";
+
+const $ = id => document.getElementById(id);
+// Texto para la voz: el navegador saca el texto de las etiquetas
+const texto = html => new DOMParser().parseFromString(html, "text/html").body.textContent;
+
+// Colores y animal de cada billete (dibujo sencillo, de la misma familia que La pulpería)
+// [fondo, borde, animal, letra]: el amarillo lleva letra oscura para que se lea bien
+const BILLETE = { 1000: ["#D9443A", "#962A22", "🦌"], 2000: ["#2F7FD1", "#1C5796", "🦈"], 5000: ["#E8B820", "#A07C06", "🐒", "#3B2F00"],
+  10000: ["#3E9E55", "#236A34", "🦥"], 20000: ["#F08A24", "#A8570A", "🐦"], 50000: ["#8E5BD9", "#5E3596", "🦋"] };
+const TAM = { 5: 40, 10: 44, 25: 48, 50: 52, 100: 58, 500: 64 };
+/** Una moneda o un billete como botón. `attrs`: atributos extra (data-…); `label`: lo que lee el lector de pantalla. */
+function pieza(v, { attrs = "", label = nombrePieza(v), clase = "" } = {}) {
+  if (esBillete(v)) {
+    const [bc, bd, ani, tx = "#FFFFFF"] = BILLETE[v];
+    return `<button type="button" class="pieza billete ${clase}" style="--bc:${bc};--bd:${bd};--tx:${tx}" ${attrs} aria-label="${label}"><span class="amt">${miles(v)}</span><span class="ani" aria-hidden="true">${ani}</span></button>`;
+  }
+  return `<button type="button" class="pieza moneda${v <= 10 ? " plata" : ""} ${clase}" style="--sz:${TAM[v]}px" ${attrs} aria-label="${label}">${v}</button>`;
+}
+
+$("niveles").innerHTML = `<button class="auto" data-nivel="auto" aria-pressed="true" aria-label="De a poquito: sube solo">🪜</button>`
+  + MODOS.map(m => `<button data-nivel="${m.id}" aria-label="${m.nombre}" title="${m.nombre}">${m.emoji}</button>`).join("");
+
+const esc = escalera("alcancia", { escalones: ESCALONES.length, inicio });
+const stars = estrellas("alcancia-stars");
+let manual = null, q = null, fallos = 0, listo = false, ronda_ = 0;
+let puestas = [], revisados = new Set(), malos = new Set();
+const ayuda = ayudaSiSeQueda({ senalar: () => {
+  if (q?.tipo === "escribir" && !listo) { $("explica").hidden = false; $("explica").textContent = "💡 " + q.pista; }
+  senalar(objetivo());
+} });
+
+// ---------- Ronda nueva ----------
+function nuevo() {
+  ronda_++;
+  fallos = 0; listo = false; puestas = []; revisados = new Set(); malos = new Set();
+  const i = esc.activa ? esc.nivel : azar(MODOS.find(m => m.id === manual).escalones);
+  q = ronda(i);
+  feedback(""); $("explica").hidden = true; $("nextBtn").classList.remove("pulse");
+  pintar();
+  instruccion(q.instr, q.voz);
+  ayuda.empezar();
+}
+
+function pintar() {
+  $("opciones").className = "wrap opciones";
+  $("opciones").style.removeProperty("--cols");
+  $("escena").innerHTML = escena();
+  if (q.tipo === "pagar") return pintarPagar();
+  if (q.tipo === "escribir") return pintarEscribir();
+  $("opciones").style.setProperty("--cols", q.cols || Math.min(q.opciones.length, 3));
+  $("opciones").innerHTML = q.opciones.map(o => `<button data-id="${o.id}" aria-label="${o.voz}">${o.html}</button>`).join("");
+}
+
+/** El dibujo de arriba: el montón para contar, la alcancía, lo que se compra o lo que se cambia. */
+function escena() {
+  const monton = lista => `<div class="monton">${lista.map(v => pieza(v, { attrs: `data-oir="${v}"` })).join("")}</div>`;
+  if (q.modo === "contar") return monton(q.piezas);
+  if (q.modo === "alcanza") return `<div class="alcancia"><span class="cerdo" aria-hidden="true">🐷</span>${monton(q.piezas)}<p>Hay <b>${col(q.total)}</b></p></div>`;
+  if (q.modo === "cambio") return `<div class="monton">${pieza(q.grande, { attrs: `data-oir="${q.grande}"`, clase: "grande" })}</div><p>= ? × ${pieza(q.chica, { attrs: `data-oir="${q.chica}"` })}</p>`;
+  if (q.modo === "cambiar") return `<div class="monton">${pieza(q.meta, { attrs: `data-oir="${q.meta}"`, clase: "grande" })}</div>`;
+  if (q.modo === "vuelto") return `<div class="compra"><span class="cosa" aria-hidden="true">${q.cosa.e}</span><span class="flecha">${col(q.tipo === "pagar" ? q.base : q.precio)}</span>
+    <span class="flecha" aria-hidden="true">←</span>${pieza(q.piezas[0], { attrs: `data-oir="${q.piezas[0]}"` })}</div>`;
+  if (q.modo === "ahorro") return `<div class="compra"><span class="cosa" aria-hidden="true">🐷</span>${q.cosa ? `<span class="cosa" aria-hidden="true">${q.cosa.e}</span>` : ""}</div>`;
+  return "";
+}
+// Tocar una moneda o un billete dice cuánto vale
+$("escena").addEventListener("click", e => {
+  const b = e.target.closest("[data-oir]");
+  if (!b) return;
+  sonido("tap");
+  decir(nombrePieza(Number(b.dataset.oir)));
+});
+
+// Lo que se le señala si se queda pegado o tras el 2.º error
+function objetivo() {
+  if (!q || listo) return null;
+  if (q.tipo === "opciones") return $("opciones").querySelector(`[data-id="${CSS.escape(q.correcta)}"]`);
+  if (q.tipo === "escribir") return $("formEsc");
+  const total = suma(puestas);
+  if (total === q.meta) return $("listoBtn");
+  if (total < q.meta) {
+    const falta = q.meta - total, v = q.cartera.filter(x => x <= falta && alcanzable(falta - x, q.cartera)).sort((a, b) => b - a)[0];
+    if (v) return $("opciones").querySelector(`[data-poner="${v}"]`);
+    // Con lo que hay no se llega justo (por ejemplo, faltan ₡3 000 y solo hay de ₡2 000 y ₡5 000): mejor quitar una
+    const chica = puestas.indexOf(Math.min(...puestas));
+    return $("mostrador").querySelector(`[data-quitar="${chica}"]`);
+  }
+  // Se pasó: la pieza que conviene quitar (la que más se acerca al exceso sin pasarse; si no, la más chiquita)
+  const sobra = total - q.meta;
+  const idx = puestas.map((v, i) => ({ v, i }));
+  const quitar = idx.filter(x => x.v <= sobra).sort((a, b) => b.v - a.v)[0] || idx.sort((a, b) => a.v - b.v)[0];
+  return $("mostrador").querySelector(`[data-quitar="${quitar.i}"]`);
+}
+
+// ---------- Acertó / se equivocó ----------
+function acierto(explica = q.explica, vozExplica = q.vozExplica) {
+  listo = true; ayuda.parar();
+  document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  const limpio = fallos === 0 && !ayuda.usada;
+  if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); } else feedback("almost", "🤏", "¡Ahora sí!");
+  $("explica").hidden = false; $("explica").innerHTML = explica;
+  decir(`${limpio ? elogio() : "¡Ahora sí!"} ${vozExplica}`);
+  esc.resultado({ fallos, ayuda: ayuda.usada, opciones: q.tipo === "opciones" ? q.opciones.length : 0 });
+  $("opciones").querySelectorAll("button, input").forEach(b => { b.disabled = true; });
+  $("nextBtn").classList.add("pulse");
+}
+
+function error(el, casi, dicho) {
+  fallos++;
+  if (el) { el.classList.add("nope"); setTimeout(() => el.classList.remove("nope"), 400); }
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", casi ? "¡Casi!" : "No es");
+  decir(dicho);
+  if (fallos >= 2) senalar(objetivo());
+}
+
+// ---------- Escoger una opción ----------
+$("opciones").addEventListener("click", e => {
+  const b = e.target.closest("[data-id]");
+  if (!b || listo || b.disabled || q.tipo !== "opciones") return;
+  sonido("tap");
+  if (b.dataset.id === q.correcta) { b.classList.add("right"); return acierto(); }
+  b.disabled = true; b.classList.add("wrong");
+  const o = q.opciones.find(x => x.id === b.dataset.id);
+  let casi = false, dicho;
+  if (q.modo === "contar") {
+    const dif = Math.abs(Number(o.id) - q.total);
+    casi = q.piezas.includes(dif);
+    dicho = `Ahí dice ${o.voz}. ${casi ? `¡Casi! Te ${Number(o.id) > q.total ? "sobra" : "falta"} ${esBillete(dif) ? "un billete" : "una moneda"} de ${vc(dif)}.` : q.vozPista}`;
+  } else if (q.modo === "alcanza") {
+    const f = q.faltan[o.id];
+    dicho = `${f.con[0].toUpperCase() + f.con.slice(1)} ${f.pl ? "cuestan" : "cuesta"} ${vc(f.p)} y tenés ${vc(q.total)}: te faltan ${vc(f.falta)}. ${q.vozPista}`;
+  } else if (q.modo === "cambio") {
+    const n = Number(o.id), junta = n * q.chica;
+    casi = Math.abs(n - Number(q.correcta)) <= 1;
+    dicho = `Con ${n} ${esBillete(q.chica) ? "billetes" : "monedas"} de ${vc(q.chica)} se juntan ${vc(junta)}, ${junta < q.grande ? "y falta" : "y es más que"} ${esBillete(q.grande) ? "el billete" : "la moneda"} de ${vc(q.grande)}. ${q.vozPista}`;
+  }
+  const quedan = [...$("opciones").querySelectorAll("button:not(:disabled)")];
+  error(b, casi, dicho);
+  if (quedan.length === 1) senalar(quedan[0]);
+});
+
+// ---------- Pagar: poner piezas en el mostrador ----------
+function pintarPagar() {
+  $("escena").insertAdjacentHTML("beforeend", `<div class="mostrador" id="mostrador" aria-label="Mostrador"></div><div class="llevas" id="llevas" aria-live="polite"></div>`);
+  $("opciones").className = "wrap opciones pagar";
+  $("opciones").innerHTML = q.cartera.map(v => pieza(v, { attrs: `data-poner="${v}"`, label: `Poner ${nombrePieza(v)}` })).join("")
+    + `<button type="button" id="listoBtn" aria-label="Listo, revisar">✔️</button>`;
+  pintarMostrador();
+}
+function pintarMostrador() {
+  $("mostrador").innerHTML = puestas.map((v, i) => pieza(v, { attrs: `data-quitar="${i}"`, label: `Quitar ${nombrePieza(v)}` })).join("");
+  const total = suma(puestas);
+  if (q.modo === "vuelto") {
+    // Contando hacia arriba desde el precio: 650 → 700 → 800…
+    let s = q.base;
+    const cadena = [miles(s), ...puestas.map(v => miles(s += v))].join(" → ");
+    $("llevas").innerHTML = `Vas por <b>${col(q.base + total)}</b> de ${col(q.pago)}<span class="cadena">${cadena}</span>`;
+  } else if (q.mostrarTotal) $("llevas").innerHTML = `Llevás <b>${col(total)}</b>`;
+  else $("llevas").textContent = puestas.length ? `${puestas.length} ${puestas.length === 1 ? "pieza" : "piezas"} en el mostrador` : "";
+}
+$("opciones").addEventListener("click", e => {
+  if (listo || q?.tipo !== "pagar") return;
+  const b = e.target.closest("[data-poner], #listoBtn");
+  if (!b) return;
+  document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  if (b.id === "listoBtn") return revisarPago();
+  if (puestas.length >= 30) { feedback("almost", "🤚", "Ya no cabe más"); return; }
+  sonido("tap");
+  const v = Number(b.dataset.poner);
+  puestas.push(v);
+  pintarMostrador();
+  const total = suma(puestas);
+  // En el vuelto se cuenta en voz alta hacia arriba; si se ve el total, se dice el total; si no, cuánto vale la pieza
+  decir(q.modo === "vuelto" ? String(q.base + total) : q.mostrarTotal ? vc(total) : nombrePieza(v));
+});
+$("escena").addEventListener("click", e => {
+  const b = e.target.closest("[data-quitar]");
+  if (!b || listo || q?.tipo !== "pagar") return;
+  sonido("tap");
+  puestas.splice(Number(b.dataset.quitar), 1);
+  document.querySelectorAll(".senal").forEach(x => x.classList.remove("senal"));
+  pintarMostrador();
+});
+function revisarPago() {
+  const total = suma(puestas);
+  if (!puestas.length) { sonido("tap"); decir("Primero poné plata en el mostrador."); return; }
+  if (total === q.meta) {
+    if (q.modo !== "pagar") return acierto();
+    // Lo que puso el niño y, si se podía con menos piezas, cómo
+    const suyas = [...puestas].sort((a, b) => b - a), menos = minimas(q.meta, q.cartera);
+    const otra = menos.length < suyas.length;
+    return acierto(
+      `Pusiste ${suyas.map(col).join(" + ")} = <b>${col(q.meta)}</b>.${otra ? ` También se puede con menos monedas: ${menos.map(col).join(" + ")}.` : ""}`,
+      `Juntaste ${vc(q.meta)} exactos.${otra ? ` También se puede con menos monedas: ${menos.join(" más ")}.` : ""}`);
+  }
+  sonido("tap");
+  const repetido = revisados.has(total); // revisar dos veces lo mismo no cuenta como otro error
+  revisados.add(total);
+  const dif = Math.abs(total - q.meta), falta = total < q.meta;
+  const casi = falta ? q.cartera.includes(dif) : puestas.includes(dif);
+  let visto, dicho;
+  if (q.modo === "vuelto") {
+    visto = falta ? `Vas por ${col(q.base + total)}: seguí hasta ${col(q.pago)}` : `Te pasaste de ${col(q.pago)}`;
+    dicho = falta ? `Vas por ${q.base + total}. Seguí contando hasta ${q.pago}.` : `Te pasaste: llegaste a ${q.base + total} y te pagaron con ${q.pago}. Quitá una moneda.`;
+  } else {
+    visto = falta ? `Llevás ${col(total)}: te faltan ${col(dif)}` : `Llevás ${col(total)}: te pasaste por ${col(dif)}`;
+    dicho = falta ? `Llevás ${vc(total)}. Te faltan ${vc(dif)}.` : `Llevás ${vc(total)}. Te pasaste por ${vc(dif)}: quitá ${puestas.includes(dif) ? "esa" : "alguna"} pieza.`;
+  }
+  if (!q.mostrarTotal || q.modo === "vuelto") $("llevas").innerHTML = `${$("llevas").innerHTML.split("<br>")[0]}<br>${visto}`;
+  if (repetido) { feedback(casi ? "almost" : "bad", "🤔", visto); decir(dicho); return; }
+  error($("listoBtn"), casi, dicho);
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🙈", visto);
+}
+
+// ---------- Escribir el monto ----------
+function pintarEscribir() {
+  $("opciones").className = "wrap";
+  $("opciones").innerHTML = `<form class="escribir" id="formEsc" novalidate>${q.prefijo ? `<span class="pre" aria-hidden="true">${q.prefijo}</span>` : ""}
+    <input id="resp" inputmode="numeric" autocomplete="off" enterkeyhint="done" aria-label="Tu respuesta${q.sufijo ? ` en ${q.sufijo}` : " en colones"}">
+    ${q.sufijo ? `<span class="suf">${q.sufijo}</span>` : ""}<button type="submit" aria-label="Revisar">✔️</button></form>`;
+  const r = ronda_;
+  setTimeout(() => { if (r === ronda_ && !listo) $("resp")?.focus({ preventScroll: true }); }, 60);
+}
+$("opciones").addEventListener("submit", e => {
+  e.preventDefault();
+  if (listo || q?.tipo !== "escribir") return;
+  const campo = $("resp"), dado = campo.value.trim().split("₡").join("").trim();
+  if (!dado) return;
+  if (igual(String(q.correcta), dado, true)) { campo.className = "right"; return acierto(); }
+  const clave = dado.split(" ").join("").split(".").join("");
+  if (malos.has(clave)) { decir(`Ese ya lo probaste. ${q.vozPista}`); campo.select(); return; } // el mismo número otra vez no cuenta como otro error
+  malos.add(clave);
+  campo.className = "wrong";
+  const n = Number(clave), dif = Math.abs(n - q.correcta);
+  const casi = isFinite(n) && (MONEDAS.includes(dif) || BILLETES.includes(dif)) && dif <= q.correcta / 2;
+  if (fallos >= 1) {
+    // Segundo error: se muestra cómo era (cuenta como ronda difícil)
+    fallos++;
+    campo.value = miles(q.correcta); campo.disabled = true;
+    feedback("almost", "🤔", `Así era: ${q.prefijo ? col(q.correcta) : `${q.correcta} ${q.sufijo || ""}`}`);
+    listo = true; ayuda.parar();
+    $("explica").hidden = false; $("explica").innerHTML = q.explica;
+    decir(`Así era. ${q.vozExplica}`);
+    esc.resultado({ fallos, ayuda: ayuda.usada });
+    $("opciones").querySelectorAll("button, input").forEach(b => { b.disabled = true; });
+    $("nextBtn").classList.add("pulse");
+    return;
+  }
+  fallos++;
+  feedback(casi ? "almost" : "bad", casi ? "🤏" : "🤔", casi ? "¡Casi!" : "Todavía no");
+  decir(`${casi ? "¡Casi! " : "No es. "}${q.vozPista}`);
+  $("explica").hidden = false; $("explica").textContent = "💡 " + q.pista;
+  campo.select();
+});
+
+// ---------- Botones ----------
+$("nextBtn").addEventListener("click", () => {
+  // Saltarse una ronda después de equivocarse cuenta como ronda difícil
+  if (!listo && fallos > 0) esc.resultado({ fallos: 2 });
+  sonido("tap"); nuevo();
+});
+niveles(v => {
+  esc.activa = v === "auto";
+  manual = v === "auto" ? null : v;
+  nuevo();
+});
+alEmpezar(nuevo);
+
+if (new URLSearchParams(location.search).has("prueba")) window.__alcancia = { get q() { return q; }, get nivel() { return esc.nivel; }, get fallos() { return fallos; }, get puestas() { return puestas; }, get listo() { return listo; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

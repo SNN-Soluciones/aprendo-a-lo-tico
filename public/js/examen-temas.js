@@ -25,6 +25,11 @@ import { TEXTOS, prepararPreguntas, explicacion as explicacionCuento } from "./c
 import { PARTES, SISTEMAS, ORGANICOS, RECORRIDOS, sentidoUso, habitoSiNo, habitoCual, concepto } from "./cuerpo.js";
 import { pregunta as preguntaCadena } from "./cadenas.js";
 import { HECHOS, MODOS as MODOS_HISTORIA, preguntaDeModo } from "./historia.js";
+// Lote 4: juegos que traen su propia pregunta de examen
+import { preguntaExamen as preguntaPlata } from "./plata.js";
+import { preguntaExamen as preguntaMedidas } from "./medidas.js";
+import { preguntaExamen as preguntaComunidad } from "./comunidad.js";
+import { preguntaExamen as preguntaGeometria } from "./geometria.js";
 
 // ---------- Ayudas ----------
 const ent = (a, b, r) => a + Math.floor(r() * (b - a + 1));
@@ -660,6 +665,8 @@ const MATE = [
   } },
   { id: "geometria", nombre: "Geometría", emoji: "📐", grados: [1, 2, 3, 4, 5, 6], pregunta: (r, g) => {
     const figuras = [["triángulo", 3], ["cuadrado", 4], ["rectángulo", 4], ["pentágono", 5], ["hexágono", 6], ["octágono", 8]];
+    // En 1° y 2° solo hay pocas preguntas de lados: la mitad de las veces sale una con dibujo (js/geometria.js)
+    if (g <= 2 && r() < 0.5) return preguntaGeometria(r, g);
     const tipo = g <= 2 ? "lados" : elegir(g >= 4 ? ["perimetro", "area", "angulo", "lados"] : ["perimetro", "lados", "figura"], r);
     if (tipo === "lados") { const [f, l] = elegir(figuras.slice(0, g <= 1 ? 3 : 6), r); return num(`¿Cuántos lados tiene un ${f}?`, l, `El ${f} tiene ${l} lados.`); }
     if (tipo === "figura") { const [f, l] = elegir(figuras.filter(x => x[0] !== "rectángulo"), r); return opc(`¿Qué figura tiene ${l} lados?`, f, figuras.filter(x => x[1] !== l).map(x => x[0]), `La figura con ${l} lados es el ${f}.`, r); }
@@ -683,6 +690,9 @@ const MATE = [
   { id: "decimales", nombre: "Decimales", emoji: "🔟", grados: [4, 5, 6], pregunta: decimales },
   { id: "porcentajes", nombre: "Porcentajes", emoji: "💯", grados: [5, 6], pregunta: porcentajes },
   { id: "graficos", nombre: "Gráficos y probabilidad", emoji: "📊", grados: [2, 3, 4, 5, 6], pregunta: graficosTema },
+  { id: "alcancia", nombre: "Monedas y billetes", emoji: "🐷", grados: [1, 2, 3, 4], pregunta: (r, g) => preguntaPlata(r, g) },
+  { id: "medidas", nombre: "Medidas", emoji: "📏", grados: [2, 3, 4, 5, 6], pregunta: (r, g) => preguntaMedidas(r, g) },
+  { id: "geometria-dibujos", nombre: "Figuras, ángulos y cuerpos", emoji: "🔺", grados: [1, 2, 3, 4, 5, 6], pregunta: (r, g) => preguntaGeometria(r, g) },
 ];
 
 // ================= ESPAÑOL =================
@@ -797,6 +807,7 @@ const SOCIALES = [
   { id: "historia", nombre: "Historia de Costa Rica", emoji: "🏛️", grados: [2, 3, 4, 5, 6], pregunta: historiaTema },
   { id: "gobierno", nombre: "Gobierno y ciudadanía", emoji: "⚖️", grados: [5, 6], pregunta: gobiernoTema },
   { id: "direcciones", nombre: "Puntos cardinales y direcciones", emoji: "🧭", grados: [1, 2, 3, 4, 5, 6], pregunta: direcciones },
+  { id: "comunidad", nombre: "Mi comunidad", emoji: "🏘️", grados: [1, 2], pregunta: (r, g) => preguntaComunidad(r, g) },
 ];
 
 // ================= INGLÉS =================

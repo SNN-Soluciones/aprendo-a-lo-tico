@@ -22,7 +22,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🐥 ¡A contar! | Matemáticas | Prepa y 1° | `public/juegos/contar.html` |
 | 🔺 Colores y figuras | Matemáticas | Prepa | `public/juegos/colores-figuras.html` |
 | 👂 ¿Con qué empieza? | Español | Prepa y 1° | `public/juegos/sonido-inicial.html` |
-| ✍️ Trazá letras y números | Español | Prepa y 1° | `public/juegos/trazos.html` |
+| ✍️ Trazá letras y números (y tu nombre) | Español | Prepa y 1° (4 a 8 años) | `public/juegos/trazos.html` |
 | 🦥 Llevá al perezoso | Programación | Prepa a 2° | `public/juegos/perezoso.html` |
 | 🔁 Repetí y decidí | Programación | 2° a 4° | `public/juegos/repeti-decidi.html` |
 | 🦜 La lapa que dibuja | Programación | 4° a 6° | `public/juegos/lapa.html` |
@@ -67,6 +67,12 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🪐 El sistema solar y la Tierra | Ciencias | 3° a 6° | `public/juegos/espacio.html` |
 | 🌋 Volcanes, ríos y regiones | Estudios Sociales | 3° a 6° | `public/juegos/paisajes.html` |
 | 🌦️ My day in English | Inglés | 2° a 6° | `public/juegos/my-day.html` |
+| 🐷 La alcancía (monedas y billetes) | Matemáticas | 1° a 4° | `public/juegos/alcancia.html` |
+| 📐 Geometría: figuras, ángulos y cuerpos | Matemáticas | 1° a 6° | `public/juegos/geometria.html` |
+| 📏 Medidas en la feria | Matemáticas | 2° a 6° | `public/juegos/medidas.html` |
+| 📖 Leo y miro (primeras lecturas) | Español | Prepa a 2° (5 a 8 años) | `public/juegos/leo.html` |
+| 🎶 La marimba (memoria y oído musical) | Pensamiento lógico | Prepa a 6° (3 a 12 años) | `public/juegos/marimba.html` |
+| 🏘️ Mi comunidad | Estudios Sociales | Prepa a 3° (4 a 9 años) | `public/juegos/comunidad.html` |
 
 ## 📝 Preparate para el examen
 
@@ -99,11 +105,16 @@ aprendo-a-lo-tico/
 │   ├── js/fracciones.js, repartir.js, bus.js, area.js, porcentajes.js, graficos.js
 │   │                       # 🔢 Generadores de Matemáticas de 2° a 6° (cada uno con su revisar… para node)
 │   ├── js/palabras.js, acentos.js, cuentos.js
-│   │                       # ✏️ Clases de palabras, sílabas y tildes (200 palabras curadas), 27 textos originales
+│   │                       # ✏️ Clases de palabras, sílabas y tildes (200 palabras curadas), 82 textos originales
 │   ├── js/cuerpo.js, cadenas.js, historia.js, rumbos.js
 │   │                       # 🌱🗺️ Cuerpo humano (con dibujo), cadenas alimenticias, historia de Costa Rica, mapas
 │   ├── js/silabas.js, numeros.js, emociones.js, estrategia.js, espacio.js, paisajes.js, my-day.js
 │   │                       # 🔤💯💭♟️🪐🌋🌦️ Lote 3 (paisajes.js reusa el mapa de provincias y su proyección)
+│   ├── js/plata.js, geometria.js, medidas.js, leo.js, marimba.js, comunidad.js
+│   │                       # 🐷📐📏📖🎶🏘️ Lote 4 (cada uno con su revisar… y, los del MEP, su preguntaExamen)
+│   ├── js/trazos.js        # ✍️ Trazos en orden de 76 letras, números y marcas (tilde, ñ, ü), con revisarTrazos()
+│   ├── js/bloques.js, reloj.js # 🧱🕒 Escalones de Sumas/Restas con bloques y de Aprendo la hora
+│   ├── js/album.js         # 🏆 Stickers del álbum de cada perfil (60, algunos con dibujo SVG propio)
 │   ├── js/perezoso.js      # 🦥 Niveles y lógica de "Llevá al perezoso"
 │   ├── js/decidi.js        # 🔁 Niveles e intérprete de bloques de "Repetí y decidí"
 │   ├── js/lapa.js          # 🦜 Retos, dibujo y comparación de "La lapa que dibuja"
@@ -231,7 +242,9 @@ La primera vez, el inicio pregunta **cuántos años tiene** quien va a jugar, **
 
 Los juegos de preguntas (`js/quiz.js`) también tienen escalera: `montarQuiz({ …, escalera: { id, escalones: [{ nombre, pregunta }], inicio } })` agrega el modo 🪜 (por defecto), que va pregunta por pregunta. Las preguntas pueden ser con opciones o para escribir la respuesta (`escribir: { respuesta, numero, sufijo }`, acepta coma o punto decimal y espacio de miles). Ver `juegos/bus.html`.
 
-En el inicio, «📈 Cómo va…» muestra en qué escalón va el niño en cada juego que ya jugó.
+En el inicio, «📈 Cómo va…» muestra en qué escalón va el niño en cada juego que ya jugó. Adentro está el **modo papá** (se entra contestando una multiplicación, sin PIN guardado): − y + mueven el escalón de cada juego (queda sin hojitas y sin el «nuevo» que suma doble) y ↺ lo empieza de cero (`ponerEscalon()` y `reiniciarJuego()` en `js/perfil.js`).
+
+**🏆 Álbum de stickers (`js/album.js`):** cada vez que la escalera de un juego llega a un escalón más alto que nunca (`max` en lo guardado), el niño gana un sticker que no tenía: el cartel «¡Subiste!» lo muestra y la voz lo dice. Bajar y volver a subir no da otro. Se guarda en `alt-album-<perfil>` y se ve en «🏆 Mi álbum» del inicio.
 
 Para pasar un juego a la escalera (ver `juegos/contar.html`):
 

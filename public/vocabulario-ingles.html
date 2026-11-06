@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Vocabulario · My oral exam · Aprendo a lo Tico</title>
+<meta name="theme-color" content="#CFEFE3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  :root { --materia: #8E5BD9; }
+  .page { width: min(94vw, 820px); }
+  .hero p { max-width: 46ch; }
+  .barra { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .barra a, .barra button { font: inherit; font-weight: 800; font-size: 1rem; color: var(--ink); text-decoration: none; background: var(--face); border: 3px solid var(--rim); border-radius: 999px; padding: 4px 14px; box-shadow: 0 3px 0 var(--rim); cursor: pointer; }
+  .barra .principal { background: var(--btn); }
+  .barra a:active, .barra button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--rim); }
+  .indice { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .indice a { font-weight: 800; color: var(--materia); text-decoration: none; background: #F6F0FF; border: 2px solid var(--materia); border-radius: 999px; padding: 2px 12px; }
+
+  .card { padding: 12px 14px; }
+  .card h2 { font-size: 1.5rem; color: var(--materia); display: flex; align-items: center; gap: 8px; }
+  .card h2 small { font-size: .95rem; font-weight: 700; color: var(--soft); }
+  .card h3 { margin: 12px 0 4px; font-size: 1.1rem; color: var(--page-ink); }
+  .card p { margin: 4px 0; }
+
+  /* Frases del examen: pregunta → respuesta */
+  .frases { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 10px; }
+  .frase { display: flex; align-items: center; gap: 8px; background: #F6F0FF; border: 2px dashed var(--materia); border-radius: 14px; padding: 6px 10px; }
+  .frase div { flex: 1; font-size: 1.02rem; line-height: 1.3; font-weight: 700; }
+  .frase .q { color: var(--materia); }
+  .frase .a { color: var(--ok); }
+  .frase .t { display: block; font-size: .85rem; font-weight: 600; opacity: .75; }
+  .frase .pr { display: block; font-size: .85rem; font-weight: 600; color: var(--soft); font-style: italic; }
+
+  /* Palabras: dibujo · inglés · español · suena */
+  .palabras { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+  .palabra { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; background: var(--face); border: 3px solid var(--rim); border-radius: 16px; padding: 8px 6px 6px; box-shadow: 0 3px 0 var(--rim); cursor: pointer; font: inherit; color: var(--ink); -webkit-tap-highlight-color: transparent; }
+  .palabra:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--rim); }
+  .palabra .emo { font-size: 2.6rem; line-height: 1.1; }
+  .palabra .dib { width: 3rem; height: auto; }
+  .palabra .color { width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 3px solid var(--rim); background: var(--c); }
+  .palabra b { font-size: 1.2rem; color: var(--materia); line-height: 1.1; margin-top: 2px; }
+  .palabra .es { font-size: .95rem; font-weight: 700; }
+  .palabra .pr { font-size: .85rem; font-weight: 600; color: var(--soft); font-style: italic; }
+  .palabra .extra { font-size: .8rem; font-weight: 700; opacity: .8; margin-top: 2px; line-height: 1.15; }
+  .palabra .alto { position: absolute; top: 4px; right: 6px; font-size: .9rem; opacity: .7; }
+  .palabra.hablando { outline: 4px solid var(--btn); }
+  .palabritas .palabra { padding-top: 6px; }
+  .palabritas .palabra b { font-size: 1.1rem; }
+
+  .tip { margin-top: 10px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-weight: 700; font-size: .95rem; }
+  .tip b { color: #7A5A00; }
+
+  /* 🖨️ En papel: sin botones ni sombras, en columnas, cada tema en su hoja */
+  @media print {
+    body { background: #fff; }
+    .page { width: 100%; padding: 0; }
+    .back, .barra, .indice, .tip, .palabra .alto, .frase button { display: none !important; }
+    .card { break-inside: avoid; box-shadow: none; border-width: 2px; margin-top: 10px; page-break-inside: avoid; }
+    .card.tema:not(:first-child) { break-before: page; }
+    .palabra { box-shadow: none; border-width: 2px; }
+    .palabras { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    .frase { border-color: #888; background: #fff; }
+    .hero p { display: none; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Volver a los juegos</a>
+
+  <header class="hero">
+    <h1>📚 Vocabulario de inglés</h1>
+    <p>Las palabras y las frases de la prueba oral: <b>family</b>, <b>house</b> y <b>animals</b>. Tocá una palabra para oírla. <i>Suena como</i> es una ayudita para pronunciar, no la escritura.</p>
+    <div class="barra">
+      <a class="principal" href="juegos/oral-ingles.html">🎤 Ir a practicar</a>
+      <button id="lentoBtn" aria-pressed="false">🐢 Despacio</button>
+      <button id="imprimirBtn">🖨️ Imprimir</button>
+    </div>
+    <nav class="indice" aria-label="Temas">
+      <a href="#family">👨‍👩‍👧 Family</a><a href="#house">🏠 House</a><a href="#animals">🐴 Animals</a><a href="#palabritas">🔤 Palabritas</a>
+    </nav>
+  </header>
+
+  <div id="contenido"></div>
+
+  <p class="foot">Las palabras son las del temario de la profesora. Si en clase usan otra, decinos en <a href="sugerencias.html">sugerencias</a>.</p>
+</main>
+
+<script type="module">
+import { hablar, LENTO, VELOCIDAD, puedeHablar } from "./js/voz.js";
+import { FAMILIA, CUARTOS, OBJETOS, ANIMALES, HABITATS, COLORES, PALABRITAS, dibujo } from "./js/oral-ingles.js";
+
+const $ = id => document.getElementById(id);
+let lento = false;
+
+const circulo = hex => `<span class="color" style="--c:${hex.length > 1 ? `linear-gradient(90deg, ${hex[0]} 50%, ${hex[1]} 50%)` : hex[0]}"></span>`;
+const may = t => t.charAt(0).toUpperCase() + t.slice(1);
+
+/** Una tarjeta de palabra. di: lo que se dice al tocarla (si no, la palabra). */
+const palabra = (x, { extra = "", di = x.en, dib = null } = {}) =>
+  `<button class="palabra" data-di="${di}" aria-label="Oír ${x.en}">
+    <span class="alto" aria-hidden="true">🔊</span>
+    ${dib ?? dibujo(x)}
+    <b>${x.en}</b><span class="es">${x.es}</span><span class="pr">suena «${x.pron}»</span>
+    ${extra ? `<span class="extra">${extra}</span>` : ""}
+  </button>`;
+
+/** Pregunta → respuesta, con traducción y cómo suena. */
+const frase = (q, a, es, pron) =>
+  `<div class="frase"><div><span class="q">${q}</span> → <span class="a">${a}</span><span class="t">${es}</span>${pron ? `<span class="pr">suena «${pron}»</span>` : ""}</div>
+   <button class="palabra" style="padding:4px 10px" data-di="${q} ${a}" aria-label="Oír">🔊</button></div>`;
+
+const html = `
+<section class="card tema" id="family">
+  <h2>👨‍👩‍👧 Family <small>la familia</small></h2>
+  <div class="frases">
+    ${frase("Who is he?", "He is my father.", "¿Quién es él? → Él es mi papá.", "ju is ji · ji is mái fáder")}
+    ${frase("Who is she?", "She is my aunt.", "¿Quién es ella? → Ella es mi tía.", "ju is shi · shi is mái ant")}
+    ${frase("Who are they?", "They are my cousins.", "¿Quiénes son ellos? → Son mis primos.", "ju ar déi · déi ar mái cásins")}
+    ${frase("Where is your uncle?", "He is in the garage.", "¿Dónde está tu tío? → Está en el garaje.", "uér is yor ánkol · ji is in da garásh")}
+  </div>
+  <div class="palabras">${FAMILIA.map(f => palabra(f, { extra: f.g === "they" ? "they are my cousins" : `${f.g} is my ${f.en}`, di: f.g === "they" ? "cousins. They are my cousins." : `${f.en}. ${may(f.g)} is my ${f.en}.` })).join("")}</div>
+  <p class="tip">💡 <b>he</b> para hombres (father, brother, grandfather, uncle, cousin) y <b>she</b> para mujeres (mother, sister, grandmother, aunt). <b>my</b> = mi.</p>
+</section>
+
+<section class="card tema" id="house">
+  <h2>🏠 House <small>la casa</small></h2>
+  <h3>Parts of the house · partes de la casa</h3>
+  <div class="frases">
+    ${frase("Where is he?", "He is in the kitchen.", "¿Dónde está él? → Está en la cocina.", "uér is ji · ji is in da kíchen")}
+    ${frase("Where is she?", "She is in the bedroom.", "¿Dónde está ella? → Está en el dormitorio.", "uér is shi · shi is in da béd-rum")}
+    ${frase("What is in the kitchen?", "There is a stove and a refrigerator.", "¿Qué hay en la cocina? → Hay una estufa y una refrigeradora.", "uát is in da kíchen · der is a stóuv and a refríyereitor")}
+  </div>
+  <div class="palabras">${CUARTOS.map(c => palabra(c, { di: `${c.en}. He is in the ${c.en}.`, extra: `in the ${c.en}` })).join("")}</div>
+  <h3>House objects · cosas de la casa</h3>
+  <div class="frases">
+    ${frase("What is this?", "It is a sofa.", "¿Qué es esto? → Es un sofá.", "uát is dis · it is a sóufa")}
+    ${frase("What are these?", "These are chairs.", "¿Qué son estos? → Son sillas.", "uát ar diis · diis ar chers")}
+    ${frase("How many chairs are there?", "There are three chairs.", "¿Cuántas sillas hay? → Hay tres sillas.", "jáu méni chers ar der · der ar zri chers")}
+    ${frase("There is a bed.", "There are two beds.", "Hay una cama. → Hay dos camas.", "der is a bed · der ar tu beds")}
+  </div>
+  <div class="palabras">${OBJETOS.map(o => palabra(o, { di: `${o.en}. ${o.pl}.`, extra: `varios: ${o.pl}` })).join("")}</div>
+  <p class="tip">💡 Uno: <b>It is a…</b> (y <b>an</b> si empieza con vocal). Varios: <b>These are…</b> y la palabra con <b>-s</b>. <b>There is</b> = hay uno · <b>There are</b> = hay varios.</p>
+</section>
+
+<section class="card tema" id="animals">
+  <h2>🐴 Animals <small>los animales</small></h2>
+  <div class="frases">
+    ${frase("What animal is this?", "It is a horse.", "¿Qué animal es este? → Es un caballo.", "uát ánimal is dis · it is a jors")}
+    ${frase("Is it big or small?", "It is big.", "¿Es grande o pequeño? → Es grande.", "is it big or smol · it is big")}
+    ${frase("What color is it?", "It is brown.", "¿De qué color es? → Es café.", "uát cólor is it · it is bráun")}
+    ${frase("Where does the horse live?", "The horse lives in a stable.", "¿Dónde vive el caballo? → El caballo vive en un establo.", "uér das da jors liv · da jors livs in a stéibol")}
+    ${frase("Where do cows live?", "Cows live in a barn.", "¿Dónde viven las vacas? → Las vacas viven en un granero.", "uér du cáus liv · cáus liv in a barn")}
+  </div>
+  <h3>Farm animals and pets · animales</h3>
+  <div class="palabras">${ANIMALES.map(a => palabra(a, { di: `${a.en}. It is ${a.size}. It is ${a.color}. ${may(a.pl)} live in ${a.the ? "the" : "a"} ${a.hab}.`, extra: `${a.size} · ${a.color}<br>🏠 ${a.hab}` })).join("")}</div>
+  <h3>Where do they live? · dónde viven</h3>
+  <div class="palabras">${HABITATS.map(h => palabra(h, { dib: `<span class="emo">${{ stable: "🐴", barn: "🐄", pigsty: "🐷", coop: "🐔", pond: "🦆", hutch: "🐰", doghouse: "🐶", house: "🐱", water: "🐟", nest: "🐦", hive: "🐝" }[h.id]}</span>`, extra: `${ANIMALES.filter(a => a.hab === h.id).map(a => a.pl).join(", ")} live in ${h.the ? "the" : "a"} ${h.en}`, di: `${h.en}. ${ANIMALES.filter(a => a.hab === h.id).map(a => `${may(a.pl)} live in ${h.the ? "the" : "a"} ${h.en}.`).join(" ")}` })).join("")}</div>
+  <h3>Colors and size · colores y tamaño</h3>
+  <div class="palabras">
+    ${COLORES.map(c => palabra(c, { dib: circulo(c.hex), di: `${c.en}. It is ${c.en}.` })).join("")}
+    ${palabra({ en: "big", es: "grande", pron: "big" }, { dib: `<span class="emo">🐘</span>`, di: "big. It is big." })}
+    ${palabra({ en: "small", es: "pequeño", pron: "smol" }, { dib: `<span class="emo">🐜</span>`, di: "small. It is small." })}
+  </div>
+  <p class="tip">💡 Para animales se dice <b>it</b>. Uno: <b>the horse lives</b> (con s). Varios: <b>horses live</b> (sin s).</p>
+</section>
+
+<section class="card" id="palabritas">
+  <h2>🔤 Palabritas <small>las que arman las respuestas</small></h2>
+  <div class="palabras palabritas">${PALABRITAS.map(p => `<button class="palabra" data-di="${p.en}" aria-label="Oír ${p.en}"><span class="alto" aria-hidden="true">🔊</span><b>${p.en}</b><span class="es">${p.es}</span><span class="pr">suena «${p.pron}»</span></button>`).join("")}</div>
+</section>`;
+$("contenido").innerHTML = html;
+
+// 🔊 Tocar una palabra la dice en inglés (con 🐢 activado, despacio)
+let hablando = null;
+$("contenido").addEventListener("click", async e => {
+  const b = e.target.closest("[data-di]");
+  if (!b) return;
+  hablando?.classList.remove("hablando");
+  hablando = b; b.classList.add("hablando");
+  await hablar(b.dataset.di, { lang: "en", rate: lento ? LENTO : VELOCIDAD });
+  b.classList.remove("hablando");
+});
+$("lentoBtn").addEventListener("click", () => {
+  lento = !lento;
+  $("lentoBtn").setAttribute("aria-pressed", lento);
+  $("lentoBtn").style.background = lento ? "var(--btn)" : "";
+});
+$("imprimirBtn").addEventListener("click", () => window.print());
+if (!puedeHablar) document.querySelector(".hero p").insertAdjacentHTML("beforeend", " <b>Este aparato no puede leer en voz alta.</b>");
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>

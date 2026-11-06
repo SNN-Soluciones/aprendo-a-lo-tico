@@ -314,6 +314,17 @@ export const JUEGOS = [
     url: "juegos/memory-ingles.html",
   },
   {
+    id: "oral-ingles",
+    titulo: "My oral exam",
+    descripcion: "Practicá la prueba oral de inglés: family, house y animals. Escuchá y tocá, contestá en voz alta (con 🎤) y hacé la entrevista como en el examen.",
+    emoji: "🎤",
+    materia: "ingles",
+    grados: [1, 2, 3],
+    edad: [6, 10],
+    leer: "poco",
+    url: "juegos/oral-ingles.html",
+  },
+  {
     id: "efemerides",
     titulo: "Efemérides",
     descripcion: "15 de setiembre, 25 de julio, 11 de abril… ¿qué celebramos cada día, en qué mes, en qué año pasó y por qué?",

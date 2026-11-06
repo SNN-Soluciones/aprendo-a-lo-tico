@@ -133,7 +133,7 @@ aprendo-a-lo-tico/
 │   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/frases-en.js    # 🦜 Frases en inglés y español, fichas con trampas y revisión
 │   ├── js/memory-en.js    # 🧠 Palabras en inglés por tema y lógica de la memoria
-│   ├── js/oral-ingles.js  # 🎤 Prueba oral de inglés (family, house, animals): preguntas de oír y de contestar, entrevista y revisarOral()
+│   ├── js/oral-ingles.js  # 🎤 Prueba oral de inglés (family, house, animals): oír, contestar, escribir y entrevista en 3 niveles (cfg), con revisarOral()
 │   ├── js/efemerides.js   # 📅 Fechas patrias y celebraciones de Costa Rica
 │   ├── js/ortografia.js   # 🐝 Palabras con b/v, s/c/z y h, y sus reglas
 │   ├── js/ecosistemas.js  # 🌳 Ecosistemas, quién vive en cada uno y dónde quedan

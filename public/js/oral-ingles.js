@@ -20,72 +20,85 @@ const en = t => [t, "en"];
 // ---------- 👨‍👩‍👧 Family ----------
 // g: "he" | "she" (cómo se dice en la respuesta)
 export const FAMILIA = [
-  { id: "father", en: "father", es: "papá", e: "👨", g: "he" },
-  { id: "mother", en: "mother", es: "mamá", e: "👩", g: "she" },
-  { id: "sister", en: "sister", es: "hermana", e: "👧", g: "she" },
-  { id: "brother", en: "brother", es: "hermano", e: "👦", g: "he" },
-  { id: "grandfather", en: "grandfather", es: "abuelo", e: "👴", g: "he" },
-  { id: "grandmother", en: "grandmother", es: "abuela", e: "👵", g: "she" },
-  { id: "uncle", en: "uncle", es: "tío", e: "🧔", g: "he" },
-  { id: "aunt", en: "aunt", es: "tía", e: "👩‍🦰", g: "she" },
-  { id: "cousin", en: "cousin", es: "primo", e: "🧒", g: "he" },
-  { id: "cousins", en: "cousins", es: "primos", e: "👫", g: "they" },
+  { id: "father", en: "father", pron: "fáder", es: "papá", e: "👨", g: "he" },
+  { id: "mother", en: "mother", pron: "máder", es: "mamá", e: "👩", g: "she" },
+  { id: "sister", en: "sister", pron: "síster", es: "hermana", e: "👧", g: "she" },
+  { id: "brother", en: "brother", pron: "bráder", es: "hermano", e: "👦", g: "he" },
+  { id: "grandfather", en: "grandfather", pron: "gránd-fader", es: "abuelo", e: "👴", g: "he" },
+  { id: "grandmother", en: "grandmother", pron: "gránd-mader", es: "abuela", e: "👵", g: "she" },
+  { id: "uncle", en: "uncle", pron: "ánkol", es: "tío", e: "🧔", g: "he" },
+  { id: "aunt", en: "aunt", pron: "ant", es: "tía", e: "👩‍🦰", g: "she" },
+  { id: "cousin", en: "cousin", pron: "cásin", es: "primo", e: "🧒", g: "he" },
+  { id: "cousins", en: "cousins", pron: "cásins", es: "primos", e: "👫", g: "they" },
 ];
 
 // ---------- 🏠 Parts of the house ----------
 export const CUARTOS = [
-  { id: "kitchen", en: "kitchen", es: "cocina", e: "🍳" },
-  { id: "bedroom", en: "bedroom", es: "dormitorio", e: "🛌" },
-  { id: "bathroom", en: "bathroom", es: "baño", e: "🛁" },
-  { id: "living-room", en: "living room", es: "sala", e: "🛋️" },
-  { id: "dining-room", en: "dining room", es: "comedor", e: "🍽️" },
-  { id: "laundry-room", en: "laundry room", es: "cuarto de pilas", e: "🧺" },
-  { id: "garage", en: "garage", es: "garaje", svg: "garage" },
+  { id: "kitchen", en: "kitchen", pron: "kíchen", es: "cocina", e: "🍳" },
+  { id: "bedroom", en: "bedroom", pron: "béd-rum", es: "dormitorio", e: "🛌" },
+  { id: "bathroom", en: "bathroom", pron: "báz-rum", es: "baño", e: "🛁" },
+  { id: "living-room", en: "living room", pron: "líving rum", es: "sala", e: "🛋️" },
+  { id: "dining-room", en: "dining room", pron: "dáining rum", es: "comedor", e: "🍽️" },
+  { id: "laundry-room", en: "laundry room", pron: "lóndri rum", es: "cuarto de pilas", e: "🧺" },
+  { id: "garage", en: "garage", pron: "garásh", es: "garaje", svg: "garage" },
 ];
 
 // ---------- 🛋️ House objects ----------
 // pl: plural · cuarto: dónde suele estar (para «There is a … in the …»)
 export const OBJETOS = [
-  { id: "sofa", en: "sofa", pl: "sofas", es: "sofá", e: "🛋️", cuarto: "living-room" },
-  { id: "television", en: "television", pl: "televisions", es: "televisor", e: "📺", cuarto: "living-room" },
-  { id: "table", en: "table", pl: "tables", es: "mesa", svg: "table", cuarto: "dining-room" },
-  { id: "chair", en: "chair", pl: "chairs", es: "silla", e: "🪑", cuarto: "dining-room" },
-  { id: "bed", en: "bed", pl: "beds", es: "cama", e: "🛏️", cuarto: "bedroom" },
-  { id: "dresser", en: "dresser", pl: "dressers", es: "cómoda", svg: "dresser", cuarto: "bedroom" },
-  { id: "toilet", en: "toilet", pl: "toilets", es: "inodoro", e: "🚽", cuarto: "bathroom" },
-  { id: "mirror", en: "mirror", pl: "mirrors", es: "espejo", e: "🪞", cuarto: "bathroom" },
-  { id: "window", en: "window", pl: "windows", es: "ventana", e: "🪟", cuarto: "living-room" },
-  { id: "stove", en: "stove", pl: "stoves", es: "cocina (estufa)", svg: "stove", cuarto: "kitchen" },
-  { id: "refrigerator", en: "refrigerator", pl: "refrigerators", es: "refrigeradora", svg: "fridge", cuarto: "kitchen" },
-  { id: "car", en: "car", pl: "cars", es: "carro", e: "🚗", cuarto: "garage" },
-  { id: "washing-machine", en: "washing machine", pl: "washing machines", es: "lavadora", svg: "washer", cuarto: "laundry-room" },
+  { id: "sofa", en: "sofa", pron: "sóufa", pl: "sofas", es: "sofá", e: "🛋️", cuarto: "living-room" },
+  { id: "television", en: "television", pron: "télevishon", pl: "televisions", es: "televisor", e: "📺", cuarto: "living-room" },
+  { id: "table", en: "table", pron: "téibol", pl: "tables", es: "mesa", svg: "table", cuarto: "dining-room" },
+  { id: "chair", en: "chair", pron: "cher", pl: "chairs", es: "silla", e: "🪑", cuarto: "dining-room" },
+  { id: "bed", en: "bed", pron: "bed", pl: "beds", es: "cama", e: "🛏️", cuarto: "bedroom" },
+  { id: "dresser", en: "dresser", pron: "dréser", pl: "dressers", es: "cómoda", svg: "dresser", cuarto: "bedroom" },
+  { id: "toilet", en: "toilet", pron: "tóilet", pl: "toilets", es: "inodoro", e: "🚽", cuarto: "bathroom" },
+  { id: "mirror", en: "mirror", pron: "míror", pl: "mirrors", es: "espejo", e: "🪞", cuarto: "bathroom" },
+  { id: "window", en: "window", pron: "uíndou", pl: "windows", es: "ventana", e: "🪟", cuarto: "living-room" },
+  { id: "stove", en: "stove", pron: "stóuv", pl: "stoves", es: "cocina (estufa)", svg: "stove", cuarto: "kitchen" },
+  { id: "refrigerator", en: "refrigerator", pron: "refríyereitor", pl: "refrigerators", es: "refrigeradora", svg: "fridge", cuarto: "kitchen" },
+  { id: "car", en: "car", pron: "car", pl: "cars", es: "carro", e: "🚗", cuarto: "garage" },
+  { id: "washing-machine", en: "washing machine", pron: "uáshing mashín", pl: "washing machines", es: "lavadora", svg: "washer", cuarto: "laundry-room" },
 ];
 
 // ---------- 🐴 Animals ----------
 // size: big | small · color: como se dice · hex: para el círculo de color · hab: dónde vive (a/the + lugar)
 export const ANIMALES = [
-  { id: "horse", en: "horse", pl: "horses", es: "caballo", e: "🐴", size: "big", color: "brown", hex: ["#8B5A2B"], hab: "stable", habEs: "establo" },
-  { id: "cow", en: "cow", pl: "cows", es: "vaca", e: "🐄", size: "big", color: "white and black", hex: ["#FFFFFF", "#222222"], hab: "barn", habEs: "granero" },
-  { id: "pig", en: "pig", pl: "pigs", es: "cerdo", e: "🐷", size: "big", color: "pink", hex: ["#F7A8C4"], hab: "pigsty", habEs: "chiquero" },
-  { id: "sheep", en: "sheep", pl: "sheep", es: "oveja", e: "🐑", size: "big", color: "white", hex: ["#FFFFFF"], hab: "barn", habEs: "granero" },
-  { id: "chicken", en: "chicken", pl: "chickens", es: "gallina", e: "🐔", size: "small", color: "white", hex: ["#FFFFFF"], hab: "coop", habEs: "gallinero" },
-  { id: "chick", en: "chick", pl: "chicks", es: "pollito", e: "🐥", size: "small", color: "yellow", hex: ["#FFD93D"], hab: "coop", habEs: "gallinero" },
-  { id: "duck", en: "duck", pl: "ducks", es: "pato", e: "🦆", size: "small", color: "green", hex: ["#3CB44B"], hab: "pond", habEs: "estanque" },
-  { id: "rabbit", en: "rabbit", pl: "rabbits", es: "conejo", e: "🐰", size: "small", color: "white", hex: ["#FFFFFF"], hab: "hutch", habEs: "conejera" },
-  { id: "dog", en: "dog", pl: "dogs", es: "perro", e: "🐶", size: "big", color: "brown", hex: ["#8B5A2B"], hab: "doghouse", habEs: "casita de perro" },
-  { id: "cat", en: "cat", pl: "cats", es: "gato", e: "🐱", size: "small", color: "orange", hex: ["#F58231"], hab: "house", habEs: "casa" },
-  { id: "frog", en: "frog", pl: "frogs", es: "rana", e: "🐸", size: "small", color: "green", hex: ["#3CB44B"], hab: "pond", habEs: "estanque" },
-  { id: "fish", en: "fish", pl: "fish", es: "pez", e: "🐟", size: "small", color: "blue", hex: ["#4363D8"], hab: "water", habEs: "agua", the: true },
-  { id: "bird", en: "bird", pl: "birds", es: "pájaro", e: "🐦", size: "small", color: "blue", hex: ["#4363D8"], hab: "nest", habEs: "nido" },
-  { id: "bee", en: "bee", pl: "bees", es: "abeja", e: "🐝", size: "small", color: "yellow and black", hex: ["#FFD93D", "#222222"], hab: "hive", habEs: "colmena" },
-  { id: "turtle", en: "turtle", pl: "turtles", es: "tortuga", e: "🐢", size: "small", color: "green", hex: ["#3CB44B"], hab: "pond", habEs: "estanque" },
+  { id: "horse", en: "horse", pron: "jors", pl: "horses", es: "caballo", e: "🐴", size: "big", color: "brown", hex: ["#8B5A2B"], hab: "stable", habEs: "establo" },
+  { id: "cow", en: "cow", pron: "cáu", pl: "cows", es: "vaca", e: "🐄", size: "big", color: "white and black", hex: ["#FFFFFF", "#222222"], hab: "barn", habEs: "granero" },
+  { id: "pig", en: "pig", pron: "pig", pl: "pigs", es: "cerdo", e: "🐷", size: "big", color: "pink", hex: ["#F7A8C4"], hab: "pigsty", habEs: "chiquero" },
+  { id: "sheep", en: "sheep", pron: "ship", pl: "sheep", es: "oveja", e: "🐑", size: "big", color: "white", hex: ["#FFFFFF"], hab: "barn", habEs: "granero" },
+  { id: "chicken", en: "chicken", pron: "chíken", pl: "chickens", es: "gallina", e: "🐔", size: "small", color: "white", hex: ["#FFFFFF"], hab: "coop", habEs: "gallinero" },
+  { id: "chick", en: "chick", pron: "chik", pl: "chicks", es: "pollito", e: "🐥", size: "small", color: "yellow", hex: ["#FFD93D"], hab: "coop", habEs: "gallinero" },
+  { id: "duck", en: "duck", pron: "dak", pl: "ducks", es: "pato", e: "🦆", size: "small", color: "green", hex: ["#3CB44B"], hab: "pond", habEs: "estanque" },
+  { id: "rabbit", en: "rabbit", pron: "rábit", pl: "rabbits", es: "conejo", e: "🐰", size: "small", color: "white", hex: ["#FFFFFF"], hab: "hutch", habEs: "conejera" },
+  { id: "dog", en: "dog", pron: "dog", pl: "dogs", es: "perro", e: "🐶", size: "big", color: "brown", hex: ["#8B5A2B"], hab: "doghouse", habEs: "casita de perro" },
+  { id: "cat", en: "cat", pron: "cat", pl: "cats", es: "gato", e: "🐱", size: "small", color: "orange", hex: ["#F58231"], hab: "house", habEs: "casa" },
+  { id: "frog", en: "frog", pron: "frog", pl: "frogs", es: "rana", e: "🐸", size: "small", color: "green", hex: ["#3CB44B"], hab: "pond", habEs: "estanque" },
+  { id: "fish", en: "fish", pron: "fish", pl: "fish", es: "pez", e: "🐟", size: "small", color: "blue", hex: ["#4363D8"], hab: "water", habEs: "agua", the: true },
+  { id: "bird", en: "bird", pron: "berd", pl: "birds", es: "pájaro", e: "🐦", size: "small", color: "blue", hex: ["#4363D8"], hab: "nest", habEs: "nido" },
+  { id: "bee", en: "bee", pron: "bi", pl: "bees", es: "abeja", e: "🐝", size: "small", color: "yellow and black", hex: ["#FFD93D", "#222222"], hab: "hive", habEs: "colmena" },
+  { id: "turtle", en: "turtle", pron: "tértol", pl: "turtles", es: "tortuga", e: "🐢", size: "small", color: "green", hex: ["#3CB44B"], hab: "pond", habEs: "estanque" },
 ];
+const HAB_PRON = { stable: "stéibol", barn: "barn", pigsty: "pígstai", coop: "cup", pond: "pond", hutch: "jach", doghouse: "dóg-jaus", house: "jáus", water: "uóter", nest: "nest", hive: "jáiv" };
 export const HABITATS = [...new Set(ANIMALES.map(a => a.hab))].map(h => {
   const a = ANIMALES.find(x => x.hab === h);
-  return { id: h, en: h, es: a.habEs, the: !!a.the };
+  return { id: h, en: h, es: a.habEs, the: !!a.the, pron: HAB_PRON[h] };
 });
-export const COLORES = [...new Set(ANIMALES.map(a => a.color))].map(c => ({ id: c, en: c, hex: ANIMALES.find(a => a.color === c).hex }));
 const COLOR_ES = { brown: "café", "white and black": "blanco y negro", pink: "rosado", white: "blanco", yellow: "amarillo", green: "verde", orange: "anaranjado", blue: "azul", "yellow and black": "amarillo y negro" };
+const COLOR_PRON = { brown: "bráun", white: "uáit", black: "blak", pink: "pink", yellow: "yélou", green: "grin", orange: "óranch", blue: "blu" };
+/** Colores sueltos (sin «and»), para el vocabulario. */
+export const COLORES = [...new Set(ANIMALES.flatMap(a => a.color.split(" and ")))].map(c => ({ id: c, en: c, es: COLOR_ES[c] || c, pron: COLOR_PRON[c], hex: [{ brown: "#8B5A2B", white: "#FFFFFF", black: "#222222", pink: "#F7A8C4", yellow: "#FFD93D", green: "#3CB44B", orange: "#F58231", blue: "#4363D8" }[c]] }));
+/** Palabritas que arman las respuestas, para el vocabulario. */
+export const PALABRITAS = [
+  { en: "he", es: "él", pron: "ji" }, { en: "she", es: "ella", pron: "shi" }, { en: "they", es: "ellos", pron: "déi" }, { en: "it", es: "eso (animal o cosa)", pron: "it" },
+  { en: "my", es: "mi", pron: "mái" }, { en: "your", es: "tu", pron: "yor" }, { en: "is", es: "es / está", pron: "is" }, { en: "are", es: "son / están", pron: "ar" },
+  { en: "this", es: "esto", pron: "dis" }, { en: "these", es: "estos", pron: "diis" }, { en: "in the", es: "en el / en la", pron: "in da" },
+  { en: "there is", es: "hay (uno)", pron: "der is" }, { en: "there are", es: "hay (varios)", pron: "der ar" }, { en: "big", es: "grande", pron: "big" }, { en: "small", es: "pequeño", pron: "smol" },
+  { en: "lives in", es: "vive en", pron: "livs in" }, { en: "live in", es: "viven en", pron: "liv in" }, { en: "where", es: "dónde", pron: "uér" }, { en: "who", es: "quién", pron: "ju" },
+  { en: "what", es: "qué", pron: "uát" }, { en: "how many", es: "cuántos", pron: "jáu méni" }, { en: "color", es: "color", pron: "cólor" },
+  { en: "one", es: "uno", pron: "uán" }, { en: "two", es: "dos", pron: "tu" }, { en: "three", es: "tres", pron: "zri" }, { en: "four", es: "cuatro", pron: "for" }, { en: "five", es: "cinco", pron: "fáiv" },
+];
 
 export const TEMAS = [
   { id: "family", nombre: "👨‍👩‍👧 Family", es: "La familia" },

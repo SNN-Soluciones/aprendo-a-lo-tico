@@ -316,7 +316,7 @@ export const JUEGOS = [
   {
     id: "oral-ingles",
     titulo: "My oral exam",
-    descripcion: "Practicá la prueba oral de inglés: family, house y animals. Escuchá y tocá, contestá en voz alta (con 🎤) y hacé la entrevista como en el examen.",
+    descripcion: "Practicá la prueba oral de inglés: family, house y animals. Escuchá y tocá, contestá en voz alta (con 🎤), escribí y hacé la entrevista como en el examen. Tres niveles 🌱🔥🚀.",
     emoji: "🎤",
     materia: "ingles",
     grados: [1, 2, 3],

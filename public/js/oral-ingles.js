@@ -9,6 +9,9 @@
 //   voz es una lista de partes [texto, "es" | "en"]: se dicen una tras otra con la voz de cada idioma.
 //   "oir":    la voz dice algo en inglés y el niño toca el dibujo (opciones, correcta).
 //   "hablar": se ve un dibujo, la voz pregunta en inglés y el niño contesta en voz alta (respuesta modelo, claves para el 🎤).
+//   "escribir": se ve un dibujo (y a veces se oye la palabra) y el niño la escribe en inglés (respuesta).
+// Niveles (NIVELES y cfg): 🌱 1 con ayuditas · 🔥 2 más dibujos, parecidos y sin nombre · 🚀 3 como el examen, con preguntas
+// combinadas, dos toques en orden y tiempo para contestar.
 // Siempre hay UNA sola respuesta correcta (revisarOral lo comprueba).
 
 const es = t => [t, "es"];
@@ -103,6 +106,29 @@ export const DIBUJOS = {
 /** El dibujo de una cosa: emoji o SVG. */
 export const dibujo = x => x.svg ? DIBUJOS[x.svg] : `<span class="emo">${x.e}</span>`;
 
+// ---------- 🪜 Niveles ----------
+export const NIVELES = [
+  { id: 1, nombre: "🌱 1", es: "Con ayuditas: 4 dibujos con su nombre, la pregunta escrita y pistas al escribir." },
+  { id: 2, nombre: "🔥 2", es: "6 dibujos parecidos y sin nombre, oraciones completas y la pregunta solo se oye." },
+  { id: 3, nombre: "🚀 3", es: "Como el examen: preguntas combinadas, dos toques en orden y 10 segundos para contestar." },
+];
+/** Qué cambia en cada nivel. */
+export function cfg(nivel = 1) {
+  const n = Math.min(3, Math.max(1, Number(nivel) || 1));
+  return {
+    nivel: n,
+    opciones: n === 1 ? 4 : 6,   // cuántos dibujos para tocar
+    pies: n === 1,               // nombre en español bajo los dibujos de la casa y los animales (la familia siempre lo lleva)
+    oracion: n === 1 ? 0.5 : 1,  // probabilidad de oír la oración completa en vez de la palabra
+    parecidos: n >= 2,           // los otros dibujos se parecen al correcto (mismo cuarto, mismo tamaño, mismo género…)
+    verPregunta: n === 1,        // la pregunta escrita; si no, solo se oye
+    secuencias: n >= 3,          // «Touch the cow. Then touch the horse.»
+    tiempo: n >= 3 ? 10 : 0,     // segundos para contestar en «hablar» y en la entrevista
+    pista: n === 1,              // al escribir: primera letra y cuántas letras
+    dictado: n <= 2,             // al escribir: se oye la palabra (en el 3 solo se ve el dibujo)
+  };
+}
+
 // ---------- Ayudas ----------
 function barajar(arr, rnd) {
   const a = [...arr];
@@ -112,33 +138,47 @@ function barajar(arr, rnd) {
 const azar = (arr, rnd) => arr[Math.floor(rnd() * arr.length)];
 const articulo = w => (/^[aeiou]/i.test(w) ? "an" : "a");
 const may = t => t.charAt(0).toUpperCase() + t.slice(1);
-const NUM = ["", "one", "two", "three", "four"];
-const NUM_ES = ["", "una", "dos", "tres", "cuatro"];
-const pron = x => x.g;
+const NUM = ["", "one", "two", "three", "four", "five"];
+const NUM_ES = ["", "una", "dos", "tres", "cuatro", "cinco"];
 const pronEs = x => (x.g === "he" ? "Él" : x.g === "she" ? "Ella" : "Ellos");
+const elLa = c => (c.es === "cocina" || c.es === "sala" ? "la" : "el");
 /** Personas sin plural, para «Where is he/she?» */
 const PERSONAS = FAMILIA.filter(f => f.g !== "they");
+/** Animales que pueden estar dentro de la casa, para «Where is the cat?» */
+const MASCOTAS = ANIMALES.filter(a => ["cat", "dog", "bird", "fish", "rabbit", "turtle"].includes(a.id));
+/** Cuartos con dos o más objetos, para «What is in the kitchen?» */
+const CUARTOS_LLENOS = CUARTOS.filter(c => OBJETOS.filter(o => o.cuarto === c.id).length >= 2);
 
-/** Opciones para tocar: la correcta y otras distintas, en orden al azar. */
-function opcionesDe(lista, correcta, n, rnd, pintar) {
-  const otras = barajar(lista.filter(x => x.id !== correcta.id), rnd).slice(0, n - 1);
+/**
+ * Opciones para tocar: la correcta y otras distintas, en orden al azar.
+ * parecido(x): si se da (nivel 2+), la mitad de las otras se escogen entre las que se parecen a la correcta.
+ */
+function opcionesDe(lista, correcta, c, rnd, pintar, parecido = null) {
+  const n = c.opciones;
+  const resto = lista.filter(x => x.id !== correcta.id);
+  let otras;
+  if (c.parecidos && parecido) {
+    const sim = barajar(resto.filter(parecido), rnd).slice(0, Math.ceil((n - 1) / 2));
+    const dif = barajar(resto.filter(x => !sim.includes(x)), rnd);
+    otras = [...sim, ...dif].slice(0, n - 1);
+  } else otras = barajar(resto, rnd).slice(0, n - 1);
   return barajar([correcta, ...otras], rnd).map(x => ({ id: x.id, html: pintar(x), label: x.en }));
 }
-const tarjeta = (x, pie = x.es) => `${dibujo(x)}<small>${pie}</small>`;
-const opcionDibujo = x => `${dibujo(x)}<small>${x.es}</small>`;
+const tarjeta = (x, pie = true) => `${dibujo(x)}${pie ? `<small>${x.es}</small>` : ""}`;
+const opcionDibujo = (pie = true) => x => tarjeta(x, pie);
 const opcionTexto = x => `<b>${x.en}</b><small>${x.es}</small>`;
+const circulo = a => `<span class="color" style="--c:${a.hex.length > 1 ? `linear-gradient(90deg, ${a.hex[0]} 50%, ${a.hex[1]} 50%)` : a.hex[0]}" aria-label="${a.color}"></span>`;
 
 // ---------- 👂 Escuchar y tocar ----------
-// dificil: en vez de la palabra sola, se oye una oración completa como en el examen
-export function oirFamilia(rnd = Math.random, dificil = false) {
+export function oirFamilia(rnd = Math.random, c = cfg(1)) {
   const f = azar(FAMILIA, rnd);
   const frase = f.g === "they" ? "They are my cousins." : `${may(f.g)} is my ${f.en}.`;
-  const dicho = dificil ? frase : f.en;
+  const dicho = rnd() < c.oracion ? frase : f.en;
   return {
     tipo: "oir", tema: "family",
     instr: "👂 Escuchá y tocá a esa persona",
     voz: [en(dicho)],
-    opciones: opcionesDe(FAMILIA, f, 4, rnd, opcionDibujo),
+    opciones: opcionesDe(FAMILIA, f, c, rnd, opcionDibujo(true), x => x.g === f.g),
     correcta: f.id,
     respuesta: { en: dicho, es: f.g === "they" ? "Ellos son mis primos." : `${pronEs(f)} es mi ${f.es}.` },
     claves: [f.en],
@@ -146,142 +186,62 @@ export function oirFamilia(rnd = Math.random, dificil = false) {
   };
 }
 
-export function oirCuarto(rnd = Math.random, dificil = false) {
-  const c = azar(CUARTOS, rnd);
+export function oirCuarto(rnd = Math.random, c = cfg(1)) {
+  const k = azar(CUARTOS, rnd);
   const p = azar(PERSONAS, rnd);
-  const frase = `${may(p.g)} is in the ${c.en}.`;
-  const dicho = dificil ? frase : c.en;
+  const oracion = rnd() < c.oracion;
+  const dicho = oracion ? `${may(p.g)} is in the ${k.en}.` : k.en;
   return {
     tipo: "oir", tema: "house",
     instr: "👂 Escuchá y tocá esa parte de la casa",
     voz: [en(dicho)],
-    opciones: opcionesDe(CUARTOS, c, 4, rnd, opcionDibujo),
-    correcta: c.id,
-    respuesta: { en: dicho, es: dificil ? `${pronEs(p)} está en ${c.es === "cocina" || c.es === "sala" ? "la" : "el"} ${c.es}.` : c.es },
-    claves: [c.en],
-    explica: `<b>${c.en}</b> = ${c.es}`,
+    opciones: opcionesDe(CUARTOS, k, c, rnd, opcionDibujo(c.pies)),
+    correcta: k.id,
+    respuesta: { en: dicho, es: oracion ? `${pronEs(p)} está en ${elLa(k)} ${k.es}.` : k.es },
+    claves: [k.en],
+    explica: `<b>${k.en}</b> = ${k.es}`,
   };
 }
 
-export function oirObjeto(rnd = Math.random, dificil = false) {
+export function oirObjeto(rnd = Math.random, c = cfg(1)) {
   const o = azar(OBJETOS, rnd);
-  const n = dificil && rnd() < 0.5 ? 2 + Math.floor(rnd() * 3) : 1;
-  const dicho = !dificil ? o.en : n === 1 ? `There is ${articulo(o.en)} ${o.en}.` : `There are ${NUM[n]} ${o.pl}.`;
-  const pintar = x => `${dibujo(x)}<small>${x.es}</small>`;
+  const oracion = rnd() < c.oracion;
+  const n = oracion && rnd() < 0.5 ? 2 + Math.floor(rnd() * 3) : 1;
+  const dicho = !oracion ? o.en : n === 1 ? `There is ${articulo(o.en)} ${o.en}.` : `There are ${NUM[n]} ${o.pl}.`;
   return {
     tipo: "oir", tema: "house",
     instr: "👂 Escuchá y tocá esa cosa de la casa",
     voz: [en(dicho)],
-    opciones: opcionesDe(OBJETOS, o, 4, rnd, pintar),
+    opciones: opcionesDe(OBJETOS, o, c, rnd, opcionDibujo(c.pies), x => x.cuarto === o.cuarto),
     correcta: o.id,
-    respuesta: { en: dicho, es: n === 1 ? (dificil ? `Hay ${articulo(o.es) === "an" ? "una" : "un"} ${o.es}.` : o.es) : `Hay ${NUM_ES[n]} ${o.es}s.` },
+    respuesta: { en: dicho, es: n === 1 ? (oracion ? `Hay ${articulo(o.es) === "an" ? "una" : "un"} ${o.es}.` : o.es) : `Hay ${NUM_ES[n]} ${o.es}s.` },
     claves: [o.en],
     explica: `<b>${o.en}</b> = ${o.es}${n > 1 ? ` · <b>${o.pl}</b> = ${o.es}s` : ""}`,
   };
 }
 
-export function oirAnimal(rnd = Math.random, dificil = false) {
+export function oirAnimal(rnd = Math.random, c = cfg(1)) {
   const a = azar(ANIMALES, rnd);
-  // En el modo difícil se oyen características, como en el examen («Escucha características de animales… y señala»)
+  // Con la oración se oyen características, como en el examen («Escucha características de animales… y señala»)
+  const pistas = rnd() < c.oracion;
   const vive = `It lives in ${a.the ? "the" : "a"} ${a.hab}.`;
-  const partes = dificil ? [`It is ${a.size}.`, `It is ${a.color}.`, vive] : [a.en];
+  const partes = pistas ? [`It is ${a.size}.`, `It is ${a.color}.`, vive] : [a.en];
   // Que las pistas alcancen: ninguna otra opción puede tener el mismo tamaño, color y casa
   const otras = ANIMALES.filter(x => x.id !== a.id && !(x.size === a.size && x.color === a.color && x.hab === a.hab));
   return {
     tipo: "oir", tema: "animals",
-    instr: dificil ? "👂 Escuchá las pistas y tocá el animal" : "👂 Escuchá y tocá el animal",
+    instr: pistas ? "👂 Escuchá las pistas y tocá el animal" : "👂 Escuchá y tocá el animal",
     voz: partes.map(en),
-    opciones: opcionesDe(otras, a, 4, rnd, opcionDibujo),
+    opciones: opcionesDe(otras, a, c, rnd, opcionDibujo(c.pies), x => x.size === a.size || x.color === a.color || x.hab === a.hab),
     correcta: a.id,
-    respuesta: { en: partes.join(" "), es: dificil ? `Es ${a.size === "big" ? "grande" : "pequeño"}. Es ${COLOR_ES[a.color]}. Vive en ${a.the ? "el" : "un"} ${a.habEs}.` : a.es },
+    respuesta: { en: partes.join(" "), es: pistas ? `Es ${a.size === "big" ? "grande" : "pequeño"}. Es ${COLOR_ES[a.color]}. Vive en ${a.the ? "el" : "un"} ${a.habEs}.` : a.es },
     claves: [a.en],
-    explica: `<b>${a.en}</b> = ${a.es}${dificil ? ` · <b>${a.size}</b> = ${a.size === "big" ? "grande" : "pequeño"} · <b>${a.color}</b> = ${COLOR_ES[a.color]} · <b>${a.hab}</b> = ${a.habEs}` : ""}`,
+    explica: `<b>${a.en}</b> = ${a.es}${pistas ? ` · <b>${a.size}</b> = ${a.size === "big" ? "grande" : "pequeño"} · <b>${a.color}</b> = ${COLOR_ES[a.color]} · <b>${a.hab}</b> = ${a.habEs}` : ""}`,
   };
 }
 
-// ---------- 🗣️ Mirar y contestar ----------
-export function hablarFamilia(rnd = Math.random) {
-  const f = azar(FAMILIA, rnd);
-  const pregunta = f.g === "they" ? "Who are they?" : `Who is ${f.g}?`;
-  const resp = f.g === "they" ? "They are my cousins." : `${may(f.g)} is my ${f.en}.`;
-  return {
-    tipo: "hablar", tema: "family",
-    instr: pregunta,
-    voz: [en(pregunta)],
-    html: tarjeta(f),
-    respuesta: { en: resp, es: f.g === "they" ? "Ellos son mis primos." : `${pronEs(f)} es mi ${f.es}.` },
-    claves: [f.en],
-    explica: `Si es hombre, <b>he</b>; si es mujer, <b>she</b>. <b>my</b> = mi.`,
-  };
-}
-
-export function hablarDonde(rnd = Math.random) {
-  const c = azar(CUARTOS, rnd);
-  const p = azar(PERSONAS, rnd);
-  const pregunta = `Where is ${p.g}?`;
-  const resp = `${may(p.g)} is in the ${c.en}.`;
-  return {
-    tipo: "hablar", tema: "house",
-    instr: pregunta,
-    voz: [en(pregunta)],
-    html: `<span class="escena">${dibujo(c)}<span class="quien">${p.e}</span></span><small>${p.es} · ${c.es}</small>`,
-    respuesta: { en: resp, es: `${pronEs(p)} está en ${c.es === "cocina" || c.es === "sala" ? "la" : "el"} ${c.es}.` },
-    claves: [c.en],
-    explica: `<b>in the</b> = en el / en la. <b>${c.en}</b> = ${c.es}.`,
-  };
-}
-
-export function hablarObjeto(rnd = Math.random) {
-  const o = azar(OBJETOS, rnd);
-  const n = rnd() < 0.45 ? 2 + Math.floor(rnd() * 3) : 1;
-  const pregunta = n === 1 ? "What is this?" : "What are these?";
-  const resp = n === 1 ? `It is ${articulo(o.en)} ${o.en}.` : `These are ${o.pl}.`;
-  const extra = n === 1 ? `There is ${articulo(o.en)} ${o.en} in the ${CUARTOS.find(c => c.id === o.cuarto).en}.` : `There are ${NUM[n]} ${o.pl}.`;
-  return {
-    tipo: "hablar", tema: "house",
-    instr: pregunta,
-    voz: [en(pregunta)],
-    html: `<span class="varios">${Array.from({ length: n }, () => dibujo(o)).join("")}</span><small>${n === 1 ? o.es : `${NUM_ES[n]} ${o.es}s`}</small>`,
-    respuesta: { en: resp, es: n === 1 ? `Es ${articulo(o.es) === "an" ? "una" : "un"} ${o.es}.` : `Estas son ${o.es}s.` },
-    tambien: { en: extra, es: n === 1 ? "También podés decir «Hay un/una …»" : `También: «Hay ${NUM_ES[n]} ${o.es}s»` },
-    claves: [n === 1 ? o.en : o.pl],
-    explica: n === 1 ? `Uno: <b>What is this?</b> → <b>It is a…</b> (o «This is a…»). <b>a</b> antes de consonante, <b>an</b> antes de vocal.` : `Varios: <b>What are these?</b> → <b>These are…</b> y la palabra con <b>-s</b>.`,
-  };
-}
-
-export function hablarAnimal(rnd = Math.random, que = null) {
-  const a = azar(ANIMALES, rnd);
-  const tipo = que || azar(["nombre", "tamano", "color", "vive", "viven"], rnd);
-  const casa = `${a.the ? "the" : "a"} ${a.hab}`;
-  const circulo = `<span class="color" style="--c:${a.hex.length > 1 ? `linear-gradient(90deg, ${a.hex[0]} 50%, ${a.hex[1]} 50%)` : a.hex[0]}" aria-label="${a.color}"></span>`;
-  const base = { tipo: "hablar", tema: "animals", html: `${dibujo(a)}<small>${a.es}</small>` };
-  if (tipo === "nombre") return { ...base,
-    instr: "What animal is this?", voz: [en("What animal is this?")],
-    respuesta: { en: `It is ${articulo(a.en)} ${a.en}.`, es: `Es ${articulo(a.es) === "an" ? "una" : "un"} ${a.es}.` },
-    claves: [a.en], explica: `<b>It is a…</b> (o «This is a…»). <b>${a.en}</b> = ${a.es}.` };
-  if (tipo === "tamano") return { ...base,
-    instr: "Is it big or small?", voz: [en("Is it big or small?")],
-    respuesta: { en: `It is ${a.size}.`, es: `Es ${a.size === "big" ? "grande" : "pequeño"}.` },
-    claves: [a.size], explica: `<b>big</b> = grande · <b>small</b> = pequeño.` };
-  if (tipo === "color") return { ...base,
-    html: `<span class="escena">${dibujo(a)}${circulo}</span><small>${a.es}</small>`,
-    instr: "What color is it?", voz: [en("What color is it?")],
-    respuesta: { en: `It is ${a.color}.`, es: `Es ${COLOR_ES[a.color]}.` },
-    claves: a.color.split(" and "), explica: `<b>${a.color}</b> = ${COLOR_ES[a.color]}. Mirá el círculo de color.` };
-  if (tipo === "vive") return { ...base,
-    instr: `Where does the ${a.en} live?`, voz: [en(`Where does the ${a.en} live?`)],
-    respuesta: { en: `The ${a.en} lives in ${casa}.`, es: `${may(a.es === "pez" || a.es === "pájaro" ? "El" : /a$/.test(a.es) ? "La" : "El")} ${a.es} vive en ${a.the ? "el" : "un"} ${a.habEs}.` },
-    tambien: { en: `${may(a.pl)} live in ${casa}.`, es: "O en plural: «… live in …»" },
-    claves: [a.hab], explica: `<b>${a.hab}</b> = ${a.habEs}. Con <b>the ${a.en}</b> (uno) se dice <b>lives</b>; con <b>${a.pl}</b> (varios) se dice <b>live</b>.` };
-  return { ...base,
-    html: `<span class="varios">${dibujo(a)}${dibujo(a)}</span><small>${a.es}s</small>`,
-    instr: `Where do ${a.pl} live?`, voz: [en(`Where do ${a.pl} live?`)],
-    respuesta: { en: `${may(a.pl)} live in ${casa}.`, es: `Los ${a.es}s viven en ${a.the ? "el" : "un"} ${a.habEs}.` },
-    claves: [a.hab], explica: `<b>${a.hab}</b> = ${a.habEs}. Como son varios (<b>${a.pl}</b>), es <b>live</b> sin «s».` };
-}
-
-/** 🏠 ¿Dónde vive? Para tocar: el animal y cuatro casas en palabras. */
-export function oirHabitat(rnd = Math.random) {
+/** 🏠 ¿Dónde vive? Para tocar: el animal y las casas en palabras. */
+export function oirHabitat(rnd = Math.random, c = cfg(1)) {
   const a = azar(ANIMALES, rnd);
   const h = HABITATS.find(x => x.id === a.hab);
   const pregunta = `Where does the ${a.en} live?`;
@@ -289,8 +249,8 @@ export function oirHabitat(rnd = Math.random) {
     tipo: "oir", tema: "animals",
     instr: pregunta,
     voz: [en(pregunta)],
-    html: `${dibujo(a)}<small>${a.es}</small>`,
-    opciones: opcionesDe(HABITATS, h, 4, rnd, opcionTexto),
+    html: tarjeta(a, c.pies),
+    opciones: opcionesDe(HABITATS, h, { ...c, opciones: Math.min(c.opciones, HABITATS.length) }, rnd, opcionTexto),
     correcta: h.id,
     respuesta: { en: `The ${a.en} lives in ${a.the ? "the" : "a"} ${a.hab}.`, es: `Vive en ${a.the ? "el" : "un"} ${a.habEs}.` },
     claves: [a.hab],
@@ -298,77 +258,336 @@ export function oirHabitat(rnd = Math.random) {
   };
 }
 
-// ---------- Por tema y por modo ----------
-const GEN = {
-  oir: {
-    family: rnd => oirFamilia(rnd, rnd() < 0.5),
-    house: rnd => (rnd() < 0.45 ? oirCuarto(rnd, rnd() < 0.5) : oirObjeto(rnd, rnd() < 0.5)),
-    animals: rnd => (rnd() < 0.3 ? oirHabitat(rnd) : oirAnimal(rnd, rnd() < 0.5)),
-  },
-  hablar: {
-    family: rnd => hablarFamilia(rnd),
-    house: rnd => (rnd() < 0.4 ? hablarDonde(rnd) : hablarObjeto(rnd)),
-    animals: rnd => hablarAnimal(rnd),
-  },
-};
-/** Una pregunta del modo ("oir" | "hablar") y tema ("family" | "house" | "animals" | "todo"). */
-export function pregunta(modo, tema, rnd = Math.random) {
-  const t = tema === "todo" ? azar(TEMAS, rnd).id : tema;
-  return GEN[modo][t](rnd);
+/** 🚀 Dos toques en orden: «Touch the cow. Then touch the horse.» */
+export function oirSecuencia(tema, rnd = Math.random, c = cfg(3)) {
+  const lista = tema === "family" ? FAMILIA : tema === "house" ? OBJETOS : ANIMALES;
+  const pies = tema === "family" || c.pies;
+  const [a, b] = barajar(lista, rnd).slice(0, 2);
+  const nom = x => (x.g === "they" ? `my ${x.en}` : tema === "family" ? `my ${x.en}` : `the ${x.en}`);
+  const voz = [en(`Touch ${nom(a)}.`), en(`Then touch ${nom(b)}.`)];
+  return {
+    tipo: "oir", tema, secuencia: [a.id, b.id],
+    instr: "👂 Escuchá y tocá los dos, en orden",
+    voz,
+    opciones: barajar([a, b, ...barajar(lista.filter(x => x !== a && x !== b), rnd).slice(0, c.opciones - 2)], rnd).map(x => ({ id: x.id, html: tarjeta(x, pies), label: x.en })),
+    correcta: a.id,
+    respuesta: { en: voz.map(v => v[0]).join(" "), es: `Tocá ${a.es === a.en ? a.es : a.es}. Después tocá ${b.es}.` },
+    claves: [a.en, b.en],
+    explica: `<b>Touch</b> = tocá · <b>then</b> = después · <b>${a.en}</b> = ${a.es} · <b>${b.en}</b> = ${b.es}`,
+  };
 }
 
-/** 🎤 La entrevista: como el examen, en el orden del temario (familia, casa, animales). */
-export function entrevista(rnd = Math.random) {
-  const lista = [
-    hablarFamilia(rnd), hablarFamilia(rnd), hablarFamilia(rnd),
-    hablarDonde(rnd), hablarObjeto(rnd), hablarObjeto(rnd), hablarDonde(rnd),
-    hablarAnimal(rnd, "nombre"), hablarAnimal(rnd, "tamano"), hablarAnimal(rnd, "color"), hablarAnimal(rnd, azar(["vive", "viven"], rnd)),
-  ];
-  // Sin preguntas repetidas en toda la entrevista
+// ---------- 🗣️ Mirar y contestar ----------
+const oculta = (q, c) => ({ ...q, oculta: !c.verPregunta });
+
+export function hablarFamilia(rnd = Math.random, c = cfg(1)) {
+  const f = azar(FAMILIA, rnd);
+  const pregunta = f.g === "they" ? "Who are they?" : `Who is ${f.g}?`;
+  const resp = f.g === "they" ? "They are my cousins." : `${may(f.g)} is my ${f.en}.`;
+  return oculta({
+    tipo: "hablar", tema: "family",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: tarjeta(f),
+    respuesta: { en: resp, es: f.g === "they" ? "Ellos son mis primos." : `${pronEs(f)} es mi ${f.es}.` },
+    claves: [f.en],
+    explica: `Si es hombre, <b>he</b>; si es mujer, <b>she</b>. <b>my</b> = mi.`,
+  }, c);
+}
+
+export function hablarDonde(rnd = Math.random, c = cfg(1)) {
+  const k = azar(CUARTOS, rnd);
+  const p = azar(PERSONAS, rnd);
+  const pregunta = `Where is ${p.g}?`;
+  const resp = `${may(p.g)} is in the ${k.en}.`;
+  return oculta({
+    tipo: "hablar", tema: "house",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: `<span class="escena">${dibujo(k)}<span class="quien">${p.e}</span></span><small>${p.es}${c.pies ? ` · ${k.es}` : ""}</small>`,
+    respuesta: { en: resp, es: `${pronEs(p)} está en ${elLa(k)} ${k.es}.` },
+    claves: [k.en],
+    explica: `<b>in the</b> = en el / en la. <b>${k.en}</b> = ${k.es}.`,
+  }, c);
+}
+
+/** 🔥 «Where is your grandmother?» → «She is in the kitchen.» */
+export function hablarFamiliaDonde(rnd = Math.random, c = cfg(2)) {
+  const k = azar(CUARTOS, rnd);
+  const p = azar(PERSONAS, rnd);
+  const pregunta = `Where is your ${p.en}?`;
+  const resp = `${may(p.g)} is in the ${k.en}.`;
+  return oculta({
+    tipo: "hablar", tema: "family",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: `<span class="escena">${dibujo(k)}<span class="quien">${p.e}</span></span><small>${p.es}${c.pies ? ` · ${k.es}` : ""}</small>`,
+    respuesta: { en: resp, es: `${pronEs(p)} está en ${elLa(k)} ${k.es}.` },
+    tambien: { en: `My ${p.en} is in the ${k.en}.`, es: "O con el nombre: «My … is in the …»" },
+    claves: [k.en],
+    explica: `<b>your</b> = tu · <b>${p.en}</b> = ${p.es} · <b>${k.en}</b> = ${k.es}. Como es ${p.g === "he" ? "hombre" : "mujer"}, se contesta con <b>${p.g}</b>.`,
+  }, c);
+}
+
+export function hablarObjeto(rnd = Math.random, c = cfg(1)) {
+  const o = azar(OBJETOS, rnd);
+  const n = rnd() < 0.45 ? 2 + Math.floor(rnd() * 3) : 1;
+  const pregunta = n === 1 ? "What is this?" : "What are these?";
+  const resp = n === 1 ? `It is ${articulo(o.en)} ${o.en}.` : `These are ${o.pl}.`;
+  const extra = n === 1 ? `There is ${articulo(o.en)} ${o.en} in the ${CUARTOS.find(k => k.id === o.cuarto).en}.` : `There are ${NUM[n]} ${o.pl}.`;
+  return oculta({
+    tipo: "hablar", tema: "house",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: `<span class="varios">${Array.from({ length: n }, () => dibujo(o)).join("")}</span>${c.pies ? `<small>${n === 1 ? o.es : `${NUM_ES[n]} ${o.es}s`}</small>` : ""}`,
+    respuesta: { en: resp, es: n === 1 ? `Es ${articulo(o.es) === "an" ? "una" : "un"} ${o.es}.` : `Estas son ${o.es}s.` },
+    tambien: { en: extra, es: n === 1 ? "También podés decir «Hay un/una …»" : `También: «Hay ${NUM_ES[n]} ${o.es}s»` },
+    claves: [n === 1 ? o.en : o.pl],
+    explica: n === 1 ? `Uno: <b>What is this?</b> → <b>It is a…</b> (o «This is a…»). <b>a</b> antes de consonante, <b>an</b> antes de vocal.` : `Varios: <b>What are these?</b> → <b>These are…</b> y la palabra con <b>-s</b>.`,
+  }, c);
+}
+
+/** 🔥 «How many chairs are there?» → «There are three chairs.» */
+export function hablarCuantos(rnd = Math.random, c = cfg(2)) {
+  const o = azar(OBJETOS, rnd);
+  const n = 2 + Math.floor(rnd() * 4);
+  const pregunta = `How many ${o.pl} are there?`;
+  return oculta({
+    tipo: "hablar", tema: "house",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: `<span class="varios">${Array.from({ length: n }, () => dibujo(o)).join("")}</span>${c.pies ? `<small>${o.es}s</small>` : ""}`,
+    respuesta: { en: `There are ${NUM[n]} ${o.pl}.`, es: `Hay ${NUM_ES[n]} ${o.es}s.` },
+    claves: [NUM[n], o.pl],
+    explica: `<b>How many…?</b> = ¿cuántos? Se contesta con <b>There are</b> + el número + la palabra con <b>-s</b>.`,
+  }, c);
+}
+
+/** 🚀 «What is in the kitchen?» → «There is a stove and a refrigerator.» */
+export function hablarQueHay(rnd = Math.random, c = cfg(3)) {
+  const k = azar(CUARTOS_LLENOS, rnd);
+  // Siempre en el mismo orden (el de la lista), para que la misma pregunta no salga dos veces «al revés»
+  const [a, b] = OBJETOS.filter(o => o.cuarto === k.id).slice(0, 2);
+  const pregunta = `What is in the ${k.en}?`;
+  return oculta({
+    tipo: "hablar", tema: "house",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: `<span class="escena">${dibujo(k)}</span><span class="varios">${dibujo(a)}${dibujo(b)}</span>${c.pies ? `<small>${k.es}: ${a.es} y ${b.es}</small>` : ""}`,
+    respuesta: { en: `There is ${articulo(a.en)} ${a.en} and ${articulo(b.en)} ${b.en}.`, es: `Hay ${articulo(a.es) === "an" ? "una" : "un"} ${a.es} y ${articulo(b.es) === "an" ? "una" : "un"} ${b.es}.` },
+    tambien: { en: `In the ${k.en} there is ${articulo(a.en)} ${a.en} and ${articulo(b.en)} ${b.en}.`, es: "También se puede empezar por el cuarto." },
+    claves: [a.en, b.en],
+    explica: `<b>What is in the…?</b> = ¿qué hay en…? Se contesta <b>There is a … and a …</b>. <b>${a.en}</b> = ${a.es} · <b>${b.en}</b> = ${b.es}.`,
+  }, c);
+}
+
+export function hablarAnimal(rnd = Math.random, c = cfg(1), que = null) {
+  const a = azar(ANIMALES, rnd);
+  const tipo = que || azar(["nombre", "tamano", "color", "vive", "viven"], rnd);
+  const casa = `${a.the ? "the" : "a"} ${a.hab}`;
+  const base = { tipo: "hablar", tema: "animals", html: tarjeta(a, c.pies) };
+  const q = tipo === "nombre" ? { ...base,
+    instr: "What animal is this?", voz: [en("What animal is this?")],
+    respuesta: { en: `It is ${articulo(a.en)} ${a.en}.`, es: `Es ${articulo(a.es) === "an" ? "una" : "un"} ${a.es}.` },
+    claves: [a.en], explica: `<b>It is a…</b> (o «This is a…»). <b>${a.en}</b> = ${a.es}.` }
+  : tipo === "tamano" ? { ...base,
+    instr: "Is it big or small?", voz: [en("Is it big or small?")],
+    respuesta: { en: `It is ${a.size}.`, es: `Es ${a.size === "big" ? "grande" : "pequeño"}.` },
+    claves: [a.size], explica: `<b>big</b> = grande · <b>small</b> = pequeño.` }
+  : tipo === "color" ? { ...base,
+    html: `<span class="escena">${dibujo(a)}${circulo(a)}</span>${c.pies ? `<small>${a.es}</small>` : ""}`,
+    instr: "What color is it?", voz: [en("What color is it?")],
+    respuesta: { en: `It is ${a.color}.`, es: `Es ${COLOR_ES[a.color]}.` },
+    claves: a.color.split(" and "), explica: `<b>${a.color}</b> = ${COLOR_ES[a.color]}. Mirá el círculo de color.` }
+  : tipo === "vive" ? { ...base,
+    instr: `Where does the ${a.en} live?`, voz: [en(`Where does the ${a.en} live?`)],
+    respuesta: { en: `The ${a.en} lives in ${casa}.`, es: `${/a$/.test(a.es) && a.es !== "pez" ? "La" : "El"} ${a.es} vive en ${a.the ? "el" : "un"} ${a.habEs}.` },
+    tambien: { en: `${may(a.pl)} live in ${casa}.`, es: "O en plural: «… live in …»" },
+    claves: [a.hab], explica: `<b>${a.hab}</b> = ${a.habEs}. Con <b>the ${a.en}</b> (uno) se dice <b>lives</b>; con <b>${a.pl}</b> (varios) se dice <b>live</b>.` }
+  : { ...base,
+    html: `<span class="varios">${dibujo(a)}${dibujo(a)}</span>${c.pies ? `<small>${a.es}s</small>` : ""}`,
+    instr: `Where do ${a.pl} live?`, voz: [en(`Where do ${a.pl} live?`)],
+    respuesta: { en: `${may(a.pl)} live in ${casa}.`, es: `Los ${a.es}s viven en ${a.the ? "el" : "un"} ${a.habEs}.` },
+    claves: [a.hab], explica: `<b>${a.hab}</b> = ${a.habEs}. Como son varios (<b>${a.pl}</b>), es <b>live</b> sin «s».` };
+  return oculta(q, c);
+}
+
+/** 🚀 Dos cosas en una: «Is it big or small? What color is it?» → «It is big and brown.» */
+export function hablarDescribe(rnd = Math.random, c = cfg(3)) {
+  const a = azar(ANIMALES, rnd);
+  return oculta({
+    tipo: "hablar", tema: "animals",
+    instr: "Is it big or small? What color is it?",
+    voz: [en("Is it big or small?"), en("What color is it?")],
+    html: `<span class="escena">${dibujo(a)}${circulo(a)}</span>${c.pies ? `<small>${a.es}</small>` : ""}`,
+    respuesta: a.color.includes(" and ")
+      ? { en: `It is ${a.size}. It is ${a.color}.`, es: `Es ${a.size === "big" ? "grande" : "pequeño"}. Es ${COLOR_ES[a.color]}.` }
+      : { en: `It is ${a.size} and ${a.color}.`, es: `Es ${a.size === "big" ? "grande" : "pequeño"} y ${COLOR_ES[a.color]}.` },
+    tambien: a.color.includes(" and ") ? null : { en: `It is ${a.size}. It is ${a.color}.`, es: "O en dos oraciones." },
+    claves: [a.size, ...a.color.split(" and ")],
+    explica: `Dos preguntas, una respuesta: <b>It is</b> + tamaño + <b>and</b> + color.`,
+  }, c);
+}
+
+/** 🚀 Un animal dentro de la casa: «Where is the cat?» → «The cat is in the bedroom.» */
+export function hablarAnimalDonde(rnd = Math.random, c = cfg(3)) {
+  const a = azar(MASCOTAS, rnd);
+  const k = azar(CUARTOS, rnd);
+  const pregunta = `Where is the ${a.en}?`;
+  return oculta({
+    tipo: "hablar", tema: "animals",
+    instr: pregunta,
+    voz: [en(pregunta)],
+    html: `<span class="escena">${dibujo(k)}<span class="quien">${a.e}</span></span>${c.pies ? `<small>${a.es} · ${k.es}</small>` : ""}`,
+    respuesta: { en: `The ${a.en} is in the ${k.en}.`, es: `${/a$/.test(a.es) ? "La" : "El"} ${a.es} está en ${elLa(k)} ${k.es}.` },
+    tambien: { en: `It is in the ${k.en}.`, es: "O más corto: «It is in the …»" },
+    claves: [k.en],
+    explica: `Para animales se usa <b>it</b>: <b>It is in the ${k.en}.</b> <b>${k.en}</b> = ${k.es}.`,
+  }, c);
+}
+
+// ---------- ✍️ Escribir ----------
+const LISTAS = { family: FAMILIA, house: [...CUARTOS, ...OBJETOS], animals: ANIMALES };
+export function escribir(tema, rnd = Math.random, c = cfg(1)) {
+  const x = azar(LISTAS[tema], rnd);
+  const plural = c.nivel >= 3 && x.pl && rnd() < 0.35;
+  const palabra = plural ? x.pl : x.en;
+  const n = plural ? 2 + Math.floor(rnd() * 2) : 1;
+  const pista = c.pista ? palabra.split(" ").map(w => w[0] + " _".repeat(w.length - 1)).join("  ") : "";
+  return {
+    tipo: "escribir", tema,
+    instr: c.dictado ? "👂✍️ Escuchá y escribí la palabra en inglés" : "✍️ Escribí en inglés lo que ves",
+    voz: c.dictado ? [en(palabra)] : [en(tema === "family" ? (plural ? "Who are they?" : "Who is this?") : plural ? "What are these?" : "What is this?"), es("Escribilo en inglés.")],
+    html: `${n === 1 ? dibujo(x) : `<span class="varios">${Array.from({ length: n }, () => dibujo(x)).join("")}</span>`}${c.pies || tema === "family" ? `<small>${plural ? `${x.es}s` : x.es}</small>` : ""}${pista ? `<span class="pista">${pista}</span>` : ""}`,
+    respuesta: { en: palabra, es: plural ? `${x.es}s` : x.es },
+    claves: [palabra],
+    largo: palabra.length,
+    explica: `<b>${palabra}</b> = ${plural ? `${x.es}s` : x.es}${plural ? " (en plural, con <b>-s</b>)" : ""}`,
+  };
+}
+/** Compara lo escrito con la respuesta (sin mayúsculas ni espacios de más). */
+export const escribioBien = (texto, respuesta) => String(texto).toLowerCase().replace(/[^a-z\s]/g, "").replace(/\s+/g, " ").trim() === respuesta.toLowerCase();
+
+// ---------- Por tema, modo y nivel ----------
+const GEN = {
+  oir: {
+    family: (rnd, c) => (c.secuencias && rnd() < 0.3 ? oirSecuencia("family", rnd, c) : oirFamilia(rnd, c)),
+    house: (rnd, c) => (c.secuencias && rnd() < 0.25 ? oirSecuencia("house", rnd, c) : rnd() < 0.45 ? oirCuarto(rnd, c) : oirObjeto(rnd, c)),
+    animals: (rnd, c) => (c.secuencias && rnd() < 0.25 ? oirSecuencia("animals", rnd, c) : rnd() < 0.3 ? oirHabitat(rnd, c) : oirAnimal(rnd, c)),
+  },
+  hablar: {
+    family: (rnd, c) => (c.nivel >= 2 && rnd() < 0.4 ? hablarFamiliaDonde(rnd, c) : hablarFamilia(rnd, c)),
+    house: (rnd, c) => {
+      const r = rnd();
+      if (c.nivel >= 3 && r < 0.25) return hablarQueHay(rnd, c);
+      if (c.nivel >= 2 && r < 0.45) return hablarCuantos(rnd, c);
+      return r < 0.65 ? hablarDonde(rnd, c) : hablarObjeto(rnd, c);
+    },
+    animals: (rnd, c) => {
+      const r = rnd();
+      if (c.nivel >= 3 && r < 0.2) return hablarDescribe(rnd, c);
+      if (c.nivel >= 3 && r < 0.35) return hablarAnimalDonde(rnd, c);
+      return hablarAnimal(rnd, c);
+    },
+  },
+  escribir: {
+    family: (rnd, c) => escribir("family", rnd, c),
+    house: (rnd, c) => escribir("house", rnd, c),
+    animals: (rnd, c) => escribir("animals", rnd, c),
+  },
+};
+/** Una pregunta del modo ("oir" | "hablar" | "escribir"), tema ("family" | "house" | "animals" | "todo") y nivel (1 a 3). */
+export function pregunta(modo, tema, rnd = Math.random, nivel = 1) {
+  const c = cfg(nivel);
+  const t = tema === "todo" ? azar(TEMAS, rnd).id : tema;
+  return GEN[modo][t](rnd, c);
+}
+
+/**
+ * 🎤 La entrevista. Nivel 1: 11 preguntas en el orden del temario (familia, casa, animales).
+ * Nivel 2: 13 preguntas revueltas. Nivel 3: 15 revueltas, con las combinadas y tiempo para contestar.
+ */
+export function entrevista(rnd = Math.random, nivel = 1) {
+  const c = cfg(nivel);
+  let lista;
+  if (c.nivel === 1) {
+    lista = [
+      hablarFamilia(rnd, c), hablarFamilia(rnd, c), hablarFamilia(rnd, c),
+      hablarDonde(rnd, c), hablarObjeto(rnd, c), hablarObjeto(rnd, c), hablarDonde(rnd, c),
+      hablarAnimal(rnd, c, "nombre"), hablarAnimal(rnd, c, "tamano"), hablarAnimal(rnd, c, "color"), hablarAnimal(rnd, c, azar(["vive", "viven"], rnd)),
+    ];
+  } else {
+    const temas = c.nivel === 2
+      ? ["family", "family", "family", "family", "house", "house", "house", "house", "house", "animals", "animals", "animals", "animals"]
+      : ["family", "family", "family", "family", "house", "house", "house", "house", "house", "house", "animals", "animals", "animals", "animals", "animals"];
+    lista = barajar(temas, rnd).map(t => GEN.hablar[t](rnd, c));
+  }
+  // Sin preguntas repetidas en toda la entrevista: ni la misma respuesta, ni la misma pregunta cuando nombra algo
+  // («Where is your uncle?» dos veces no; «What is this?» sí puede repetirse con otra cosa)
+  const GENERICAS = /^(What is this|What are these|Who is he|Who is she|Who are they|Where is he|Where is she|What animal is this|Is it big or small|What color is it)/;
+  const firma = q => (GENERICAS.test(q.instr) ? q.respuesta.en : q.instr);
   for (let i = 1; i < lista.length; i++) {
     let v = 0;
-    const repetida = () => lista.slice(0, i).some(x => x.respuesta.en === lista[i].respuesta.en);
-    while (v++ < 20 && repetida()) lista[i] = GEN.hablar[lista[i].tema](rnd);
+    const repetida = () => lista.slice(0, i).some(x => x.respuesta.en === lista[i].respuesta.en || firma(x) === firma(lista[i]));
+    while (v++ < 30 && repetida()) lista[i] = GEN.hablar[lista[i].tema](rnd, c);
   }
   return lista;
 }
 
-/** ¿Lo que se oyó (micrófono) tiene la palabra clave? Acepta variantes cercanas. */
+/** ¿Lo que se oyó (micrófono) tiene las palabras clave? Acepta variantes cercanas y singular o plural. */
 export function dijoBien(oido, claves) {
-  const t = ` ${String(oido).toLowerCase().replace(/[^a-z\s]/g, " ").replace(/\s+/g, " ").trim()} `;
+  const t = ` ${String(oido).toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim()} `;
   const ALIAS = { father: ["dad", "daddy"], mother: ["mom", "mum", "mommy"], grandfather: ["grandpa", "granddad"], grandmother: ["grandma", "granny"],
-    television: ["tv"], refrigerator: ["fridge"], chicken: ["hen"], pigsty: ["pigpen", "pig pen"], coop: ["chicken coop", "henhouse"], water: ["sea", "river"] };
-  // Vale en singular o plural («these are chair» también se entiende)
+    television: ["tv"], refrigerator: ["fridge"], chicken: ["hen"], pigsty: ["pigpen", "pig pen"], coop: ["chicken coop", "henhouse"], water: ["sea", "river"],
+    two: ["2"], three: ["3"], four: ["4"], five: ["5"] };
   const formas = k => [k, ...(ALIAS[k] || [])].flatMap(w => [w, w.replace(/s$/, ""), w + "s"]);
   return claves.every(k => formas(k).some(w => t.includes(` ${w} `)));
 }
 
-/** Para node: comprueba que cada generador tenga una sola respuesta correcta y opciones distintas. */
-export function revisarOral(n = 300) {
+/** Para node: comprueba que cada generador, en cada nivel, tenga una sola respuesta correcta y opciones distintas. */
+export function revisarOral(n = 200) {
   const errores = [];
   let s = 7;
   const rnd = () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; };
-  const gens = { oirFamilia, oirCuarto, oirObjeto, oirAnimal, oirHabitat, hablarFamilia, hablarDonde, hablarObjeto, hablarAnimal };
-  for (const [nombre, g] of Object.entries(gens)) for (let i = 0; i < n; i++) {
-    const q = g(rnd, i % 2 === 0);
-    if (!q.voz?.length || !q.respuesta?.en || !q.claves?.length) errores.push(`${nombre}: falta voz, respuesta o claves`);
-    if (q.tipo === "oir") {
-      const ids = q.opciones.map(o => o.id);
-      if (new Set(ids).size !== ids.length) errores.push(`${nombre}: opciones repetidas`);
-      if (ids.filter(x => x === q.correcta).length !== 1) errores.push(`${nombre}: la correcta no está una sola vez`);
-    } else if (!dijoBien(q.respuesta.en, q.claves)) errores.push(`${nombre}: la respuesta no contiene sus claves (${q.respuesta.en})`);
+  const gens = { oirFamilia, oirCuarto, oirObjeto, oirAnimal, oirHabitat, hablarFamilia, hablarDonde, hablarFamiliaDonde, hablarObjeto, hablarCuantos, hablarQueHay, hablarAnimal, hablarDescribe, hablarAnimalDonde };
+  for (const nivel of [1, 2, 3]) {
+    const c = cfg(nivel);
+    const todos = { ...gens, ...Object.fromEntries(TEMAS.map(t => [`oirSecuencia-${t.id}`, (r, cc) => oirSecuencia(t.id, r, cc)])), ...Object.fromEntries(TEMAS.map(t => [`escribir-${t.id}`, (r, cc) => escribir(t.id, r, cc)])) };
+    for (const [nombre, g] of Object.entries(todos)) for (let i = 0; i < n; i++) {
+      const q = g(rnd, c);
+      const donde = `${nombre} (nivel ${nivel})`;
+      if (!q.voz?.length || !q.respuesta?.en || !q.claves?.length || !q.explica) errores.push(`${donde}: falta voz, respuesta, claves o explica`);
+      if (q.tipo === "oir") {
+        const ids = q.opciones.map(o => o.id);
+        if (new Set(ids).size !== ids.length) errores.push(`${donde}: opciones repetidas`);
+        if (ids.filter(x => x === q.correcta).length !== 1) errores.push(`${donde}: la correcta no está una sola vez`);
+        if (q.secuencia && !q.secuencia.every(id => ids.includes(id))) errores.push(`${donde}: la secuencia no está entre las opciones`);
+        const esperadas = nombre === "oirHabitat" ? Math.min(c.opciones, HABITATS.length) : c.opciones;
+        if (ids.length !== esperadas) errores.push(`${donde}: ${ids.length} opciones, se esperaban ${esperadas}`);
+      } else if (q.tipo === "hablar") {
+        if (!dijoBien(q.respuesta.en, q.claves)) errores.push(`${donde}: la respuesta no contiene sus claves (${q.respuesta.en})`);
+        if (!!q.oculta !== !c.verPregunta) errores.push(`${donde}: oculta mal puesta`);
+      } else if (q.tipo === "escribir") {
+        if (!escribioBien(q.respuesta.en, q.respuesta.en) || escribioBien(q.respuesta.en + "x", q.respuesta.en)) errores.push(`${donde}: escribioBien falla`);
+      }
+    }
+    for (let i = 0; i < 30; i++) {
+      const e = entrevista(rnd, nivel);
+      const largo = [11, 13, 15][nivel - 1];
+      if (e.length !== largo) errores.push(`entrevista nivel ${nivel}: no son ${largo} preguntas`);
+      if (new Set(e.map(x => x.respuesta.en)).size !== e.length) errores.push(`entrevista nivel ${nivel}: respuesta repetida`);
+      const especificas = e.map(x => x.instr).filter(t => !/^(What is this|What are these|Who is he|Who is she|Who are they|Where is he|Where is she|What animal is this|Is it big or small|What color is it)/.test(t));
+      if (new Set(especificas).size !== especificas.length) errores.push(`entrevista nivel ${nivel}: pregunta repetida`);
+      if (!e.every(x => x.tipo === "hablar")) errores.push(`entrevista nivel ${nivel}: hay preguntas que no son de hablar`);
+    }
   }
-  // Los animales del modo difícil: las pistas deben dejar una sola opción
+  // Los animales con pistas: deben dejar una sola opción
   for (let i = 0; i < n; i++) {
-    const q = oirAnimal(rnd, true);
+    const q = oirAnimal(rnd, cfg(2));
     const a = ANIMALES.find(x => x.id === q.correcta);
     const iguales = q.opciones.filter(o => { const x = ANIMALES.find(y => y.id === o.id); return x.size === a.size && x.color === a.color && x.hab === a.hab; });
-    if (iguales.length !== 1) errores.push("oirAnimal difícil: las pistas no alcanzan");
+    if (iguales.length !== 1) errores.push("oirAnimal con pistas: las pistas no alcanzan");
   }
-  for (let i = 0; i < 50; i++) {
-    const e = entrevista(rnd);
-    if (e.length !== 11) errores.push("entrevista: no son 11 preguntas");
-    if (new Set(e.map(x => x.respuesta.en)).size !== e.length) errores.push("entrevista: pregunta repetida");
-  }
+  if (!dijoBien("there are 3 chairs", ["three", "chairs"]) || dijoBien("it is big", ["small"])) errores.push("dijoBien falla");
   return [...new Set(errores)];
 }

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My oral exam</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../css/prepa.css">
+<link rel="stylesheet" href="../css/quiz.css">
+<style>
+  :root { --materia: #8E5BD9; }
+  .top { gap: 6px; }
+  .top .modos { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; flex: 1; min-width: 0; padding: 2px 2px 8px; }
+  .top .modos::-webkit-scrollbar { display: none; }
+  .top .modos button { flex: none; white-space: nowrap; }
+  .temas { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-top: 4px; }
+  .temas button { padding: 2px 10px; font-size: .9rem; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .temas button[aria-pressed="true"] { background: var(--btn); }
+
+  .instr .txt { color: var(--materia); }
+  .instr .txt.es { color: var(--ink); font-size: clamp(1rem, 4.5vw, 1.25rem); }
+
+  /* Dibujos: emoji grandes o SVG */
+  .tarjeta { padding: 10px 12px; }
+  .tarjeta .emo { display: inline-block; font-size: clamp(4rem, 22vw, 6rem); line-height: 1.1; }
+  .tarjeta .dib { width: clamp(4.5rem, 24vw, 6.5rem); height: auto; vertical-align: middle; }
+  .tarjeta small { font-size: 1rem; opacity: .75; }
+  .tarjeta .escena { position: relative; display: inline-block; }
+  .tarjeta .escena .quien { position: absolute; right: -14px; bottom: -4px; font-size: clamp(2rem, 11vw, 3rem); line-height: 1; }
+  .tarjeta .escena .color { position: absolute; right: -44px; top: 0; width: 44px; height: 44px; border-radius: 50%; border: 4px solid var(--rim); background: var(--c); }
+  .tarjeta .varios { display: inline-flex; gap: 2px; flex-wrap: wrap; justify-content: center; }
+  .tarjeta .varios .emo { font-size: clamp(2.8rem, 15vw, 4rem); }
+  .tarjeta .varios .dib { width: clamp(3.2rem, 16vw, 4.4rem); }
+
+  .opciones { grid-template-columns: repeat(2, 1fr); }
+  .opciones button .emo { display: block; font-size: clamp(2.8rem, 14vw, 3.8rem); line-height: 1.1; }
+  .opciones button .dib { display: block; margin: 0 auto; width: clamp(3.2rem, 15vw, 4.2rem); height: auto; }
+  .opciones button b { font-size: 1.4rem; }
+  .opciones button small { font-size: .85rem; }
+
+  /* 🗣️ Contestar en voz alta */
+  .hablar { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .hablar .fila { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; width: 100%; }
+  .hablar .fila button { flex: 1 1 40%; font-size: 1.1rem; padding: 10px 8px; border-radius: 18px; line-height: 1.15; }
+  .hablar .ver { background: var(--btn); }
+  .hablar .mic { background: #F6F0FF; border-color: var(--materia); box-shadow: 0 4px 0 var(--materia); }
+  .hablar .mic.oyendo { animation: pulse .8s ease-in-out infinite; background: #FFD9D6; }
+  .hablar .bien { background: #CFF5DC; border-color: var(--ok); box-shadow: 0 4px 0 var(--ok); }
+  .hablar .costo { background: #FFF6DA; }
+  .oido { width: 100%; text-align: center; font-weight: 700; color: var(--page-ink); min-height: 1.4rem; font-size: 1rem; }
+  .respuesta { width: 100%; background: var(--face); border: 4px solid var(--ok); border-radius: 22px; padding: 10px 14px; text-align: center; box-shadow: 0 5px 0 var(--ok); }
+  .respuesta .en { display: block; font-size: clamp(1.5rem, 7vw, 2rem); font-weight: 800; color: var(--ok); line-height: 1.15; }
+  .respuesta .es { display: block; font-size: 1.05rem; font-weight: 700; opacity: .8; margin-top: 2px; }
+  .respuesta .tambien { display: block; margin-top: 8px; padding-top: 6px; border-top: 2px dashed var(--soft); font-size: 1rem; font-weight: 700; }
+  .respuesta .tambien b { color: var(--materia); }
+  .respuesta button { font-size: 1.5rem; padding: 2px 14px; margin-top: 6px; }
+  .respuesta button.lento { font-size: 1.2rem; }
+
+  /* 📖 Repasar: lista de vocabulario con 🔊 */
+  .repaso { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; }
+  .repaso h2 { margin: 6px 0 0; font-size: 1.3rem; color: var(--page-ink); text-align: center; }
+  .repaso .nota { background: var(--face); border: 3px dashed var(--materia); border-radius: 16px; padding: 8px 12px; font-weight: 700; font-size: 1rem; color: var(--ink); }
+  .repaso .nota b { color: var(--materia); }
+  .repaso .nota button { font-size: 1rem; padding: 1px 10px; margin-left: 4px; vertical-align: middle; }
+  .lista { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .lista button { display: flex; align-items: center; gap: 8px; text-align: left; border-radius: 16px; padding: 6px 10px; font-size: 1.05rem; line-height: 1.1; }
+  .lista button .emo { font-size: 2rem; flex: none; }
+  .lista button .dib { width: 2.4rem; height: auto; flex: none; }
+  .lista button b { display: block; color: var(--materia); }
+  .lista button small { display: block; font-weight: 700; opacity: .75; font-size: .8rem; }
+  .lista button .color { display: inline-block; width: 1rem; height: 1rem; border-radius: 50%; border: 2px solid var(--rim); background: var(--c); vertical-align: middle; margin-left: 4px; }
+
+  /* 🎤 Entrevista */
+  .avance { margin-top: 6px; }
+  .resumen .lista-res { text-align: left; margin-top: 8px; display: flex; flex-direction: column; gap: 4px; font-size: .95rem; }
+  .resumen .lista-res span { display: flex; gap: 6px; align-items: baseline; }
+  .resumen .lista-res b { color: var(--materia); }
+
+  .papas { margin-top: 14px; background: #FFF6DA; color: #3B2F00; border: 3px dashed #D9A400; border-radius: 14px; padding: 8px 12px; font-size: .9rem; font-weight: 700; }
+  .papas summary { cursor: pointer; }
+  .papas ul { margin: 6px 0 0; padding-left: 18px; }
+  .papas li { margin: 3px 0; }
+</style>
+</head>
+<body>
+<a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>
+
+<div class="start" id="start">
+  <div class="big" aria-hidden="true">🎤👨‍👩‍👧🏠🐴</div>
+  <h1>My oral exam</h1>
+  <button id="startBtn" aria-label="Empezar">▶️</button>
+  <p>Practicá la prueba oral de inglés: la familia, la casa y los animales. Escuchá y tocá, mirá y contestá en voz alta, y hacé la entrevista como en el examen. Subile el volumen 🔊.</p>
+</div>
+
+<div class="wrap top ancho">
+  <div class="modos" id="modos" role="group" aria-label="Modo">
+    <button data-modo="oir" aria-pressed="true">👂 Escuchar</button>
+    <button data-modo="hablar" aria-pressed="false">🗣️ Hablar</button>
+    <button data-modo="entrevista" aria-pressed="false">🎤 Entrevista</button>
+    <button data-modo="repasar" aria-pressed="false">📖 Repasar</button>
+  </div>
+  <div class="stars" id="stars">⭐ 0</div>
+</div>
+<div class="wrap temas ancho" id="temas" role="group" aria-label="Tema">
+  <button data-tema="todo" aria-pressed="true">🎲 Todo</button>
+  <button data-tema="family" aria-pressed="false">👨‍👩‍👧 Family</button>
+  <button data-tema="house" aria-pressed="false">🏠 House</button>
+  <button data-tema="animals" aria-pressed="false">🐴 Animals</button>
+</div>
+
+<div class="wrap instr ancho"><button class="oir" id="oir" aria-label="Escuchar otra vez">🔊</button><button class="lento" id="lento" aria-label="Escuchar despacio">🐢</button><div class="txt" id="instr"></div></div>
+
+<div id="juego" class="ancho">
+  <div class="avance" id="avance" hidden></div>
+  <div class="tarjeta" id="tarjeta" aria-live="polite"></div>
+  <div id="zona"></div>
+</div>
+<div class="wrap feedback ancho" id="feedback" aria-live="polite"></div>
+<div class="explica ancho" id="explica" hidden aria-live="polite"></div>
+<button id="sigBtn" class="ancho" hidden>Next ➡️</button>
+
+<details class="papas ancho">
+  <summary>👨‍👩‍👧 Para papás y mamás: cómo es el examen</summary>
+  <ul>
+    <li>Es una <b>entrevista individual</b> con la profesora, con imágenes de apoyo. Vale 18 %.</li>
+    <li><b>Familia:</b> «Who is he? / Who is she?» → «He is my father», «She is my aunt». Y reconocer de oído: father, mother, sister, brother, grandfather, grandmother, uncle, aunt, cousin(s).</li>
+    <li><b>Casa:</b> partes (kitchen, bedroom, bathroom, living room, dining room, laundry room, garage) y objetos (sofa, television, table, chair, bed, dresser, toilet, mirror, window, stove, refrigerator, car, washing machine). «Where is he/she?» → «He is in the kitchen». «What is this?» → «It is a sofa». «What are these?» → «These are chairs». «There is a… / There are…».</li>
+    <li><b>Animales:</b> «What animal is this?» → «It is a horse». «Is it big or small?» «What color is it?» «Where does the horse live?» → «Horses live in a stable». «Where do cows live?» → «Cows live in a barn». Y señalar el animal al oír su nombre o sus características.</li>
+    <li>Consejo: en <b>🗣️ Hablar</b> y <b>🎤 Entrevista</b>, que el niño conteste en voz alta <i>antes</i> de ver la respuesta. Con el 🎤 el teléfono lo escucha (necesita internet en la mayoría de celulares); si no, el papá marca ✅ o 🔁.</li>
+  </ul>
+</details>
+
+<script type="module">
+import { elogio, sonido, LENTO, puedeHablar } from "../js/voz.js";
+import { decir, feedback, estrellas, alEmpezar, senalar, ayudaSiSeQueda } from "../js/prepa.js";
+import { TEMAS, FAMILIA, CUARTOS, OBJETOS, ANIMALES, HABITATS, dibujo, pregunta, entrevista, dijoBien } from "../js/oral-ingles.js";
+
+const $ = id => document.getElementById(id);
+const sinHtml = t => new DOMParser().parseFromString(String(t), "text/html").body.textContent;
+const stars = estrellas("oral-ingles-stars");
+// Si se queda un rato sin tocar nada, se repite la pregunta (y en «escuchar» se señala el dibujo)
+const ayuda = ayudaSiSeQueda({ repetir: () => decirPregunta(false), senalar: () => { if (q?.tipo === "oir" && !listo) senalar(botonBueno()); }, espera: 15000 });
+
+let modo = "oir", tema = "todo", q = null, fallos = 0, listo = false;
+let cola = [], idx = 0, aciertos = 0, resultados = []; // 🎤 entrevista
+
+// 🔊 Las partes se dicen una tras otra, cada una con la voz de su idioma.
+let turnoVoz = 0;
+async function decirPartes(partes, lento = false) {
+  const t = ++turnoVoz;
+  for (let i = 0; i < partes.length; i++) {
+    if (t !== turnoVoz) return;
+    const [texto, lang] = partes[i];
+    await decir(texto, { lang, cola: i > 0, ...(lento ? { rate: LENTO } : {}) });
+  }
+}
+const decirPregunta = lento => q && decirPartes(q.voz, lento);
+const botonBueno = () => $("zona").querySelector(`.opciones [data-id="${q.correcta}"]`);
+
+// ---------- Modos y temas ----------
+$("modos").addEventListener("click", e => {
+  const b = e.target.closest("[data-modo]");
+  if (!b || b.dataset.modo === modo) return;
+  sonido("tap");
+  modo = b.dataset.modo;
+  $("modos").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  b.scrollIntoView({ block: "nearest", inline: "center" });
+  empezarModo();
+});
+$("temas").addEventListener("click", e => {
+  const b = e.target.closest("[data-tema]");
+  if (!b) return;
+  sonido("tap");
+  tema = b.dataset.tema;
+  $("temas").querySelectorAll("button").forEach(x => x.setAttribute("aria-pressed", x === b ? "true" : "false"));
+  empezarModo();
+});
+function empezarModo() {
+  pararMic();
+  $("temas").hidden = modo === "entrevista";
+  $("avance").hidden = modo !== "entrevista";
+  if (modo === "repasar") return repasar();
+  if (modo === "entrevista") { cola = entrevista(); idx = 0; aciertos = 0; resultados = []; }
+  nueva();
+}
+
+// ---------- Pregunta nueva ----------
+function nueva() {
+  pararMic();
+  if (modo === "entrevista") {
+    if (idx >= cola.length) return resumen();
+    q = cola[idx];
+    pintarAvance();
+  } else q = pregunta(modo, tema);
+  fallos = 0; listo = false;
+  $("explica").hidden = true; $("sigBtn").hidden = true;
+  feedback("");
+  $("instr").className = "txt"; $("instr").textContent = q.instr;
+  if (q.tipo === "oir") {
+    $("tarjeta").hidden = !q.html; $("tarjeta").innerHTML = q.html || "";
+    $("zona").innerHTML = `<div class="opciones">${q.opciones.map(o => `<button data-id="${o.id}" aria-label="${o.label}">${o.html}</button>`).join("")}</div>`;
+  } else {
+    $("tarjeta").hidden = false; $("tarjeta").innerHTML = q.html;
+    $("zona").innerHTML = `<div class="hablar">
+      <div class="fila">
+        ${hayMic ? `<button class="mic" id="micBtn">🎤 Decilo en inglés</button>` : ""}
+        <button class="ver" id="verBtn">👀 Ver la respuesta</button>
+      </div>
+      <div class="oido" id="oido">${hayMic ? "Contestá en voz alta y después revisá 👆" : "Contestá en voz alta y después tocá 👀"}</div>
+    </div>`;
+    $("verBtn").addEventListener("click", () => mostrarRespuesta("ver"));
+    if (hayMic) $("micBtn").addEventListener("click", escuchar);
+  }
+  decirPregunta(false);
+  ayuda.empezar();
+}
+function pintarAvance() {
+  $("avance").innerHTML = cola.map((_, i) => `<span class="${resultados[i] === true ? "ya-bien" : resultados[i] === false ? "ya-mal" : ""} ${i === idx ? "ahora" : ""}"></span>`).join("");
+}
+
+// ---------- 👂 Tocar el dibujo ----------
+$("zona").addEventListener("click", e => {
+  const b = e.target.closest(".opciones [data-id]");
+  if (!b || !q || listo || b.disabled) return;
+  const botones = [...$("zona").querySelectorAll(".opciones button")];
+  if (b.dataset.id === q.correcta) {
+    b.classList.remove("senal"); b.classList.add("right");
+    botones.forEach(x => { if (x !== b) x.disabled = true; });
+    listo = true; ayuda.parar();
+    const limpio = fallos === 0 && !ayuda.usada;
+    if (limpio) { stars.sumar(); feedback("ok", "🎉", elogio()); } else feedback("almost", "🤏", "¡Ahora sí!");
+    cerrar([[q.respuesta.en, "en"]]);
+    return;
+  }
+  fallos++;
+  b.classList.add("wrong", "nope"); b.disabled = true;
+  const tocado = sinHtml(b.getAttribute("aria-label"));
+  feedback("bad", "🤔", `No es. Ese es <b>${tocado}</b>`);
+  decirPartes([[tocado, "en"], ["Escuchá otra vez.", "es"], ...q.voz]);
+  if (fallos >= 2) senalar(botonBueno());
+});
+
+// ---------- 🗣️ Contestar en voz alta ----------
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const hayMic = !!SR && window.isSecureContext;
+let rec = null;
+function pararMic() { try { rec?.abort(); } catch (_) {} rec = null; $("micBtn")?.classList.remove("oyendo"); }
+function escuchar() {
+  if (!q || listo) return;
+  if (rec) return pararMic();
+  try { speechSynthesis.cancel(); } catch (_) {}
+  const r = new SR();
+  r.lang = "en-US"; r.interimResults = false; r.maxAlternatives = 5;
+  rec = r;
+  $("micBtn").classList.add("oyendo"); $("micBtn").textContent = "🎤 Escuchando… tocá para parar";
+  $("oido").textContent = "";
+  r.onresult = ev => {
+    const alts = [...ev.results[0]].map(a => a.transcript);
+    const bien = alts.some(t => dijoBien(t, q.claves));
+    $("oido").innerHTML = `Oí: «<b>${alts[0]}</b>»`;
+    if (bien) { feedback("ok", "🎉", elogio()); mostrarRespuesta("mic-bien"); }
+    else { fallos++; feedback("almost", "🤏", "Casi. Probá otra vez o mirá la respuesta"); decirPartes([["Casi. Probá otra vez.", "es"]]); }
+  };
+  r.onerror = ev => {
+    $("oido").textContent = ev.error === "not-allowed" ? "El teléfono no dejó usar el micrófono. Contestá en voz alta y tocá 👀" : "No te oí bien. Probá otra vez o tocá 👀";
+  };
+  r.onend = () => { rec = null; const m = $("micBtn"); if (m) { m.classList.remove("oyendo"); m.textContent = "🎤 Decilo en inglés"; } };
+  try { r.start(); } catch (_) { rec = null; $("oido").textContent = "No se pudo usar el micrófono. Contestá en voz alta y tocá 👀"; }
+}
+
+/** Muestra la respuesta modelo. como: "ver" (el niño ya contestó, el papá marca) · "mic-bien" (el 🎤 lo oyó bien) */
+function mostrarRespuesta(como) {
+  pararMic();
+  listo = true; ayuda.parar();
+  const r = q.respuesta;
+  $("zona").innerHTML = `<div class="hablar">
+    <div class="respuesta" aria-live="polite">
+      <span class="en">${r.en}</span><span class="es">${r.es}</span>
+      ${q.tambien ? `<span class="tambien"><b>${q.tambien.en}</b><br>${q.tambien.es}</span>` : ""}
+      <div><button id="repBtn" aria-label="Oír la respuesta">🔊</button> <button id="repLento" class="lento" aria-label="Oír despacio">🐢</button></div>
+    </div>
+    ${como === "ver" ? `<div class="oido">¿Lo dijo bien?</div>
+    <div class="fila"><button class="bien" id="bienBtn">✅ Lo dije bien</button><button class="costo" id="costoBtn">🔁 Me costó</button></div>` : ""}
+  </div>`;
+  $("repBtn").addEventListener("click", () => decirPartes([[r.en, "en"]]));
+  $("repLento").addEventListener("click", () => decirPartes([[r.en, "en"]], true));
+  const partes = [[r.en, "en"], ...(q.tambien ? [[q.tambien.en, "en"]] : [])];
+  if (como === "mic-bien") { decirPartes([[elogio(), "es"], ...partes]); calificar(fallos === 0); return; }
+  decirPartes(partes);
+  $("bienBtn").addEventListener("click", () => { feedback("ok", "🎉", elogio()); decirPartes([[elogio(), "es"]]); calificar(true); });
+  $("costoBtn").addEventListener("click", () => { feedback("almost", "💪", "Repetila 3 veces y seguimos"); decirPartes([["Repetila conmigo.", "es"], [r.en, "en"], [r.en, "en"]], true); calificar(false); });
+}
+function calificar(bien) {
+  $("bienBtn")?.setAttribute("disabled", ""); $("costoBtn")?.setAttribute("disabled", "");
+  if (bien) stars.sumar();
+  if (modo === "entrevista") { resultados[idx] = bien; if (bien) aciertos++; pintarAvance(); }
+  cerrar([]);
+}
+function cerrar(voz) {
+  $("explica").hidden = false; $("explica").innerHTML = q.explica;
+  if (voz.length) decirPartes(voz);
+  $("sigBtn").hidden = false;
+  $("sigBtn").textContent = modo === "entrevista" ? (idx + 1 >= cola.length ? "Ver mi nota 🏁" : "Next ➡️") : "Next ➡️";
+}
+$("sigBtn").addEventListener("click", () => {
+  sonido("tap");
+  if (!listo && q.tipo === "oir") { /* saltó sin acertar */ }
+  if (modo === "entrevista") idx++;
+  nueva();
+});
+
+// ---------- 🎤 Fin de la entrevista ----------
+function resumen() {
+  q = null; pararMic();
+  const n = cola.length, nota = Math.round(100 * aciertos / n);
+  $("instr").className = "txt es"; $("instr").textContent = "¡Terminaste la entrevista!";
+  $("tarjeta").hidden = true; $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  const caras = nota >= 90 ? "🌟🌟🌟" : nota >= 70 ? "🌟🌟" : nota >= 50 ? "🌟" : "💪";
+  $("zona").innerHTML = `<div class="resumen">
+    <div class="grande">${caras}</div>
+    <p>${aciertos} de ${n} bien · nota ${nota}</p>
+    <p>${nota >= 90 ? "¡Pura vida! Estás listo para el examen 🎉" : nota >= 70 ? "¡Muy bien! Repasá las que te costaron y volvé a intentar." : "Vamos bien. Repasá en 📖 y hacé la entrevista otra vez."}</p>
+    <div class="lista-res">${cola.map((p, i) => `<span>${resultados[i] ? "✅" : "🔁"} <b>${p.instr}</b> ${p.respuesta.en}</span>`).join("")}</div>
+    <div class="botones"><button id="otraBtn" class="sig">🎤 Otra entrevista</button><button id="repBtn2">📖 Repasar</button></div>
+  </div>`;
+  decirPartes([[nota >= 70 ? `${elogio()} Sacaste ${nota}.` : `Sacaste ${nota}. Repasá y probá otra vez.`, "es"]]);
+  $("otraBtn").addEventListener("click", () => { sonido("tap"); empezarModo(); });
+  $("repBtn2").addEventListener("click", () => $("modos").querySelector('[data-modo="repasar"]').click());
+}
+
+// ---------- 📖 Repasar ----------
+function repasar() {
+  q = null; ayuda.parar();
+  $("instr").className = "txt es"; $("instr").textContent = "Tocá una palabra para oírla. 🐢 la dice despacio.";
+  $("tarjeta").hidden = true; $("explica").hidden = true; $("sigBtn").hidden = true; feedback("");
+  const item = (x, extra = "") => `<button data-di="${x.en}">${dibujo(x)}<span><b>${x.en}</b><small>${x.es}${extra}</small></span></button>`;
+  const frase = (en, es) => `<div class="nota"><b>${en}</b> ${es} <button data-di="${en}" aria-label="Oír">🔊</button></div>`;
+  const secciones = {
+    family: `<h2>👨‍👩‍👧 Family</h2>
+      ${frase("Who is he?", "→ <b>He is my father.</b> · Who is she? → <b>She is my mother.</b>")}
+      <div class="lista">${FAMILIA.map(f => item(f, f.g === "they" ? " · they are my cousins" : ` · ${f.g} is my ${f.en}`)).join("")}</div>`,
+    house: `<h2>🏠 Parts of the house</h2>
+      ${frase("Where is he?", "→ <b>He is in the kitchen.</b>")}
+      <div class="lista">${CUARTOS.map(c => item(c)).join("")}</div>
+      <h2>🛋️ House objects</h2>
+      ${frase("What is this?", "→ <b>It is a sofa.</b> · What are these? → <b>These are chairs.</b>")}
+      ${frase("There is a bed.", "Hay una cama · <b>There are two chairs.</b> Hay dos sillas")}
+      <div class="lista">${OBJETOS.map(o => item(o, ` · ${o.pl}`)).join("")}</div>`,
+    animals: `<h2>🐴 Animals</h2>
+      ${frase("What animal is this?", "→ <b>It is a horse.</b> · Is it big or small? → <b>It is big.</b> · What color is it? → <b>It is brown.</b>")}
+      ${frase("Where does the horse live?", "→ <b>The horse lives in a stable.</b> · Where do cows live? → <b>Cows live in a barn.</b>")}
+      <div class="lista">${ANIMALES.map(a => `<button data-di="${a.en}. It is ${a.size}. It is ${a.color}. ${a.pl.charAt(0).toUpperCase() + a.pl.slice(1)} live in ${a.the ? "the" : "a"} ${a.hab}.">${dibujo(a)}<span><b>${a.en}</b><small>${a.es} · ${a.size} · ${a.color}<i class="color" style="--c:${a.hex.length > 1 ? `linear-gradient(90deg, ${a.hex[0]} 50%, ${a.hex[1]} 50%)` : a.hex[0]}"></i><br>🏠 ${a.hab} (${a.habEs})</small></span></button>`).join("")}</div>`,
+  };
+  const ver = tema === "todo" ? TEMAS.map(t => t.id) : [tema];
+  $("zona").innerHTML = `<div class="repaso">${ver.map(t => secciones[t]).join("")}</div>`;
+}
+let ultimoDicho = "";
+$("zona").addEventListener("click", e => {
+  const b = e.target.closest("[data-di]");
+  if (!b) return;
+  ultimoDicho = b.dataset.di;
+  decirPartes([[ultimoDicho, "en"]]);
+});
+
+// 🔊 y 🐢 repiten la pregunta (o la última palabra del repaso)
+alEmpezar(() => { if (!puedeHablar) $("instr").textContent = "Este aparato no puede leer en voz alta: leé vos la pregunta 👀"; empezarModo(); },
+  lento => (modo === "repasar" ? (ultimoDicho && decirPartes([[ultimoDicho, "en"]], lento)) : decirPregunta(lento)));
+
+if (new URLSearchParams(location.search).has("prueba")) window.__oral = { get q() { return q; }, get modo() { return modo; } };
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});</script>
+</body>
+</html>

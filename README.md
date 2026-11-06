@@ -67,6 +67,7 @@ Juegos educativos **gratis** para niños y niñas de Costa Rica, con sabor tico:
 | 🪐 El sistema solar y la Tierra | Ciencias | 3° a 6° | `public/juegos/espacio.html` |
 | 🌋 Volcanes, ríos y regiones | Estudios Sociales | 3° a 6° | `public/juegos/paisajes.html` |
 | 🌦️ My day in English | Inglés | 2° a 6° | `public/juegos/my-day.html` |
+| 🎤 My oral exam (family, house, animals) | Inglés | 1° a 3° | `public/juegos/oral-ingles.html` |
 | 🐷 La alcancía (monedas y billetes) | Matemáticas | 1° a 4° | `public/juegos/alcancia.html` |
 | 📐 Geometría: figuras, ángulos y cuerpos | Matemáticas | 1° a 6° | `public/juegos/geometria.html` |
 | 📏 Medidas en la feria | Matemáticas | 2° a 6° | `public/juegos/medidas.html` |
@@ -132,6 +133,7 @@ aprendo-a-lo-tico/
 │   ├── js/escudo.js       # 🛡️ Partes del escudo, su significado y zonas para tocar
 │   ├── js/frases-en.js    # 🦜 Frases en inglés y español, fichas con trampas y revisión
 │   ├── js/memory-en.js    # 🧠 Palabras en inglés por tema y lógica de la memoria
+│   ├── js/oral-ingles.js  # 🎤 Prueba oral de inglés (family, house, animals): preguntas de oír y de contestar, entrevista y revisarOral()
 │   ├── js/efemerides.js   # 📅 Fechas patrias y celebraciones de Costa Rica
 │   ├── js/ortografia.js   # 🐝 Palabras con b/v, s/c/z y h, y sus reglas
 │   ├── js/ecosistemas.js  # 🌳 Ecosistemas, quién vive en cada uno y dónde quedan

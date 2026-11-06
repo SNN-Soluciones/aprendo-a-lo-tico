@@ -126,6 +126,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Listen and tap: más temas (ropa, cuerpo, escuela, comida) y números hasta 100
 - [x] 🦜 Armo en inglés: escuchar y armar, traducir al inglés y al español, con fichas trampa y repaso de las falladas (tipo Duolingo)
 - [x] 🌦️ My day in English: días, meses, clima, ropa, la hora y la rutina · 2°–6°
+- [x] 🎤 My oral exam: prueba oral de inglés (family, house, animals) con escuchar y tocar, contestar en voz alta con 🎤 y entrevista · 1°–3°
 
 ## 💻 Programación (sin servidor: todo corre en el navegador)
 

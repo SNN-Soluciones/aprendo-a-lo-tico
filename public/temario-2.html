@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Temario de 2° · Segundas pruebas · Aprendo a lo Tico</title>
+<meta name="description" content="Resumen para estudiar y prácticas del temario de las segundas pruebas de 2°: Español, Ciencias, Matemáticas y Estudios Sociales.">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/base.css">
+<style>
+  .page { width: min(94vw, 820px); }
+  .hero p { max-width: 50ch; }
+  .barra { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 10px; }
+  .barra a, .barra button, .practica a { font: inherit; font-weight: 800; font-size: 1rem; color: var(--ink); text-decoration: none; background: var(--face); border: 3px solid var(--rim); border-radius: 999px; padding: 4px 14px; box-shadow: 0 3px 0 var(--rim); cursor: pointer; display: inline-block; }
+  .barra a:active, .barra button:active, .practica a:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--rim); }
+  .indice { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin-top: 12px; }
+  .indice a { font-weight: 800; color: var(--ink); text-decoration: none; background: var(--face); border: 2px solid var(--rim); border-radius: 999px; padding: 2px 12px; }
+
+  .card { padding: 12px 14px; }
+  .card h2 { font-size: 1.5rem; color: var(--c); margin: 0; }
+  .card .fecha { font-weight: 800; color: var(--soft); margin: 0 0 6px; }
+  .practica { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 0 4px; }
+  .practica a.todo { background: var(--btn); }
+  .tema { margin-top: 12px; border-left: 6px solid var(--c); padding: 2px 0 2px 10px; }
+  .tema h3 { margin: 0 0 4px; font-size: 1.12rem; color: var(--page-ink); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .tema h3 a { font-size: .9rem; font-weight: 800; color: var(--c); text-decoration: none; border: 2px solid var(--c); border-radius: 999px; padding: 0 10px; white-space: nowrap; }
+  .tema p, .tema li { margin: 3px 0; line-height: 1.4; }
+  .tema ul { margin: 4px 0; padding-left: 20px; }
+  .ej { background: #FFFBEA; border: 2px dashed #D9A400; border-radius: 12px; padding: 4px 10px; margin: 6px 0; font-weight: 600; }
+  table.mini { border-collapse: collapse; margin: 6px 0; font-size: .95rem; width: 100%; }
+  table.mini td, table.mini th { border: 2px solid var(--rim); padding: 3px 8px; text-align: left; }
+  table.mini th { background: #F2F6FA; }
+  .eximido { background: #CFF5DC; border: 3px dashed var(--ok); border-radius: 14px; padding: 6px 10px; font-weight: 700; }
+
+  @media print {
+    body { background: #fff; }
+    .page { width: 100%; padding: 0; }
+    .back, .barra, .indice, .practica, .tema h3 a { display: none !important; }
+    .card { box-shadow: none; border-width: 2px; margin-top: 10px; }
+    .card:not(:first-of-type) { break-before: page; }
+    .tema { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Volver a los juegos</a>
+
+  <header class="hero">
+    <h1>📋 Temario de 2°</h1>
+    <p>Segundas pruebas sumativas, <b>del 9 al 12 de noviembre</b>. Cada materia trae lo que hay que saber, con ejemplos, y botones para <b>practicar</b>: cada práctica sale con preguntas nuevas, se califica y explica cada respuesta.</p>
+    <div class="barra">
+      <button id="imprimirBtn">🖨️ Imprimir el resumen</button>
+      <a href="examen.html">📝 Armar otro examen</a>
+    </div>
+    <nav class="indice" aria-label="Materias">
+      <a href="#espanol">✏️ Español · lun 9</a><a href="#ciencias">🌱 Ciencias · mar 10</a><a href="#mate">🔢 Matemáticas · mié 11</a><a href="#sociales">🗺️ Estudios Sociales · jue 12</a>
+    </nav>
+  </header>
+
+  <!-- ✏️ ESPAÑOL -->
+  <section class="card" id="espanol" style="--c:#E8574A">
+    <h2>✏️ Español</h2>
+    <p class="fecha">📅 Lunes 9 de noviembre</p>
+    <div class="practica" data-materia="espanol" data-temas="lectura-apreciativa,diptongo,hiato,expresion-oral,interrogacion,lenguaje-verbal"></div>
+
+    <div class="tema" data-t="lectura-apreciativa">
+      <h3>📚 Lectura apreciativa y tipos de textos</h3>
+      <p><b>Lectura apreciativa</b> es leer por gusto: imaginar, sentir y comentar lo que leemos. Estrategias: mirar el título y los dibujos antes de leer, leer en voz alta con buena entonación, dibujar lo que más nos gustó, inventar otro final y recomendar el libro.</p>
+      <table class="mini"><tr><th>Texto</th><th>¿Cómo lo reconozco?</th></tr>
+        <tr><td>Cuento</td><td>«Había una vez…», personajes, inicio, problema y final.</td></tr>
+        <tr><td>Fábula</td><td>Animales que hablan y una <b>moraleja</b> (enseñanza) al final.</td></tr>
+        <tr><td>Poema</td><td>Versos (renglones cortos) y muchas veces rima.</td></tr>
+        <tr><td>Receta</td><td>Ingredientes y pasos para preparar algo.</td></tr>
+        <tr><td>Noticia</td><td>Algo que pasó de verdad: qué, dónde, cuándo y quiénes.</td></tr>
+        <tr><td>Carta</td><td>Saludo («Querida abuela:»), mensaje, despedida y firma.</td></tr>
+        <tr><td>Aviso</td><td>Información corta de un evento: día, hora y lugar.</td></tr>
+      </table>
+      <p><b>Relación entre el texto y el contenido:</b> el título tiene que decir de qué trata el texto.</p>
+    </div>
+
+    <div class="tema" data-t="diptongo">
+      <h3>🤝 El diptongo</h3>
+      <p>Vocales <b>abiertas</b>: a, e, o. Vocales <b>cerradas</b>: i, u.</p>
+      <p><b>Diptongo:</b> dos vocales juntas que se dicen en <b>la misma sílaba</b>. Se forma con una abierta + una cerrada (sin tilde), o con dos cerradas.</p>
+      <div class="ej">pei-ne · nue-ve · jau-la · pia-no · hue-vo · ciu-dad · rui-do · ca-mión</div>
+    </div>
+
+    <div class="tema" data-t="hiato">
+      <h3>✂️ El hiato</h3>
+      <p><b>Hiato:</b> dos vocales juntas que se separan en <b>sílabas distintas</b>. Se forma con dos abiertas (a, e, o), o cuando la i o la u llevan tilde (í, ú).</p>
+      <div class="ej">po-e-ta · le-ón · te-a-tro · ma-es-tra · rí-o · dí-a · ma-íz · ba-úl · pul-pe-rí-a</div>
+      <p>💡 Truco: aplaudí cada sílaba. Si las dos vocales caen en el mismo aplauso es diptongo; si caen en aplausos distintos, hiato.</p>
+    </div>
+
+    <div class="tema" data-t="expresion-oral">
+      <h3>🎭 Gestos, tono de voz, doble sentido, humor, enojo, pausa y silencio</h3>
+      <ul>
+        <li><b>Gestos:</b> comunicamos sin palabras (cabeza arriba-abajo = sí; dedo en la boca = silencio; encoger los hombros = no sé).</li>
+        <li><b>Tono de voz:</b> alegre para un chiste, bajo y suave para algo triste, fuerte para avisar «¡Cuidado!».</li>
+        <li><b>Doble sentido:</b> una frase que se entiende de dos maneras: «Estoy hecho una sopa» = estoy muy mojado.</li>
+        <li><b>Sentido humorístico:</b> chistes y frases que dan risa (muchas veces por el doble sentido).</li>
+        <li><b>Enojo:</b> ceño fruncido, voz fuerte o seria, brazos cruzados.</li>
+        <li><b>Pausa:</b> corta en la coma y más larga en el punto; ayuda a que se entienda.</li>
+        <li><b>Silencio:</b> también comunica: escuchar callados es respeto y atención.</li>
+      </ul>
+    </div>
+
+    <div class="tema" data-t="interrogacion">
+      <h3>❔ Signos de interrogación y entonación</h3>
+      <p>Las preguntas van entre <b>¿ ?</b>: uno al inicio y otro al final. <b>Entonación</b> es cómo sube y baja la voz: en una pregunta de sí o no la voz <b>sube al final</b>; con punto, <b>baja</b>.</p>
+      <div class="ej">✅ ¿Querés jugar conmigo? ❌ Querés jugar conmigo? ❌ ¿Querés jugar conmigo</div>
+      <p>Qué, cómo, dónde, cuándo, quién y cuál llevan tilde cuando preguntan: <b>¿Dónde</b> vivís?</p>
+    </div>
+
+    <div class="tema" data-t="lenguaje-verbal">
+      <h3>🎵 Adivinanzas, trabalenguas, canciones y rimas</h3>
+      <ul>
+        <li><b>Adivinanza:</b> da pistas para descubrir algo. «Tengo agujas y no sé coser…» (el reloj).</li>
+        <li><b>Trabalenguas:</b> sonidos parecidos para practicar la pronunciación. «Tres tristes tigres…».</li>
+        <li><b>Canción:</b> palabras con música y ritmo. «Los pollitos dicen pío, pío, pío…».</li>
+        <li><b>Rima:</b> palabras que terminan con el mismo sonido: ratón – camión, rana – manzana.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 🌱 CIENCIAS -->
+  <section class="card" id="ciencias" style="--c:#2FA85A">
+    <h2>🌱 Ciencias</h2>
+    <p class="fecha">📅 Martes 10 de noviembre</p>
+    <div class="practica" data-materia="ciencias" data-temas="contaminacion,estados,cambios-nombres,ciclo-agua"></div>
+
+    <div class="tema" data-t="contaminacion">
+      <h3>🏭 La contaminación ambiental</h3>
+      <p><b>Contaminación ambiental:</b> cuando el aire, el agua o el suelo se ensucian con basura, humo, ruido o sustancias que dañan a los seres vivos. La causan sobre todo las <b>acciones humanas</b>.</p>
+      <table class="mini"><tr><th>Causa (lo que hacemos)</th><th>Efecto (lo que pasa)</th></tr>
+        <tr><td>Tirar basura al río</td><td>El agua se ensucia y mueren los peces</td></tr>
+        <tr><td>Quemar basura, humo de carros y fábricas</td><td>Aire sucio: tos, asma, alergias</td></tr>
+        <tr><td>Cortar los árboles</td><td>Los animales pierden su casa</td></tr>
+        <tr><td>Basura en la calle</td><td>Se tapan las alcantarillas: inundaciones</td></tr>
+        <tr><td>Plásticos en la playa</td><td>Las tortugas se los comen y se enferman</td></tr>
+        <tr><td>Química en la tierra</td><td>El suelo se daña y las plantas no crecen</td></tr>
+        <tr><td>Música a todo volumen</td><td>Contaminación sónica: daña los oídos</td></tr>
+      </table>
+      <p>✅ Cómo ayudar: <b>reducir, reutilizar y reciclar</b>, botar la basura separada, sembrar árboles, caminar o andar en bici.</p>
+    </div>
+
+    <div class="tema" data-t="estados">
+      <h3>🧊 Estados de la materia</h3>
+      <ul>
+        <li><b>Sólido:</b> tiene forma propia (hielo, piedra, lápiz).</li>
+        <li><b>Líquido:</b> toma la forma del recipiente y se derrama (agua, leche, jugo).</li>
+        <li><b>Gaseoso:</b> se esparce por todo el espacio y casi no se ve (vapor, aire, viento).</li>
+      </ul>
+    </div>
+
+    <div class="tema" data-t="cambios-nombres">
+      <h3>🌡️ Cambios de estado</h3>
+      <table class="mini"><tr><th>Cambio</th><th>De… a…</th><th>Ejemplo</th></tr>
+        <tr><td><b>Fusión</b></td><td>sólido → líquido (calor)</td><td>el hielo se derrite al sol</td></tr>
+        <tr><td><b>Solidificación</b></td><td>líquido → sólido (frío)</td><td>el agua se hace hielo en el congelador</td></tr>
+        <tr><td><b>Evaporación</b></td><td>líquido → gas (calor)</td><td>el agua de la olla hierve y sale vapor</td></tr>
+        <tr><td><b>Condensación</b></td><td>gas → líquido (frío)</td><td>el espejo del baño se llena de gotitas</td></tr>
+      </table>
+      <p>Cambian al subir o bajar la temperatura (o la presión), pero <b>no cambia lo que es</b>: el hielo, el agua y el vapor siguen siendo agua.</p>
+    </div>
+
+    <div class="tema" data-t="ciclo-agua">
+      <h3>🌧️ El ciclo del agua</h3>
+      <p>El <b>sol</b> es el que mueve el ciclo:</p>
+      <ol>
+        <li><b>Evaporación:</b> el sol calienta el agua de mares, ríos y lagos y sube como vapor.</li>
+        <li><b>Condensación:</b> el vapor se enfría y forma las nubes.</li>
+        <li><b>Precipitación:</b> el agua cae como lluvia (o granizo).</li>
+        <li><b>Recolección:</b> llega a ríos, lagos, el mar o se mete en la tierra… y vuelve a empezar.</li>
+      </ol>
+      <p><b>Importancia:</b> renueva el agua dulce que necesitamos todos los seres vivos para beber, regar las plantas y vivir.</p>
+    </div>
+  </section>
+
+  <!-- 🔢 MATEMÁTICAS -->
+  <section class="card" id="mate" style="--c:#2F7FD1">
+    <h2>🔢 Matemáticas</h2>
+    <p class="fecha">📅 Miércoles 11 de noviembre</p>
+    <p class="eximido">🏆 Si quedaste eximido o eximida en Matemáticas, ¡felicidades! Igual podés practicar por gusto.</p>
+    <div class="practica" data-materia="mate" data-temas="hora,numeros,graficos"></div>
+    <div class="tema"><h3>🕒 La hora: reloj analógico y digital</h3><p>El analógico tiene agujas: la corta marca la hora y la larga los minutos. El digital muestra números (7:30). Practicá también en <a href="juegos/reloj.html">Aprendo la hora</a>.</p></div>
+    <div class="tema"><h3>💯 Sucesiones ascendentes y descendentes</h3><p>Ascendente: los números crecen (10, 20, 30…). Descendente: bajan (50, 45, 40…). Practicá en <a href="juegos/numeros.html">Números del 1 al 100</a>.</p></div>
+    <div class="tema"><h3>📊 Recolección de datos</h3><p>Formas de obtener información: <b>observación directa</b> (mirar y anotar), <b>entrevistas sencillas</b> (preguntarle a alguien) y <b>encuestas</b> (la misma pregunta a muchas personas). Practicá en <a href="juegos/graficos.html">Encuesta en la escuela</a>.</p></div>
+  </section>
+
+  <!-- 🗺️ ESTUDIOS SOCIALES -->
+  <section class="card" id="sociales" style="--c:#C77700">
+    <h2>🗺️ Estudios Sociales</h2>
+    <p class="fecha">📅 Jueves 12 de noviembre</p>
+    <div class="practica" data-materia="sociales" data-temas="canton-belen,personajes-belen,expresiones-artisticas,participacion-escuela,valores,ciudadania"></div>
+
+    <div class="tema" data-t="canton-belen">
+      <h3>🏘️ Mi escuela y mi cantón</h3>
+      <p>Mi escuela: <b>Escuela Fidel Chaves Murillo</b>. Distrito: <b>La Ribera</b>. Cantón: <b>Belén</b>. Provincia: <b>Heredia</b>. País: Costa Rica.</p>
+      <p>Belén tiene tres distritos: <b>San Antonio</b> (la cabecera, donde está la Municipalidad), <b>La Ribera</b> y <b>La Asunción</b>.</p>
+      <p><b>Importancia del desarrollo cultural:</b> las tradiciones, la música, el arte y las fiestas nos dan identidad, conservan nuestra historia y unen a los vecinos.</p>
+    </div>
+
+    <div class="tema" data-t="personajes-belen">
+      <h3>👴 Hombres y mujeres representativos</h3>
+      <ul>
+        <li><b>Don Fidel Chaves Murillo:</b> vecino de La Ribera. La escuela empezó (hacia 1912) en el corredor de su casa; por eso, desde 1976, la escuela lleva su nombre. Ejemplo de solidaridad.</li>
+        <li><b>Don Wilfrido Sánchez Mondragón, «Don Billo»:</b> nació en Alajuela y desde niño trabajó la tierra con su papá. Sirvió a Belén en la Municipalidad (tesorero y presidente municipal) y fue declarado <b>Hijo Predilecto</b> de Belén. La Municipalidad entrega la <b>Orden Billo Sánchez</b> a quienes trabajan por la comunidad (su símbolo: dos manos unidas).</li>
+      </ul>
+    </div>
+
+    <div class="tema" data-t="expresiones-artisticas">
+      <h3>🎭 Expresiones artísticas</h3>
+      <p><b>Mascaradas</b> (gigantes con máscaras de papel maché que bailan en las fiestas, acompañadas por la <b>cimarrona</b>), <b>música</b> (bandas, marimba), <b>pintura</b> (cuadros, murales), baile folclórico y teatro. El <b>31 de octubre</b> es el Día de la Mascarada Tradicional Costarricense.</p>
+    </div>
+
+    <div class="tema" data-t="participacion-escuela">
+      <h3>🏆 Mi escuela participa en el cantón</h3>
+      <ul>
+        <li><b>Artística y deportiva:</b> FEA (Festival Estudiantil de las Artes), torneos deportivos, la banda institucional.</li>
+        <li><b>Académica:</b> exposiciones, trabajos y juegos grupales, la Feria Científica, exposiciones de arte (pintura y mascaradas).</li>
+      </ul>
+    </div>
+
+    <div class="tema" data-t="valores">
+      <h3>🤝 Valores que se fomentan al participar</h3>
+      <p><b>Armonía</b> (convivir en paz), <b>honestidad</b> (decir la verdad), <b>solidaridad</b> (ayudar al que lo necesita), <b>tolerancia</b> (aceptar a quien piensa distinto), <b>compañerismo</b>, <b>respeto</b>, <b>cooperación</b> (trabajar juntos) y <b>empatía</b> (ponerse en el lugar del otro).</p>
+    </div>
+
+    <div class="tema" data-t="ciudadania">
+      <h3>🗳️ Espacios de participación: ciudadanía activa</h3>
+      <p><b>Gobierno estudiantil</b> (elegido en las <b>elecciones estudiantiles</b>) y <b>directiva de sección</b> (presidente, vicepresidente, secretario, tesorero, fiscal y vocal). Se eligen con el voto, que es <b>secreto</b> (nadie ve por quién votamos) y <b>voluntario</b> (nadie nos obliga). Si nuestro candidato pierde, respetamos el resultado.</p>
+    </div>
+  </section>
+
+  <p class="foot">Hecho a partir del temario de la sección 2-4. Si algún dato no coincide con lo que vieron en clase, manda lo que diga la maestra. Contanos en <a href="sugerencias.html">sugerencias</a>.</p>
+</main>
+
+<script type="module">
+import { MATERIAS_EXAMEN } from "./js/examen-temas.js";
+// Cada materia: «Practicar todo» y un botón por tema que abre el examen ya armado
+const url = (m, temas, porTema) => `examen.html?materia=${m}&grado=2&temas=${temas.join(",")}&porTema=${porTema}&empezar`;
+document.querySelectorAll(".practica").forEach(div => {
+  const m = div.dataset.materia, temas = div.dataset.temas.split(","), mat = MATERIAS_EXAMEN.find(x => x.id === m);
+  div.innerHTML = `<a class="todo" href="${url(m, temas, 5)}">${mat.emoji} Practicar todo ${mat.nombre}</a>`;
+  div.closest("section").querySelectorAll(".tema[data-t]").forEach(t => {
+    t.querySelector("h3").insertAdjacentHTML("beforeend", `<a href="${url(m, [t.dataset.t], 10)}">▶️ Practicar (10)</a>`);
+  });
+});
+document.getElementById("imprimirBtn").addEventListener("click", () => window.print());
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>

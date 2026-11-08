@@ -28,6 +28,7 @@
   .practica a.todo { background: var(--btn); }
   .tema { margin-top: 12px; border-left: 6px solid var(--c); padding: 2px 0 2px 10px; }
   .tema h3 { margin: 0 0 4px; font-size: 1.12rem; color: var(--page-ink); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .pasos-ayuda { background: var(--face); border: 3px dashed var(--rim); border-radius: 14px; padding: 6px 10px; font-weight: 700; margin: 10px auto 0; }
   .tema h3 a { font-size: .9rem; font-weight: 800; color: var(--c); text-decoration: none; border: 2px solid var(--c); border-radius: 999px; padding: 0 10px; white-space: nowrap; }
   .tema p, .tema li { margin: 3px 0; line-height: 1.4; }
   .tema ul { margin: 4px 0; padding-left: 20px; }
@@ -54,6 +55,7 @@
   <header class="hero">
     <h1>📋 Temario de 2°</h1>
     <p>Segundas pruebas sumativas, <b>del 9 al 12 de noviembre</b>. Cada materia trae lo que hay que saber, con ejemplos, y botones para <b>practicar</b>: cada práctica sale con preguntas nuevas, se califica y explica cada respuesta.</p>
+    <p class="pasos-ayuda">En cada tema, de a poquito: <b>📖 Aprender</b> (leer y oír, sin preguntas) → <b>✏️ Practicar</b> (marcar con X y completar, con ayuda) → <b>📝 Examen</b> (con nota).</p>
     <div class="barra">
       <button id="imprimirBtn">🖨️ Imprimir el resumen</button>
       <a href="examen.html">📝 Armar otro examen</a>
@@ -244,13 +246,20 @@
 
 <script type="module">
 import { MATERIAS_EXAMEN } from "./js/examen-temas.js";
-// Cada materia: «Practicar todo» y un botón por tema que abre el examen ya armado
+import { LECCIONES } from "./js/aprender-2.js";
+let hecho = {};
+try { hecho = JSON.parse(localStorage.getItem("aprender-2")) || {}; } catch (_) {}
+// Cada materia: el examen de todo, y en cada tema sus tres pasos
 const url = (m, temas, porTema) => `examen.html?materia=${m}&grado=2&temas=${temas.join(",")}&porTema=${porTema}&empezar`;
 document.querySelectorAll(".practica").forEach(div => {
   const m = div.dataset.materia, temas = div.dataset.temas.split(","), mat = MATERIAS_EXAMEN.find(x => x.id === m);
-  div.innerHTML = `<a class="todo" href="${url(m, temas, 5)}">${mat.emoji} Practicar todo ${mat.nombre}</a>`;
+  div.innerHTML = `<a class="todo" href="${url(m, temas, 5)}">📝 Examen de todo ${mat.nombre}</a>`;
   div.closest("section").querySelectorAll(".tema[data-t]").forEach(t => {
-    t.querySelector("h3").insertAdjacentHTML("beforeend", `<a href="${url(m, [t.dataset.t], 10)}">▶️ Practicar (10)</a>`);
+    // 1 📖 aprender → 2 ✏️ practicar → 3 📝 examen (✅ lo que ya hizo en este teléfono)
+    const id = t.dataset.t, h = hecho[id] || {}, a = p => `aprender.html?materia=${m}&tema=${id}&paso=${p}`;
+    t.querySelector("h3").insertAdjacentHTML("beforeend", LECCIONES[id]
+      ? `<a href="${a("aprender")}">📖 Aprender${h.leido ? " ✅" : ""}</a><a href="${a("practicar")}">✏️ Practicar${h.practica != null ? " ✅" : ""}</a><a href="${url(m, [id], 10)}">📝 Examen</a>`
+      : `<a href="${url(m, [id], 10)}">📝 Examen</a>`);
   });
 });
 document.getElementById("imprimirBtn").addEventListener("click", () => window.print());

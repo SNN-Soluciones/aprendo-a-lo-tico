@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aprender, practicar y examen</title>
+<meta name="description" content="Primero aprendé leyendo y escuchando, después practicá marcando con X y completando, y al final hacé el examen.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/prepa.css">
+<style>
+  .home-link { position: static; align-self: flex-start; margin: 0 0 4px; text-decoration: none; font-size: 1.6rem; }
+  .ancho { width: min(96vw, 620px); }
+  h1 { margin: 2px 0 0; color: var(--page-ink); font-size: clamp(1.4rem, 6vw, 2rem); text-align: center; line-height: 1.1; }
+
+  /* Los tres pasos */
+  .pasos { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-top: 10px; }
+  .pasos button { padding: 6px 4px; font-size: 1rem; line-height: 1.05; border-radius: 16px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .pasos button small { display: block; font-size: .72rem; opacity: .8; }
+  .pasos button[aria-current="step"] { background: var(--btn); }
+  .pasos button.hecho::after { content: " ✅"; }
+
+  .caja { margin-top: 12px; background: var(--face); color: var(--ink); border: 4px solid var(--rim); border-radius: 22px; padding: 14px; box-shadow: 0 5px 0 var(--rim); }
+
+  /* 📖 Aprender: una tarjeta a la vez */
+  .tarjeta { text-align: center; min-height: 250px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
+  .tarjeta .emo { font-size: 4rem; line-height: 1; }
+  .tarjeta .txt { font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
+  .tarjeta .txt b { color: #C2410C; }
+  .tarjeta .ej { background: #FFFBEA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 800; font-size: 1.15rem; }
+  .puntos { display: flex; justify-content: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+  .puntos i { width: 12px; height: 12px; border-radius: 50%; background: var(--soft); }
+  .puntos i.on { background: var(--rim); }
+  .nav { display: flex; gap: 8px; justify-content: space-between; align-items: center; margin-top: 12px; }
+  .nav .grande { background: var(--btn); font-size: 1.2rem; }
+  .oir { font-size: 1.1rem; }
+
+  /* ✏️ Practicar */
+  .cuenta { text-align: center; font-weight: 800; color: var(--page-ink); margin-top: 10px; }
+  .tipo { display: inline-block; font-size: .85rem; font-weight: 800; background: #EEF4FB; border: 2px solid var(--rim); border-radius: 999px; padding: 0 10px; margin-bottom: 6px; }
+  .preg { font-size: 1.25rem; font-weight: 800; line-height: 1.3; display: flex; gap: 8px; align-items: flex-start; }
+  .preg .t { flex: 1; }
+  .preg .oir { flex: none; padding: 0 8px; border-width: 3px; box-shadow: none; }
+  .lectura { background: #FFFBEA; border: 3px dashed var(--rim); border-radius: 14px; padding: 8px 12px; margin-bottom: 10px; font-weight: 600; font-size: 1.1rem; line-height: 1.45; }
+  .marcar { display: grid; gap: 8px; margin-top: 10px; }
+  .marcar button { text-align: left; border-radius: 14px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); font-size: 1.1rem; padding: 6px 10px; display: flex; gap: 10px; align-items: center; line-height: 1.2; }
+  .marcar button .box { flex: none; width: 1.6em; height: 1.6em; border: 3px solid var(--rim); border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; background: #fff; }
+  .marcar button.mal { border-color: var(--bad); background: #FDE3E0; opacity: .75; }
+  .marcar button.mal .box { color: var(--bad); }
+  .marcar button.bien, .fichas button.bien { opacity: 1; }
+  .marcar button.bien { border-color: var(--ok); background: #CFF5DC; }
+  .marcar button.bien .box { color: var(--ok); border-color: var(--ok); }
+  .hueco { display: inline-block; min-width: 4.5em; border-bottom: 4px solid var(--rim); text-align: center; color: var(--materia); padding: 0 4px; }
+  .hueco.bien { color: var(--ok); border-color: var(--ok); }
+  .fichas { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 14px; }
+  .fichas button { font-size: 1.15rem; border-radius: 14px; border-width: 3px; box-shadow: 0 3px 0 var(--rim); }
+  .fichas button.mal { border-color: var(--bad); background: #FDE3E0; text-decoration: line-through; opacity: .7; }
+  .fichas button.bien { border-color: var(--ok); background: #CFF5DC; }
+  .aviso { margin-top: 10px; border-radius: 14px; padding: 8px 12px; font-weight: 700; font-size: 1.05rem; }
+  .aviso.ok { background: #CFF5DC; border: 3px solid var(--ok); }
+  .aviso.casi { background: #FFF1D6; border: 3px solid var(--almost); }
+  .sigue { margin-top: 12px; width: 100%; background: var(--ok); color: #fff; border-color: #1D6B3A; box-shadow: 0 4px 0 #1D6B3A; font-size: 1.25rem; }
+
+  /* Final y examen */
+  .fin { text-align: center; }
+  .fin .grande { font-size: 3rem; line-height: 1.1; }
+  .fin p { font-weight: 700; font-size: 1.15rem; margin: 6px 0; }
+  .botones { display: grid; gap: 8px; margin-top: 12px; }
+  .botones a, .botones button { display: block; text-align: center; text-decoration: none; font: inherit; font-weight: 800; font-size: 1.15rem; color: var(--ink); background: var(--face); border: 4px solid var(--rim); border-radius: 999px; padding: 6px 14px; box-shadow: 0 4px 0 var(--rim); cursor: pointer; }
+  .botones .principal { background: var(--btn); }
+  .otros { margin-top: 14px; font-weight: 700; color: var(--page-ink); }
+  .otros a { color: inherit; }
+</style>
+</head>
+<body>
+<a class="home-link" href="temario-2.html" aria-label="Volver al temario">📋</a>
+<div class="ancho">
+  <h1 id="titulo">Aprender</h1>
+  <nav class="pasos" aria-label="Pasos">
+    <button data-paso="aprender">📖 1. Aprender<small>leer y oír</small></button>
+    <button data-paso="practicar">✏️ 2. Practicar<small>marcar y completar</small></button>
+    <button data-paso="examen">📝 3. Examen<small>con nota</small></button>
+  </nav>
+  <div id="contenido"></div>
+</div>
+
+<script type="module">
+import { decir } from "./js/prepa.js";
+import { sonido } from "./js/voz.js";
+import { MATERIAS_EXAMEN } from "./js/examen-temas.js";
+import { LECCIONES } from "./js/aprender-2.js";
+
+const $ = id => document.getElementById(id);
+const pide = new URLSearchParams(location.search);
+const materia = MATERIAS_EXAMEN.find(m => m.id === pide.get("materia")) || MATERIAS_EXAMEN.find(m => m.id === "espanol");
+const tema = materia.temas.find(t => t.id === pide.get("tema") && LECCIONES[t.id]) || materia.temas.find(t => LECCIONES[t.id]);
+const leccion = LECCIONES[tema.id];
+const GRADO = 2, PREGUNTAS = 10;
+
+const barajar = a => { const b = [...a]; for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+const texto = html => { const d = new DOMParser().parseFromString(String(html), "text/html"); d.querySelectorAll("svg").forEach(x => x.remove()); return d.body.textContent.replace(/\s+/g, " ").trim(); };
+const paraVoz = t => texto(t).replace(/_{2,}/g, "espacio en blanco").replace(/→/g, ", ").replace(/·/g, ", ").replace(/ – /g, " y ");
+
+// ✅ Lo que ya hizo, por tema (si el navegador no deja guardar, igual funciona)
+let progreso = {};
+try { progreso = JSON.parse(localStorage.getItem("aprender-2")) || {}; } catch (_) {}
+const marcar = (k, v) => { progreso[tema.id] = { ...progreso[tema.id], [k]: v }; try { localStorage.setItem("aprender-2", JSON.stringify(progreso)); } catch (_) {} };
+
+$("titulo").textContent = `${tema.emoji} ${tema.nombre}`;
+document.title = `${tema.nombre} · Aprender y practicar`;
+let paso = ["aprender", "practicar", "examen"].includes(pide.get("paso")) ? pide.get("paso") : "aprender";
+
+function pintarPasos() {
+  document.querySelectorAll("[data-paso]").forEach(b => {
+    if (b.dataset.paso === paso) b.setAttribute("aria-current", "step"); else b.removeAttribute("aria-current");
+    b.classList.toggle("hecho", (b.dataset.paso === "aprender" && progreso[tema.id]?.leido) || (b.dataset.paso === "practicar" && progreso[tema.id]?.practica != null));
+  });
+}
+function ir(p) {
+  paso = p; pintarPasos(); window.scrollTo(0, 0);
+  speechSynthesis?.cancel?.();
+  ({ aprender: mostrarTarjeta, practicar: empezarPractica, examen: mostrarExamen })[p]();
+}
+document.querySelector(".pasos").addEventListener("click", e => { const b = e.target.closest("[data-paso]"); if (b) { sonido("tap"); if (b.dataset.paso === "aprender") carta = 0; ir(b.dataset.paso); } });
+
+// ---------- 📖 1. Aprender ----------
+let carta = 0;
+function mostrarTarjeta() {
+  const n = leccion.tarjetas.length, c = leccion.tarjetas[carta], ultima = carta === n - 1;
+  $("contenido").innerHTML = `<div class="caja">
+      <div class="tarjeta"><div class="emo">${c.e}</div><div class="txt">${c.t}</div>${c.ej ? `<div class="ej">${c.ej}</div>` : ""}</div>
+      <div class="puntos">${leccion.tarjetas.map((_, i) => `<i class="${i <= carta ? "on" : ""}"></i>`).join("")}</div>
+      <div class="nav">
+        <button id="atras" ${carta ? "" : "disabled"} aria-label="Anterior">⬅️</button>
+        <button class="oir" id="oir">🔊 Oír</button>
+        <button class="grande" id="adelante">${ultima ? "✏️ ¡A practicar!" : "Siguiente ➡️"}</button>
+      </div></div>
+    <p class="cuenta">Tarjeta ${carta + 1} de ${n}</p>`;
+  const leer = () => decir(paraVoz(c.t + (c.ej ? ". Por ejemplo: " + c.ej : "")));
+  $("oir").onclick = leer;
+  $("atras").onclick = () => { sonido("tap"); carta--; mostrarTarjeta(); };
+  $("adelante").onclick = () => {
+    sonido("tap");
+    if (ultima) { marcar("leido", true); ir("practicar"); } else { carta++; mostrarTarjeta(); leerAlPasar(); }
+  };
+  if (ultima) marcar("leido", true);
+}
+// Después del primer toque el teléfono ya deja hablar: cada tarjeta nueva se lee sola
+const leerAlPasar = () => { const c = leccion.tarjetas[carta]; decir(paraVoz(c.t + (c.ej ? ". Por ejemplo: " + c.ej : ""))); };
+
+// ---------- ✏️ 2. Practicar: marque con X y complete, con ayuda y sin nota ----------
+let lista = [], i = 0, aLaPrimera = 0, intentos = 0;
+function armarPractica() {
+  // La mitad «marque con X» (del examen) y la mitad «complete» (de la lección), intercaladas
+  const comp = barajar(leccion.completar), vistas = new Set(), marcarX = [];
+  for (let k = 0; marcarX.length < PREGUNTAS - Math.min(comp.length, PREGUNTAS / 2) && k < 200; k++) {
+    const q = tema.pregunta(Math.random, GRADO, "");
+    if (vistas.has(q.texto + q.correcta)) continue;
+    vistas.add(q.texto + q.correcta);
+    marcarX.push(q.tipo === "numero" ? aOpciones(q) : q);
+  }
+  const out = [];
+  for (let k = 0; out.length < PREGUNTAS && (k < comp.length || k < marcarX.length); k++) {
+    if (marcarX[k]) out.push({ ...marcarX[k], forma: "x" });
+    if (comp[k] && out.length < PREGUNTAS) out.push({ forma: "completar", frase: comp[k][0], correcta: comp[k][1], opciones: barajar([comp[k][1], ...comp[k][2]]) });
+  }
+  return out;
+}
+// Las de escribir un número pasan a marcar: el número y sus vecinos
+const aOpciones = q => { const n = Number(q.correcta); return { ...q, tipo: "opcion", opciones: [...new Set([n - 1, n, n + 1].filter(x => x > 0).map(String))] }; };
+
+function empezarPractica() { lista = armarPractica(); i = 0; aLaPrimera = 0; mostrarPregunta(); }
+function mostrarPregunta() {
+  if (i >= lista.length) return terminarPractica();
+  const q = lista[i]; intentos = 0;
+  const cab = `<p class="cuenta">${i + 1} de ${lista.length} · ⭐ ${aLaPrimera}</p>`;
+  if (q.forma === "x") {
+    $("contenido").innerHTML = `${cab}<div class="caja"><span class="tipo">☒ Marcá con X la respuesta correcta</span>
+      ${q.lectura ? `<div class="lectura">${q.lectura}</div>` : ""}
+      <div class="preg"><span class="t">${q.texto}</span><button class="oir" id="oir" aria-label="Oír">🔊</button></div>
+      <div class="marcar">${q.opciones.map((o, k) => `<button data-k="${k}"><span class="box"></span><span>${o}</span></button>`).join("")}</div>
+      <div id="aviso"></div></div>`;
+    $("oir").onclick = () => decir((q.lectura ? paraVoz(q.lectura) + ". " : "") + paraVoz(q.texto) + ". " + q.opciones.map(paraVoz).join(", "));
+    document.querySelector(".marcar").onclick = e => { const b = e.target.closest("button[data-k]"); if (b && !b.disabled) responder(b, q.opciones[b.dataset.k], q, "x"); };
+  } else {
+    $("contenido").innerHTML = `${cab}<div class="caja"><span class="tipo">✍️ Completá con la palabra correcta</span>
+      <div class="preg"><span class="t">${q.frase.replace("___", `<span class="hueco" id="hueco">?</span>`)}</span><button class="oir" id="oir" aria-label="Oír">🔊</button></div>
+      <div class="fichas">${q.opciones.map((o, k) => `<button data-k="${k}">${o}</button>`).join("")}</div>
+      <div id="aviso"></div></div>`;
+    $("oir").onclick = () => decir(paraVoz(q.frase) + ". Las palabras son: " + q.opciones.join(", "));
+    document.querySelector(".fichas").onclick = e => { const b = e.target.closest("button[data-k]"); if (b && !b.disabled) responder(b, q.opciones[b.dataset.k], q, "c"); };
+  }
+}
+function responder(b, elegida, q, forma) {
+  intentos++;
+  const grupo = b.parentElement, bien = elegida === q.correcta;
+  if (bien) {
+    if (intentos === 1) aLaPrimera++;
+    b.classList.add("bien");
+    if (forma === "x") b.querySelector(".box").textContent = "✕";
+    else { $("hueco").textContent = elegida; $("hueco").classList.add("bien"); }
+    grupo.querySelectorAll("button").forEach(x => (x.disabled = true));
+    sonido("ok");
+    const porque = q.explica ? `<br>💡 ${q.explica}` : "";
+    $("aviso").innerHTML = `<div class="aviso ok">✅ ${intentos === 1 ? "¡Muy bien!" : "¡Eso es!"}${porque}</div><button class="sigue" id="sigue">${i + 1 < lista.length ? "Siguiente ➡️" : "🏁 Terminar"}</button>`;
+    decir(intentos === 1 ? "¡Muy bien!" : "¡Eso es!");
+    $("sigue").onclick = () => { sonido("tap"); i++; mostrarPregunta(); };
+    $("sigue").scrollIntoView({ block: "nearest", behavior: "smooth" });
+    return;
+  }
+  // ❌ No pasa nada: se tacha y se prueba otra vez. A la segunda se le enseña cuál es.
+  b.classList.add("mal"); b.disabled = true;
+  if (forma === "x") b.querySelector(".box").textContent = "✕";
+  sonido("casi");
+  if (intentos >= 2) {
+    const ok = [...grupo.querySelectorAll("button[data-k]")].find(x => q.opciones[x.dataset.k] === q.correcta);
+    ok?.classList.add("bien");
+    $("aviso").innerHTML = `<div class="aviso casi">👉 Es la que está en verde: <b>${q.correcta}</b>. Tocala para seguir.${q.explica ? `<br>💡 ${q.explica}` : ""}</div>`;
+    decir("Mirá, es la que está en verde. Tocala.");
+  } else {
+    $("aviso").innerHTML = `<div class="aviso casi">🤔 ¡Casi! Esa no es. Probá otra vez.</div>`;
+    decir("¡Casi! Probá otra vez.");
+  }
+}
+function terminarPractica() {
+  const n = lista.length, antes = progreso[tema.id]?.practica ?? 0;
+  marcar("practica", Math.max(antes, aLaPrimera)); pintarPasos();
+  const listo = aLaPrimera >= Math.ceil(n * 0.7);
+  $("contenido").innerHTML = `<div class="caja fin"><div class="grande">${listo ? "🌟" : "💪"}</div>
+    <p>¡Terminaste la práctica!</p><p>Acertaste <b>${aLaPrimera} de ${n}</b> a la primera.</p>
+    <p>${listo ? "¡Ya estás lista o listo para el examen!" : "Practicá otra vez o repasá las tarjetas, y después vas al examen."}</p>
+    <div class="botones">
+      ${listo ? `<button class="principal" id="alExamen">📝 ¡Al examen!</button>` : ""}
+      <button ${listo ? "" : 'class="principal"'} id="otraVez">🔁 Practicar otra vez</button>
+      <button id="repasar">📖 Repasar las tarjetas</button>
+      ${listo ? "" : `<button id="alExamen">📝 Ir al examen igual</button>`}
+    </div></div>`;
+  sonido(listo ? "ok" : "casi");
+  decir(`Acertaste ${aLaPrimera} de ${n} a la primera. ${listo ? "¡Ya estás lista para el examen!" : "Practiquemos otra vez."}`);
+  $("alExamen").onclick = () => { sonido("tap"); ir("examen"); };
+  $("otraVez").onclick = () => { sonido("tap"); empezarPractica(); };
+  $("repasar").onclick = () => { sonido("tap"); carta = 0; ir("aprender"); };
+}
+
+// ---------- 📝 3. Examen ----------
+function mostrarExamen() {
+  const conLeccion = materia.temas.filter(t => LECCIONES[t.id]).map(t => t.id);
+  const url = (temas, porTema) => `examen.html?materia=${materia.id}&grado=${GRADO}&temas=${temas.join(",")}&porTema=${porTema}&empezar`;
+  const sig = conLeccion[conLeccion.indexOf(tema.id) + 1], sigTema = sig && materia.temas.find(t => t.id === sig);
+  $("contenido").innerHTML = `<div class="caja fin"><div class="grande">📝</div>
+    <p>El examen es como el de la escuela: contestás todo, lo entregás y te da la <b>nota</b>.</p>
+    <div class="botones">
+      <a class="principal" href="${url([tema.id], 10)}">📝 Examen de «${tema.nombre}» (10 preguntas)</a>
+      <a href="${url(conLeccion, 5)}">${materia.emoji} Examen de todo ${materia.nombre}</a>
+    </div>
+    ${sigTema ? `<p class="otros">Siguiente tema: <a href="aprender.html?materia=${materia.id}&tema=${sig}">${sigTema.emoji} ${sigTema.nombre} ➡️</a></p>` : ""}
+    <p class="otros"><a href="temario-2.html">📋 Volver al temario</a></p></div>`;
+}
+
+pintarPasos();
+ir(paso);
+</script>
+<script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
+</body>
+</html>

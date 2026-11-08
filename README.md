@@ -87,6 +87,9 @@ para estudiar de cada tema y botones que abren el examen ya armado (`examen.html
 Los temas nuevos (diptongo, hiato, tipos de textos, gestos y tono, interrogación, adivinanzas y rimas, contaminación,
 cambios de estado con sus nombres, ciclo del agua, mi cantón, don Fidel y don Billo, mascaradas, participación, valores
 y gobierno estudiantil) están en `public/js/temario-2.js`.
+Cada tema va en tres pasos en `public/aprender.html?materia=…&tema=…`: 📖 aprender (tarjetas para leer y oír, sin
+preguntas), ✏️ practicar (marque con X y complete, con ayuda y sin nota) y 📝 examen. Las lecciones están en
+`public/js/aprender-2.js`.
 
 ## Estructura
 

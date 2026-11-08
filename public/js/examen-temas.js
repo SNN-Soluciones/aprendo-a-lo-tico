@@ -30,6 +30,8 @@ import { preguntaExamen as preguntaPlata } from "./plata.js";
 import { preguntaExamen as preguntaMedidas } from "./medidas.js";
 import { preguntaExamen as preguntaComunidad } from "./comunidad.js";
 import { preguntaExamen as preguntaGeometria } from "./geometria.js";
+// 📋 Temario de las segundas pruebas de 2° (diptongo, hiato, contaminación, ciclo del agua, mi cantón…)
+import { ESPANOL_2, CIENCIAS_2, SOCIALES_2 } from "./temario-2.js";
 
 // ---------- Ayudas ----------
 const ent = (a, b, r) => a + Math.floor(r() * (b - a + 1));
@@ -737,6 +739,7 @@ const ESPANOL = [
     const mal3 = ws.map(w => w[0].toLocaleUpperCase("es") + w.slice(1)).join(" ");
     return opc(`¿Cuál oración está bien escrita?`, bien, [mal1, mal2, mal3], `«${bien}»: la primera palabra y los nombres de personas, mascotas y lugares van con mayúscula.`, r);
   } },
+  ...ESPANOL_2,
 ];
 function orto(lista, r) {
   const p = elegir(lista, r), antes = p.w.slice(0, p.i), despues = p.w.slice(p.i + p.l.length);
@@ -773,6 +776,7 @@ const CIENCIAS = [
     return opc(lugar ? `¿Qué ecosistema hay en ${x.n}?` : `${x.e} ¿En qué ecosistema vive ${x.n.toLowerCase()}?`, ECOS[x.eco].n, malos.map(k => ECOS[k].n),
       `${ECOS[x.eco].n}: ${ECOS[x.eco].como}.`, r);
   } },
+  ...CIENCIAS_2,
 ];
 
 // ================= ESTUDIOS SOCIALES =================
@@ -808,6 +812,7 @@ const SOCIALES = [
   { id: "gobierno", nombre: "Gobierno y ciudadanía", emoji: "⚖️", grados: [5, 6], pregunta: gobiernoTema },
   { id: "direcciones", nombre: "Puntos cardinales y direcciones", emoji: "🧭", grados: [1, 2, 3, 4, 5, 6], pregunta: direcciones },
   { id: "comunidad", nombre: "Mi comunidad", emoji: "🏘️", grados: [1, 2], pregunta: (r, g) => preguntaComunidad(r, g) },
+  ...SOCIALES_2,
 ];
 
 // ================= INGLÉS =================

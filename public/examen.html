@@ -109,6 +109,7 @@
 <div id="config" class="ancho">
   <h1>📝 Preparate para el examen</h1>
   <p class="sub">Elegí lo que viene en el examen y practicá. Cada vez salen preguntas nuevas.</p>
+  <p class="sub"><a href="temario-2.html">📋 Temario de 2° (noviembre): resumen para estudiar y prácticas listas</a></p>
 
   <div class="paso">
     <h2><span class="n">1</span>¿Para quién es? <small>(opcional)</small></h2>
@@ -123,7 +124,7 @@
     <div class="grupo" id="materias"></div>
   </div>
   <div class="paso">
-    <h2><span class="n">4</span>¿Qué temas vienen? <small>(de 2 a 5)</small></h2>
+    <h2><span class="n">4</span>¿Qué temas vienen? <small>(de 1 a 6)</small></h2>
     <div class="grupo temas" id="temas"></div>
     <p class="nota-temas" id="notaTemas"></p>
   </div>
@@ -171,6 +172,14 @@ const lecturaAntes = (qs, qi) => (qs[qi].lectura && qs[qi].lectura !== qs[qi - 1
 
 let cfg = { nombre: "", grado: 3, materia: "mate", temas: [], porTema: 5 };
 try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem("examen-config")) }; } catch (_) {}
+// 📋 Desde el temario: examen.html?materia=espanol&grado=2&temas=diptongo,hiato deja todo elegido
+const pide = new URLSearchParams(location.search);
+if (MATERIAS_EXAMEN.some(m => m.id === pide.get("materia"))) {
+  cfg.materia = pide.get("materia");
+  if ([1, 2, 3, 4, 5, 6].includes(Number(pide.get("grado")))) cfg.grado = Number(pide.get("grado"));
+  cfg.temas = (pide.get("temas") || "").split(",").filter(Boolean).slice(0, 6);
+  if ([3, 5, 10].includes(Number(pide.get("porTema")))) cfg.porTema = Number(pide.get("porTema"));
+}
 let historial = [];
 try { historial = JSON.parse(localStorage.getItem("examen-historial")) || []; } catch (_) {}
 const guardar = () => { try { localStorage.setItem("examen-config", JSON.stringify(cfg)); localStorage.setItem("examen-historial", JSON.stringify(historial.slice(0, 8))); } catch (_) {} };
@@ -189,12 +198,12 @@ function pintarConfig() {
   cfg.temas = cfg.temas.filter(id => disponibles.some(t => t.id === id));
   $("temas").innerHTML = disponibles.map(t => {
     const on = cfg.temas.includes(t.id);
-    return `<button data-t="${t.id}" aria-pressed="${on}" ${!on && cfg.temas.length >= 5 ? "disabled" : ""}>${t.emoji} ${t.nombre}</button>`;
+    return `<button data-t="${t.id}" aria-pressed="${on}" ${!on && cfg.temas.length >= 6 ? "disabled" : ""}>${t.emoji} ${t.nombre}</button>`;
   }).join("");
   const n = cfg.temas.length;
-  $("notaTemas").textContent = n < 2 ? `Elegí ${n ? "al menos 1 tema más" : "de 2 a 5 temas"}.` : `${n} temas · ${n * cfg.porTema} preguntas en total.`;
+  $("notaTemas").textContent = n < 1 ? "Elegí de 1 a 6 temas." : `${n} ${n === 1 ? "tema" : "temas"} · ${n * cfg.porTema} preguntas en total.`;
   $("cantidades").innerHTML = CANTIDADES.map(c => `<button data-c="${c}" aria-pressed="${c === cfg.porTema}">${c}</button>`).join("");
-  $("crearBtn").disabled = n < 2 || n > 5;
+  $("crearBtn").disabled = n < 1 || n > 6;
   $("historial").innerHTML = historial.length ? `<b>📈 Últimos exámenes:</b>` + historial.map(h => `<li>${h.fecha} · ${h.nombre ? h.nombre + " · " : ""}${h.materia} (${h.grado}°): <b>${h.nota}</b></li>`).join("") : "";
 }
 $("nombre").addEventListener("input", () => { cfg.nombre = $("nombre").value.trim(); guardar(); });
@@ -327,6 +336,8 @@ function imprimir() {
 $("imprimirBtn").addEventListener("click", imprimir);
 
 pintarConfig();
+// …&empezar: el examen sale de una vez (los botones ▶️ del temario)
+if (pide.has("empezar") && cfg.temas.length) crear(cfg.temas);
 if (new URLSearchParams(location.search).has("prueba")) window.__examen = { get secciones() { return secciones; }, get cfg() { return cfg; } };
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>

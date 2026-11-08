@@ -82,6 +82,12 @@ Ciencias, Estudios Sociales o Inglés), de 2 a 5 temas y cuántas preguntas por 
 partes, se entrega y da la nota de 0 a 100, cuánto sacó en cada tema, la revisión con explicaciones,
 «practicar lo que fallé» e impresión en papel con hoja de respuestas. Las preguntas se generan cada vez.
 
+`public/temario-2.html`: 📋 el temario de las segundas pruebas de 2° (Escuela Fidel Chaves Murillo, Belén), con el resumen
+para estudiar de cada tema y botones que abren el examen ya armado (`examen.html?materia=…&grado=2&temas=…&empezar`).
+Los temas nuevos (diptongo, hiato, tipos de textos, gestos y tono, interrogación, adivinanzas y rimas, contaminación,
+cambios de estado con sus nombres, ciclo del agua, mi cantón, don Fidel y don Billo, mascaradas, participación, valores
+y gobierno estudiantil) están en `public/js/temario-2.js`.
+
 ## Estructura
 
 ```

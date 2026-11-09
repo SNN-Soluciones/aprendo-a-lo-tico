@@ -29,6 +29,7 @@
   /* 📖 Aprender: una tarjeta a la vez */
   .tarjeta { text-align: center; min-height: 250px; display: flex; flex-direction: column; justify-content: center; gap: 8px; }
   .tarjeta .emo { font-size: 4rem; line-height: 1; }
+  .tarjeta .txt small { font-size: .8em; color: #5B7590; font-weight: 700; }
   .tarjeta .txt { font-size: 1.3rem; font-weight: 700; line-height: 1.35; }
   .tarjeta .txt b { color: #C2410C; }
   .tarjeta .ej { background: #FFFBEA; border: 3px dashed #D9A400; border-radius: 14px; padding: 6px 10px; font-weight: 800; font-size: 1.15rem; }
@@ -90,7 +91,7 @@
 
 <script type="module">
 import { decir } from "./js/prepa.js";
-import { sonido } from "./js/voz.js";
+import { sonido, hablar } from "./js/voz.js";
 import { MATERIAS_EXAMEN } from "./js/examen-temas.js";
 import { LECCIONES } from "./js/aprender-2.js";
 
@@ -140,8 +141,7 @@ function mostrarTarjeta() {
         <button class="grande" id="adelante">${ultima ? "✏️ ¡A practicar!" : "Siguiente ➡️"}</button>
       </div></div>
     <p class="cuenta">Tarjeta ${carta + 1} de ${n}</p>`;
-  const leer = () => decir(paraVoz(c.t + (c.ej ? ". Por ejemplo: " + c.ej : "")));
-  $("oir").onclick = leer;
+  $("oir").onclick = () => leerTarjeta(c);
   $("atras").onclick = () => { sonido("tap"); carta--; mostrarTarjeta(); };
   $("adelante").onclick = () => {
     sonido("tap");
@@ -150,7 +150,18 @@ function mostrarTarjeta() {
   if (ultima) marcar("leido", true);
 }
 // Después del primer toque el teléfono ya deja hablar: cada tarjeta nueva se lee sola
-const leerAlPasar = () => { const c = leccion.tarjetas[carta]; decir(paraVoz(c.t + (c.ej ? ". Por ejemplo: " + c.ej : ""))); };
+const leerAlPasar = () => leerTarjeta(leccion.tarjetas[carta]);
+// En inglés cada parte va con su voz (la palabra en inglés y su significado en español)
+function leerTarjeta(c) {
+  if (!c.voz) return decir(paraVoz(c.t + (c.ej ? ". Por ejemplo: " + c.ej : "")));
+  c.voz.forEach(([t, lang], k) => hablar(t, { lang, cola: k > 0 }));
+}
+// Inglés: la pregunta en español y las respuestas con la voz en inglés
+function leerPregunta(pregunta, opciones) {
+  if (materia.id !== "ingles") return decir(pregunta + ". " + opciones.join(", "));
+  hablar(pregunta, { lang: "es" });
+  opciones.forEach(o => hablar(o, { lang: "en", cola: true }));
+}
 
 // ---------- ✏️ 2. Practicar: marque con X y complete, con ayuda y sin nota ----------
 let lista = [], i = 0, aLaPrimera = 0, intentos = 0;
@@ -184,14 +195,14 @@ function mostrarPregunta() {
       <div class="preg"><span class="t">${q.texto}</span><button class="oir" id="oir" aria-label="Oír">🔊</button></div>
       <div class="marcar">${q.opciones.map((o, k) => `<button data-k="${k}"><span class="box"></span><span>${o}</span></button>`).join("")}</div>
       <div id="aviso"></div></div>`;
-    $("oir").onclick = () => decir((q.lectura ? paraVoz(q.lectura) + ". " : "") + paraVoz(q.texto) + ". " + q.opciones.map(paraVoz).join(", "));
+    $("oir").onclick = () => leerPregunta((q.lectura ? paraVoz(q.lectura) + ". " : "") + paraVoz(q.texto), q.opciones.map(paraVoz));
     document.querySelector(".marcar").onclick = e => { const b = e.target.closest("button[data-k]"); if (b && !b.disabled) responder(b, q.opciones[b.dataset.k], q, "x"); };
   } else {
     $("contenido").innerHTML = `${cab}<div class="caja"><span class="tipo">✍️ Completá con la palabra correcta</span>
       <div class="preg"><span class="t">${q.frase.replace("___", `<span class="hueco" id="hueco">?</span>`)}</span><button class="oir" id="oir" aria-label="Oír">🔊</button></div>
       <div class="fichas">${q.opciones.map((o, k) => `<button data-k="${k}">${o}</button>`).join("")}</div>
       <div id="aviso"></div></div>`;
-    $("oir").onclick = () => decir(paraVoz(q.frase) + ". Las palabras son: " + q.opciones.join(", "));
+    $("oir").onclick = () => leerPregunta(paraVoz(q.frase) + ". Las palabras son", q.opciones);
     document.querySelector(".fichas").onclick = e => { const b = e.target.closest("button[data-k]"); if (b && !b.disabled) responder(b, q.opciones[b.dataset.k], q, "c"); };
   }
 }
@@ -257,6 +268,7 @@ function mostrarExamen() {
       <a class="principal" href="${url([tema.id], 10)}">📝 Examen de «${tema.nombre}» (10 preguntas)</a>
       <a href="${url(conLeccion, 5)}">${materia.emoji} Examen de todo ${materia.nombre}</a>
     </div>
+    ${materia.id === "ingles" ? `<p class="otros">🎤 Para la prueba oral: <a href="juegos/oral-ingles.html">practicar hablando</a> · <a href="vocabulario-ingles.html">📚 vocabulario con cómo suena</a></p>` : ""}
     ${sigTema ? `<p class="otros">Siguiente tema: <a href="aprender.html?materia=${materia.id}&tema=${sig}">${sigTema.emoji} ${sigTema.nombre} ➡️</a></p>` : ""}
     <p class="otros"><a href="temario-2.html">📋 Volver al temario</a></p></div>`;
 }

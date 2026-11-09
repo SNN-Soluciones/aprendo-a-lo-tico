@@ -2,7 +2,19 @@
 // Cada tema: tarjetas para leer y oír (sin preguntas) y frases para completar en la práctica.
 //   tarjetas: [{ e: emoji grande, t: texto (HTML corto), ej?: ejemplo }]
 //   completar: [frase con ___, respuesta, [otras palabras del banco]]
+//   voz?: [[texto, "es" | "en"], …] para que el 🔊 diga el inglés con voz en inglés
 // La práctica de «marque con X» sale de los temas del examen (js/examen-temas.js).
+import { relojSVG, digital } from "./temario-2.js";
+import { FAMILIA, CUARTOS, OBJETOS, ANIMALES } from "./oral-ingles.js";
+
+// 💬 Inglés: tarjetas de a 4 palabras, con cómo suena, y la voz en inglés
+const enGrupos = (lista, n = 4) => Array.from({ length: Math.ceil(lista.length / n) }, (_, k) => lista.slice(k * n, k * n + n));
+const tarjetasDe = lista => enGrupos(lista).map(g => ({
+  e: g.map(x => x.e || "🏠").join(" "),
+  t: g.map(x => `<b>${x.en}</b> = ${x.es} <small>(suena «${x.pron}»)</small>`).join("<br>"),
+  voz: g.flatMap(x => [[x.en, "en"], [x.es, "es"]]),
+}));
+const azar3 = (lista, x, campo) => lista.filter(y => y[campo] !== x[campo]).sort(() => Math.random() - 0.5).slice(0, 2).map(y => y[campo]);
 
 export const LECCIONES = {
   // ======================= ✏️ ESPAÑOL =======================
@@ -301,6 +313,112 @@ export const LECCIONES = {
       ["El gobierno estudiantil se elige con ___ estudiantiles.", "elecciones", ["carreras", "rifas"]],
       ["Los compañeros que organizan nuestro grupo son la directiva de ___.", "sección", ["fútbol", "cocina"]],
       ["Si mi candidato pierde, ___ el resultado.", "respeto", ["rompo", "ignoro"]],
+    ],
+  },
+
+  // ======================= 🔢 MATEMÁTICAS =======================
+  "hora-relojes": {
+    tarjetas: [
+      { e: "⏰", t: "Con el reloj <b>medimos el tiempo</b>: sabemos cuándo ir a la escuela, cuándo comer y cuándo dormir." },
+      { e: relojSVG(3, 0, 110), t: "El reloj <b>analógico</b> tiene <b>agujas</b> y números del 1 al 12 en un círculo." },
+      { e: digital(3, 0), t: "El reloj <b>digital</b> muestra la hora solo con <b>números</b> en una pantalla." },
+      { e: relojSVG(3, 0, 110), t: "La aguja <b>corta</b> (roja) marca la <b>hora</b>. La aguja <b>larga</b> (azul) marca los <b>minutos</b>." },
+      { e: relojSVG(7, 0, 110), t: "Si la aguja larga está en el <b>12</b>, es <b>en punto</b>.", ej: "Son las siete en punto = 7:00" },
+      { e: relojSVG(7, 30, 110), t: "Si la aguja larga está en el <b>6</b>, es <b>y media</b>.", ej: "Son las siete y media = 7:30" },
+      { e: relojSVG(7, 15, 110), t: "Si la aguja larga está en el <b>3</b>, es <b>y cuarto</b>. En el <b>9</b>, es <b>un cuarto para</b> la hora que sigue.", ej: "7:15 = siete y cuarto · 7:45 = un cuarto para las ocho" },
+      { e: "🕐", t: "Una hora tiene <b>60 minutos</b>. Media hora son <b>30 minutos</b>. Un día tiene <b>24 horas</b>." },
+      { e: "🌅🌙", t: "<b>a. m.</b> es la mañana (desayuno, ir a la escuela). <b>p. m.</b> es la tarde y la noche (almuerzo, ir a dormir)." },
+    ],
+    completar: [
+      ["El reloj con agujas se llama ___.", "analógico", ["digital", "calendario"]],
+      ["El reloj que muestra solo números se llama ___.", "digital", ["analógico", "de arena"]],
+      ["La aguja corta marca la ___.", "hora", ["semana", "fecha"]],
+      ["La aguja larga marca los ___.", "minutos", ["días", "meses"]],
+      ["Una hora tiene ___ minutos.", "60", ["30", "100"]],
+      ["Si la aguja larga está en el 6, es «y ___».", "media", ["cuarto", "punto"]],
+      ["Si la aguja larga está en el 12, es «en ___».", "punto", ["media", "cuarto"]],
+      ["Las horas de la mañana llevan ___.", "a. m.", ["p. m.", "km"]],
+    ],
+  },
+  sucesiones: {
+    tarjetas: [
+      { e: "🪜", t: "Una <b>sucesión</b> es una fila de números que siguen una regla." },
+      { e: "⬆️", t: "<b>Ascendente</b>: los números <b>suben</b>, van de menor a mayor.", ej: "10, 20, 30, 40, 50" },
+      { e: "⬇️", t: "<b>Descendente</b>: los números <b>bajan</b>, van de mayor a menor.", ej: "50, 45, 40, 35, 30" },
+      { e: "🔍", t: "Para saber qué número sigue, mirá cuánto cambia de uno a otro.", ej: "2, 4, 6, 8 → va de 2 en 2 → sigue el 10" },
+      { e: "🧩", t: "Si falta un número en medio, usá la misma regla.", ej: "100, 200, ___, 400 → falta el 300" },
+      { e: "🥇", t: "La <b>posición</b> dice el lugar: primero, segundo, tercero, cuarto, quinto, sexto, séptimo, octavo, noveno, décimo." },
+    ],
+    completar: [
+      ["Si los números suben, la sucesión es ___.", "ascendente", ["descendente", "redonda"]],
+      ["Si los números bajan, la sucesión es ___.", "descendente", ["ascendente", "igual"]],
+      ["10, 20, 30, 40, ___", "50", ["41", "60"]],
+      ["50, 45, 40, ___", "35", ["30", "39"]],
+      ["2, 4, 6, 8, ___", "10", ["9", "12"]],
+      ["300, 200, ___", "100", ["0", "250"]],
+      ["Después del primero viene el ___.", "segundo", ["tercero", "último"]],
+      ["El lugar número 3 es el ___.", "tercero", ["segundo", "cuarto"]],
+    ],
+  },
+  "recoleccion-datos": {
+    tarjetas: [
+      { e: "📋", t: "<b>Recolectar datos</b> es juntar información para saber algo. Hay tres formas fáciles:" },
+      { e: "👀", t: "<b>Observación directa</b>: mirar con atención lo que pasa y anotarlo.", ej: "Contar cuántos carros pasan frente a la escuela." },
+      { e: "🎤", t: "<b>Entrevista sencilla</b>: hacerle preguntas a una persona y escuchar sus respuestas.", ej: "Preguntarle a la abuela cómo era su escuela." },
+      { e: "📊", t: "<b>Encuesta</b>: hacer la misma pregunta a muchas personas y contar las respuestas.", ej: "Preguntar a todo el grupo su fruta favorita." },
+      { e: "✏️", t: "Para contar rápido usamos <b>palitos de conteo</b>: un palito por voto, y de 5 en 5.", ej: "||||| ||| = 8" },
+    ],
+    completar: [
+      ["Mirar y anotar lo que pasa es observación ___.", "directa", ["secreta", "cantada"]],
+      ["Hacerle preguntas a una persona es una ___.", "entrevista", ["encuesta", "observación"]],
+      ["La misma pregunta a muchas personas es una ___.", "encuesta", ["entrevista", "adivinanza"]],
+      ["||||| ||| son ___ votos.", "8", ["6", "5"]],
+      ["Recolectamos datos para obtener ___.", "información", ["comida", "sueño"]],
+    ],
+  },
+
+  // ======================= 💬 INGLÉS =======================
+  "en-family": {
+    tarjetas: [
+      { e: "👨‍👩‍👧‍👦", t: "En la prueba oral te enseñan una foto y te preguntan quién es.", voz: [["En la prueba oral te enseñan una foto y te preguntan quién es.", "es"]] },
+      { e: "👨", t: "<b>Who is he?</b> = ¿Quién es él?<br>→ <b>He is my father.</b> = Él es mi papá.", voz: [["Who is he?", "en"], ["He is my father.", "en"]] },
+      { e: "👩", t: "<b>Who is she?</b> = ¿Quién es ella?<br>→ <b>She is my mother.</b> = Ella es mi mamá.", voz: [["Who is she?", "en"], ["She is my mother.", "en"]] },
+      { e: "🙋", t: "<b>he</b> = él (hombre o niño) · <b>she</b> = ella (mujer o niña)", voz: [["he", "en"], ["él", "es"], ["she", "en"], ["ella", "es"]] },
+      ...tarjetasDe(FAMILIA),
+    ],
+    completar: [
+      ...FAMILIA.filter(f => f.g !== "they").map(f => [`${f.e} (${f.es}) ${f.g === "he" ? "He" : "She"} is my ___.`, f.en, azar3(FAMILIA, f, "en")]),
+      ["👨 Who is ___? He is my father.", "he", ["she", "it"]],
+      ["👩 Who is ___? She is my mother.", "she", ["he", "it"]],
+    ],
+  },
+  "en-house": {
+    tarjetas: [
+      { e: "🏠", t: "<b>House</b> = casa. Aprendé los cuartos (<b>rooms</b>) y las cosas de la casa.", voz: [["House", "en"], ["casa", "es"], ["rooms", "en"], ["cuartos", "es"]] },
+      ...tarjetasDe(CUARTOS),
+      ...tarjetasDe(OBJETOS),
+      { e: "🛏️", t: "<b>What is this?</b> = ¿Qué es esto?<br>→ <b>It is a bed.</b> = Es una cama.", voz: [["What is this?", "en"], ["It is a bed.", "en"]] },
+      { e: "🍳", t: "<b>There is a stove in the kitchen.</b> = Hay una cocina (estufa) en la cocina.", voz: [["There is a stove in the kitchen.", "en"]] },
+    ],
+    completar: [
+      ...CUARTOS.map(c => [`«___» quiere decir ${c.es}.`, c.en, azar3(CUARTOS, c, "en")]),
+      ...OBJETOS.filter(o => o.e).map(o => [`${o.e} It is a ___.`, o.en, azar3(OBJETOS, o, "en")]),
+    ],
+  },
+  "en-animals": {
+    tarjetas: [
+      { e: "🐴", t: "<b>What animal is this?</b> → <b>It is a horse.</b> = Es un caballo.", voz: [["What animal is this?", "en"], ["It is a horse.", "en"]] },
+      { e: "🐄🐥", t: "<b>Is it big or small?</b> → <b>It is big.</b> (grande) · <b>It is small.</b> (pequeño)", voz: [["Is it big or small?", "en"], ["It is big.", "en"], ["It is small.", "en"]] },
+      { e: "🦆", t: "<b>What color is it?</b> → <b>It is green.</b> (verde)", voz: [["What color is it?", "en"], ["It is green.", "en"]] },
+      { e: "🐄🏚️", t: "<b>Where do cows live?</b> → <b>Cows live in a barn.</b> = Las vacas viven en un granero.", voz: [["Where do cows live?", "en"], ["Cows live in a barn.", "en"]] },
+      ...tarjetasDe(ANIMALES),
+      ...enGrupos(ANIMALES).map(g => ({ e: g.map(a => a.e).join(" "), t: g.map(a => `${a.e} <b>${a.pl[0].toUpperCase() + a.pl.slice(1)} live in ${a.the ? "the" : "a"} ${a.hab}.</b> (${a.habEs})`).join("<br>"),
+        voz: g.map(a => [`${a.pl} live in ${a.the ? "the" : "a"} ${a.hab}.`, "en"]) })),
+    ],
+    completar: [
+      ...ANIMALES.map(a => [`${a.e} It is a ___. (${a.es})`, a.en, azar3(ANIMALES, a, "en")]),
+      ...ANIMALES.map(a => [`${a.e} ${a.pl[0].toUpperCase() + a.pl.slice(1)} live in ${a.the ? "the" : "a"} ___.`, a.hab, [...new Set(ANIMALES.filter(x => x.hab !== a.hab).map(x => x.hab))].slice(0, 2)]),
+      ...ANIMALES.map(a => [`${a.e} Is it big or small? It is ___.`, a.size, [a.size === "big" ? "small" : "big"]]),
     ],
   },
 };

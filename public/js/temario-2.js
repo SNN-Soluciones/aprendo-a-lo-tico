@@ -476,3 +476,161 @@ export const SOCIALES_2 = [
 
 /** Para la página del temario y las pruebas: cuántas preguntas distintas tiene cada banco escrito a mano. */
 export const BANCOS = { DIPTONGOS, HIATOS, TEXTOS, EXPRESION, CONTAMINACION, CANTON, PERSONAJES, EXPRESIONES, PARTICIPACION, CIUDADANIA };
+
+// =====================================================================
+// 🔢 MATEMÁTICAS · miércoles 11 de noviembre
+// =====================================================================
+import { enPalabras } from "./reloj.js";
+const ent = (a, b, r) => a + Math.floor(r() * (b - a + 1));
+const dos = m => String(m).padStart(2, "0");
+
+/** Reloj de agujas en SVG (la corta, la hora; la larga, los minutos). */
+export function relojSVG(h, m, tam = 120) {
+  const ang = g => (g - 90) * Math.PI / 180, p = (g, l) => [60 + l * Math.cos(ang(g)), 60 + l * Math.sin(ang(g))];
+  const marcas = Array.from({ length: 12 }, (_, k) => { const [x1, y1] = p(k * 30, 48), [x2, y2] = p(k * 30, 53); return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1F3A5F" stroke-width="3"/>`; }).join("");
+  const nums = Array.from({ length: 12 }, (_, k) => { const n = k + 1, [x, y] = p(n * 30, 40); return `<text x="${x}" y="${y + 4.5}" font-size="12" font-weight="800" text-anchor="middle" fill="#1F3A5F">${n}</text>`; }).join("");
+  const [hx, hy] = p((h % 12) * 30 + m / 2, 26), [mx, my] = p(m * 6, 42);
+  return `<svg viewBox="0 0 120 120" width="${tam}" height="${tam}" role="img" aria-label="reloj de agujas" style="vertical-align:middle">
+    <circle cx="60" cy="60" r="56" fill="#fff" stroke="#1F3A5F" stroke-width="5"/>${marcas}${nums}
+    <line x1="60" y1="60" x2="${hx}" y2="${hy}" stroke="#E8574A" stroke-width="7" stroke-linecap="round"/>
+    <line x1="60" y1="60" x2="${mx}" y2="${my}" stroke="#2F7FD1" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="60" cy="60" r="5" fill="#1F3A5F"/></svg>`;
+}
+export const digital = (h, m) => `<span style="display:inline-block;font-family:monospace;font-size:1.8rem;font-weight:800;background:#1F3A5F;color:#7CFC9A;border-radius:10px;padding:2px 12px;letter-spacing:2px;vertical-align:middle">${h}:${dos(m)}</span>`;
+const horaAzar = r => [ent(1, 12, r), elegir([0, 0, 30, 30, 15, 45], r)];
+const RELOJ_BANCO = [
+  ["En el reloj de agujas, la aguja <b>corta</b> marca…", "la hora", ["los minutos", "los días", "los segundos"], "La aguja corta (roja) marca la hora y la larga (azul) marca los minutos."],
+  ["En el reloj de agujas, la aguja <b>larga</b> marca…", "los minutos", ["la hora", "los meses", "los años"], "La aguja larga marca los minutos: cuando apunta al 12 es «en punto» y al 6, «y media»."],
+  ["¿Cuál reloj tiene agujas y números del 1 al 12 en un círculo?", "El analógico", ["El digital", "El de arena", "El calendario"], "El reloj <b>analógico</b> tiene agujas. El <b>digital</b> muestra la hora solo con números, como 7:30."],
+  ["¿Cuál reloj muestra la hora solo con números, como 7:30?", "El digital", ["El analógico", "La brújula", "El termómetro"], "El reloj <b>digital</b> muestra números en una pantalla: 7:30."],
+  ["¿Cuántos minutos tiene una hora?", "60", ["30", "100", "12"], "Una hora tiene 60 minutos. Media hora son 30 minutos."],
+  ["¿Cuántos minutos son media hora?", "30", ["15", "60", "50"], "Media hora son 30 minutos: la aguja larga da media vuelta."],
+  ["Si la aguja larga apunta al 12, la hora es…", "en punto", ["y media", "y cuarto", "un cuarto para"], "Aguja larga en el 12 = en punto (por ejemplo, 3:00)."],
+  ["Si la aguja larga apunta al 6, la hora es…", "y media", ["en punto", "y cuarto", "un cuarto para"], "Aguja larga en el 6 = y media (por ejemplo, 3:30)."],
+  ["¿Cuántas horas tiene un día completo?", "24", ["12", "60", "7"], "Un día tiene 24 horas: 12 de a. m. y 12 de p. m."],
+  ["Las horas de la mañana se escriben con…", "a. m.", ["p. m.", "km", "kg"], "a. m. es de la medianoche al mediodía (la mañana). p. m. es del mediodía en adelante (la tarde y la noche)."],
+  ["¿A qué hora es más probable que desayunés?", "6:30 a. m.", ["11:00 p. m.", "3:00 p. m.", "9:00 p. m."], "El desayuno es en la mañana: a. m."],
+  ["¿A qué hora es más probable que te vayas a dormir?", "8:00 p. m.", ["7:00 a. m.", "10:00 a. m.", "12:00 del mediodía"], "En la noche, como a las 8:00 p. m."],
+  ["¿Qué dura más tiempo?", "Dormir en la noche", ["Cepillarse los dientes", "Lavarse las manos", "Amarrarse los zapatos"], "Dormir dura horas; cepillarse los dientes, unos minutos."],
+  ["¿Qué dura menos tiempo?", "Lavarse las manos", ["Un día de clases", "Una noche de sueño", "Las vacaciones"], "Lavarse las manos dura menos de un minuto."],
+  ["¿Para qué nos sirve medir el tiempo?", "Para llegar puntuales y organizar lo que hacemos en el día", ["Para saber cuánto pesamos", "Para medir la mesa", "Para saber el color del cielo"],
+    "Con el reloj sabemos cuándo ir a la escuela, cuándo comer y cuándo dormir."],
+];
+const horaRelojes = mezcla(
+  [3, r => { const [h, m] = horaAzar(r); return opc(`¿Qué hora marca el reloj?<br>${relojSVG(h, m)}`, `${h}:${dos(m)}`, [`${h % 12 + 1}:${dos(m)}`, `${h}:${dos((m + 30) % 60)}`, `${m === 0 ? 12 : h}:${dos(m === 15 ? 45 : m === 45 ? 15 : m)}`, `${(h + 5) % 12 + 1}:${dos(m)}`, `${h}:${dos((m + 15) % 60)}`],
+    `La aguja corta (roja) señala ${m >= 30 ? `que ya pasó del ${h}` : `el ${h}`} y la larga (azul) ${m === 0 ? "el 12" : m === 30 ? "el 6" : m === 15 ? "el 3" : "el 9"}: ${enPalabras(h, m).toLowerCase()} (${h}:${dos(m)}).`, r, 3); }],
+  [2, r => { const [h, m] = horaAzar(r); const otras = [[h % 12 + 1, m], [h, (m + 30) % 60], [(h + 1) % 12 + 1, m]].map(([a, b]) => enPalabras(a, b));
+    return opc(`El reloj digital marca ${digital(h, m)}. ¿Qué hora es?`, enPalabras(h, m), otras, `${h}:${dos(m)} se lee «${enPalabras(h, m).toLowerCase()}».`, r, 3); }],
+  [1, r => { const [h, m] = horaAzar(r), dig = r() < 0.5;
+    return opc(`¿Qué tipo de reloj es este?<br>${dig ? digital(h, m) : relojSVG(h, m, 100)}`, dig ? "Digital" : "Analógico", [dig ? "Analógico" : "Digital"],
+      dig ? "Es <b>digital</b>: muestra la hora solo con números." : "Es <b>analógico</b>: tiene agujas y números en círculo.", r, 2); }],
+  [3, deBanco(RELOJ_BANCO)],
+);
+
+// ---------- Sucesiones ascendentes y descendentes, posición y orden ----------
+const ORDINALES = ["primero", "segundo", "tercero", "cuarto", "quinto", "sexto", "séptimo", "octavo", "noveno", "décimo"];
+const FILA = ["🐶", "🐱", "🐰", "🐸", "🐥", "🐢", "🦊", "🐷", "🐮", "🦁"];
+function serie(r) {
+  const paso = elegir([1, 2, 5, 10, 10, 100], r), sube = r() < 0.6, n = 5;
+  // Hasta el 999: el inicio es un múltiplo del paso; si baja, empieza arriba y no llega a negativos
+  const veces = { 1: 190, 2: 95, 5: 38, 10: 90, 100: 4 }[paso];
+  let a = ent(0, veces, r) * paso; if (!sube) a += paso * n;
+  return { paso, sube, nums: Array.from({ length: n }, (_, k) => a + (sube ? k : -k) * paso) };
+}
+const sucesiones = mezcla(
+  [3, r => { const { paso, sube, nums } = serie(r), sig = nums[4] + (sube ? paso : -paso);
+    return { texto: `¿Qué número sigue? <b>${nums.slice(1).join(", ")}, ___</b>`, tipo: "numero", correcta: String(sig),
+      explica: `Es una sucesión ${sube ? "ascendente (sube)" : "descendente (baja)"} de ${paso} en ${paso}: ${nums[4]} ${sube ? "+" : "−"} ${paso} = ${sig}.` }; }],
+  [3, r => { const { paso, sube, nums } = serie(r), k = ent(1, 3, r), mostrar = nums.map((x, i) => (i === k ? "___" : x));
+    return { texto: `¿Qué número falta? <b>${mostrar.join(", ")}</b>`, tipo: "numero", correcta: String(nums[k]),
+      explica: `Va ${sube ? "subiendo" : "bajando"} de ${paso} en ${paso}: ${nums.join(", ")}.` }; }],
+  [2, r => { const { paso, sube, nums } = serie(r);
+    return opc(`La sucesión <b>${nums.join(", ")}</b> es…`, sube ? "ascendente" : "descendente", [sube ? "descendente" : "ascendente"],
+      `${sube ? "Ascendente: los números van de menor a mayor (suben)" : "Descendente: los números van de mayor a menor (bajan)"}, de ${paso} en ${paso}.`, r, 2); }],
+  [2, r => { const ns = []; while (ns.length < 4) { const x = ent(10, 999, r); if (!ns.includes(x)) ns.push(x); }
+    const menor = [...ns].sort((a, b) => a - b), mayor = [...menor].reverse(), asc = r() < 0.5, bien = (asc ? menor : mayor).join(", ");
+    const malas = [barajar(ns, r), barajar(ns, r), asc ? mayor : menor].map(x => x.join(", "));
+    return opc(`¿Cómo quedan ordenados de <b>${asc ? "menor a mayor" : "mayor a menor"}</b>?`, bien, malas, `De ${asc ? "menor a mayor (ascendente)" : "mayor a menor (descendente)"}: ${bien}.`, r, 3); }],
+  [2, r => { const n = ent(5, 7, r), fila = barajar(FILA, r).slice(0, n), k = ent(0, n - 1, r);
+    return r() < 0.5
+      ? opc(`En la fila ${fila.join(" ")} (el primero es el de la izquierda), ¿qué lugar ocupa el ${fila[k]}?`, ORDINALES[k], ORDINALES.slice(0, n), `Contando desde la izquierda, el ${fila[k]} está en el lugar ${k + 1}: ${ORDINALES[k]}.`, r, 3)
+      : opc(`En la fila ${fila.join(" ")} (el primero es el de la izquierda), ¿quién está de <b>${ORDINALES[k]}</b>?`, fila[k], fila, `Contando desde la izquierda: ${fila.map((x, i) => `${i + 1}° ${x}`).join(", ")}.`, r, 3); }],
+  [1, r => { const n = ent(11, 998, r); return { texto: `¿Qué número va entre el <b>${n - 1}</b> y el <b>${n + 1}</b>?`, tipo: "numero", correcta: String(n), explica: `${n - 1}, <b>${n}</b>, ${n + 1}: se suma 1.` }; }],
+);
+
+// ---------- Recolección de datos: observación directa, entrevistas y encuestas ----------
+const DATOS_BANCO = [
+  ["Contamos cuántos carros pasan frente a la escuela mirando desde la ventana. Usamos…", "observación directa", ["entrevista", "encuesta"], "Mirar y anotar lo que pasa es <b>observación directa</b>."],
+  ["Le hacemos varias preguntas a la abuela sobre cómo era la escuela antes. Es una…", "entrevista", ["encuesta", "observación directa"], "Conversar con una persona haciéndole preguntas es una <b>entrevista</b>."],
+  ["Le preguntamos a todos los compañeros cuál es su fruta favorita. Es una…", "encuesta", ["entrevista", "observación directa"], "Hacer la misma pregunta a muchas personas y contar las respuestas es una <b>encuesta</b>."],
+  ["Miramos cuántas mariposas llegan al jardín y lo anotamos. Usamos…", "observación directa", ["encuesta", "entrevista"], "Observamos con nuestros ojos y anotamos: observación directa."],
+  ["Le preguntamos al conserje qué hace durante su día de trabajo. Es una…", "entrevista", ["encuesta", "observación directa"], "Preguntarle a una persona sobre su trabajo es una entrevista."],
+  ["Preguntamos a todo el grupo qué deporte le gusta más. Es una…", "encuesta", ["entrevista", "observación directa"], "La misma pregunta a muchas personas: encuesta."],
+  ["¿Para qué sirve recolectar datos?", "Para obtener información y saber algo", ["Para jugar fútbol", "Para pintar", "Para dormir"], "Recolectamos datos para conocer algo: qué fruta gusta más, cuántos carros pasan…"],
+  ["¿Qué es una <b>encuesta</b>?", "Hacer la misma pregunta a muchas personas y contar las respuestas", ["Mirar algo y anotarlo", "Conversar con una sola persona", "Hacer un dibujo"], "Encuesta: la misma pregunta a muchas personas."],
+  ["¿Qué es la <b>observación directa</b>?", "Mirar con atención lo que pasa y anotarlo", ["Preguntarle a mucha gente", "Leer un cuento", "Cantar una canción"], "Observación directa: mirar y anotar."],
+  ["¿Qué es una <b>entrevista sencilla</b>?", "Hacerle preguntas a una persona y escuchar sus respuestas", ["Mirar por la ventana", "Contar carros", "Hacer una suma"], "Entrevista: conversar con una persona haciéndole preguntas."],
+  ["Para anotar rápido cada voto de una encuesta usamos…", "palitos de conteo ( | )", ["un dibujo grande", "una canción", "una adivinanza"], "Con palitos de conteo: cada voto es un palito y cada 5 se agrupan."],
+];
+const COSAS_DATOS = [["Fruta favorita", ["🥭 mango", "🍌 banano", "🍉 sandía", "🍍 piña"]], ["Mascota favorita", ["🐶 perro", "🐱 gato", "🐰 conejo", "🐟 pez"]],
+  ["Deporte favorito", ["⚽ fútbol", "🏀 baloncesto", "🏊 natación", "🚴 ciclismo"]], ["Color favorito", ["🔴 rojo", "🔵 azul", "🟢 verde", "🟡 amarillo"]]];
+const palitos = n => "||||| ".repeat(Math.floor(n / 5)) + "|".repeat(n % 5);
+function tablaConteo(r) {
+  const [titulo, cosas] = elegir(COSAS_DATOS, r), cs = barajar(cosas, r).slice(0, 4);
+  let votos; do votos = cs.map(() => ent(1, 12, r)); while (new Set(votos).size < 4);
+  const tabla = `<table style="border-collapse:collapse;margin:6px 0;font-size:1rem">${`<tr><th colspan="2" style="border:2px solid #1F3A5F;padding:2px 8px">${titulo} (encuesta)</th></tr>`}${cs.map((c, i) => `<tr><td style="border:2px solid #1F3A5F;padding:2px 8px">${c}</td><td style="border:2px solid #1F3A5F;padding:2px 8px;font-family:monospace;letter-spacing:1px">${palitos(votos[i])}</td></tr>`).join("")}</table>`;
+  return { cs, votos, tabla };
+}
+const recoleccionDatos = mezcla(
+  [3, deBanco(DATOS_BANCO)],
+  [2, r => { const { cs, votos, tabla } = tablaConteo(r), i = votos.indexOf(Math.max(...votos));
+    return opc(`${tabla}¿Cuál tuvo <b>más</b> votos?`, cs[i], cs, `${cs[i]} tiene ${votos[i]} palitos: es el que tiene más.`, r, 4); }],
+  [2, r => { const { cs, votos, tabla } = tablaConteo(r), i = ent(0, 3, r);
+    return { texto: `${tabla}¿Cuántos votos tuvo ${cs[i]}?`, tipo: "numero", correcta: String(votos[i]), explica: `Contamos los palitos de ${cs[i]}: ${votos[i]} (cada grupo de ||||| son 5).` }; }],
+  [1, r => { const { votos, tabla } = tablaConteo(r), t = votos.reduce((a, b) => a + b, 0);
+    return { texto: `${tabla}¿Cuántas personas contestaron la encuesta en total?`, tipo: "numero", correcta: String(t), explica: `Sumamos todos los votos: ${votos.join(" + ")} = ${t}.` }; }],
+);
+
+export const MATE_2 = [
+  { id: "hora-relojes", nombre: "La hora: reloj analógico y digital", emoji: "⏰", grados: [1, 2, 3], pregunta: horaRelojes },
+  { id: "sucesiones", nombre: "Sucesiones: ascendentes, descendentes y orden", emoji: "🪜", grados: [1, 2, 3], pregunta: sucesiones },
+  { id: "recoleccion-datos", nombre: "Recolección de datos: observación, entrevista y encuesta", emoji: "📋", grados: [1, 2, 3], pregunta: recoleccionDatos },
+];
+
+// =====================================================================
+// 💬 INGLÉS · prueba oral: family, house y animals (datos de js/oral-ingles.js)
+// =====================================================================
+import { FAMILIA, CUARTOS, OBJETOS, ANIMALES } from "./oral-ingles.js";
+const capEn = t => t[0].toUpperCase() + t.slice(1);
+const conE = x => (x.e ? `${x.e} ` : "");
+const sujeto = g => (g === "he" ? "He" : "She");
+const vivir = a => `${capEn(a.pl)} live in ${a.the ? "the" : "a"} ${a.hab}.`;
+const familyEn = mezcla(
+  [3, r => { const f = elegir(FAMILIA.filter(x => x.g !== "they"), r), mismos = FAMILIA.filter(x => x.g === f.g && x.id !== f.id);
+    return opc(`${f.e} (${f.es}) — <i>Who is ${f.g}?</i>`, `${sujeto(f.g)} is my ${f.en}.`, [...mismos.map(x => `${sujeto(f.g)} is my ${x.en}.`), `${sujeto(f.g === "he" ? "she" : "he")} is my ${f.en}.`],
+      `Para «${f.es}» decimos «${sujeto(f.g)} is my ${f.en}». ${f.g === "he" ? "He = él (hombre)." : "She = ella (mujer)."}`, r, 3); }],
+  [2, r => { const f = elegir(FAMILIA, r); return opc(`${f.e} ¿Cómo se dice «${f.es}» en inglés?`, f.en, FAMILIA.map(x => x.en), `«${f.es}» es «${f.en}» (suena «${f.pron}»).`, r, 3); }],
+  [2, r => { const f = elegir(FAMILIA, r); return opc(`¿Qué significa «${f.en}»?`, f.es, FAMILIA.map(x => x.es), `«${f.en}» significa «${f.es}».`, r, 3); }],
+  [1, deBanco([["¿Cuándo usamos «he»?", "Para un hombre o niño (él)", ["Para una mujer o niña (ella)", "Para un animal grande", "Para muchas personas"], "He = él. She = ella."],
+    ["¿Cuándo usamos «she»?", "Para una mujer o niña (ella)", ["Para un hombre o niño (él)", "Para una cosa", "Para muchas personas"], "She = ella. He = él."]])],
+);
+const houseEn = mezcla(
+  [2, r => { const c = elegir(CUARTOS, r); return opc(`${conE(c)}¿Cómo se dice «${c.es}» en inglés?`, c.en, CUARTOS.map(x => x.en), `«${c.es}» es «${c.en}» (suena «${c.pron}»).`, r, 3); }],
+  [2, r => { const o = elegir(OBJETOS.filter(x => x.e), r); return opc(`${o.e} <i>What is this?</i>`, `It is a ${o.en}.`, OBJETOS.filter(x => x.id !== o.id).map(x => `It is a ${x.en}.`), `Es ${o.es}: «It is a ${o.en}».`, r, 3); }],
+  // Solo objetos que están en un único cuarto (una silla o una ventana pueden estar en varios)
+  [2, r => { const o = elegir(OBJETOS.filter(x => ["sofa", "bed", "dresser", "toilet", "stove", "refrigerator", "car", "washing-machine"].includes(x.id)), r), c = CUARTOS.find(x => x.id === o.cuarto);
+    return opc(`${conE(o)}There is a ${o.en} in the ___. (${o.es})`, c.en, CUARTOS.map(x => x.en), `«${o.en}» (${o.es}) está en «${c.en}» (${c.es}): «There is a ${o.en} in the ${c.en}».`, r, 3); }],
+  [2, r => { const o = elegir(OBJETOS, r); return opc(`¿Qué significa «${o.en}»?`, o.es, OBJETOS.map(x => x.es), `«${o.en}» significa «${o.es}».`, r, 3); }],
+);
+const animalsEn = mezcla(
+  [2, r => { const a = elegir(ANIMALES, r); return opc(`${a.e} <i>What animal is this?</i>`, `It is a ${a.en}.`, ANIMALES.filter(x => x.id !== a.id).map(x => `It is a ${x.en}.`), `Es ${a.es}: «It is a ${a.en}».`, r, 3); }],
+  [2, r => { const a = elegir(ANIMALES, r); return opc(`${a.e} (${a.es}) <i>Is it big or small?</i>`, `It is ${a.size}.`, [`It is ${a.size === "big" ? "small" : "big"}.`], `${a.size === "big" ? "Big = grande" : "Small = pequeño"}: «It is ${a.size}».`, r, 2); }],
+  [2, r => { const a = elegir(ANIMALES, r); return opc(`${a.e} (${a.es}) <i>What color is it?</i>`, `It is ${a.color}.`, [...new Set(ANIMALES.map(x => x.color))].map(c => `It is ${c}.`), `«It is ${a.color}».`, r, 3); }],
+  [2, r => { const a = elegir(ANIMALES, r); return opc(`${a.e} <i>Where do ${a.pl} live?</i>`, vivir(a), [...new Set(ANIMALES.filter(x => x.hab !== a.hab).map(vivir))].map(s => s.replace(/^\w+/, capEn(a.pl))), `${capEn(a.es)}: viven en ${a.habEs} = «${vivir(a)}»`, r, 3); }],
+  [1, r => { const a = elegir(ANIMALES, r); return opc(`¿Qué significa «${a.en}»?`, a.es, ANIMALES.map(x => x.es), `«${a.en}» significa «${a.es}».`, r, 3); }],
+);
+export const INGLES_2 = [
+  { id: "en-family", nombre: "Family (Who is he? Who is she?)", emoji: "👨‍👩‍👧", grados: [1, 2, 3], pregunta: familyEn },
+  { id: "en-house", nombre: "House (rooms and objects)", emoji: "🏠", grados: [1, 2, 3], pregunta: houseEn },
+  { id: "en-animals", nombre: "Animals (big, small, color, where)", emoji: "🐴", grados: [1, 2, 3], pregunta: animalsEn },
+];

@@ -28,6 +28,10 @@
   .practica a.todo { background: var(--btn); }
   .tema { margin-top: 12px; border-left: 6px solid var(--c); padding: 2px 0 2px 10px; }
   .tema h3 { margin: 0 0 4px; font-size: 1.12rem; color: var(--page-ink); display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; }
+  .como { background: var(--face); border: 3px dashed var(--rim); border-radius: 14px; padding: 6px 12px; margin: 12px auto 0; text-align: left; max-width: 640px; }
+  .como summary { font-weight: 800; cursor: pointer; }
+  .como li { margin: 4px 0; line-height: 1.35; }
+  .como p { margin: 6px 0 2px; max-width: none; }
   .pasos-ayuda { background: var(--face); border: 3px dashed var(--rim); border-radius: 14px; padding: 6px 10px; font-weight: 700; margin: 10px auto 0; }
   .tema h3 a { font-size: .9rem; font-weight: 800; color: var(--c); text-decoration: none; border: 2px solid var(--c); border-radius: 999px; padding: 0 10px; white-space: nowrap; }
   .tema p, .tema li { margin: 3px 0; line-height: 1.4; }
@@ -41,7 +45,7 @@
   @media print {
     body { background: #fff; }
     .page { width: 100%; padding: 0; }
-    .back, .barra, .indice, .practica, .tema h3 a { display: none !important; }
+    .back, .barra, .indice, .como, .practica, .tema h3 a { display: none !important; }
     .card { box-shadow: none; border-width: 2px; margin-top: 10px; }
     .card:not(:first-of-type) { break-before: page; }
     .tema { break-inside: avoid; }
@@ -54,14 +58,29 @@
 
   <header class="hero">
     <h1>📋 Temario de 2°</h1>
-    <p>Segundas pruebas sumativas, <b>del 9 al 12 de noviembre</b>. Cada materia trae lo que hay que saber, con ejemplos, y botones para <b>practicar</b>: cada práctica sale con preguntas nuevas, se califica y explica cada respuesta.</p>
-    <p class="pasos-ayuda">En cada tema, de a poquito: <b>📖 Aprender</b> (leer y oír, sin preguntas) → <b>✏️ Practicar</b> (marcar con X y completar, con ayuda) → <b>📝 Examen</b> (con nota).</p>
+    <p>Segundas pruebas sumativas, <b>del 9 al 12 de noviembre</b>, y la prueba oral de inglés. Cada materia trae lo que hay que saber, con ejemplos, y botones para <b>practicar</b>: cada práctica sale con preguntas nuevas, se califica y explica cada respuesta.</p>
+    <details class="como" open>
+      <summary>👨‍👩‍👧 ¿Cómo se usa? (para papás, mamás y maestras)</summary>
+      <ol>
+        <li>Buscá la materia del examen que viene (abajo están por día).</li>
+        <li>En cada tema hay tres botones. Hacelos <b>en orden</b>, un tema a la vez:
+          <ul>
+            <li><b>📖 Aprender:</b> tarjetas para leer y escuchar con 🔊. No hay preguntas: solo se aprende.</li>
+            <li><b>✏️ Practicar:</b> 10 ejercicios de <b>marcar con X</b> y <b>completar</b>. No hay nota: si se equivoca, prueba otra vez y la app le explica.</li>
+            <li><b>📝 Examen:</b> como el de la escuela, con nota del 0 al 100 y revisión de cada respuesta.</li>
+          </ul></li>
+        <li>Arriba de cada materia está <b>📝 Examen de todo</b>, para un repaso general el día antes.</li>
+        <li>El ✅ marca lo que ya hizo (queda guardado en ese teléfono o tableta).</li>
+        <li>No necesita cuenta ni datos personales y es gratis. También se puede <b>🖨️ imprimir</b> el resumen o un examen.</li>
+      </ol>
+      <p>💡 Ideal: 15 a 20 minutos por día, un tema por vez, acompañando al niño o la niña en el primer paso.</p>
+    </details>
     <div class="barra">
       <button id="imprimirBtn">🖨️ Imprimir el resumen</button>
       <a href="examen.html">📝 Armar otro examen</a>
     </div>
     <nav class="indice" aria-label="Materias">
-      <a href="#espanol">✏️ Español · lun 9</a><a href="#ciencias">🌱 Ciencias · mar 10</a><a href="#mate">🔢 Matemáticas · mié 11</a><a href="#sociales">🗺️ Estudios Sociales · jue 12</a>
+      <a href="#espanol">✏️ Español · lun 9</a><a href="#ciencias">🌱 Ciencias · mar 10</a><a href="#mate">🔢 Matemáticas · mié 11</a><a href="#ingles">💬 Inglés (oral)</a><a href="#sociales">🗺️ Estudios Sociales · jue 12</a>
     </nav>
   </header>
 
@@ -190,10 +209,51 @@
     <h2>🔢 Matemáticas</h2>
     <p class="fecha">📅 Miércoles 11 de noviembre</p>
     <p class="eximido">🏆 Si quedaste eximido o eximida en Matemáticas, ¡felicidades! Igual podés practicar por gusto.</p>
-    <div class="practica" data-materia="mate" data-temas="hora,numeros,graficos"></div>
-    <div class="tema"><h3>🕒 La hora: reloj analógico y digital</h3><p>El analógico tiene agujas: la corta marca la hora y la larga los minutos. El digital muestra números (7:30). Practicá también en <a href="juegos/reloj.html">Aprendo la hora</a>.</p></div>
-    <div class="tema"><h3>💯 Sucesiones ascendentes y descendentes</h3><p>Ascendente: los números crecen (10, 20, 30…). Descendente: bajan (50, 45, 40…). Practicá en <a href="juegos/numeros.html">Números del 1 al 100</a>.</p></div>
-    <div class="tema"><h3>📊 Recolección de datos</h3><p>Formas de obtener información: <b>observación directa</b> (mirar y anotar), <b>entrevistas sencillas</b> (preguntarle a alguien) y <b>encuestas</b> (la misma pregunta a muchas personas). Practicá en <a href="juegos/graficos.html">Encuesta en la escuela</a>.</p></div>
+    <div class="practica" data-materia="mate" data-temas="hora-relojes,sucesiones,recoleccion-datos"></div>
+
+    <div class="tema" data-t="hora-relojes">
+      <h3>⏰ La hora: reloj analógico y digital</h3>
+      <p>Medimos el tiempo para organizar el día. El reloj <b>analógico</b> tiene agujas: la <b>corta</b> marca la hora y la <b>larga</b> los minutos. El <b>digital</b> muestra solo números (7:30).</p>
+      <p>Aguja larga en el 12 = <b>en punto</b> · en el 6 = <b>y media</b> · en el 3 = <b>y cuarto</b> · en el 9 = <b>un cuarto para</b>. Una hora = 60 minutos. a. m. = mañana, p. m. = tarde y noche.</p>
+      <p>Más práctica: <a href="juegos/reloj.html">🕒 Aprendo la hora</a>.</p>
+    </div>
+
+    <div class="tema" data-t="sucesiones">
+      <h3>🪜 Sucesiones ascendentes y descendentes</h3>
+      <p><b>Ascendente:</b> los números suben (10, 20, 30…). <b>Descendente:</b> bajan (50, 45, 40…). Para saber cuál sigue, mirá de cuánto en cuánto cambia. <b>Posición y orden:</b> primero, segundo, tercero… décimo.</p>
+      <p>Más práctica: <a href="juegos/numeros.html">💯 Números del 1 al 100</a>.</p>
+    </div>
+
+    <div class="tema" data-t="recoleccion-datos">
+      <h3>📋 Recolección de datos</h3>
+      <p><b>Observación directa</b> (mirar y anotar), <b>entrevista sencilla</b> (preguntarle a una persona) y <b>encuesta</b> (la misma pregunta a muchas personas). Contamos con palitos: ||||| ||| = 8.</p>
+      <p>Más práctica: <a href="juegos/graficos.html">📊 Encuesta en la escuela</a>.</p>
+    </div>
+  </section>
+
+  <!-- 💬 INGLÉS -->
+  <section class="card" id="ingles" style="--c:#8E5BD9">
+    <h2>💬 Inglés · prueba oral</h2>
+    <p class="fecha">📅 La fecha la da la maestra de inglés</p>
+    <div class="practica" data-materia="ingles" data-temas="en-family,en-house,en-animals"></div>
+    <p>Es una entrevista con la maestra usando imágenes. Además de los tres pasos, practicá <b>hablando</b> en <a href="juegos/oral-ingles.html">🎤 My oral exam</a> y repasá el <a href="vocabulario-ingles.html">📚 vocabulario con cómo suena cada palabra</a>.</p>
+
+    <div class="tema" data-t="en-family">
+      <h3>👨‍👩‍👧 Family</h3>
+      <p><b>Who is he?</b> → <b>He is my father.</b> · <b>Who is she?</b> → <b>She is my mother.</b> (he = él, she = ella)</p>
+      <p>father, mother, sister, brother, grandfather, grandmother, uncle, aunt, cousin(s).</p>
+    </div>
+
+    <div class="tema" data-t="en-house">
+      <h3>🏠 House</h3>
+      <p>Rooms: kitchen, bedroom, bathroom, living room, dining room, laundry room, garage. Objects: sofa, television, table, chair, bed, dresser, toilet, mirror, window, stove, refrigerator, car, washing machine.</p>
+      <p><b>What is this?</b> → <b>It is a bed.</b> · <b>There is a stove in the kitchen.</b></p>
+    </div>
+
+    <div class="tema" data-t="en-animals">
+      <h3>🐴 Animals</h3>
+      <p><b>What animal is this?</b> → <b>It is a horse.</b> · <b>Is it big or small?</b> → <b>It is big.</b> · <b>What color is it?</b> → <b>It is brown.</b> · <b>Where do cows live?</b> → <b>Cows live in a barn.</b></p>
+    </div>
   </section>
 
   <!-- 🗺️ ESTUDIOS SOCIALES -->

@@ -31,7 +31,7 @@ import { preguntaExamen as preguntaMedidas } from "./medidas.js";
 import { preguntaExamen as preguntaComunidad } from "./comunidad.js";
 import { preguntaExamen as preguntaGeometria } from "./geometria.js";
 // 📋 Temario de las segundas pruebas de 2° (diptongo, hiato, contaminación, ciclo del agua, mi cantón…)
-import { ESPANOL_2, CIENCIAS_2, SOCIALES_2 } from "./temario-2.js";
+import { ESPANOL_2, CIENCIAS_2, SOCIALES_2, MATE_2, INGLES_2 } from "./temario-2.js";
 
 // ---------- Ayudas ----------
 const ent = (a, b, r) => a + Math.floor(r() * (b - a + 1));
@@ -695,6 +695,7 @@ const MATE = [
   { id: "alcancia", nombre: "Monedas y billetes", emoji: "🐷", grados: [1, 2, 3, 4], pregunta: (r, g) => preguntaPlata(r, g) },
   { id: "medidas", nombre: "Medidas", emoji: "📏", grados: [2, 3, 4, 5, 6], pregunta: (r, g) => preguntaMedidas(r, g) },
   { id: "geometria-dibujos", nombre: "Figuras, ángulos y cuerpos", emoji: "🔺", grados: [1, 2, 3, 4, 5, 6], pregunta: (r, g) => preguntaGeometria(r, g) },
+  ...MATE_2,
 ];
 
 // ================= ESPAÑOL =================
@@ -838,6 +839,7 @@ const INGLES = [
     const [f, ...otras] = frases(4, r, { tiempo: 0.2 });
     return opc(`¿Qué significa: «${f.en}»?`, f.es, otras.map(o => o.es), `«${f.en}» significa «${f.es}».`, r);
   } },
+  ...INGLES_2,
 ];
 
 export const MATERIAS_EXAMEN = [

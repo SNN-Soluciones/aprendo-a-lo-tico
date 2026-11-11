@@ -1,0 +1,44 @@
+# ✅ API: pruebas con PostgreSQL de verdad, reglas de arquitectura y cobertura mínima, en cada PR que toque api/.
+name: API
+
+on:
+  pull_request:
+    paths: ["api/**", ".github/workflows/api.yml"]
+  push:
+    branches: [main]
+    paths: ["api/**", ".github/workflows/api.yml"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: API (pruebas, arquitectura y cobertura)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Pruebas, arquitectura y cobertura
+        run: ./gradlew check --no-daemon
+      - name: La imagen Docker se construye
+        run: docker build --quiet --tag aprendo-api:ci .
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reportes-api
+          path: |
+            api/build/reports/
+            api/build/test-results/
+          retention-days: 7

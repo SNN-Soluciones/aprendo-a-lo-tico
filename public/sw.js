@@ -1,9 +1,10 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v35";
+const VERSION = "v36";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",
+  "acerca.html", "privacidad.html", "css/fuentes.css", "fonts/baloo2-latin.woff2", "fonts/baloo2-latin-ext.woff2", "js/analitica.js",
   "css/base.css", "css/prepa.css", "js/home.js", "js/catalog.js", "js/config.js", "js/voz.js", "js/prepa.js",
   "js/perfil.js", "js/escalera.js", "js/html.js", "juegos/buscar.html", "juegos/patrones.html", "js/patrones.js", "juegos/parejas.html",
   "juegos/tamanos.html", "juegos/sonidos.html", "juegos/clasificar.html",
@@ -61,13 +62,13 @@ self.addEventListener("activate", (e) => {
 // Primero la red (para ver cambios), si no hay internet usa la copia guardada.
 // Los archivos del sitio se piden con "no-cache": el navegador siempre le pregunta al servidor
 // si hay versión nueva, así un cambio publicado se ve de una vez (sin quedarse con JS viejo).
+// Solo los archivos del sitio: lo de afuera (el pixel de las visitas) va directo y nunca se guarda.
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
-  const propio = new URL(e.request.url).origin === self.location.origin;
+  if (e.request.method !== "GET" || new URL(e.request.url).origin !== self.location.origin) return;
   e.respondWith(
-    (propio ? fetch(e.request.url, { cache: "no-cache" }) : fetch(e.request))
+    fetch(e.request.url, { cache: "no-cache" })
       .then((res) => {
-        if (res && (res.ok || res.type === "opaque")) {
+        if (res && res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(e.request, copy));
         }

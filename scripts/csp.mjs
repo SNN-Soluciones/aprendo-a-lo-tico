@@ -11,6 +11,7 @@ import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, readdirSync, realpathSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { CONFIG } from "../public/js/config.js";
 
 const RAIZ = fileURLToPath(new URL("../public/", import.meta.url));
 const META = /<meta http-equiv="Content-Security-Policy" content="([^"]*)">\n?/;
@@ -36,17 +37,20 @@ export const hashDe = texto =>
 /**
  * La política completa para una página con esos hashes de scripts inline.
  * @param {string[]} hashes
- * @param {{ formSubmit?: boolean }} [op] formSubmit: la página manda su formulario a FormSubmit (solo sugerencias)
+ * @param {{ formSubmit?: boolean, goatcounter?: string }} [op]
+ *   formSubmit: la página manda su formulario a FormSubmit (solo sugerencias)
+ *   goatcounter: código de la cuenta de GoatCounter (CONFIG.analitica): se permite solo su pixel
  */
-export function politica(hashes, { formSubmit = false } = {}) {
+export function politica(hashes, { formSubmit = false, goatcounter = "" } = {}) {
+  if (goatcounter && !/^[a-z0-9-]+$/.test(goatcounter)) throw new Error(`Código de GoatCounter raro: «${goatcounter}»`);
   return [
     "default-src 'self'",
     `script-src ${["'self'", ...hashes].join(" ")}`,
     // style 'unsafe-inline': los juegos pintan con style="…" y <style> desde JS (no ejecuta código)
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
+    "style-src 'self' 'unsafe-inline'",
+    "font-src 'self'",
     // data: y blob: para el dibujo de la lapa y la vista previa de las fotos en sugerencias
-    "img-src 'self' data: blob:",
+    `img-src 'self' data: blob:${goatcounter ? ` https://${goatcounter}.goatcounter.com` : ""}`,
     "media-src 'self'",
     "connect-src 'self'",
     "worker-src 'self'",
@@ -83,8 +87,10 @@ export function paginas(dir = RAIZ) {
 }
 
 /** Cómo tiene que quedar el archivo de esa página (ruta completa) con su CSP al día. */
-export const esperadaDe = ruta =>
-  conPolitica(readFileSync(ruta, "utf8"), { formSubmit: FORM_SUBMIT.has(relative(RAIZ, ruta).split(sep).join("/")) });
+export const esperadaDe = ruta => conPolitica(readFileSync(ruta, "utf8"), {
+  formSubmit: FORM_SUBMIT.has(relative(RAIZ, ruta).split(sep).join("/")),
+  goatcounter: CONFIG.analitica?.goatcounter || "",
+});
 
 function principal(revisar) {
   const desactualizadas = [];

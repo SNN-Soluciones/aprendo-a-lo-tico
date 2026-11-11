@@ -36,6 +36,8 @@ jobs:
       - run: npm ci
       - name: La CSP de cada página está al día
         run: npm run csp:revisar
+      - name: Los metadatos para compartir están al día
+        run: npm run compartir:revisar
       - name: Semilla al azar (solo los lunes)
         if: github.event_name == 'schedule'
         run: echo "SEMILLA=$RANDOM$RANDOM" >> "$GITHUB_ENV"

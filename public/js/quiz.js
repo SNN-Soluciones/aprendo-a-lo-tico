@@ -14,6 +14,7 @@
 import { elogio, sonido, LENTO } from "./voz.js";
 import { decir, instruccion, feedback, alEmpezar } from "./prepa.js";
 import { escalera as crearEscalera } from "./escalera.js";
+import { escapar } from "./html.js";
 
 const $ = id => document.getElementById(id);
 
@@ -38,7 +39,6 @@ export function igual(respuesta, dado, numero = false) {
   if (/^\d{1,3}(\.\d{3})+$/.test(b)) leidos.push(Number(b.replace(/\./g, "")));
   return leidos.some(x => x === Number(a));
 }
-const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 /**
  * @param {object} op

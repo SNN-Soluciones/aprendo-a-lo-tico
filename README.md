@@ -159,24 +159,66 @@ aprendo-a-lo-tico/
 │   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
+│   ├── js/html.js          # 🧼 escapar(): texto seguro para meter en HTML
 │   └── juegos/             # Cada juego es un HTML autocontenido
+├── pruebas/                # ✅ generadores/ y unidad/ (node --test), navegador/ (Playwright) y sitio.mjs (páginas y SHELL)
+├── scripts/csp.mjs         # 🛡️ Pone y revisa la CSP de cada página
+├── scripts/servir.mjs      # 🌐 Servidor estático sin dependencias (npm start y las pruebas)
+├── .github/workflows/ci.yml # Pruebas en cada PR
+├── package.json            # Solo para las pruebas (el sitio no tiene build)
 ├── README.md
-└── TODO.md                 # Hoja de ruta
+├── PLAN.md                 # Plan por fases: plataforma para escuelas, maestras y familias
+└── TODO.md                 # Hoja de ruta de contenido
 ```
 
 ## Correr en local
 
-No necesita build. Cualquier servidor estático sirve:
+No necesita build. Con Node (sin instalar nada):
 
 ```bash
-cd public
-python3 -m http.server 8080
-# o: npx serve .
+npm start   # node scripts/servir.mjs → http://127.0.0.1:8080
 ```
 
-Abrí <http://localhost:8080>.
+O cualquier servidor estático dentro de `public/` (`python3 -m http.server 8080`).
+
+Abrí <http://127.0.0.1:8080>.
 
 > Abrirlo con doble clic (`file://`) no funciona bien porque usa módulos JS y service worker.
+
+## ✅ Pruebas
+
+El sitio sigue sin build. `package.json` es solo para las pruebas (Node 20 o más nuevo):
+
+```bash
+npm install
+npx playwright install chromium webkit firefox   # la primera vez
+npm test                 # generadores, CSP, service worker, servidor y escapar() (node --test, unos segundos)
+npm run test:navegador   # todas las páginas en Chrome (375 y 1024 px), Safari y Firefox (Playwright, unos 2 min)
+npm run csp:revisar      # ¿la CSP de cada página está al día? (npm test también lo revisa)
+```
+
+- **`pruebas/generadores/`**: cada generador da preguntas válidas (la correcta está entre las opciones, los casos del
+  jaguar tienen una sola respuesta, las soluciones de «Repetí y decidí» ganan…), con semilla fija para poder repetir un
+  fallo. Para probar con otra: `SEMILLA=123 npm test` (la CI lo hace con una al azar cada lunes).
+- **`pruebas/unidad/`**: `escapar()`, la CSP, el servidor de `scripts/servir.mjs` y que **todo** lo que carga cada
+  página esté en la lista `SHELL` de `sw.js` (si no, ese juego se rompe sin internet).
+- **`pruebas/navegador/`**: cada página abre y cada juego arranca sin errores de consola, sin excepciones, sin bloqueos
+  de la CSP, sin archivos propios que fallen y sin pedir nada que no esté en `SHELL`. Google Fonts se simula, así que
+  no depende de la red. También: un nombre con HTML se ve como texto (inicio y examen), la CSP bloquea lo que se cuele,
+  y con el service worker de verdad se corta la red y se sigue jugando.
+- **CI** (`.github/workflows/ci.yml`): todo lo anterior corre en cada PR y en cada push a `main`, con Node 20 y 24.
+
+### 🛡️ CSP (política de seguridad)
+
+Cada página trae una `<meta http-equiv="Content-Security-Policy">` que solo deja correr los scripts propios y los
+`<script>` inline cuyo hash sha256 está en la política (nunca `'unsafe-inline'`). Así, un HTML que se cuele en un
+`innerHTML` (`<img onerror=…>`) no se ejecuta. La genera `scripts/csp.mjs`.
+
+**Cada vez que cambiés un `<script>` inline o agregués una página, corré `npm run csp`.** Si no, el navegador bloquea
+ese script (en la consola sale *Refused to execute inline script*) y la CI falla.
+
+Todo texto que no escribimos nosotros (el nombre del perfil, lo que escribe el niño y, más adelante, lo que venga del
+servidor) se mete en el HTML con `escapar()` de `js/html.js`.
 
 ## Configurar SINPE
 
@@ -213,8 +255,8 @@ sugerencias: {
 1. Subí el repo a GitHub.
 2. En DigitalOcean: **Create → App → GitHub** y escogé el repo y la rama `main`.
 3. **Antes de darle Next**, en **Source directory** poné `public`.
-   La raíz del repo no tiene `index.html` ni `package.json`, así que si lo dejás en `/`
-   aparece el error *"No components detected"*.
+   La raíz del repo no tiene `index.html` (su `package.json` es solo para las pruebas), así que si lo dejás en `/`
+   no encuentra el sitio o lo toma como una app de Node.
 4. Cuando detecte el componente, configuralo como **Static Site**:
    - **Source directory:** `public`
    - **Build command:** (vacío)
@@ -244,7 +286,8 @@ Subí la versión en `public/sw.js`:
 const VERSION = "v2";
 ```
 
-Si agregás archivos nuevos, sumalos también a la lista `SHELL` para que funcionen sin internet.
+Si agregás archivos nuevos, sumalos también a la lista `SHELL` para que funcionen sin internet (`npm test` avisa si
+falta alguno). Si cambiaste un `<script>` inline, corré `npm run csp`.
 
 ## 👧 Para cada edad: perfil, escalera 🪜 y ayudas
 
@@ -295,6 +338,8 @@ El HTML lleva `<div class="escalera" id="escalera"></div>` en la barra de arriba
 ```
 
 3. Sumalo a `SHELL` en `sw.js` y subí `VERSION`.
+4. Corré `npm run csp` (le pone la CSP a la página nueva) y `npm test` y `npm run test:navegador`: la prueba del
+   navegador ya abre y arranca el juego nuevo sola. Si tiene generador, agregale su `pruebas/generadores/mi-juego.test.mjs`.
 
 ### Juegos para los que todavía no leen (Prepa)
 

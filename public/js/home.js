@@ -3,6 +3,7 @@ import { retoDelDia, hecho } from "./reto-dia.js";
 import { AVATARES, EDADES, LECTURA, perfiles, perfilActivo, usarPerfil, guardarPerfil, borrarPerfil, gradosParaEdad, juegosPara, progresoDe, ponerEscalon, reiniciarJuego } from "./perfil.js";
 import { hablar, sonido } from "./voz.js";
 import { STICKERS, GRUPOS, TOTAL, albumDe, stickerDe, conArticulo, dibujo, cuantos } from "./album.js";
+import { escapar } from "./html.js";
 
 // 🏠 Inicio: menú principal con categorías (#), página de cada categoría (#c/<id>) y menú ☰.
 const $ = (s) => document.querySelector(s);
@@ -33,7 +34,6 @@ function chipsGrado(el) {
 
 // ---------- 👧 ¿Quién juega? ----------
 // Se pregunta la edad y si ya lee; con eso se sugieren los juegos y cada juego sabe por dónde empezar.
-const escapar = t => String(t).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 const nombreDe = p => escapar(p.nombre) || `${p.edad} años`;
 let editando = null; // perfil que se está creando o cambiando: { id?, edad, lee, avatar, nombre }
 const OMITIDO = "alt-perfil-omitido"; // tocaron «Ahora no»: se invita con un botón chiquito en vez del formulario

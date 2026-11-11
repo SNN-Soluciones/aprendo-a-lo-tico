@@ -7,3 +7,7 @@ Thumbs.db
 android/app/build/
 android/.gradle/
 ios/App/Pods/
+# Pruebas
+playwright-report/
+test-results/
+coverage/

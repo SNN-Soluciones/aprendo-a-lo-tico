@@ -497,9 +497,11 @@ export function porQueNo(r, id) {
   const o = r.opciones.find(x => x.id === id);
   if (!o) return "";
   const esa = o.f ? "Esa es" : "Ese es";
-  if (r.tipo === "nombre") return `${esa} ${o.voz}. Buscá ${con("a", r.opciones.find(x => x.id === r.meta).voz)}.`;
+  // La que hay que buscar (si una ronda mal armada no la trae, revisarRonda lo reporta: aquí no se revienta)
+  const buscada = r.opciones.find(x => x.id === r.meta)?.voz;
+  if (r.tipo === "nombre") return buscada ? `${esa} ${o.voz}. Buscá ${con("a", buscada)}.` : `${esa} ${o.voz}.`;
   if (o.tipo === "persona") return `${may(o.voz)} ${OFICIOS[id].hace}. Pensá otra vez.`;
-  if (r.tipo === "lugar") return `${esa} ${o.voz}. Buscá ${r.opciones.find(x => x.id === r.meta).voz}.`;
+  if (r.tipo === "lugar") return buscada ? `${esa} ${o.voz}. Buscá ${buscada}.` : `${esa} ${o.voz}.`;
   if (o.tipo === "lugar") return `${may(o.voz)}: ${LUGARES[id].que}. Pensá otra vez.`;
   if (o.tipo === "servicio") return `${may(o.voz)} no sirve para eso. Pensá otra vez.`;
   if (o.tipo === "vineta") return `Eso está bien: ${o.voz} Buscá lo que está mal.`;

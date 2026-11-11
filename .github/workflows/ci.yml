@@ -1,0 +1,65 @@
+# ✅ Pruebas en cada PR y en cada push a main. Si algo sale en rojo, no se mergea.
+# Los lunes corre además con una semilla al azar, para que los generadores muestren preguntas que la CI no había visto.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 12 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # En un PR, un push nuevo cancela la corrida vieja; en main cada commit se prueba completo
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  unidad:
+    name: Generadores, unidad y CSP (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 24]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - name: La CSP de cada página está al día
+        run: npm run csp:revisar
+      - name: Semilla al azar (solo los lunes)
+        if: github.event_name == 'schedule'
+        run: echo "SEMILLA=$RANDOM$RANDOM" >> "$GITHUB_ENV"
+      - name: Pruebas de los generadores y de unidad
+        run: |
+          echo "Semilla: ${SEMILLA:-la fija (20261111)}"
+          npm test
+
+  navegador:
+    name: Todas las páginas en Chrome, Safari y Firefox
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium webkit firefox
+      - run: npm run test:navegador
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: reporte-playwright
+          path: playwright-report/
+          retention-days: 7

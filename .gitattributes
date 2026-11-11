@@ -1,0 +1,2 @@
+# Los hashes de la CSP se calculan sobre el HTML con saltos LF: que git no los cambie a CRLF
+*.html text eol=lf

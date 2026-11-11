@@ -85,16 +85,15 @@ class ArquitecturaTest {
             .orShould().dependOnClassesThat().areAssignableTo(org.springframework.data.repository.Repository.class)
             .because("los controladores hablan con servicios, no con la base");
 
+    // Dos reglas simples y no una con andShould: en noClasses(), andShould solo falla si se cumplen las dos condiciones
     @ArchTest
-    static final ArchRule transaccionesFueraDeWeb = noClasses().that().resideInAPackage("..web..")
-            .should().beAnnotatedWith(Transactional.class)
-            .andShould(new ArchCondition<JavaClass>("no tener métodos @Transactional") {
-                @Override
-                public void check(JavaClass clase, ConditionEvents eventos) {
-                    clase.getMethods().stream().filter(m -> m.isAnnotatedWith(Transactional.class))
-                            .forEach(m -> eventos.add(SimpleConditionEvent.violated(m, m.getFullName() + " es @Transactional")));
-                }
-            })
+    static final ArchRule clasesDeWebSinTransacciones = noClasses().that().resideInAPackage("..web..")
+            .should().beAnnotatedWith(Transactional.class).orShould().beAnnotatedWith("jakarta.transaction.Transactional")
+            .because("las transacciones las abren los servicios, no los controladores");
+
+    @ArchTest
+    static final ArchRule metodosDeWebSinTransacciones = noMethods().that().areDeclaredInClassesThat().resideInAPackage("..web..")
+            .should().beAnnotatedWith(Transactional.class).orShould().beAnnotatedWith("jakarta.transaction.Transactional")
             .because("las transacciones las abren los servicios, no los controladores");
 
     @ArchTest

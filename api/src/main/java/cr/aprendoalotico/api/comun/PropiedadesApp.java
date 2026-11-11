@@ -8,7 +8,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * Configuración propia de la aplicación (prefijo «app»). Se valida al arrancar: si falta o está mal, no arranca.
  *
  * @param sitioUrl    origen público del sitio (https://aprendoalotico.cr): los cambios solo se aceptan desde aquí
- * @param origenExtra otro origen de confianza, opcional y solo para la compu de quien programa (el portal local)
+ * @param origenExtra otro origen de confianza, opcional y solo para la compu de quien programa (el portal local): si
+ *                    él o el sitio son públicos, no arranca
  */
 @ConfigurationProperties("app")
 public record PropiedadesApp(String sitioUrl, String origenExtra) {
@@ -19,12 +20,12 @@ public record PropiedadesApp(String sitioUrl, String origenExtra) {
         }
         sitioUrl = Origenes.normalizar(sitioUrl);
         origenExtra = origenExtra == null || origenExtra.isBlank() ? null : Origenes.normalizar(origenExtra);
-        if (origenExtra != null && Origenes.esLocal(origenExtra) && !Origenes.esLocal(sitioUrl)) {
-            throw new IllegalArgumentException("Un sitio público no puede confiar en un origen local (" + origenExtra
-                    + "): ORIGEN_EXTRA es solo para la compu de quien programa");
-        }
         if (sitioUrl.equals(origenExtra)) {
             origenExtra = null;
+        }
+        if (origenExtra != null && !(Origenes.esLocal(origenExtra) && Origenes.esLocal(sitioUrl))) {
+            throw new IllegalArgumentException("No se puede confiar en " + origenExtra + " con el sitio " + sitioUrl
+                    + ": ORIGEN_EXTRA es solo para la compu de quien programa (los dos tienen que ser locales)");
         }
     }
 

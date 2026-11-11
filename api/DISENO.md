@@ -110,7 +110,11 @@ sirve para entrar.
 
 - Perfiles: `local` (Docker Compose con PostgreSQL en un puerto libre), `test` (Testcontainers), `prod` (variables de entorno).
 - Variables: `DB_URL`, `DB_USUARIO`, `DB_CLAVE`, `DB_MIGRACION_USUARIO`, `DB_MIGRACION_CLAVE`, `SITIO_URL`; con identidad,
-  `SMTP_USUARIO`, `SMTP_CLAVE`, `CORREO_REMITENTE`. La conexión a la base va siempre con TLS (`sslmode=require`).
+  `SMTP_USUARIO`, `SMTP_CLAVE`, `CORREO_REMITENTE`. La conexión a la base va siempre con TLS: `DB_URL` termina en
+  `?sslmode=require` (o `verify-full`) y sin eso no arranca (`BaseCifradaEnProduccion`). Va en la dirección y no en las
+  propiedades del pool porque las migraciones abren su propia conexión con esa dirección y sin esas propiedades.
+  **Pendiente al desplegar:** pasar a `verify-full` con el certificado de la base administrada (`require` cifra, pero no
+  verifica que del otro lado esté nuestra base).
 - **Dos roles en la base:** `aprendo_migracion` es dueño de las tablas y corre Flyway; `aprendo_app` es con el que se
   conecta la aplicación, sin DDL, y en `auditoria` solo `SELECT, INSERT`. Así ni una inyección SQL ni una credencial
   robada de la app pueden apagar los disparadores de la auditoría. Se crean al montar la base (antes de desplegar), con
@@ -119,7 +123,8 @@ sirve para entrar.
   borrado de las viejas por el rol dueño, con un plazo acordado con las escuelas.
 - Imagen Docker de varias etapas, JRE 21, usuario sin privilegios. La plataforma revisa `/actuator/health/liveness`
   (no toca la base: una caída de la base no reinicia las instancias); `/api/v1/estado` es para el monitoreo externo
-  (dice si la base responde, con 5 s de caché y espera de 2 s). Todo en el mismo puerto: el Actuator solo expone la salud.
+  (dice si la base responde: 5 s de caché que renueva un solo pedido a la vez, 2 s para conseguir conexión y 30 s como
+  máximo por consulta). Todo en el mismo puerto: el Actuator solo expone la salud.
 - Despliegue: un componente *service* más en la misma app de App Platform, ruta `/api` con `preserve_path_prefix: true`
   (los controladores ya viven en `/api/v1/…`), con PostgreSQL administrado y respaldos diarios. HSTS va con
   `includeSubDomains`: todo `aprendoalotico.cr` tiene que servirse por HTTPS. **Mergear es desplegar: se pregunta antes**, como en snn-core.

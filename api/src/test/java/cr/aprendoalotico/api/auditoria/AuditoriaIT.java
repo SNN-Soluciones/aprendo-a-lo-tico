@@ -68,12 +68,23 @@ class AuditoriaIT extends PruebaDeIntegracion {
     }
 
     @Test
-    @DisplayName("Un evento sin acción o sin recurso no se puede armar")
+    @DisplayName("Un evento sin acción, sin recurso o de una persona sin su id no se puede armar")
     void eventoIncompleto() {
         assertThatThrownBy(() -> new EventoAuditoria(TipoDeActor.USUARIO, UUID.randomUUID(), " ", "ESTUDIANTE", null, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
         assertThatThrownBy(() -> new EventoAuditoria(null, null, "VER", "ESTUDIANTE", null, null, null))
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> new EventoAuditoria(TipoDeActor.USUARIO, null, "VER", "ESTUDIANTE", null, null, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("USUARIO");
+        assertThatThrownBy(() -> new EventoAuditoria(TipoDeActor.ESTUDIANTE, null, "JUGAR", "TEMA", null, null, null))
+                .isInstanceOf(IllegalArgumentException.class).hasMessageContaining("ESTUDIANTE");
+    }
+
+    @Test
+    @DisplayName("La base tampoco guarda una acción de una persona sin su id: solo el sistema va sin actor")
+    void laBaseExigeElActor() {
+        assertThatThrownBy(() -> jdbc.sql("insert into public.auditoria (actor_tipo, accion, recurso) values ('USUARIO', 'VER', 'ESTUDIANTE')")
+                .update()).hasMessageContaining("auditoria_actor_con_id");
     }
 
     @Test

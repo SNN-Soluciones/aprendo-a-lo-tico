@@ -2,13 +2,11 @@
 # si falta uno, la aplicación no arranca (DISENO.md, B14).
 spring:
   datasource:
+    # Con ?sslmode=require (o verify-full) al final: si no, no arranca (BaseCifradaEnProduccion). Va en la dirección
+    # porque las migraciones abren su propia conexión con ella y sin las propiedades del pool.
     url: ${DB_URL}
     username: ${DB_USUARIO}
     password: ${DB_CLAVE}
-    hikari:
-      data-source-properties:
-        # La conexión a la base siempre cifrada (si DB_URL pide verify-full, eso manda)
-        sslmode: require
   flyway:
     # Las migraciones corren con el rol dueño de las tablas; la aplicación, con uno que solo lee y agrega
     # (DISENO.md, sección 7). Mientras no exista ese segundo rol, se pueden poner las mismas credenciales.

@@ -9,7 +9,7 @@ import java.util.UUID;
  * Una fila de la auditoría.
  *
  * @param tipo          quién: USUARIO, ESTUDIANTE o SISTEMA
- * @param actor         su id (null si es el sistema)
+ * @param actor         su id: obligatorio para USUARIO y ESTUDIANTE, null si es el sistema
  * @param accion        qué hizo, en MAYUSCULAS: VER, CREAR, CAMBIAR, RETIRAR, VER_DENEGADO…
  * @param recurso       sobre qué: ESTUDIANTE, GRUPO, SESION…
  * @param recursoId     cuál (null si no aplica)
@@ -22,6 +22,9 @@ public record EventoAuditoria(TipoDeActor tipo, UUID actor, String accion, Strin
     public EventoAuditoria {
         if (tipo == null) {
             throw new IllegalArgumentException("Falta quién hizo la acción");
+        }
+        if (actor == null && tipo != TipoDeActor.SISTEMA) {
+            throw new IllegalArgumentException("Falta el id del actor " + tipo + ": solo el sistema va sin id");
         }
         if (accion == null || accion.isBlank() || recurso == null || recurso.isBlank()) {
             throw new IllegalArgumentException("Un evento de auditoría necesita acción y recurso");

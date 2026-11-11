@@ -13,7 +13,9 @@ create table public.auditoria (
     recurso_id     uuid,
     institucion_id uuid,
     pedido         text,
-    detalle        jsonb not null default '{}'::jsonb
+    detalle        jsonb not null default '{}'::jsonb,
+    -- Una persona siempre con su id: solo el sistema va sin actor
+    constraint auditoria_actor_con_id check (actor_tipo = 'SISTEMA' or actor_id is not null)
 );
 
 -- La auditoría de una escuela, de la más nueva a la más vieja; y todo lo que le pasó a un recurso

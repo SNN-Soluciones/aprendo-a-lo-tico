@@ -51,7 +51,7 @@ Imagen: `docker build -t aprendo-api .` (perfil `prod`). Variables obligatorias,
 
 | Variable | Qué es |
 |---|---|
-| `DB_URL` | `jdbc:postgresql://…` de la base administrada (la conexión va siempre con TLS) |
+| `DB_URL` | `jdbc:postgresql://…?sslmode=require` de la base administrada: sin `sslmode=require` (o `verify-full`) no arranca |
 | `DB_USUARIO`, `DB_CLAVE` | el rol de la aplicación (`aprendo_app`: lee y escribe datos, sin DDL) |
 | `DB_MIGRACION_USUARIO`, `DB_MIGRACION_CLAVE` | el rol dueño de las tablas, con el que corre Flyway |
 | `SITIO_URL` | origen público, por ejemplo `https://aprendoalotico.cr` (https, sin barra al final) |

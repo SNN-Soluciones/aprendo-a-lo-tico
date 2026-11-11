@@ -11,6 +11,10 @@ spring:
       # Si la base no responde, que se sepa en 2 s y no en 30 (cada pedido en espera retiene un hilo)
       connection-timeout: 2000
       validation-timeout: 1000
+      data-source-properties:
+        # Y si la red se cae a media consulta, que se corte a los 30 s y no espere para siempre (en el driver, el 0 de
+        # fábrica es «sin límite»). Las migraciones de producción abren su propia conexión, sin este límite.
+        socketTimeout: 30
   jpa:
     open-in-view: false
     hibernate:

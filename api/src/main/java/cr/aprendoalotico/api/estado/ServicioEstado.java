@@ -3,6 +3,7 @@ package cr.aprendoalotico.api.estado;
 import java.time.Clock;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -13,8 +14,10 @@ import org.springframework.stereotype.Service;
 
 /**
  * Revisa que la base responda y dice qué versión está corriendo. Es público: la respuesta se repite durante unos
- * segundos para que muchos pedidos no se conviertan en muchas consultas, y la consulta tiene un tiempo de espera corto
- * (spring.datasource.hikari.connection-timeout). La plataforma usa /actuator/health/liveness, que no toca la base.
+ * segundos, y cuando vence la renueva un solo pedido mientras los demás esperan su resultado, para que muchos pedidos no
+ * se conviertan en muchas consultas. La espera por una conexión está limitada por spring.datasource.hikari.connection-timeout
+ * (2 s) y la consulta por el socketTimeout del driver (30 s, si la red se cae a media respuesta). La plataforma usa
+ * /actuator/health/liveness, que no toca la base.
  */
 @Service
 public class ServicioEstado {
@@ -27,6 +30,8 @@ public class ServicioEstado {
     private final Clock reloj;
     private final String version;
     private final AtomicReference<Estado> ultimo = new AtomicReference<>();
+    // ReentrantLock y no synchronized: con hilos virtuales, synchronized deja atado el hilo de plataforma mientras espera
+    private final ReentrantLock renovando = new ReentrantLock();
 
     public ServicioEstado(JdbcClient jdbc, Clock reloj, ObjectProvider<BuildProperties> build) {
         this.jdbc = jdbc;
@@ -36,14 +41,30 @@ public class ServicioEstado {
     }
 
     public Estado estado() {
-        var ahora = reloj.instant();
-        Estado previo = ultimo.get();
-        if (previo != null && previo.hora().plus(VIGENCIA).isAfter(ahora)) {
-            return previo;
+        Estado vigente = vigente();
+        if (vigente != null) {
+            return vigente;
         }
-        var nuevo = new Estado(SERVICIO, version, ahora, baseResponde() ? Estado.BASE_OK : "sin conexión");
-        ultimo.set(nuevo);
-        return nuevo;
+        renovando.lock();
+        try {
+            // Mientras esperábamos, otro pedido pudo haberla renovado
+            vigente = vigente();
+            if (vigente != null) {
+                return vigente;
+            }
+            var ahora = reloj.instant();
+            var nuevo = new Estado(SERVICIO, version, ahora, baseResponde() ? Estado.BASE_OK : "sin conexión");
+            ultimo.set(nuevo);
+            return nuevo;
+        } finally {
+            renovando.unlock();
+        }
+    }
+
+    /** La última respuesta, si todavía no venció. */
+    private Estado vigente() {
+        Estado previo = ultimo.get();
+        return previo != null && previo.hora().plus(VIGENCIA).isAfter(reloj.instant()) ? previo : null;
     }
 
     private boolean baseResponde() {

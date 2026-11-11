@@ -12,7 +12,12 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.ObjectProvider;
@@ -93,5 +98,45 @@ class ServicioEstadoTest {
         assertThat(segundo).isSameAs(primero);
         assertThat(tercero.hora()).isEqualTo(AHORA.plus(Duration.ofSeconds(6)));
         verify(jdbc.sql("select 1").query(Integer.class), times(2)).single();
+    }
+
+    @Test
+    @DisplayName("Si muchos pedidos llegan juntos con la respuesta vencida, uno solo consulta la base y los demás usan su resultado")
+    void unaSolaConsultaALaVez() throws Exception {
+        // Arrange: la primera consulta se queda pegada hasta que la soltemos
+        var consultando = new CountDownLatch(1);
+        var soltar = new CountDownLatch(1);
+        when(jdbc.sql("select 1").query(Integer.class).single()).thenAnswer(invocacion -> {
+            consultando.countDown();
+            assertThat(soltar.await(5, TimeUnit.SECONDS)).isTrue();
+            return 1;
+        });
+        var servicio = new ServicioEstado(jdbc, Clock.fixed(AHORA, ZoneOffset.UTC), build(null));
+        var respuestas = new ConcurrentLinkedQueue<Estado>();
+        Runnable pedir = () -> respuestas.add(servicio.estado());
+        var primero = Thread.ofPlatform().start(pedir);
+        assertThat(consultando.await(5, TimeUnit.SECONDS)).isTrue();
+        var otros = IntStream.range(0, 20).mapToObj(n -> Thread.ofPlatform().start(pedir)).toList();
+        esperarQueTodosEsperen(otros);
+        // Act
+        soltar.countDown();
+        primero.join(5_000);
+        for (var hilo : otros) {
+            hilo.join(5_000);
+        }
+        // Assert
+        assertThat(respuestas).hasSize(21).allSatisfy(e -> assertThat(e).isSameAs(respuestas.peek()));
+        verify(jdbc.sql("select 1").query(Integer.class), times(1)).single();
+    }
+
+    /** Espera (sin adivinar un tiempo) a que cada hilo esté detenido esperando algo, o ya haya terminado. */
+    private static void esperarQueTodosEsperen(List<Thread> hilos) {
+        long limite = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        while (hilos.stream().anyMatch(h -> h.getState() == Thread.State.NEW || h.getState() == Thread.State.RUNNABLE)) {
+            if (System.nanoTime() > limite) {
+                throw new AssertionError("Los pedidos no llegaron a esperar");
+            }
+            Thread.onSpinWait();
+        }
     }
 }

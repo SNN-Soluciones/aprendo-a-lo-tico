@@ -5,7 +5,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import cr.aprendoalotico.api.PruebaDeIntegracion;
+import javax.sql.DataSource;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
@@ -14,6 +18,17 @@ class EstadoIT extends PruebaDeIntegracion {
 
     @Autowired
     MockMvc mvc;
+
+    @Autowired
+    DataSource base;
+
+    @Test
+    @DisplayName("Una consulta pegada (la red se cayó a media respuesta) se corta a los 30 s: no retiene el pedido para siempre")
+    void lasConexionesTienenTiempoDeEspera() throws Exception {
+        try (var conexion = base.getConnection()) {
+            assertThat(conexion.getNetworkTimeout()).isEqualTo(30_000);
+        }
+    }
 
     @Test
     void elEstadoEsPublicoYDiceQueLaBaseResponde() throws Exception {

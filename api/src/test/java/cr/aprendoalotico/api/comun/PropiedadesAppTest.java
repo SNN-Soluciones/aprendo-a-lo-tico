@@ -50,6 +50,17 @@ class PropiedadesAppTest {
     }
 
     @Test
+    @DisplayName("El origen extra es solo para la compu: uno público no arranca, ni con un sitio público ni con uno local")
+    void origenExtraPublicoNoArranca() {
+        contexto.withPropertyValues("app.sitio-url=https://aprendoalotico.cr", "app.origen-extra=https://portal.example.com").run(ctx -> {
+            assertThat(ctx).hasFailed();
+            assertThat(causa(ctx.getStartupFailure())).contains("ORIGEN_EXTRA");
+        });
+        contexto.withPropertyValues("app.sitio-url=http://127.0.0.1:8080", "app.origen-extra=https://portal.example.com")
+                .run(ctx -> assertThat(ctx).hasFailed());
+    }
+
+    @Test
     @DisplayName("Con un origen válido arranca: normaliza, y el origen extra es opcional")
     void conSitioArranca() {
         contexto.withPropertyValues("app.sitio-url=HTTPS://AprendoALoTico.cr:443").run(ctx -> {

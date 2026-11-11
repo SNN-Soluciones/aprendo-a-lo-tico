@@ -2,7 +2,7 @@
   "name": "aprendo-a-lo-tico",
   "private": true,
   "type": "module",
-  "description": "Solo para las pruebas y la CSP: el sitio en public/ no necesita build ni dependencias.",
+  "description": "Solo para las pruebas, la CSP y los metadatos para compartir: el sitio en public/ no necesita build ni dependencias.",
   "engines": {
     "node": ">=20"
   },
@@ -12,7 +12,10 @@
     "test:cobertura": "node --test --experimental-test-coverage pruebas/unidad/*.test.mjs pruebas/generadores/*.test.mjs",
     "test:navegador": "playwright test",
     "csp": "node scripts/csp.mjs",
-    "csp:revisar": "node scripts/csp.mjs --revisar"
+    "csp:revisar": "node scripts/csp.mjs --revisar",
+    "compartir": "node scripts/compartir.mjs",
+    "compartir:revisar": "node scripts/compartir.mjs --revisar",
+    "compartir:imagen": "node scripts/compartir-imagen.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1"

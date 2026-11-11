@@ -2,18 +2,32 @@
 <html lang="es-CR">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Aprendo a lo Tico · Juegos para aprender</title>
+<!-- compartir: lo escribe scripts/compartir.mjs -->
+<link rel="canonical" href="https://plankton-app-auidd.ondigitalocean.app/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aprendo a lo Tico">
+<meta property="og:locale" content="es_CR">
+<meta property="og:title" content="Aprendo a lo Tico · Juegos para aprender">
+<meta property="og:description" content="Juegos educativos gratis hechos en Costa Rica: la hora, restas con bloques, colones y más.">
+<meta property="og:url" content="https://plankton-app-auidd.ondigitalocean.app/">
+<meta property="og:image" content="https://plankton-app-auidd.ondigitalocean.app/img/compartir.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Aprendo a lo Tico: juegos gratis para aprender, hechos en Costa Rica">
+<meta name="twitter:card" content="summary_large_image">
+<!-- /compartir -->
 <meta name="description" content="Juegos educativos gratis hechos en Costa Rica: la hora, restas con bloques, colones y más.">
 <meta name="theme-color" content="#CFEFE3">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fuentes.css">
 <link rel="stylesheet" href="css/base.css">
+<script type="module" src="js/analitica.js"></script>
 </head>
 <body>
 <header class="barra">
@@ -33,6 +47,8 @@
   <p class="menu-titulo">Aprendo a lo Tico</p>
   <a class="menu-item" href="apoyar.html">💚 Apoyar con SINPE</a>
   <a class="menu-item" href="sugerencias.html">💡 Enviar ideas</a>
+  <a class="menu-item" href="acerca.html">ℹ️ Acerca de</a>
+  <a class="menu-item" href="privacidad.html">🔒 Privacidad</a>
 </nav>
 
 <main class="page">
@@ -96,7 +112,7 @@
     <section class="games" id="juegos" aria-live="polite"></section>
   </section>
 
-  <p class="foot">Hecho con cariño en Costa Rica 🇨🇷</p>
+  <p class="foot">Hecho con cariño en Costa Rica 🇨🇷 · <a href="acerca.html">Acerca de</a> · <a href="privacidad.html">Privacidad</a></p>
 </main>
 
 <!-- 🏆 Álbum de stickers del niño que está jugando (js/album.js) -->

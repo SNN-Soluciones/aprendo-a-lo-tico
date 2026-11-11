@@ -47,13 +47,29 @@ test("politica permite los scripts propios y solo los inline con hash, nunca 'un
   assert.doesNotMatch(p.match(/script-src[^;]*/)[0], /unsafe-inline|unsafe-eval/);
   assert.match(p, /object-src 'none'/);
   assert.match(p, /base-uri 'self'/);
-  assert.match(p, /font-src 'self' https:\/\/fonts\.gstatic\.com/);
+  assert.match(p, /font-src 'self';/);
+  assert.match(p, /style-src 'self' 'unsafe-inline';/);
+  assert.match(p, /img-src 'self' data: blob:;/);
+  assert.doesNotMatch(p, /google/i, "la fuente es propia: nada de Google");
   assert.match(p, /form-action 'self';/);
 });
 
 test("conPolitica solo deja mandar formularios a FormSubmit cuando se le pide (página por página)", () => {
   assert.match(politicaDe(conPolitica(PAGINA, { formSubmit: true })), /form-action 'self' https:\/\/formsubmit\.co;/);
   assert.match(politicaDe(conPolitica(PAGINA)), /form-action 'self';/);
+});
+
+test("con GoatCounter configurado, solo su host se suma a img-src (el pixel de las visitas)", () => {
+  // Act
+  const p = politica([], { goatcounter: "aprendo-a-lo-tico" });
+  // Assert
+  assert.match(p, /img-src 'self' data: blob: https:\/\/aprendo-a-lo-tico\.goatcounter\.com;/);
+  assert.match(p, /connect-src 'self';/);
+  assert.match(p, /script-src 'self';/);
+});
+
+test("un código de GoatCounter raro no se mete en la política", () => {
+  assert.throws(() => politica([], { goatcounter: "x.com; script-src *" }), /GoatCounter/);
 });
 
 test("solo sugerencias.html puede mandar formularios a FormSubmit", () => {

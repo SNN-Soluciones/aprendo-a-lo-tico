@@ -2,15 +2,29 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-e4UTfTeL/+B0Wkt+Ek5zpjMzf8uRcJ8bA1KTlo+GlaM=' 'sha256-qw1nPw1y+PU3o84dJLoX+YK1eiuH+pX0BsrN2U7BvbQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-e4UTfTeL/+B0Wkt+Ek5zpjMzf8uRcJ8bA1KTlo+GlaM=' 'sha256-qw1nPw1y+PU3o84dJLoX+YK1eiuH+pX0BsrN2U7BvbQ='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cuentos ticos: leo y entiendo</title>
+<!-- compartir: lo escribe scripts/compartir.mjs -->
+<link rel="canonical" href="https://plankton-app-auidd.ondigitalocean.app/juegos/cuentos.html">
+<meta name="description" content="82 textos ticos para leer o escuchar: cuentos, fábulas, recetas, noticias, textos informativos, cartas, poemas y adivinanzas. Si te equivocás, te muestra dónde volver a leer.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aprendo a lo Tico">
+<meta property="og:locale" content="es_CR">
+<meta property="og:title" content="Cuentos ticos: leo y entiendo">
+<meta property="og:description" content="82 textos ticos para leer o escuchar: cuentos, fábulas, recetas, noticias, textos informativos, cartas, poemas y adivinanzas. Si te equivocás, te muestra dónde volver a leer.">
+<meta property="og:url" content="https://plankton-app-auidd.ondigitalocean.app/juegos/cuentos.html">
+<meta property="og:image" content="https://plankton-app-auidd.ondigitalocean.app/img/compartir.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Aprendo a lo Tico: juegos gratis para aprender, hechos en Costa Rica">
+<meta name="twitter:card" content="summary_large_image">
+<!-- /compartir -->
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" href="../icons/icon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#CFEFE3">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<link rel="preload" href="../fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../css/fuentes.css">
 <link rel="stylesheet" href="../css/prepa.css">
 <style>
   :root { --materia: #E8574A; }
@@ -67,6 +81,7 @@
   .bottom button { font-size: 1.3rem; padding: 6px 22px; }
   [hidden] { display: none !important; }
 </style>
+<script type="module" src="../js/analitica.js"></script>
 </head>
 <body>
 <a class="home-link" href="../index.html" aria-label="Volver al inicio">🏠</a>

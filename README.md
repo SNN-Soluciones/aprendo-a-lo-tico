@@ -160,10 +160,16 @@ aprendo-a-lo-tico/
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
 │   ├── icons/              # Íconos de la app
 │   ├── js/html.js          # 🧼 escapar(): texto seguro para meter en HTML
+│   ├── js/analitica.js     # 📊 Visitas por página con GoatCounter, sin cookies (apagada sin código en config.js)
+│   ├── css/fuentes.css, fonts/ # 🔤 Baloo 2 guardada en el sitio (OFL)
+│   ├── acerca.html, privacidad.html # ℹ️🔒 Quiénes somos, licencias y qué datos se usan
+│   ├── img/compartir.png   # 📤 Imagen al compartir por WhatsApp o Facebook (1200 × 630)
 │   └── juegos/             # Cada juego es un HTML autocontenido
 ├── pruebas/                # ✅ generadores/ y unidad/ (node --test), navegador/ (Playwright) y sitio.mjs (páginas y SHELL)
 ├── scripts/csp.mjs         # 🛡️ Pone y revisa la CSP de cada página
 ├── scripts/servir.mjs      # 🌐 Servidor estático sin dependencias (npm start y las pruebas)
+├── scripts/compartir.mjs   # 📤 Metadatos para compartir en cada página (y compartir-imagen.* para la imagen)
+├── LICENSE, LICENSE-CONTENIDO.md # MIT para el código, CC BY-NC-SA 4.0 para el contenido
 ├── .github/workflows/ci.yml # Pruebas en cada PR
 ├── package.json            # Solo para las pruebas (el sitio no tiene build)
 ├── README.md
@@ -195,6 +201,7 @@ npx playwright install chromium webkit firefox   # la primera vez
 npm test                 # generadores, CSP, service worker, servidor y escapar() (node --test, unos segundos)
 npm run test:navegador   # todas las páginas en Chrome (375 y 1024 px), Safari y Firefox (Playwright, unos 2 min)
 npm run csp:revisar      # ¿la CSP de cada página está al día? (npm test también lo revisa)
+npm run compartir:revisar  # ¿los metadatos para compartir están al día? (npm test también)
 ```
 
 - **`pruebas/generadores/`**: cada generador da preguntas válidas (la correcta está entre las opciones, los casos del
@@ -203,9 +210,9 @@ npm run csp:revisar      # ¿la CSP de cada página está al día? (npm test tam
 - **`pruebas/unidad/`**: `escapar()`, la CSP, el servidor de `scripts/servir.mjs` y que **todo** lo que carga cada
   página esté en la lista `SHELL` de `sw.js` (si no, ese juego se rompe sin internet).
 - **`pruebas/navegador/`**: cada página abre y cada juego arranca sin errores de consola, sin excepciones, sin bloqueos
-  de la CSP, sin archivos propios que fallen y sin pedir nada que no esté en `SHELL`. Google Fonts se simula, así que
-  no depende de la red. También: un nombre con HTML se ve como texto (inicio y examen), la CSP bloquea lo que se cuele,
-  y con el service worker de verdad se corta la red y se sigue jugando.
+  de la CSP, sin archivos propios que fallen, sin pedir nada que no esté en `SHELL` y sin pedirle nada a otro sitio
+  (no depende de la red). También: un nombre con HTML se ve como texto
+  (inicio y examen), la CSP bloquea lo que se cuele, y con el service worker de verdad se corta la red y se sigue jugando.
 - **CI** (`.github/workflows/ci.yml`): todo lo anterior corre en cada PR y en cada push a `main`, con Node 20 y 24.
 
 ### 🛡️ CSP (política de seguridad)
@@ -219,6 +226,14 @@ ese script (en la consola sale *Refused to execute inline script*) y la CI falla
 
 Todo texto que no escribimos nosotros (el nombre del perfil, lo que escribe el niño y, más adelante, lo que venga del
 servidor) se mete en el HTML con `escapar()` de `js/html.js`.
+
+### 📤 Al compartir (WhatsApp, Facebook)
+
+Cada página trae en su `<head>`, entre `<!-- compartir … -->` y `<!-- /compartir -->`, el título, la descripción (la de
+la página o, en los juegos, la del catálogo), la dirección y la imagen `img/compartir.png`. Lo escribe
+`scripts/compartir.mjs` con la dirección de `CONFIG.sitio`: **corré `npm run compartir` al agregar una página o al
+cambiar de dominio** (`npm test` avisa si falta). La imagen se diseña en `scripts/compartir-imagen.html` y se genera con
+`npm run compartir:imagen`.
 
 ## Configurar SINPE
 
@@ -240,13 +255,23 @@ Mientras `numero` diga `"PENDIENTE"`, la página de apoyo muestra un aviso en lu
 
 ```js
 sugerencias: {
-  destino: "andres.mayorga07@icloud.com",
+  destino: "info@snnsoluciones.com",
 }
 ```
 
 1. **Activación (una sola vez):** el primer mensaje que alguien mande dispara un correo de FormSubmit a esa dirección. Hay que abrirlo y confirmar. Hasta entonces no llegan los mensajes.
 2. **Esconder el correo (recomendado):** después de activar, FormSubmit da un código tipo `a1b2c3d4e5…`. Poné ese código en `destino` en lugar del correo, así no queda público en el código de la página.
 3. Las fotos se achican solas en el teléfono (máx. 1600 px) antes de enviarse, y se pide no subir fotos de niños.
+
+## 📊 Visitas (sin cookies)
+
+`js/analitica.js` cuenta cuántas veces se abre cada página con [GoatCounter](https://www.goatcounter.com): manda solo la
+ruta (`/juegos/reloj.html`) con un pixel, sin scripts de terceros, sin cookies ni identificadores, y no cuenta nada si el
+navegador pide «No rastrear» o en `localhost`. Está apagada hasta configurarla:
+
+1. Creá la cuenta en goatcounter.com (gratis para proyectos sin fines de lucro).
+2. En `public/js/config.js` poné el código (lo que va antes de `.goatcounter.com`) en `analitica.goatcounter`.
+3. Corré `npm run csp`: la CSP de cada página deja pasar solo ese pixel.
 
 ## Desplegar en DigitalOcean App Platform
 
@@ -276,7 +301,14 @@ doctl apps create --spec .do/app.yaml
 doctl apps update <APP_ID> --spec .do/app.yaml
 ```
 
-**Dominio propio:** en la app, ir a **Settings → Domains** y agregar el dominio, por ejemplo `aprendoalotico.com`.
+**Dominio propio** (el 11/11/2026 estaban libres `aprendoalotico.cr`, `.com` y `.org`):
+
+1. Comprarlo: el `.cr` en [NIC Costa Rica](https://www.nic.cr), el `.com` en cualquier registrador.
+2. En la app de App Platform: **Settings → Domains → Add domain**. Si los DNS quedan en DigitalOcean, se configuran
+   solos; si no, poné en tu registrador el `CNAME` (o los registros) que te indique.
+3. En `public/js/config.js` cambiá `sitio: "https://aprendoalotico.cr"` (sin barra al final) y corré
+   `npm run compartir`: así los enlaces que se comparten por WhatsApp apuntan al dominio nuevo.
+4. Si usás el spec, agregá el dominio en `.do/app.yaml` (`domains: [{ domain: aprendoalotico.cr, type: PRIMARY }]`).
 
 ## ⚠️ Al publicar cambios
 
@@ -287,7 +319,8 @@ const VERSION = "v2";
 ```
 
 Si agregás archivos nuevos, sumalos también a la lista `SHELL` para que funcionen sin internet (`npm test` avisa si
-falta alguno). Si cambiaste un `<script>` inline, corré `npm run csp`.
+falta alguno). Si cambiaste un `<script>` inline, corré `npm run csp`; si agregaste una página, también
+`npm run compartir`.
 
 ## 👧 Para cada edad: perfil, escalera 🪜 y ayudas
 
@@ -395,7 +428,7 @@ node --input-type=module -e 'import { CASOS, revisarCaso } from "./js/detective.
 
 - **Paleta:** fondo menta `#CFEFE3`, bordes azul marino `#1F3A5F`, botones amarillos `#FFC83D`.
 - **Colores de materia:** mate azul `#2F7FD1`, español rojo `#E8574A`, ciencias verde `#2FA85A`, sociales naranja `#F29A1F`, inglés morado `#8E5BD9`.
-- **Tipografía:** Baloo 2, con fuentes del sistema como respaldo.
+- **Tipografía:** Baloo 2, guardada en `public/fonts/` (`css/fuentes.css`, nada de Google Fonts), con fuentes del sistema como respaldo.
 - **Botones:** grandes y con sombra sólida (se ven "presionables").
 - **Retroalimentación:** siempre tres niveles: **¡Acertado!**, **¡Casi!** y **No es**, con una pista de qué revisar.
 - **Lenguaje:** voseo tico y cariñoso ("Poné", "Revisá", "¡Pura vida!").
@@ -416,8 +449,11 @@ Para que funcione 100% offline dentro del APK, conviene descargar la fuente Balo
 
 ## Créditos
 
+- Letra [Baloo 2](https://github.com/EkType/Baloo2) (Ek Type), SIL Open Font License 1.1, guardada en `public/fonts/`.
 - Mapa de provincias: © colaboradores de [OpenStreetMap](https://www.openstreetmap.org/copyright), licencia ODbL, obtenido de [geoBoundaries](https://www.geoboundaries.org/) y simplificado.
 
 ## Licencia
 
-Por definir (ver TODO.md).
+© 2026 SNN Soluciones. El código es [MIT](LICENSE) y el contenido educativo (textos, cuentos, preguntas,
+explicaciones y dibujos) es [CC BY-NC-SA 4.0](LICENSE-CONTENIDO.md). La letra, Blockly y el mapa tienen su propia
+licencia; el detalle está en [LICENSE-CONTENIDO.md](LICENSE-CONTENIDO.md).

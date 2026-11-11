@@ -6,10 +6,6 @@ const ATAQUE = `<img src=x onerror="window.__xss=1">Ana`;
 // El examen guarda el nombre con el mismo tope que su campo (30 letras): este cabe entero
 const ATAQUE_CORTO = `<img src=x onerror=__xss=1>Ana`;
 
-test.beforeEach(async ({ page }) => {
-  await page.route(/fonts\.(googleapis|gstatic)\.com/, r => r.fulfill({ status: 200, contentType: "text/css", body: "" }));
-});
-
 test("el nombre del perfil se ve como texto y nunca se ejecuta como HTML", async ({ page }) => {
   // Arrange: un perfil guardado con HTML en el nombre (como podría llegar algún día desde el servidor)
   await page.addInitScript(nombre => {

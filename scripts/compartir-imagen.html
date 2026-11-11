@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<!-- 🖼️ Diseño de la imagen para compartir (public/img/compartir.png, 1200 × 630). La genera scripts/compartir-imagen.mjs. -->
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<style>
+  @font-face { font-family: "Baloo 2"; font-weight: 500 800; src: url(../public/fonts/baloo2-latin.woff2) format("woff2"); }
+  @font-face { font-family: "Baloo 2"; font-weight: 500 800; src: url(../public/fonts/baloo2-latin-ext.woff2) format("woff2"); unicode-range: U+0100-02BA, U+20A0-20AB; }
+  :root {
+    --menta: #CFEFE3; --marino: #1F3A5F; --amarillo: #FFC83D; --blanco: #FFFFFF;
+    --mate: #2F7FD1; --espanol: #E8574A; --ciencias: #2FA85A; --sociales: #F29A1F; --ingles: #8E5BD9; --prog: #14A3A3; --logica: #D9731F;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    width: 1200px; height: 630px; overflow: hidden; position: relative;
+    font-family: "Baloo 2", system-ui, sans-serif; color: var(--marino);
+    background: var(--menta);
+  }
+  .texto { position: absolute; left: 72px; top: 70px; width: 600px; }
+  .marca { display: flex; align-items: center; gap: 22px; }
+  .marca img { width: 118px; height: 118px; }
+  h1 { font-size: 92px; font-weight: 800; line-height: .92; letter-spacing: -1.5px; }
+  h1 span { display: block; }
+  .bandera { font-size: 38px; }
+  p { margin-top: 34px; font-size: 40px; font-weight: 600; line-height: 1.12; max-width: 560px; }
+  .sellos { position: absolute; left: 72px; bottom: 62px; display: flex; gap: 14px; }
+  .sello {
+    padding: 6px 18px 2px; font-size: 27px; font-weight: 800; background: var(--amarillo);
+    border: 5px solid var(--marino); border-radius: 999px; box-shadow: 0 6px 0 var(--marino);
+  }
+  .juegos { position: absolute; right: 60px; top: 66px; width: 412px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; }
+  .juego {
+    aspect-ratio: 1; display: grid; place-items: center; font-size: 74px; background: var(--blanco);
+    border: 6px solid var(--marino); border-radius: 30px; box-shadow: 0 9px 0 var(--marino), inset 0 -16px 0 var(--c);
+  }
+  .juego:nth-child(1) { --c: var(--mate); transform: rotate(-6deg); }
+  .juego:nth-child(2) { --c: var(--prog); transform: rotate(4deg) translateY(14px); }
+  .juego:nth-child(3) { --c: var(--espanol); transform: rotate(-3deg); }
+  .juego:nth-child(4) { --c: var(--sociales); transform: rotate(5deg); }
+  .juego:nth-child(5) { --c: var(--ciencias); transform: rotate(-4deg) translateY(14px); }
+  .juego:nth-child(6) { --c: var(--ingles); transform: rotate(3deg); }
+  .juego:nth-child(7) { --c: var(--logica); transform: rotate(-5deg); }
+  .juego:nth-child(8) { --c: var(--amarillo); transform: rotate(6deg) translateY(14px); }
+  .juego:nth-child(9) { --c: var(--mate); transform: rotate(-2deg); }
+</style>
+</head>
+<body>
+  <section class="texto">
+    <div class="marca">
+      <img src="../public/icons/icon.svg" alt="">
+      <h1><span>Aprendo</span><span>a lo Tico</span></h1>
+    </div>
+    <p>Juegos gratis para aprender, hechos en Costa Rica <span class="bandera">🇨🇷</span></p>
+  </section>
+  <div class="sellos"><span class="sello">Sin anuncios</span><span class="sello">Sin internet</span><span class="sello">Prepa a 6°</span></div>
+  <div class="juegos" aria-hidden="true">
+    <span class="juego">🕒</span><span class="juego">🦥</span><span class="juego">📖</span>
+    <span class="juego">🌋</span><span class="juego">🌱</span><span class="juego">🦜</span>
+    <span class="juego">🐸</span><span class="juego">🎶</span><span class="juego">🍕</span>
+  </div>
+</body>
+</html>

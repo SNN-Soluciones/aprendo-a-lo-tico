@@ -190,12 +190,18 @@ El `id` lo genera el dispositivo: si un lote se manda dos veces, el servidor no 
 
 **Objetivo:** que lo que ya existe se vea serio ante una escuela, el MEP o un diputado, y tener números de uso.
 
-- [ ] Dominio propio (`aprendoalotico.cr` o `.com`) conectado en App Platform
-- [ ] Páginas «Acerca de», **privacidad** y términos, en lenguaje claro (versión 1)
-- [ ] Licencias: código MIT y contenido CC BY-NC-SA (pendiente en el TODO)
-- [ ] Fuente Baloo 2 local (offline total) e imagen para compartir en WhatsApp (`og:image`)
-- [ ] **Analítica sin cookies ni datos personales:** solo conteos agregados (visitas por juego y por día).
-      Umami o Plausible autoalojado, o un contador propio. Sin esto no hay números que enseñar.
+- [ ] Dominio propio conectado en App Platform. `aprendoalotico.cr`, `.com` y `.org` estaban libres el 11/11/2026.
+      Al tenerlo: cambiar `CONFIG.sitio` y correr `npm run compartir`
+- [x] Páginas «Acerca de» y **privacidad** en lenguaje claro (versión 1); responsable: SNN Soluciones
+- [ ] Revisar la página de privacidad con un abogado (Ley 8968) y agregar términos de uso
+- [x] Licencias: código MIT (`LICENSE`) y contenido CC BY-NC-SA 4.0 (`LICENSE-CONTENIDO.md`)
+- [ ] Confirmar de dónde salieron las fotos de `public/img/` (sin fuente registrada; quedan fuera de la licencia)
+- [x] Fuente Baloo 2 local (offline total, sin pedirle nada a Google) e imagen para compartir en WhatsApp (`og:image`),
+      con título, descripción y dirección en cada página (`scripts/compartir.mjs`)
+- [x] **Analítica sin cookies ni datos personales** con GoatCounter: solo la ruta de la página, sin scripts de terceros,
+      respeta «No rastrear». Lista en el código, apagada hasta crear la cuenta
+- [ ] Crear la cuenta de GoatCounter y poner su código en `CONFIG.analitica.goatcounter` (+ `npm run csp`).
+      Sin esto no hay números que enseñar
 - [x] Tests: los `revisar…` de cada generador pasados a `node --test` (`pruebas/generadores/`, uno por módulo, con semilla)
 - [x] Playwright: las 71 páginas abren y cada juego arranca sin errores de consola ni bloqueos de la CSP, en Chrome
       (375 y 1024 px), Safari y Firefox

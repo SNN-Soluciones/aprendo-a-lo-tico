@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es-CR">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-oP9DagtapPykceda0NR1/yxEvMd7uTZcoUxX8v7niJg='; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acerca de · Aprendo a lo Tico</title>
+<!-- compartir: lo escribe scripts/compartir.mjs -->
+<link rel="canonical" href="https://plankton-app-auidd.ondigitalocean.app/acerca.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Aprendo a lo Tico">
+<meta property="og:locale" content="es_CR">
+<meta property="og:title" content="Acerca de · Aprendo a lo Tico">
+<meta property="og:description" content="Aprendo a lo Tico: juegos educativos gratis, hechos en Costa Rica para el programa del MEP. Sin anuncios, sin cuentas y funcionan sin internet.">
+<meta property="og:url" content="https://plankton-app-auidd.ondigitalocean.app/acerca.html">
+<meta property="og:image" content="https://plankton-app-auidd.ondigitalocean.app/img/compartir.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Aprendo a lo Tico: juegos gratis para aprender, hechos en Costa Rica">
+<meta name="twitter:card" content="summary_large_image">
+<!-- /compartir -->
+<meta name="description" content="Aprendo a lo Tico: juegos educativos gratis, hechos en Costa Rica para el programa del MEP. Sin anuncios, sin cuentas y funcionan sin internet.">
+<meta name="theme-color" content="#CFEFE3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="preload" href="fonts/baloo2-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="css/fuentes.css">
+<link rel="stylesheet" href="css/base.css">
+<script type="module" src="js/analitica.js"></script>
+</head>
+<body>
+<main class="page">
+  <a class="back" href="index.html">← Volver a los juegos</a>
+
+  <header class="hero">
+    <h1>Aprendo a lo Tico 🇨🇷</h1>
+    <p>Juegos para aprender, hechos en Costa Rica: la hora como la decimos aquí, colones, la pulpería y el programa del MEP.</p>
+  </header>
+
+  <section class="card">
+    <h2>Lo que prometemos</h2>
+    <ul>
+      <li><b>Gratis</b> para niños, familias y escuelas, y <b>sin anuncios</b>. Siempre.</li>
+      <li><b>Sin cuentas ni datos de los niños:</b> el avance queda en el dispositivo. <a href="privacidad.html">Así cuidamos la privacidad</a>.</li>
+      <li><b>Funciona sin internet</b> después de abrirlo una vez, también en las tabletas de la escuela.</li>
+      <li><b>De a poquito:</b> cada juego sube de nivel según cómo le va al niño, y ayuda solo cuando se queda pegado.</li>
+      <li><b>Pensado para el programa del MEP</b>, de Preparatoria a sexto grado, con contenido original.</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Quién lo hace</h2>
+    <p><b id="responsable">SNN Soluciones</b>, en Costa Rica, con ideas de maestras y familias. ¿Tenés una idea o
+      encontraste un error? <a href="sugerencias.html">Contanos</a>. Si te sirve, podés <a href="apoyar.html">apoyarnos con SINPE</a>.</p>
+  </section>
+
+  <section class="card">
+    <h2>Licencias</h2>
+    <ul>
+      <li>El código es abierto, con licencia <a href="https://github.com/SNN-Soluciones/aprendo-a-lo-tico/blob/main/LICENSE" target="_blank" rel="noopener">MIT</a>.</li>
+      <li>El contenido educativo (textos, cuentos, preguntas, explicaciones y dibujos) es
+        <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.es" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a>:
+        lo podés usar y compartir en tu clase, dando crédito, sin fines comerciales y con la misma licencia.</li>
+      <li>Hay piezas de otros, con su propia licencia (ver abajo).</li>
+    </ul>
+  </section>
+
+  <section class="card">
+    <h2>Gracias a</h2>
+    <ul>
+      <li>La letra <b>Baloo 2</b>, de Ek Type (SIL Open Font License).</li>
+      <li><a href="https://github.com/google/blockly" target="_blank" rel="noopener">Blockly</a>, los bloques de «La lapa que dibuja» (Apache 2.0).</li>
+      <li>El mapa de provincias: © colaboradores de <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> (ODbL), vía geoBoundaries.</li>
+    </ul>
+  </section>
+</main>
+<script type="module">
+  import { CONFIG } from "./js/config.js";
+  document.getElementById("responsable").textContent = CONFIG.responsable.nombre;
+  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>

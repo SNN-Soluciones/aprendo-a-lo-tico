@@ -33,13 +33,14 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [ ] Definir si las donaciones entran a cuenta personal, de SNN Soluciones o una cuenta aparte (consultarlo con un contador por el tema de Hacienda)
 - [ ] Comprar dominio (`aprendoalotico.com` / `.cr`) y conectarlo en App Platform
 - [ ] Logo e identidad visual (ícono definitivo, ilustraciones)
-- [ ] Fuente Baloo 2 local en `public/fonts/` (offline total y APK)
-- [ ] Página "Acerca de" + política de privacidad corta (no recolectamos datos; mencionar FormSubmit en sugerencias)
+- [x] Fuente Baloo 2 local en `public/fonts/` (offline total y APK), sin Google Fonts
+- [x] Página "Acerca de" + política de privacidad corta (`acerca.html`, `privacidad.html`: localStorage, GoatCounter, voz, micrófono, FormSubmit, SINPE)
 - [x] Página de ideas y sugerencias con fotos (`sugerencias.html`, vía FormSubmit)
 - [ ] Confirmar el correo de activación de FormSubmit y cambiar el correo por el código aleatorio en `js/config.js`
-- [ ] Definir licencia: código (MIT) y contenido (CC BY-NC-SA)
-- [ ] Imagen para compartir en WhatsApp/Facebook (`og:image`)
-- [ ] Analítica sin cookies ni datos personales (o ninguna)
+- [x] Licencia: código MIT (`LICENSE`) y contenido CC BY-NC-SA 4.0 (`LICENSE-CONTENIDO.md`), a nombre de SNN Soluciones
+- [x] Imagen para compartir en WhatsApp/Facebook (`og:image`, `img/compartir.png`) y metadatos en cada página (`npm run compartir`)
+- [x] Analítica sin cookies ni datos personales: GoatCounter (`js/analitica.js`), apagada hasta poner el código
+- [ ] Crear la cuenta de GoatCounter y poner el código en `CONFIG.analitica.goatcounter`
 
 ## 🧒 Fase 2 · Para los más chiquitos (Prepa, 4–5 años)
 

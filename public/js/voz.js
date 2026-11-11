@@ -14,7 +14,9 @@ export const puedeHablar = typeof window !== "undefined" && "speechSynthesis" in
 
 function buscarVoz(lang) {
   if (!puedeHablar) return null;
-  const voces = speechSynthesis.getVoices();
+  // Primero las voces del propio dispositivo: las de red (como «Google español» en Chrome) mandan el texto,
+  // con el nombre del niño incluido, a un servidor. Solo se usan si el aparato no tiene una propia.
+  const voces = [...speechSynthesis.getVoices()].sort((a, b) => Number(b.localService) - Number(a.localService));
   if (lang === "en") return voces.find(v => /^en[-_]US/i.test(v.lang)) || voces.find(v => /^en/i.test(v.lang)) || null;
   return voces.find(v => /^es[-_](CR|MX|US|419)/i.test(v.lang)) || voces.find(v => /^es/i.test(v.lang)) || null;
 }

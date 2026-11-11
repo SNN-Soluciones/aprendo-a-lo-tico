@@ -11,6 +11,7 @@
 //     respuesta, pista, explica, confusiones?: [{ v, msg }], datos }
 //   texto, pista, explica y msg llevan **negritas**: marcado() los pasa a HTML y aVoz() a palabras para la voz.
 //   datos: lo necesario para revisar que el dibujo cumpla lo que se pregunta (revisarRonda).
+import { escapar } from "./html.js";
 
 // ---------- Números al azar ----------
 export const entero = (a, b, rnd = Math.random) => a + Math.floor(rnd() * (b - a + 1));
@@ -26,7 +27,6 @@ const RAD = Math.PI / 180;
 const f1 = n => Math.round(n * 10) / 10;
 
 // ---------- Textos ----------
-const escapar = t => String(t).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 /** «**negrita**» → <b>negrita</b>; todo lo demás se escapa. */
 export const marcado = t => String(t).split("**").map((p, i) => (i % 2 ? `<b>${escapar(p)}</b>` : escapar(p))).join("");
 /** Para la voz: sin asteriscos y con los símbolos en palabras. */

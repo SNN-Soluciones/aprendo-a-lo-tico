@@ -201,6 +201,8 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 
 ## 🏫 Fase 3 · Maestros y papás (con backend)
 
+> Plan detallado por fases (perfiles de maestras y familias, grupos, avance por temario y piloto) en [`PLAN.md`](PLAN.md).
+
 - [ ] Backend Spring Boot en DO + base de datos
 - [ ] Roles: estudiante / papá / maestro
 - [ ] Maestro crea grupo con código de clase
@@ -215,7 +217,7 @@ Hoja de ruta. Marcá con `[x]` lo que se vaya haciendo.
 - [x] Crear `js/voz.js` compartido (lo usan los juegos de Prepa)
 - [ ] Pasar animales, provincias y listen-tap a `js/voz.js` (hoy tienen su propia copia)
 - [ ] Componentes reutilizables: teclado numérico, retroalimentación, estrellas
-- [ ] Tests de los generadores de problemas (que siempre sean válidos)
+- [x] Tests de los generadores de problemas (que siempre sean válidos): `npm test`, y Playwright con todas las páginas (`npm run test:navegador`), en la CI
 - [ ] APK con Capacitor + ícono y splash
 - [ ] Publicar en Google Play (cuenta de desarrollador, ficha de "apps para niños" / Families Policy)
 - [ ] Accesibilidad: contraste, tamaños táctiles, lector de pantalla

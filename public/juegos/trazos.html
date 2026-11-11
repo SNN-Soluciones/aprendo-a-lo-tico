@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-f7FZM5wKoGygEpT2H1LsB9oXTpRiV1iMcGdRN9DZbf0=' 'sha256-qw1nPw1y+PU3o84dJLoX+YK1eiuH+pX0BsrN2U7BvbQ='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Trazá letras y números</title>
 <link rel="manifest" href="../manifest.webmanifest">
@@ -107,10 +108,9 @@ import { decir, instruccion, feedback, estrellas, niveles, alEmpezar, ayudaSiSeQ
 import { escalera } from "../js/escalera.js";
 import { perfilActivo } from "../js/perfil.js";
 import { trazosDe, caja, RENGLON, tieneTrazos } from "../js/trazos.js";
+import { escapar } from "../js/html.js";
 
 const $ = id => document.getElementById(id);
-const ESCAPE = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" };
-const escapar = t => String(t).replace(/[&<>"']/g, c => ESCAPE[c]);
 
 // 🗣️ Cómo se dice cada letra
 const NOMBRE = { a: "a", b: "be", c: "ce", d: "de", e: "e", f: "efe", g: "ge", h: "hache", i: "i", j: "jota", k: "ka", l: "ele", m: "eme", n: "ene", ñ: "eñe",

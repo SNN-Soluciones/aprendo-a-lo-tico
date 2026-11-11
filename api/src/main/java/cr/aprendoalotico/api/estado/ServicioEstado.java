@@ -52,8 +52,10 @@ public class ServicioEstado {
             if (vigente != null) {
                 return vigente;
             }
-            var ahora = reloj.instant();
-            var nuevo = new Estado(SERVICIO, version, ahora, baseResponde() ? Estado.BASE_OK : "sin conexión");
+            // La hora (y con ella la vigencia) es la de cuando la base respondió: si se tomara antes, una consulta lenta
+            // publicaría una respuesta ya vencida y cada pedido en espera volvería a consultar
+            var base = baseResponde() ? Estado.BASE_OK : "sin conexión";
+            var nuevo = new Estado(SERVICIO, version, reloj.instant(), base);
             ultimo.set(nuevo);
             return nuevo;
         } finally {

@@ -30,9 +30,9 @@ class ServicioEstadoTest {
     private static final Instant AHORA = Instant.parse("2026-11-11T18:00:00Z");
     private final JdbcClient jdbc = mock(JdbcClient.class, RETURNS_DEEP_STUBS);
 
-    /** Un reloj que se puede adelantar a mano. */
+    /** Un reloj que se puede adelantar a mano (también desde otro hilo). */
     static final class RelojDePrueba extends Clock {
-        Instant ahora = AHORA;
+        volatile Instant ahora = AHORA;
 
         @Override
         public ZoneId getZone() {
@@ -101,7 +101,8 @@ class ServicioEstadoTest {
     }
 
     @Test
-    @DisplayName("Si muchos pedidos llegan juntos con la respuesta vencida, uno solo consulta la base y los demás usan su resultado")
+    @DisplayName("Si muchos pedidos llegan juntos con la respuesta vencida, uno solo consulta la base y los demás usan su resultado,"
+            + " aunque la consulta tarde más que la vigencia")
     void unaSolaConsultaALaVez() throws Exception {
         // Arrange: la primera consulta se queda pegada hasta que la soltemos
         var consultando = new CountDownLatch(1);
@@ -111,14 +112,16 @@ class ServicioEstadoTest {
             assertThat(soltar.await(5, TimeUnit.SECONDS)).isTrue();
             return 1;
         });
-        var servicio = new ServicioEstado(jdbc, Clock.fixed(AHORA, ZoneOffset.UTC), build(null));
+        var reloj = new RelojDePrueba();
+        var servicio = new ServicioEstado(jdbc, reloj, build(null));
         var respuestas = new ConcurrentLinkedQueue<Estado>();
         Runnable pedir = () -> respuestas.add(servicio.estado());
         var primero = Thread.ofPlatform().start(pedir);
         assertThat(consultando.await(5, TimeUnit.SECONDS)).isTrue();
         var otros = IntStream.range(0, 20).mapToObj(n -> Thread.ofPlatform().start(pedir)).toList();
         esperarQueTodosEsperen(otros);
-        // Act
+        // Act: la consulta tardó 6 s, más que los 5 de vigencia
+        reloj.ahora = AHORA.plus(Duration.ofSeconds(6));
         soltar.countDown();
         primero.join(5_000);
         for (var hilo : otros) {
@@ -126,6 +129,7 @@ class ServicioEstadoTest {
         }
         // Assert
         assertThat(respuestas).hasSize(21).allSatisfy(e -> assertThat(e).isSameAs(respuestas.peek()));
+        assertThat(respuestas.peek().hora()).as("la hora es la de cuando la base respondió").isEqualTo(AHORA.plus(Duration.ofSeconds(6)));
         verify(jdbc.sql("select 1").query(Integer.class), times(1)).single();
     }
 

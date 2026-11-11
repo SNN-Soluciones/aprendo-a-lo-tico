@@ -9,17 +9,20 @@
 // ⚠️ Cada vez que cambiés un <script> inline de una página, corré `npm run csp`: si no, el navegador lo bloquea.
 import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync, readdirSync, realpathSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RAIZ = fileURLToPath(new URL("../public/", import.meta.url));
 const META = /<meta http-equiv="Content-Security-Policy" content="([^"]*)">\n?/;
 const CHARSET = `<meta charset="UTF-8">\n`;
+/** Las únicas páginas que mandan su formulario a FormSubmit (que reenvía a cualquier correo). */
+export const FORM_SUBMIT = new Set(["sugerencias.html"]);
 
 /** Texto de cada <script> sin src, exactamente como lo hashea el navegador. */
 export function scriptsInline(html) {
-  const bloques = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)];
-  // Si hay más «<script» que bloques leídos, algo raro (</script > con espacio, un > en un atributo…)
+  // El cierre acepta lo mismo que el navegador: </script>, </script >, </SCRIPT\t>…
+  const bloques = [...html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script\b[^>]*>/gi)];
+  // Si hay más «<script» que bloques leídos, algo raro (un «<script>» escrito dentro de otro script…)
   // haría que un hash no coincida: mejor fallar aquí que bloquear un script en el navegador sin aviso.
   const abiertos = html.match(/<script\b/gi)?.length ?? 0;
   if (abiertos !== bloques.length) throw new Error(`Hay ${abiertos} <script> pero se leyeron ${bloques.length}: revisá cómo están escritos`);
@@ -59,9 +62,12 @@ export function politica(hashes, { formSubmit = false } = {}) {
 /** La política que trae la página, o null si no tiene. */
 export const politicaDe = html => html.match(META)?.[1] ?? null;
 
-/** La página con su meta CSP al día, justo después del charset (antes de cualquier script). */
-export function conPolitica(html) {
-  const p = politica([...new Set(scriptsInline(html).map(hashDe))], { formSubmit: html.includes("https://formsubmit.co/") });
+/**
+ * La página con su meta CSP al día, justo después del charset (antes de cualquier script).
+ * @param {{ formSubmit?: boolean }} [op] lo que esa página necesita además de lo común (ver FORM_SUBMIT)
+ */
+export function conPolitica(html, op = {}) {
+  const p = politica([...new Set(scriptsInline(html).map(hashDe))], op);
   const sinMeta = html.replace(META, "");
   if (!sinMeta.includes(CHARSET)) throw new Error(`La página no tiene ${CHARSET.trim()}`);
   return sinMeta.replace(CHARSET, `${CHARSET}<meta http-equiv="Content-Security-Policy" content="${p}">\n`);
@@ -76,10 +82,14 @@ export function paginas(dir = RAIZ) {
   });
 }
 
+/** Cómo tiene que quedar el archivo de esa página (ruta completa) con su CSP al día. */
+export const esperadaDe = ruta =>
+  conPolitica(readFileSync(ruta, "utf8"), { formSubmit: FORM_SUBMIT.has(relative(RAIZ, ruta).split(sep).join("/")) });
+
 function principal(revisar) {
   const desactualizadas = [];
   for (const ruta of paginas()) {
-    const html = readFileSync(ruta, "utf8"), nuevo = conPolitica(html);
+    const html = readFileSync(ruta, "utf8"), nuevo = esperadaDe(ruta);
     if (nuevo === html) continue;
     desactualizadas.push(relative(RAIZ, ruta));
     if (!revisar) writeFileSync(ruta, nuevo);

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-E/XkLVMBmoXksP3Mw45yEnPykN5wIY9nZxVYCS/0UeE=' 'sha256-ft3iADKsjpdiVxyWx/pHztPkxF9BkMWPyGSJSvxe8xs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-NnNGCK4S5pz8DPENsh6HKUaZJNZCKEV160YVNer/joI=' 'sha256-ft3iADKsjpdiVxyWx/pHztPkxF9BkMWPyGSJSvxe8xs='; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self'; connect-src 'self'; worker-src 'self'; manifest-src 'self'; form-action 'self'; frame-src 'none'; object-src 'none'; base-uri 'self';">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Preparate para el examen</title>
 <meta name="description" content="Armá un examen de práctica: elegí la materia, el grado y los temas que vienen en el examen.">
@@ -173,15 +173,27 @@ const soloTexto = html => new DOMParser().parseFromString(html, "text/html").bod
 /** La lectura va antes de la primera pregunta de su texto. */
 const lecturaAntes = (qs, qi) => (qs[qi].lectura && qs[qi].lectura !== qs[qi - 1]?.lectura ? qs[qi].lectura : "");
 
+// Lo guardado y la URL los puede cambiar cualquiera: cada campo se toma solo si es uno de los valores que el examen conoce
+const NUM_GRADOS = GRADOS.map(([g]) => g), MATERIAS = MATERIAS_EXAMEN.map(m => m.id);
+const deLista = (lista, valor, antes) => lista.find(x => x === valor) ?? antes;
 let cfg = { nombre: "", grado: 3, materia: "mate", temas: [], porTema: 5 };
-try { cfg = { ...cfg, ...JSON.parse(localStorage.getItem("examen-config")) }; } catch (_) {}
+try {
+  const g = JSON.parse(localStorage.getItem("examen-config")) || {};
+  cfg = {
+    nombre: typeof g.nombre === "string" ? g.nombre.slice(0, 30) : cfg.nombre,
+    grado: deLista(NUM_GRADOS, Number(g.grado), cfg.grado),
+    materia: deLista(MATERIAS, g.materia, cfg.materia),
+    temas: Array.isArray(g.temas) ? g.temas.filter(t => typeof t === "string").slice(0, 6) : cfg.temas,
+    porTema: deLista(CANTIDADES, Number(g.porTema), cfg.porTema),
+  };
+} catch (_) {}
 // 📋 Desde el temario: examen.html?materia=espanol&grado=2&temas=diptongo,hiato deja todo elegido
 const pide = new URLSearchParams(location.search);
-if (MATERIAS_EXAMEN.some(m => m.id === pide.get("materia"))) {
-  cfg.materia = pide.get("materia");
-  if ([1, 2, 3, 4, 5, 6].includes(Number(pide.get("grado")))) cfg.grado = Number(pide.get("grado"));
+if (MATERIAS.includes(pide.get("materia"))) {
+  cfg.materia = deLista(MATERIAS, pide.get("materia"), cfg.materia);
+  cfg.grado = deLista(NUM_GRADOS, Number(pide.get("grado")), cfg.grado);
   cfg.temas = (pide.get("temas") || "").split(",").filter(Boolean).slice(0, 6);
-  if ([3, 5, 10].includes(Number(pide.get("porTema")))) cfg.porTema = Number(pide.get("porTema"));
+  cfg.porTema = deLista(CANTIDADES, Number(pide.get("porTema")), cfg.porTema);
 }
 let historial = [];
 try { historial = JSON.parse(localStorage.getItem("examen-historial")) || []; } catch (_) {}

@@ -4,7 +4,7 @@
 import { createServer } from "node:http";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { realpathSync } from "node:fs";
-import { extname, join, sep } from "node:path";
+import { extname, join, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const RAIZ = realpathSync(fileURLToPath(new URL("../public/", import.meta.url))) + sep;
@@ -21,12 +21,17 @@ const TIPOS = {
  * @throws {URIError} si la ruta está mal codificada
  */
 async function archivoDe(url) {
-  const ruta = join(RAIZ, decodeURIComponent(url.split(/[?#]/)[0]));
+  const sinConsulta = url.split(/[?#]/)[0];
+  let pedido = decodeURIComponent(sinConsulta);
+  if (pedido.endsWith("/")) pedido += "index.html";
+  // Primero se resuelve la ruta y se revisa que quede dentro de public/; recién después se toca el disco
+  const ruta = resolve(RAIZ, `.${sep}${pedido}`);
+  if (!ruta.startsWith(RAIZ)) return null;
   const real = await realpath(ruta).catch(() => null);
-  if (!real || !(real + sep).startsWith(RAIZ)) return null;
+  if (!real || !real.startsWith(RAIZ)) return null; // un symlink que apunta afuera de public/
   const info = await stat(real);
   if (info.isFile()) return real;
-  return info.isDirectory() ? archivoDe(`${url.split(/[?#]/)[0].replace(/\/?$/, "/")}index.html`) : null;
+  return info.isDirectory() ? archivoDe(`${sinConsulta}/`) : null;
 }
 
 async function responder(req, res) {
@@ -49,7 +54,8 @@ async function responder(req, res) {
 
 /** El servidor, sin escuchar todavía (las pruebas lo abren en un puerto libre). */
 export const crearServidor = () => createServer((req, res) => responder(req, res).catch(e => {
-  console.error(`Error sirviendo ${req.url}:`, e);
+  // La URL va como dato y no dentro del formato: un %s o %o en ella no cambia el mensaje
+  console.error("Error sirviendo %s:", req.url, e);
   if (!res.headersSent) res.writeHead(500);
   res.end();
 }));

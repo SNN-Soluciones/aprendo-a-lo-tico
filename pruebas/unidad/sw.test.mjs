@@ -7,7 +7,8 @@ import { readFileSync, existsSync } from "node:fs";
 import { join, dirname, normalize } from "node:path";
 import { RAIZ, RUTAS, SHELL } from "../sitio.mjs";
 
-const sinComentarios = t => t.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "").replace(/<!--[\s\S]*?-->/g, "");
+// Solo comentarios de JS: un <script> dentro de un comentario HTML se contaría igual, y está bien (sobra, no falta)
+const sinComentarios = t => t.replace(/^\s*\/\/.*$/gm, "").replace(/\/\*[\s\S]*?\*\//g, "");
 /** Archivos propios que carga una página o un módulo: import, <script src> y hojas de estilo. */
 function dependencias(archivo) {
   const texto = sinComentarios(readFileSync(join(RAIZ, archivo), "utf8")), urls = [];

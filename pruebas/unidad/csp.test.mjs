@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { scriptsInline, hashDe, politica, conPolitica, politicaDe, paginas } from "../../scripts/csp.mjs";
+import { scriptsInline, hashDe, politica, conPolitica, politicaDe, paginas, esperadaDe, FORM_SUBMIT } from "../../scripts/csp.mjs";
 
 const sha = t => `'sha256-${createHash("sha256").update(t, "utf8").digest("base64")}'`;
 const PAGINA = `<!DOCTYPE html>
@@ -51,28 +51,33 @@ test("politica permite los scripts propios y solo los inline con hash, nunca 'un
   assert.match(p, /form-action 'self';/);
 });
 
-test("politica solo deja mandar formularios a FormSubmit en la página que lo usa", () => {
-  // Arrange
-  const sugerencias = PAGINA.replace("</body>", `<p><a href="https://formsubmit.co/">FormSubmit</a></p>\n</body>`);
-  // Act + Assert
-  assert.match(politicaDe(conPolitica(sugerencias)), /form-action 'self' https:\/\/formsubmit\.co;/);
+test("conPolitica solo deja mandar formularios a FormSubmit cuando se le pide (página por página)", () => {
+  assert.match(politicaDe(conPolitica(PAGINA, { formSubmit: true })), /form-action 'self' https:\/\/formsubmit\.co;/);
   assert.match(politicaDe(conPolitica(PAGINA)), /form-action 'self';/);
+});
+
+test("solo sugerencias.html puede mandar formularios a FormSubmit", () => {
+  assert.deepEqual([...FORM_SUBMIT], ["sugerencias.html"]);
 });
 
 test("scriptsInline cuenta como inline un script con data-src (no es src)", () => {
   assert.equal(scriptsInline(`<script data-src="x">hola()</script>`).length, 1);
 });
 
+test("scriptsInline lee el cierre «</script >» con espacio igual que el navegador", () => {
+  assert.deepEqual(scriptsInline(`<script>a()</script ><script>b()</script\t>`), ["a()", "b()"]);
+});
+
 test("conPolitica falla en vez de adivinar si hay un <script> que no sabe leer", () => {
-  // Arrange: «</script >» con espacio hace que dos scripts se lean como uno
-  const rara = PAGINA.replace("</body>", `<script>a()</script ><script>b()</script>\n</body>`);
+  // Arrange: un «<script>» escrito dentro del texto de otro script se cuenta, pero no es un bloque aparte
+  const rara = PAGINA.replace("</body>", `<script>document.write("<script>")</script>\n</body>`);
   // Act + Assert
   assert.throws(() => conPolitica(rara), /script/);
 });
 
 test("todas las páginas del sitio tienen la CSP al día (si no, corré npm run csp)", () => {
   // Act
-  const desactualizadas = paginas().filter(ruta => { const html = readFileSync(ruta, "utf8"); return conPolitica(html) !== html; });
+  const desactualizadas = paginas().filter(ruta => esperadaDe(ruta) !== readFileSync(ruta, "utf8"));
   // Assert
   assert.deepEqual(desactualizadas, []);
 });

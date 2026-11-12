@@ -27,6 +27,10 @@ tareas. Este documento fija las decisiones **antes** del código; si una cambia,
 | B18 | **La cuenta se crea al confirmar el correo, y ahí se escriben el nombre y la clave.** Pedir una cuenta es dar solo el correo; no existen cuentas sin confirmar | Evita el «pre-secuestro»: si la clave se pusiera al pedirla, alguien podría pedir una cuenta con el correo de una maestra y su propia clave, y quedarse con ella cuando la maestra abra el enlace |
 | B20 | **Lo que depende de si un correo tiene cuenta se hace en segundo plano** (`SegundoPlano`): pedir cuenta, recuperar la clave, auditar un intento fallido | La respuesta es la misma y tarda lo mismo: nadie averigua qué correos tienen cuenta midiendo tiempos |
 | B19 | **La IP del cliente** sale de la cabecera que pone la plataforma (`do-connecting-ip` en App Platform; `X-Forwarded-For` ahí trae la del proxy), solo si es una IP literal; las IPv6 se agrupan por /64 para los límites | Una IP que el cliente pueda inventar no sirve para limitar nada |
+| B21 | **Las escuelas las crea el equipo** (admins de plataforma: tabla `administradores`, que el dueño llena a mano con un motivo). Un admin crea la escuela y le pasa la administración a la dirección con un código de invitación; no es miembro, así que no ve grupos ni estudiantes. **Un hogar lo crea cualquier cuenta**, y quien lo crea es su encargado | Las escuelas son reales y una sola vez cada una (el código MEP no se repite); una familia sin escuela no tiene por qué esperar a nadie |
+| B22 | **Unirse a una institución con un código de invitación**, no por correo: 12 caracteres sin 0/O/1/I (60 bits, en grupos de 4), de un solo uso, 7 días (2 el que da el rol que administra: quien lo vea primero en el WhatsApp queda administrando), con el rol que da. Se guarda solo su hash. Lo saca quien administra (o un admin, para una escuela) y lo manda por WhatsApp. Nadie usa un código que sacó él mismo (ni el equipo se hace dirección). Al sacar a alguien de la institución, sus códigos pendientes se revocan. Si no sirve (no existe, se usó, venció, se revocó o es suyo), el error es el mismo, y en el log queda la cuenta | Sin correos no hay texto ajeno en nuestro dominio (B7) ni forma de averiguar qué correos tienen cuenta. Adivinar 60 bits con el límite de intentos no se puede |
+| B23 | **Roles por institución:** administra (datos, miembros, invitaciones, años) la `DIRECCION` en una escuela y el `ENCARGADO` en un hogar; crea grupos y da clases `DOCENTE` o `DIRECCION` (escuela) y `ENCARGADO` (hogar). Quien administra ve todos los grupos; los demás, solo los suyos. Lo de otra institución da 404 (no dice que existe); lo que se ve pero no se puede hacer, 403 `SIN_PERMISO`. Al último que administra no se le puede sacar (409). Sacar a alguien lo saca también de los grupos de esa institución, en la misma transacción. Lo que cambia quién puede qué (sacar a alguien, dar o usar un código, poner o sacar docentes) se hace con la institución trabada, vuelve a mirar a quien lo pide ya trabada (si lo sacaron mientras tanto, no hace nada) y se audita **dentro de la transacción**: si la auditoría falla, no se hace. Las rutas `/api/v1/admin/**` las frena también la cadena de seguridad (autoridad `EQUIPO`), además del servicio | B10. Sin el último administrador, nadie podría invitar ni arreglar nada. Un permiso que cambia sin quedar escrito no se puede rastrear |
+| B24 | **El año lectivo se crea solo** con el primer grupo de ese año, del 1 de febrero al 15 de diciembre, y quien administra cambia las fechas. El año de un grupo o de un año lectivo es el pasado, el actual o el que viene. **El código de clase** son 6 caracteres del mismo alfabeto (sin 0/O/1/I, unos 30 bits), único y se puede cambiar si se filtra. Con él y sus dibujitos entran los niños en la Fase 3, que **antes de salir** necesita: el mismo error para un código que no existe y para dibujitos equivocados, límite de intentos por código y por IP, bloqueo del grupo tras muchos fallos, y decidir si el código se renueva al cerrar el año | Una maestra crea su grupo sin pasos previos. El código se dicta y se copia a mano en una tarjeta; 30 bits solos no aguantan que alguien pruebe códigos en bucle |
 
 ## 2. Módulos
 
@@ -59,10 +63,12 @@ registros_pendientes  id, correo, token_hash (único), creado_en, expira_en   (2
 sesiones        id, usuario_id → usuarios, token_hash (único), creada_en, vista_en, expira_en, cerrada_en, agente
 recuperaciones  id, usuario_id → usuarios, token_hash (único), creada_en, expira_en, usada_en
 instituciones   id, tipo (ESCUELA | HOGAR), nombre, codigo_mep?, provincia?, canton?, direccion_regional?, creada_en
-membresias      usuario_id, institucion_id, rol (DOCENTE | DIRECCION | ENCARGADO | ADMIN), desde, hasta?
-anios_lectivos  id, institucion_id, anio, desde, hasta
-grupos          id, anio_lectivo_id, grado (0–6), seccion, codigo_clase (único), creado_en
-docentes_grupo  grupo_id, usuario_id, papel (TITULAR | MATERIA), materia?
+administradores usuario_id → usuarios, desde, motivo   (admins de plataforma, B21; se marcan a mano)
+membresias      id, usuario_id, institucion_id, rol (DOCENTE | DIRECCION | ENCARGADO), desde, hasta?   (un rol vigente por persona e institución)
+invitaciones    id, institucion_id, rol, codigo_hash (único), creada_por, creada_en, expira_en, usada_en?, usada_por?, revocada_en?   (B22)
+anios_lectivos  id, institucion_id, anio, desde, hasta   (único por institución y año; B24)
+grupos          id, anio_lectivo_id, grado (0–6), seccion, codigo_clase (único), creado_en   (único por año, grado y sección)
+docentes_grupo  grupo_id, usuario_id, papel (TITULAR | MATERIA), materia?, desde   (un solo titular por grupo)
 estudiantes     id, institucion_id, nombre_visible, animalito, grado, lee (NO | POCO | SI), creado_en, retirado_en?
 matriculas      estudiante_id, grupo_id, desde, hasta?
 credenciales    estudiante_id, dibujitos_hash, qr_token_hash, intentos, bloqueado_hasta
@@ -112,6 +118,29 @@ probando todas). Una tarea de cada noche borra las sesiones, registros pendiente
 | `POST /api/v1/clave/recuperar` | `{correo}` → 202 siempre |
 | `POST /api/v1/clave/nueva` | `{token, clave}` del enlace → 200, o 400 `ENLACE_INVALIDO` o `CLAVE_DEBIL` |
 
+**Instituciones y grupos** (todas 🔒; las de `/admin`, solo para admins de plataforma):
+
+| Ruta | Qué hace |
+|---|---|
+| `POST /api/v1/admin/escuelas` | Crear una escuela `{nombre, codigoMep?, provincia?, canton?, direccionRegional?}` → 201; 409 `ESCUELA_REPETIDA` si el código MEP ya está |
+| `GET /api/v1/admin/escuelas` | Todas las escuelas, por páginas |
+| `PUT /api/v1/admin/escuelas/{id}` | Cambiar sus datos, también el código MEP |
+| `POST /api/v1/admin/escuelas/{id}/invitaciones` | `{rol}` → 201 con el código (sale una sola vez) |
+| `POST /api/v1/hogares` | Crear un hogar `{nombre}` → 201, y quien lo crea queda de encargado (5 por día y 10 en total por cuenta) |
+| `GET /api/v1/instituciones` | Las mías, con mis roles |
+| `GET /api/v1/instituciones/{id}` · `PUT` | Ver (miembros) y cambiar los datos (quien administra; el código MEP, no). El `PUT` reemplaza todos los datos: lo que no viene queda vacío |
+| `GET /api/v1/instituciones/{id}/miembros` | Nombre y roles de cada miembro (el correo, solo a quien administra) |
+| `DELETE /api/v1/instituciones/{id}/miembros/{usuario}` | Sacar a alguien (quien administra) o salirse (cualquiera); 409 `ULTIMO_ADMINISTRADOR` |
+| `POST /api/v1/instituciones/{id}/invitaciones` · `GET` · `DELETE …/{invitacion}` | Sacar un código `{rol}`, ver los pendientes (sin el código) y revocar uno (quien administra) |
+| `POST /api/v1/invitaciones/aceptar` | `{codigo}` → 200 con la institución; 400 `INVITACION_INVALIDA`; 409 `YA_TIENE_ESE_ROL` (el código sigue sirviendo) |
+| `GET /api/v1/instituciones/{id}/anios` · `PUT …/anios/{anio}` | Ver los años lectivos y cambiar las fechas de uno `{desde, hasta}` (quien administra) |
+| `POST /api/v1/instituciones/{id}/grupos` | `{anio, grado, seccion}` → 201 con el código de clase; quien lo crea queda de titular; 409 `GRUPO_REPETIDO` |
+| `GET /api/v1/instituciones/{id}/grupos?anio=` | Todos (quien administra) o los míos |
+| `GET /api/v1/grupos` | Mis grupos, de todas mis instituciones |
+| `GET /api/v1/grupos/{id}` · `PUT` | Ver el grupo con sus docentes (sus docentes y quien administra) y cambiar grado o sección (titular o quien administra) |
+| `POST /api/v1/grupos/{id}/codigo` | Un código de clase nuevo: el anterior deja de servir |
+| `PUT /api/v1/grupos/{id}/docentes/{usuario}` · `DELETE` | Poner `{papel, materia?}` o sacar un docente (titular o quien administra; cualquiera puede salirse). Un titular nuevo reemplaza al anterior |
+
 Los enlaces de los correos van al portal: `{sitio}/portal/confirmar#t={token}` y `{sitio}/portal/clave-nueva#t={token}`.
 La página lee el token, lo manda por POST (ningún GET cambia nada) y lo borra de la barra de direcciones.
 
@@ -150,6 +179,10 @@ La página lee el token, lo manda por POST (ningún GET cambia nada) y lo borra 
 - **Antes de abrir al público (además de los dos roles):** comprobar `do-connecting-ip` (sección 4, «IP real»); mandar
   un correo de verdad desde una instancia desplegada (que App Platform deje salir por el 2465); y una alerta en los logs
   para «No se pudo mandar», «Se llegó al tope de» y «Cola … llena», que hoy solo quedan escritos.
+- **Antes de abrir al público (instituciones):** una segunda verificación al entrar para la gente del equipo (crean
+  escuelas y le dan la dirección a alguien); avisar por correo a quien administra cuando alguien entra con el rol que
+  administra (sin el nombre de nadie, B7); y una alerta en los logs para muchos «Código de invitación que no sirve» de
+  una misma cuenta.
 - **Retención de la auditoría:** el detalle lleva ids, no datos personales. Cuando crezca, particiones por mes y
   borrado de las viejas por el rol dueño, con un plazo acordado con las escuelas.
 - Imagen Docker de varias etapas, JRE 21, usuario sin privilegios. La plataforma revisa `/actuator/health/liveness`

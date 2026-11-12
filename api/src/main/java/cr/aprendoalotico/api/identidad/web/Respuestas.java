@@ -14,10 +14,10 @@ final class Respuestas {
     }
 
     /** La persona con sesión: nunca más que esto (ni el hash de la clave, ni la sesión). */
-    record Yo(UUID id, String correo, String nombre) {
+    record Yo(UUID id, String correo, String nombre, boolean admin) {
 
         static Yo de(UsuarioActual u) {
-            return new Yo(u.id(), u.correo(), u.nombre());
+            return new Yo(u.id(), u.correo(), u.nombre(), u.admin());
         }
     }
 }

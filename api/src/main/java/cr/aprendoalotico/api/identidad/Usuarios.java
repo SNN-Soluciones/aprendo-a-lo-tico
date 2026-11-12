@@ -1,5 +1,6 @@
 package cr.aprendoalotico.api.identidad;
 
+import cr.aprendoalotico.api.comun.Fechas;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -11,7 +12,7 @@ import org.springframework.stereotype.Repository;
 class Usuarios {
 
     /** Una cuenta, con el hash de la clave: no sale de este módulo. */
-    record Usuario(UUID id, String correo, String nombre, String claveHash) {
+    record Usuario(UUID id, String correo, String nombre, String claveHash, boolean admin) {
 
         @Override
         public String toString() {
@@ -19,7 +20,8 @@ class Usuarios {
         }
     }
 
-    private static final String COLUMNAS = "select id, correo, nombre, clave_hash from public.usuarios ";
+    private static final String COLUMNAS = "select id, correo, nombre, clave_hash, "
+            + "exists (select 1 from public.administradores a where a.usuario_id = usuarios.id) as admin from public.usuarios ";
 
     private final JdbcClient jdbc;
 

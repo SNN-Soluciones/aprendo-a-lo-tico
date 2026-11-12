@@ -1,5 +1,6 @@
 package cr.aprendoalotico.api.identidad;
 
+import cr.aprendoalotico.api.comun.Fechas;
 import java.time.Instant;
 import java.util.Optional;
 import org.springframework.jdbc.core.simple.JdbcClient;

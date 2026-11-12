@@ -247,8 +247,9 @@ El `id` lo genera el dispositivo: si un lote se manda dos veces, el servidor no 
       todos lados». Los **roles por institución** van con el paso de instituciones (`api/DISENO.md`, sección 8)
 - [x] Límite de intentos al entrar, pedir una cuenta, recuperar la clave, usar un enlace y cambiar la clave (salir no
       tiene: no cuesta nada ni dice nada); mensajes de error que no filtran datos. Las pantallas van con el portal
-- [ ] Instituciones: escuela (nombre, código del MEP opcional, provincia, cantón, dirección regional) u hogar
-- [ ] Grupos: año lectivo, grado, sección, docente titular y docentes de materia; código de clase (sin letras que
+- [x] Instituciones: escuela (nombre, código del MEP opcional, provincia, cantón, dirección regional) u hogar. Las
+      escuelas las crea el equipo y se entra con un código de invitación (`api/DISENO.md`, B21 a B23)
+- [x] Grupos: año lectivo, grado, sección, docente titular y docentes de materia; código de clase (sin letras que
       se confunden: 0/O, 1/I)
 - [ ] Estudiantes: alta pegando una lista de nombres; nada de cédula, fecha de nacimiento ni foto
 - [ ] **Tarjetas de acceso imprimibles** (PDF): QR, código de clase y los dibujitos de cada niño

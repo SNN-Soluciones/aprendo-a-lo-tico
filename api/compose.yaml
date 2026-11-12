@@ -1,4 +1,4 @@
-# PostgreSQL para desarrollar en la compu (perfil local). Lo levanta Spring Boot solo al correr `./gradlew bootRun`.
+# PostgreSQL y Mailpit para desarrollar en la compu (perfil local). Los levanta Spring Boot solo al correr `./gradlew bootRun`.
 # Estas claves son solo para esta base local de prueba, nunca para producción.
 services:
   postgres:
@@ -12,6 +12,12 @@ services:
       - "127.0.0.1::5432"
     volumes:
       - datos:/var/lib/postgresql/data
+  # Atrapa todos los correos (no manda ninguno de verdad): se ven en http://127.0.0.1:8025
+  mailpit:
+    image: axllent/mailpit:v1.32.0
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
 
 volumes:
   datos:

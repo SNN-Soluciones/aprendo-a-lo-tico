@@ -5,8 +5,10 @@ import jakarta.servlet.DispatcherType;
 import java.util.ArrayList;
 import java.util.List;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.Customizer;
@@ -32,6 +34,18 @@ public class ConfiguracionSeguridad {
     static List<RequestMatcher> saludPublica() {
         var m = PathPatternRequestMatcher.withDefaults();
         return List.of(m.matcher(HttpMethod.GET, "/actuator/health/**"), m.matcher(HttpMethod.HEAD, "/actuator/health/**"));
+    }
+
+    /**
+     * El tope del cuerpo va como filtro del servlet, justo después del id de pedido y antes que todo lo demás: si fuera
+     * parte de esta cadena, algún filtro anterior podría leer el cuerpo entero antes (lo hacía el de formularios de
+     * Spring con un DELETE de 100 MB, sin sesión).
+     */
+    @Bean
+    FilterRegistrationBean<LimiteDeCuerpoFiltro> limiteDeCuerpo() {
+        var registro = new FilterRegistrationBean<>(new LimiteDeCuerpoFiltro(LimiteDeCuerpoFiltro.MAXIMO));
+        registro.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
+        return registro;
     }
 
     @Bean

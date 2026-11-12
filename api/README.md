@@ -1,6 +1,8 @@
 # API · Aprendo a lo Tico
 
-Backend de las cuentas de maestras y familias, escuelas, grupos, estudiantes y avance. Las decisiones están en
+Backend de las cuentas de maestras y familias, escuelas, grupos, estudiantes y avance. Ya están la base y las
+**cuentas** (pedir una cuenta, crearla desde el enlace del correo, entrar, salir, recuperar y cambiar la clave): las rutas, en
+[DISENO.md, sección 5](DISENO.md#5-api). Las decisiones están en
 [DISENO.md](DISENO.md): leelo antes de cambiar algo de fondo.
 
 Java 21 · Spring Boot 4.1 · PostgreSQL 16 · Flyway · Testcontainers · ArchUnit · JaCoCo.
@@ -11,10 +13,11 @@ Necesita Java 21 y Docker abierto.
 
 ```bash
 cd api
-./gradlew bootRun    # perfil local: levanta PostgreSQL (compose.yaml, en un puerto libre) y el API en http://127.0.0.1:8081
+./gradlew bootRun    # perfil local: levanta PostgreSQL y Mailpit (compose.yaml) y el API en http://127.0.0.1:8081
 ```
 
-Probalo con <http://127.0.0.1:8081/api/v1/estado>.
+Probalo con <http://127.0.0.1:8081/api/v1/estado>. Los correos (el enlace para confirmar la cuenta, el de la clave
+nueva) no salen de la compu: se ven en Mailpit, <http://127.0.0.1:8025>.
 
 ## Pruebas
 
@@ -44,6 +47,14 @@ La CI (`.github/workflows/api.yml`) corre `./gradlew check` en cada PR que toque
 - **Abrir una ruta sin sesión o agregar un filtro:** un `@Component` del módulo que implemente
   `ContribucionDeSeguridad` (ver `estado/SeguridadEstado.java`). Nunca una segunda cadena de seguridad.
 - **Datos de estudiantes:** todo acceso o cambio se registra con `Auditoria`.
+- **Saber quién pide:** `@AuthenticationPrincipal UsuarioActual yo` (de `identidad.api`). Toda ruta pide sesión salvo
+  las que un módulo abre a propósito.
+- **Un límite de intentos:** `Limite.de(reloj, new Tramo(5, Duration.ofMinutes(1)))` y `gastar(clave)` (429 con
+  `Retry-After` al pasarse). La IP, siempre con `IpDelCliente.paraLimites(pedido)`, nunca `getRemoteAddr()`.
+- **Un correo:** `Correos.programar(new Mensaje(para, asunto, texto))`: sale después de confirmar la transacción, en
+  texto plano. Nunca con texto que haya escrito otra persona.
+- **Algo que no tiene que hacer esperar al pedido** (o que, hecho en el pedido, diría por su tiempo si algo existe):
+  `SegundoPlano.ejecutar("qué es", tarea)`. En las pruebas de integración corre en el mismo hilo.
 
 ## Producción
 
@@ -54,7 +65,10 @@ Imagen: `docker build -t aprendo-api .` (perfil `prod`). Variables obligatorias,
 | `DB_URL` | `jdbc:postgresql://…?sslmode=require` de la base administrada: sin `sslmode=require` (o `verify-full`) no arranca |
 | `DB_USUARIO`, `DB_CLAVE` | el rol de la aplicación (`aprendo_app`: lee y escribe datos, sin DDL) |
 | `DB_MIGRACION_USUARIO`, `DB_MIGRACION_CLAVE` | el rol dueño de las tablas, con el que corre Flyway |
-| `SITIO_URL` | origen público, por ejemplo `https://aprendoalotico.cr` (https, sin barra al final) |
+| `SITIO_URL` | origen público, por ejemplo `https://aprendoalotico.cr` (https, sin barra al final): los enlaces de los correos van ahí |
+| `SMTP_USUARIO` | en Resend, la palabra `resend` |
+| `SMTP_CLAVE` | la clave de API de Resend (solo con permiso de mandar) |
+| `CORREO_REMITENTE` | quién manda, por ejemplo `Aprendo a lo Tico <no-responder@snnsoluciones.com>`: de un dominio verificado en Resend |
 
 La plataforma revisa la salud en `/actuator/health/liveness`; `/api/v1/estado` es para el monitoreo externo.
 

@@ -15,6 +15,12 @@ spring:
         # Y si la red se cae a media consulta, que se corte a los 30 s y no espere para siempre (en el driver, el 0 de
         # fábrica es «sin límite»). Las migraciones de producción abren su propia conexión, sin este límite.
         socketTimeout: 30
+  mail:
+    properties:
+      # Si el SMTP no contesta, que se sepa en 5 s (los correos salen en segundo plano y se reintentan)
+      mail.smtp.connectiontimeout: 5000
+      mail.smtp.timeout: 5000
+      mail.smtp.writetimeout: 5000
   jpa:
     open-in-view: false
     hibernate:
@@ -24,6 +30,12 @@ spring:
   threads:
     virtual:
       enabled: true
+  mvc:
+    formcontent:
+      filter:
+        # El API es solo JSON: sin esto, Spring lee entero el cuerpo de un PUT/DELETE de formulario (el tope de
+        # LimiteDeCuerpoFiltro lo frena antes igual, pero mejor que no exista quien lo haga)
+        enabled: false
   web:
     # Mensajes (de validación, por ejemplo) siempre en español, pida lo que pida el navegador
     locale: es
@@ -39,6 +51,11 @@ server:
     include-path: never
 
 management:
+  health:
+    mail:
+      # Sin esto, cada revisión de salud abriría una conexión al SMTP, y un SMTP caído daría al API por caído
+      # (los correos se reintentan solos: no es motivo para sacar al API de servicio)
+      enabled: false
   endpoints:
     web:
       exposure:

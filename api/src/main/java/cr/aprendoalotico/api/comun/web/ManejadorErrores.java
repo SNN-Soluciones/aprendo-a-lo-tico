@@ -45,6 +45,14 @@ public class ManejadorErrores {
         return responder(e.estado(), HttpHeaders.EMPTY, e.codigo(), e.getMessage(), null);
     }
 
+    /** Un límite de intentos: 429 con Retry-After (los segundos que faltan). */
+    @ExceptionHandler(DemasiadosIntentos.class)
+    ResponseEntity<Respuesta<Void>> demasiadosIntentos(DemasiadosIntentos e) {
+        var cabeceras = new HttpHeaders();
+        cabeceras.set(HttpHeaders.RETRY_AFTER, Long.toString(e.segundos()));
+        return responder(e.estado(), cabeceras, e.codigo(), e.getMessage(), null);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<Respuesta<Void>> validacion(MethodArgumentNotValidException e) {
         Map<String, String> campos = new LinkedHashMap<>();
@@ -79,6 +87,12 @@ public class ManejadorErrores {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     ResponseEntity<Respuesta<Void>> cuerpoIlegible(HttpMessageNotReadableException e) {
+        for (Throwable c = e; c != null; c = c.getCause() == c ? null : c.getCause()) {
+            if (c instanceof CuerpoDemasiadoGrande) {
+                return responder(HttpStatus.CONTENT_TOO_LARGE, HttpHeaders.EMPTY, "DEMASIADO_GRANDE",
+                        CodigosHttp.mensaje(HttpStatus.CONTENT_TOO_LARGE), null);
+            }
+        }
         return responder(HttpStatus.BAD_REQUEST, HttpHeaders.EMPTY, "CUERPO_INVALIDO", "Lo que se mandó no tiene el formato esperado.", null);
     }
 
@@ -107,7 +121,7 @@ public class ManejadorErrores {
      * La misma traza, pero cada excepción solo con el nombre de su clase: los mensajes pueden traer correos, nombres
      * o claves (por ejemplo, el detalle de una violación de unicidad de PostgreSQL). DISENO.md, B13.
      */
-    static Throwable sinMensajes(Throwable t) {
+    public static Throwable sinMensajes(Throwable t) {
         return sinMensajes(t, 0);
     }
 

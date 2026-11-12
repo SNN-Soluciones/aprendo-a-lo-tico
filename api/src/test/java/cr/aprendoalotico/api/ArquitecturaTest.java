@@ -60,7 +60,8 @@ class ArquitecturaTest {
     @ArchTest
     static final ArchRule comunNoDependeDeNingunModulo = noClasses().that().resideInAPackage("cr.aprendoalotico.api.comun..")
             .should().dependOnClassesThat().resideOutsideOfPackages("cr.aprendoalotico.api.comun..", "java..", "javax..",
-                    "jakarta..", "org.springframework..", "org.slf4j..", "tools.jackson..", "com.fasterxml..", "org.apache..");
+                    "jakarta..", "org.springframework..", "org.slf4j..", "tools.jackson..", "com.fasterxml..", "org.apache..",
+                    "io.github.bucket4j..", "com.github.benmanes.caffeine..");
 
     @ArchTest
     static final ArchRule sinInyeccionPorCampo = noFields().should().beAnnotatedWith(Autowired.class)

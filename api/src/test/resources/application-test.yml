@@ -1,3 +1,9 @@
 # Pruebas: la base la pone Testcontainers (PruebaDeIntegracion) y el sitio es el de producción, para probar el origen real.
+spring:
+  mail:
+    # Nunca se conecta: en las pruebas los correos van a un buzón en memoria (PruebaDeIntegracion)
+    host: localhost
 app:
   sitio-url: https://aprendoalotico.cr
+  correo:
+    remitente: Aprendo a lo Tico <no-responder@aprendoalotico.cr>

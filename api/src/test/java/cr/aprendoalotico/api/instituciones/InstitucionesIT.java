@@ -355,11 +355,16 @@ class InstitucionesIT extends PruebaDeInstituciones {
 
     /**
      * Corre los dos pedidos a la vez (salen juntos de una largada) y devuelve sus estados. Si alguno se tranca, la prueba
-     * falla a los 30 s: los hilos se interrumpen y no se espera por ellos más de 5 s.
+     * falla a los 30 s: los hilos se interrumpen y no se espera por ellos más de 5 s. Son hilos daemon: si alguno no hace
+     * caso de la interrupción, tampoco deja viva la JVM de las pruebas.
      */
     private static List<Integer> aLaVez(Callable<Integer> uno, Callable<Integer> otro) throws Exception {
         var largada = new CountDownLatch(1);
-        var hilos = Executors.newFixedThreadPool(2);
+        var hilos = Executors.newFixedThreadPool(2, tarea -> {
+            Thread hilo = new Thread(tarea, "a-la-vez");
+            hilo.setDaemon(true);
+            return hilo;
+        });
         try {
             List<Future<Integer>> pedidos = List.of(uno, otro).stream().map(p -> hilos.submit(() -> {
                 largada.await();

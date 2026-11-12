@@ -139,8 +139,9 @@ public class ServicioGrupos {
     public Detalle nuevoCodigo(UsuarioActual yo, UUID id) {
         Visto visto = paraCambiar(yo, id);
         limites.codigosPorGrupo.gastar(id.toString());
-        conPermisoTrabado(yo, visto,
-                () -> conCodigoNuevo(() -> grupos.cambiarCodigo(id, Codigos.nuevo(LARGO_DEL_CODIGO)) ? Optional.of(id) : Optional.empty()));
+        // Cada intento en su propia transacción: si otro grupo toma el mismo código en el mismo instante, la clave única
+        // rechaza este, y en esa transacción ya no se puede probar otro
+        conCodigoNuevo(() -> codigoNuevoSiSePuede(yo, visto));
         eventos.registrar(yo, "CAMBIAR_CODIGO", "GRUPO", id, visto.grupo().institucion(), null);
         return ver(yo, id);
     }
@@ -212,15 +213,32 @@ public class ServicioGrupos {
      * todavía lo puede cambiar: si mientras tanto la sacaron, no cambia nada.
      */
     private void conPermisoTrabado(UsuarioActual yo, Visto visto, Runnable cambio) {
+        conPermisoTrabado(yo, visto, () -> {
+            cambio.run();
+            return true;
+        });
+    }
+
+    private <T> T conPermisoTrabado(UsuarioActual yo, Visto visto, Supplier<T> cambio) {
         UUID id = visto.grupo().id();
-        transaccion.executeWithoutResult(estado -> {
+        return transaccion.execute(estado -> {
             Acceso mio = accesos.deTrabando(yo.id(), visto.grupo().institucion()).orElseThrow(ServicioGrupos::grupoNoEncontrado);
             grupos.trabar(id);
             if (!new Visto(visto.grupo(), mio, docentes.papel(id, yo.id())).puedeCambiar()) {
                 throw ErrorDeNegocio.sinPermiso();
             }
-            cambio.run();
+            return cambio.get();
         });
+    }
+
+    /** Un intento de código nuevo, en su propia transacción. Vacío si ya lo tenía otro grupo (se prueba con otro). */
+    private Optional<UUID> codigoNuevoSiSePuede(UsuarioActual yo, Visto visto) {
+        UUID id = visto.grupo().id();
+        try {
+            return conPermisoTrabado(yo, visto, () -> grupos.cambiarCodigo(id, Codigos.nuevo(LARGO_DEL_CODIGO))) ? Optional.of(id) : Optional.empty();
+        } catch (DuplicateKeyException e) {
+            return Optional.empty();
+        }
     }
 
     /** El grupo, si lo ve; 404 si no existe, es de otra institución o no le toca verlo. */

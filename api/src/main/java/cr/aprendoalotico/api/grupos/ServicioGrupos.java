@@ -90,9 +90,11 @@ public class ServicioGrupos {
             UUID anioLectivo = anios.asegurar(institucion, anio);
             UUID nuevo = conCodigoNuevo(() -> crearSiSePuede(anioLectivo, grado, seccion, ahora));
             docentes.poner(nuevo, yo.id(), Papel.TITULAR, null, ahora);
+            // Quien lo crea queda de titular (va a ver a sus estudiantes): se audita aquí, o no se crea
+            eventos.registrarODeshacer(yo, "CREAR", "GRUPO", nuevo, institucion,
+                    Map.of("anio", anio, "grado", grado, "titular", yo.id().toString()));
             return nuevo;
         });
-        eventos.registrar(yo, "CREAR", "GRUPO", id, institucion, Map.of("anio", anio, "grado", grado));
         return ver(yo, id);
     }
 
@@ -122,11 +124,13 @@ public class ServicioGrupos {
 
     public Detalle cambiar(UsuarioActual yo, UUID id, int grado, String seccion) {
         Visto visto = paraCambiar(yo, id);
-        try {
-            grupos.cambiar(id, grado, seccion);
-        } catch (DuplicateKeyException e) {
-            throw grupoRepetido();
-        }
+        conPermisoTrabado(yo, visto, () -> {
+            try {
+                grupos.cambiar(id, grado, seccion);
+            } catch (DuplicateKeyException e) {
+                throw grupoRepetido();
+            }
+        });
         eventos.registrar(yo, "CAMBIAR", "GRUPO", id, visto.grupo().institucion(), Map.of("grado", grado));
         return ver(yo, id);
     }
@@ -135,7 +139,8 @@ public class ServicioGrupos {
     public Detalle nuevoCodigo(UsuarioActual yo, UUID id) {
         Visto visto = paraCambiar(yo, id);
         limites.codigosPorGrupo.gastar(id.toString());
-        conCodigoNuevo(() -> grupos.cambiarCodigo(id, Codigos.nuevo(LARGO_DEL_CODIGO)) ? Optional.of(id) : Optional.empty());
+        conPermisoTrabado(yo, visto,
+                () -> conCodigoNuevo(() -> grupos.cambiarCodigo(id, Codigos.nuevo(LARGO_DEL_CODIGO)) ? Optional.of(id) : Optional.empty()));
         eventos.registrar(yo, "CAMBIAR_CODIGO", "GRUPO", id, visto.grupo().institucion(), null);
         return ver(yo, id);
     }
@@ -200,6 +205,22 @@ public class ServicioGrupos {
         if (anio < hoy - 1 || anio > hoy + 1) {
             throw new ErrorDeNegocio(HttpStatus.BAD_REQUEST, "ANIO_INVALIDO", "El año tiene que ser el pasado, este o el que viene.");
         }
+    }
+
+    /**
+     * Hace el cambio con la institución (compartido) y el grupo trabados, después de volver a mirar que quien lo pide
+     * todavía lo puede cambiar: si mientras tanto la sacaron, no cambia nada.
+     */
+    private void conPermisoTrabado(UsuarioActual yo, Visto visto, Runnable cambio) {
+        UUID id = visto.grupo().id();
+        transaccion.executeWithoutResult(estado -> {
+            Acceso mio = accesos.deTrabando(yo.id(), visto.grupo().institucion()).orElseThrow(ServicioGrupos::grupoNoEncontrado);
+            grupos.trabar(id);
+            if (!new Visto(visto.grupo(), mio, docentes.papel(id, yo.id())).puedeCambiar()) {
+                throw ErrorDeNegocio.sinPermiso();
+            }
+            cambio.run();
+        });
     }
 
     /** El grupo, si lo ve; 404 si no existe, es de otra institución o no le toca verlo. */

@@ -168,9 +168,29 @@ class InstitucionesIT extends PruebaDeInstituciones {
 
             List<Integer> estados = aLaVez(() -> estado(como(a, HttpMethod.DELETE, miembros + b.id(), null)),
                     () -> estado(como(b, HttpMethod.DELETE, miembros + a.id(), null)));
-            assertThat(estados).containsOnlyOnce(200);
+            // La que pierde llega cuando ya no es miembro: 404 (nunca un 500 ni las dos afuera)
+            assertThat(estados).containsExactlyInAnyOrder(200, 404);
             assertThat(filas("select count(*) from public.membresias where institucion_id = ? and rol = 'DIRECCION' and hasta is null", id))
                     .isOne();
+        }
+    }
+
+    @Test
+    @DisplayName("Sacan a alguien mientras otra persona usa su código: o entra antes o el código ya no sirve, nunca un 500")
+    void usarElCodigoDeQuienSacan() throws Exception {
+        for (int vuelta = 0; vuelta < 5; vuelta++) {
+            Persona directora = persona();
+            UUID id = escuelaDe(directora);
+            Persona subdirectora = persona();
+            unir(directora, id, subdirectora, "DIRECCION");
+            String suyo = codigo(subdirectora, id, "DOCENTE", false);
+            Persona nueva = persona();
+
+            List<Integer> estados = aLaVez(
+                    () -> estado(como(directora, HttpMethod.DELETE, "/api/v1/instituciones/" + id + "/miembros/" + subdirectora.id(), null)),
+                    () -> estado(aceptar(nueva, suyo)));
+            assertThat(estados.get(0)).isEqualTo(200);
+            assertThat(estados.get(1)).isIn(200, 400);
         }
     }
 
@@ -333,16 +353,23 @@ class InstitucionesIT extends PruebaDeInstituciones {
         return r.andReturn().getResponse().getStatus();
     }
 
-    /** Corre los dos pedidos a la vez (salen juntos de una largada) y devuelve sus estados. */
+    /**
+     * Corre los dos pedidos a la vez (salen juntos de una largada) y devuelve sus estados. Si alguno se tranca, la prueba
+     * falla a los 30 s: los hilos se interrumpen y no se espera por ellos más de 5 s.
+     */
     private static List<Integer> aLaVez(Callable<Integer> uno, Callable<Integer> otro) throws Exception {
         var largada = new CountDownLatch(1);
-        try (var hilos = Executors.newFixedThreadPool(2)) {
+        var hilos = Executors.newFixedThreadPool(2);
+        try {
             List<Future<Integer>> pedidos = List.of(uno, otro).stream().map(p -> hilos.submit(() -> {
                 largada.await();
                 return p.call();
             })).toList();
             largada.countDown();
             return List.of(pedidos.get(0).get(30, TimeUnit.SECONDS), pedidos.get(1).get(30, TimeUnit.SECONDS));
+        } finally {
+            hilos.shutdownNow();
+            hilos.awaitTermination(5, TimeUnit.SECONDS);
         }
     }
 

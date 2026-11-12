@@ -51,6 +51,12 @@ class Invitaciones {
         return new Pagina.Leida<>(elementos, contarPendientes(institucion, ahora));
     }
 
+    /** De qué institución es el código (sin trabar nada): para trabarla antes de usarlo. */
+    Optional<UUID> institucionDe(byte[] codigoHash) {
+        return jdbc.sql("select institucion_id from public.invitaciones where codigo_hash = :codigo").param("codigo", codigoHash)
+                .query(UUID.class).optional();
+    }
+
     /**
      * La usa, si todavía sirve: en una sola sentencia, así dos personas con el mismo código no la usan las dos. Vacío si
      * no existe, ya se usó, se revocó, venció o la sacó la misma persona (B22: para quien la escribe es lo mismo). Nadie

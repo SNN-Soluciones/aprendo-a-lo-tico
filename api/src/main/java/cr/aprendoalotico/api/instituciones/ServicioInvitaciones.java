@@ -110,6 +110,8 @@ public class ServicioInvitaciones {
     public void revocar(UsuarioActual yo, UUID institucion, UUID invitacion) {
         servicio.administrada(yo, institucion);
         transaccion.executeWithoutResult(estado -> {
+            instituciones.trabar(institucion);
+            servicio.administrada(yo, institucion);
             if (!invitaciones.revocar(invitacion, institucion, reloj.instant())) {
                 throw ErrorDeNegocio.noEncontrado("Ese código ya no está pendiente.");
             }
@@ -119,12 +121,15 @@ public class ServicioInvitaciones {
 
     /**
      * Usa un código y devuelve la institución a la que entró. Si ya tenía ese rol ahí, 409 y el código sigue sirviendo
-     * (para dárselo a quien era). Se usa, se da el rol y se audita en la misma transacción.
+     * (para dárselo a quien era). Se usa, se da el rol y se audita en la misma transacción, con la institución trabada
+     * primero (compartido), en el mismo orden que «retirar»: si no, uno trabaría el código y esperaría la institución, y el
+     * otro al revés.
      */
     public InstitucionConRoles aceptar(UsuarioActual yo, String codigo, String ip) {
         Limite.gastarEnTodos(new Gasto(limites.aceptarPorCuenta, yo.id().toString()), new Gasto(limites.aceptarPorIp, ip));
         byte[] hash = CodigosDeInvitacion.hash(codigo).orElseThrow(() -> invalida(yo));
         Usada usada = transaccion.execute(estado -> {
+            instituciones.trabarCompartido(invitaciones.institucionDe(hash).orElseThrow(() -> invalida(yo)));
             Instant ahora = reloj.instant();
             Usada u = invitaciones.usar(hash, yo.id(), ahora).orElseThrow(() -> invalida(yo));
             // Un rol que no existe en esa institución (por un cambio de reglas o una fila puesta a mano) no se da

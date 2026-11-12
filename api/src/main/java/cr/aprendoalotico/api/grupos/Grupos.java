@@ -6,7 +6,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import org.springframework.dao.DuplicateKeyException;
 import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.stereotype.Repository;
 
@@ -76,14 +75,15 @@ class Grupos {
                 .param("grado", grado).param("seccion", seccion).param("id", id).update();
     }
 
-    /** False si ese código ya lo tiene otro grupo (se prueba con otro). */
+    /**
+     * False si ese código ya lo tiene otro grupo (se prueba con otro). Se mira en la misma sentencia en vez de atrapar el
+     * error de clave repetida: dentro de una transacción, ese error la deja inservible para el siguiente intento.
+     */
     boolean cambiarCodigo(UUID id, String codigo) {
-        try {
-            jdbc.sql("update public.grupos set codigo_clase = :codigo where id = :id").param("codigo", codigo).param("id", id).update();
-            return true;
-        } catch (DuplicateKeyException e) {
-            return false;
-        }
+        return jdbc.sql("""
+                update public.grupos set codigo_clase = :codigo
+                where id = :id and not exists (select 1 from public.grupos otro where otro.codigo_clase = :codigo)""")
+                .param("codigo", codigo).param("id", id).update() == 1;
     }
 
     /** Traba el grupo hasta el fin de la transacción: los cambios de docentes se turnan. */

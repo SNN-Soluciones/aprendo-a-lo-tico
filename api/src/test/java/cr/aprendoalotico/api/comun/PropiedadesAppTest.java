@@ -82,6 +82,19 @@ class PropiedadesAppTest {
     }
 
     @Test
+    @DisplayName("La cabecera de la IP del cliente es opcional, y si está tiene que ser un nombre de cabecera")
+    void cabeceraIp() {
+        contexto.withPropertyValues("app.sitio-url=https://aprendoalotico.cr", "app.cabecera-ip= do-connecting-ip ")
+                .run(ctx -> assertThat(ctx.getBean(PropiedadesApp.class).cabeceraIp()).isEqualTo("do-connecting-ip"));
+        contexto.withPropertyValues("app.sitio-url=https://aprendoalotico.cr", "app.cabecera-ip=")
+                .run(ctx -> assertThat(ctx.getBean(PropiedadesApp.class).cabeceraIp()).isNull());
+        contexto.withPropertyValues("app.sitio-url=https://aprendoalotico.cr", "app.cabecera-ip=X-Real-IP: 1.2.3.4").run(ctx -> {
+            assertThat(ctx).hasFailed();
+            assertThat(causa(ctx.getStartupFailure())).contains("app.cabecera-ip");
+        });
+    }
+
+    @Test
     @DisplayName("En la compu, el sitio local puede confiar además en el portal local")
     void localConPortalLocal() {
         contexto.withPropertyValues("app.sitio-url=http://127.0.0.1:8080", "app.origen-extra=http://localhost:4200")

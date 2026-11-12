@@ -86,6 +86,25 @@ class ManejadorErroresTest {
     }
 
     @Test
+    @DisplayName("Un límite de intentos es 429 con Retry-After en segundos")
+    void demasiadosIntentos() {
+        var r = manejador.demasiadosIntentos(new DemasiadosIntentos(java.time.Duration.ofMillis(90_500)));
+        assertThat(r.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+        assertThat(r.getHeaders().getFirst("Retry-After")).isEqualTo("91");
+        assertThat(r.getBody().error().codigo()).isEqualTo("DEMASIADOS_INTENTOS");
+        assertThat(r.getBody().error().mensaje()).contains("2 minutos");
+    }
+
+    @Test
+    @DisplayName("Un cuerpo que pasó el tope mientras se leía es 413, aunque llegue envuelto como «ilegible»")
+    void cuerpoDemasiadoGrande() {
+        var ex = new HttpMessageNotReadableException("I/O error", new CuerpoDemasiadoGrande(), new MockHttpInputMessage(new byte[0]));
+        var r = manejador.cuerpoIlegible(ex);
+        assertThat(r.getStatusCode()).isEqualTo(HttpStatus.CONTENT_TOO_LARGE);
+        assertThat(r.getBody().error().codigo()).isEqualTo("DEMASIADO_GRANDE");
+    }
+
+    @Test
     @DisplayName("Un parámetro que falta o no tiene formato es 400 PARAMETRO_INVALIDO")
     void parametro() {
         var r = manejador.parametro(new MissingServletRequestParameterException("pagina", "int"));

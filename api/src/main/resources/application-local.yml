@@ -5,9 +5,15 @@ spring:
     compose:
       file: compose.yaml
       lifecycle-management: start-only
+  mail:
+    # Mailpit, de compose.yaml
+    host: 127.0.0.1
+    port: 1025
 
 server:
   port: 8081
 
 app:
   sitio-url: http://127.0.0.1:8080
+  correo:
+    remitente: Aprendo a lo Tico <no-responder@aprendoalotico.local>

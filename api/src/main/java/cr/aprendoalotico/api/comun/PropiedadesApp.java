@@ -2,6 +2,7 @@ package cr.aprendoalotico.api.comun;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
@@ -10,9 +11,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @param sitioUrl    origen público del sitio (https://aprendoalotico.cr): los cambios solo se aceptan desde aquí
  * @param origenExtra otro origen de confianza, opcional y solo para la compu de quien programa (el portal local): si
  *                    él o el sitio son públicos, no arranca
+ * @param cabeceraIp  la cabecera en la que la plataforma pone la IP del cliente (do-connecting-ip en App Platform, B19);
+ *                    sin ella se usa la de la conexión, que es la correcta solo sin proxy (en la compu)
  */
 @ConfigurationProperties("app")
-public record PropiedadesApp(String sitioUrl, String origenExtra) {
+public record PropiedadesApp(String sitioUrl, String origenExtra, String cabeceraIp) {
+
+    private static final Pattern NOMBRE_DE_CABECERA = Pattern.compile("[A-Za-z0-9-]{1,64}");
 
     public PropiedadesApp {
         if (sitioUrl == null || sitioUrl.isBlank()) {
@@ -26,6 +31,10 @@ public record PropiedadesApp(String sitioUrl, String origenExtra) {
         if (origenExtra != null && !(Origenes.esLocal(origenExtra) && Origenes.esLocal(sitioUrl))) {
             throw new IllegalArgumentException("No se puede confiar en " + origenExtra + " con el sitio " + sitioUrl
                     + ": ORIGEN_EXTRA es solo para la compu de quien programa (los dos tienen que ser locales)");
+        }
+        cabeceraIp = cabeceraIp == null || cabeceraIp.isBlank() ? null : cabeceraIp.trim();
+        if (cabeceraIp != null && !NOMBRE_DE_CABECERA.matcher(cabeceraIp).matches()) {
+            throw new IllegalArgumentException("app.cabecera-ip tiene que ser el nombre de una cabecera, como do-connecting-ip");
         }
     }
 

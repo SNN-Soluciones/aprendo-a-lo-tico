@@ -1,0 +1,3 @@
+# Revisiones que corren al preparar la configuración, antes de crear cualquier bean o conexión
+org.springframework.boot.EnvironmentPostProcessor=\
+cr.aprendoalotico.api.comun.BaseCifradaEnProduccion

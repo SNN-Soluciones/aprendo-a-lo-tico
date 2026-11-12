@@ -1,0 +1,50 @@
+# Configuración común. Cada ambiente agrega la suya: application-local.yml (compu), application-prod.yml (App Platform);
+# las pruebas usan src/test/resources/application-test.yml. Sin perfil la aplicación no arranca (falta app.sitio-url).
+spring:
+  application:
+    name: aprendo-a-lo-tico-api
+  autoconfigure:
+    # Las cuentas son nuestras (módulo identidad): sin el usuario por defecto de Spring con su clave impresa en el log
+    exclude: org.springframework.boot.security.autoconfigure.UserDetailsServiceAutoConfiguration
+  datasource:
+    hikari:
+      # Si la base no responde, que se sepa en 2 s y no en 30 (cada pedido en espera retiene un hilo)
+      connection-timeout: 2000
+      validation-timeout: 1000
+      data-source-properties:
+        # Y si la red se cae a media consulta, que se corte a los 30 s y no espere para siempre (en el driver, el 0 de
+        # fábrica es «sin límite»). Las migraciones de producción abren su propia conexión, sin este límite.
+        socketTimeout: 30
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    locations: classpath:db/migration
+  threads:
+    virtual:
+      enabled: true
+  web:
+    # Mensajes (de validación, por ejemplo) siempre en español, pida lo que pida el navegador
+    locale: es
+    locale-resolver: fixed
+
+server:
+  shutdown: graceful
+  error:
+    whitelabel:
+      enabled: false
+    include-stacktrace: never
+    include-message: never
+    include-path: never
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never

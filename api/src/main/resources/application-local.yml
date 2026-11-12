@@ -1,0 +1,13 @@
+# En la compu de quien programa: `./gradlew bootRun` levanta el PostgreSQL de compose.yaml (Docker) y se conecta solo.
+# El sitio (juegos) corre con `npm start` en la raíz del repo.
+spring:
+  docker:
+    compose:
+      file: compose.yaml
+      lifecycle-management: start-only
+
+server:
+  port: 8081
+
+app:
+  sitio-url: http://127.0.0.1:8080

@@ -1,0 +1,17 @@
+# PostgreSQL para desarrollar en la compu (perfil local). Lo levanta Spring Boot solo al correr `./gradlew bootRun`.
+# Estas claves son solo para esta base local de prueba, nunca para producción.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: aprendo
+      POSTGRES_USER: aprendo
+      POSTGRES_PASSWORD: aprendo-local
+    # Puerto libre al azar (solo en 127.0.0.1): no choca con otro PostgreSQL de la compu; Spring Boot lo encuentra solo
+    ports:
+      - "127.0.0.1::5432"
+    volumes:
+      - datos:/var/lib/postgresql/data
+
+volumes:
+  datos:

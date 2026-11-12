@@ -1,0 +1,114 @@
+// API de Aprendo a lo Tico (ver DISENO.md). `./gradlew check` corre todo: pruebas, arquitectura y cobertura mínima.
+plugins {
+	id 'java'
+	id 'jacoco'
+	id 'org.springframework.boot' version '4.1.2'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'cr.aprendoalotico'
+version = '0.1.0'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	archunitVersion = '1.5.1'
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-flyway'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-webmvc'
+	implementation 'org.flywaydb:flyway-database-postgresql'
+	runtimeOnly 'org.postgresql:postgresql'
+	// Solo en la compu de quien programa: levanta el PostgreSQL de compose.yaml al arrancar con el perfil local
+	developmentOnly 'org.springframework.boot:spring-boot-docker-compose'
+
+	testImplementation 'org.springframework.boot:spring-boot-starter-actuator-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-flyway-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-validation-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+	testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+	testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
+	testImplementation 'org.testcontainers:testcontainers-postgresql'
+	testImplementation "com.tngtech.archunit:archunit-junit5:${archunitVersion}"
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// La versión y la fecha de la build van en /api/v1/estado
+springBoot {
+	buildInfo()
+}
+
+// Un solo jar, con nombre fijo, para que el Dockerfile no dependa de la versión
+tasks.named('bootJar') {
+	archiveFileName = 'app.jar'
+}
+tasks.named('jar') {
+	enabled = false
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	finalizedBy tasks.named('jacocoTestReport')
+}
+
+// `./gradlew bootRun` arranca con el perfil local (PostgreSQL de compose.yaml) salvo que se pida otro
+tasks.named('bootRun') {
+	systemProperty 'spring.profiles.active', System.getenv('SPRING_PROFILES_ACTIVE') ?: 'local'
+}
+
+// Lo que no tiene lógica propia no cuenta para la cobertura
+def fueraDeCobertura = ['cr/aprendoalotico/api/ApiApplication.class']
+
+tasks.named('jacocoTestReport') {
+	dependsOn tasks.named('test')
+	reports {
+		xml.required = true
+		html.required = true
+	}
+	classDirectories.setFrom(files(classDirectories.files.collect { fileTree(dir: it, exclude: fueraDeCobertura) }))
+}
+
+// 🚧 Mínimo 80 % de líneas y de ramas: por debajo, la build falla
+tasks.named('jacocoTestCoverageVerification') {
+	dependsOn tasks.named('test')
+	classDirectories.setFrom(files(classDirectories.files.collect { fileTree(dir: it, exclude: fueraDeCobertura) }))
+	violationRules {
+		rule {
+			limit {
+				counter = 'LINE'
+				minimum = 0.80
+			}
+			limit {
+				counter = 'BRANCH'
+				minimum = 0.80
+			}
+		}
+		// Y cada paquete por su lado: un módulo nuevo sin pruebas no se esconde detrás del promedio
+		rule {
+			element = 'PACKAGE'
+			limit {
+				counter = 'LINE'
+				minimum = 0.75
+			}
+		}
+	}
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('jacocoTestCoverageVerification')
+}

@@ -1,0 +1,4 @@
+# Finales de línea del wrapper de Gradle: el script de Unix con LF, el de Windows con CRLF
+/gradlew text eol=lf
+*.bat text eol=crlf
+*.jar binary

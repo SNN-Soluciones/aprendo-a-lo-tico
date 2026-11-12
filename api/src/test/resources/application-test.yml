@@ -1,0 +1,3 @@
+# Pruebas: la base la pone Testcontainers (PruebaDeIntegracion) y el sitio es el de producción, para probar el origen real.
+app:
+  sitio-url: https://aprendoalotico.cr

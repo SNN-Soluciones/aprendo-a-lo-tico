@@ -23,7 +23,7 @@ ext {
 	archunitVersion = '1.5.1'
 	// Argon2id de Spring Security usa la implementación de BouncyCastle
 	bouncycastleVersion = '1.86'
-	bucket4jVersion = '8.21.0'
+	bucket4jVersion = '8.22.0'
 }
 
 dependencies {

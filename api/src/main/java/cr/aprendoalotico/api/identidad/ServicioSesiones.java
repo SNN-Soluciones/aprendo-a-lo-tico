@@ -70,15 +70,20 @@ public class ServicioSesiones {
      * Entra con correo y clave. El error es el mismo si el correo no tiene cuenta o si la clave no es esa, y tarda lo
      * mismo (también la auditoría del fallo va en segundo plano). Los límites (LimitesDeIdentidad): por IP cuentan
      * todas las entradas; por cuenta, solo las buenas (con claves equivocadas nadie gasta las de la titular), y los
-     * estrictos, solo las fallidas.
+     * de fallidos se gastan antes de comprobar y se devuelven si la clave era esa. Se gastan antes a propósito: si
+     * solo frenaran las equivocadas, con el balde vacío la buena entraría y la mala no, y se podría seguir probando.
      */
     public Entrada entrar(String correo, String clave, String ip, String agente) {
         String direccion = Direcciones.normalizar(correo);
         // Antes del Argon2: si la cuenta ya entró demasiadas veces, ni se calcula
         limites.entradasPorCuenta.exigirQueQuede(direccion);
         limites.entradasPorIp.gastar(ip);
-        Ficha fallo = Limite.gastarEnTodos(new Gasto(limites.fallosPorIpYCorreo, LimitesDeIdentidad.ipYCorreo(ip, direccion)),
-                new Gasto(limites.fallosPorCorreo, direccion), new Gasto(limites.fallosPorIp, ip));
+        String ipYCorreo = LimitesDeIdentidad.ipYCorreo(ip, direccion);
+        Ficha fallo = limites.entradasBuenas.conoce(ipYCorreo)
+                // Desde donde esta cuenta ya entró bien, solo el estricto: nadie la frena desde otras IP ni desde la suya (B11)
+                ? limites.fallosPorIpYCorreo.gastar(ipYCorreo)
+                : Limite.gastarEnTodos(new Gasto(limites.fallosPorIpYCorreo, ipYCorreo), new Gasto(limites.fallosPorCorreo, direccion),
+                        new Gasto(limites.fallosPorIp, ip));
         Optional<Usuario> cuenta = usuarios.porCorreo(direccion);
         boolean coincide = cuenta.isPresent() ? claves.coincide(clave, cuenta.get().claveHash()) : claves.gastarTiempo(clave);
         if (!coincide) {
@@ -96,6 +101,7 @@ public class ServicioSesiones {
             entrada.devolver();
             throw e;
         }
+        limites.entradasBuenas.anotar(ipYCorreo);
         eventos.deLaPersona(u.id(), "ENTRAR", "SESION", sesion);
         return new Entrada(token, new UsuarioActual(u.id(), sesion, u.correo(), u.nombre()));
     }

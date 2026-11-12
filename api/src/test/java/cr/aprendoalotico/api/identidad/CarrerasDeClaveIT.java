@@ -10,7 +10,14 @@ import cr.aprendoalotico.api.comun.tareas.SegundoPlano;
 import cr.aprendoalotico.api.comun.web.ErrorDeNegocio;
 import cr.aprendoalotico.api.identidad.api.UsuarioActual;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -18,11 +25,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Lo que pasa si otro pedido cambia la cuenta mientras uno comprueba la clave (el Argon2 tarda, y se calcula sin la
  * cuenta trabada). Las claves de estas pruebas dejan pasar al otro pedido justo después de comprobar: el orden es
- * siempre el mismo, sin hilos ni esperas.
+ * siempre el mismo, sin hilos ni esperas. Una más, con dos transacciones a la vez de verdad, prueba que la cuenta
+ * trabada las turna (sin el «for update», esa falla).
  */
 class CarrerasDeClaveIT extends PruebaDeIdentidad {
 
@@ -53,6 +62,8 @@ class CarrerasDeClaveIT extends PruebaDeIdentidad {
     ServicioClaves clavesDeVerdad;
     @Autowired
     ServicioSesiones sesionesDeVerdad;
+    @Autowired
+    Claves clavesDeLaApp;
 
     private ClavesConInterrupcion claves;
     private ServicioSesiones entradas;
@@ -143,6 +154,45 @@ class CarrerasDeClaveIT extends PruebaDeIdentidad {
                 .isInstanceOfSatisfying(ErrorDeNegocio.class, e -> assertThat(e.codigo()).isEqualTo("NO_AUTENTICADO"));
         noEntraCon(correo, OTRA);
         entrar(correo, CLAVE);
+    }
+
+    @Test
+    @DisplayName("Con dos transacciones a la vez: entrar espera a que termine la recuperación que tiene trabada la cuenta, y no abre la sesión")
+    void entrarEsperaALaRecuperacion() throws Exception {
+        String correo = cuentaNueva();
+        UUID cuenta = usuarios.porCorreo(correo).orElseThrow().id();
+        String recuperada = clavesDeLaApp.hash(RECUPERADA);
+        var trabada = new CountDownLatch(1);
+        try (ExecutorService otro = Executors.newSingleThreadExecutor()) {
+            // Lo mismo que hace ponerClaveNueva, pero sin confirmar hasta que el «entrar» esté esperando la cuenta
+            Future<?> recuperacion = otro.submit(() -> new TransactionTemplate(transacciones).executeWithoutResult(estado -> {
+                usuarios.trabar(cuenta);
+                Instant ahora = reloj.instant();
+                usuarios.cambiarClave(cuenta, recuperada, ahora);
+                sesiones.cerrarTodas(cuenta, ahora);
+                trabada.countDown();
+                esperarAQueAlguienEspere();
+            }));
+            assertThat(trabada.await(10, TimeUnit.SECONDS)).isTrue();
+
+            // Lee la clave vieja (la nueva no está confirmada), la comprueba y se queda esperando la cuenta
+            assertThatThrownBy(() -> sesionesDeVerdad.entrar(correo, CLAVE, Navegador.ipNueva(), "Firefox"))
+                    .isInstanceOfSatisfying(ErrorDeNegocio.class, e -> assertThat(e.codigo()).isEqualTo("CREDENCIALES_INVALIDAS"));
+            recuperacion.get(10, TimeUnit.SECONDS);
+        }
+        assertThat(abiertas(correo)).isZero();
+        entrar(correo, RECUPERADA);
+    }
+
+    /** Hasta que otra transacción quede esperando un candado (como mucho 10 s): pg_locks muestra las esperas en el acto. */
+    private void esperarAQueAlguienEspere() {
+        long hasta = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (jdbc.sql("select count(*) from pg_locks where not granted").query(Integer.class).single() == 0) {
+            if (System.nanoTime() > hasta) {
+                throw new AssertionError("Nadie llegó a esperar la cuenta trabada");
+            }
+            Thread.onSpinWait();
+        }
     }
 
     @Test

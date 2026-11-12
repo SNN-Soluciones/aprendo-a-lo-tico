@@ -133,6 +133,54 @@ class SesionIT extends PruebaDeIdentidad {
         entrar(correo, CLAVE);
     }
 
+    private int entrarDesde(String ip, String correo, String clave) throws Exception {
+        return mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/sesion", Map.of("correo", correo, "clave", clave)))
+                .andReturn().getResponse().getStatus();
+    }
+
+    @Test
+    @DisplayName("Quien sabe el correo agota sus fallidos desde otras IP, pero la titular entra desde donde ya entró (B11)")
+    void laTitularEntraDesdeSuIp() throws Exception {
+        String correo = cuentaNueva();
+        String casa = Navegador.ipNueva();
+        assertThat(entrarDesde(casa, correo, CLAVE)).isEqualTo(200);
+        reloj.detener();
+        try {
+            // 50 fallos, el tope por correo: 5 desde cada IP (el máximo por IP y correo)
+            for (int i = 0; i < 10; i++) {
+                String otra = Navegador.ipNueva();
+                for (int j = 0; j < 5; j++) {
+                    assertThat(entrarDesde(otra, correo, "equivocada")).isEqualTo(401);
+                }
+            }
+            assertThat(entrarDesde(Navegador.ipNueva(), correo, CLAVE)).isEqualTo(429);
+            assertThat(entrarDesde(casa, correo, CLAVE)).isEqualTo(200);
+        } finally {
+            reloj.soltar();
+        }
+    }
+
+    @Test
+    @DisplayName("Un estudiante agota los fallidos de la IP de la escuela, pero quien ya entró desde ahí entra igual (B11)")
+    void laEscuelaNoQuedaBloqueada() throws Exception {
+        String maestra = cuentaNueva();
+        String nueva = cuentaNueva();
+        String escuela = Navegador.ipNueva();
+        assertThat(entrarDesde(escuela, maestra, CLAVE)).isEqualTo(200);
+        reloj.detener();
+        try {
+            for (int i = 0; i < 30; i++) {
+                assertThat(entrarDesde(escuela, Navegador.correoNuevo(), "equivocada")).isEqualTo(401);
+            }
+            assertThat(entrarDesde(escuela, Navegador.correoNuevo(), "equivocada")).isEqualTo(429);
+            assertThat(entrarDesde(escuela, maestra, CLAVE)).isEqualTo(200);
+            // Una cuenta que nunca entró desde la escuela sí espera: con el balde vacío no se compara ninguna clave
+            assertThat(entrarDesde(escuela, nueva, CLAVE)).isEqualTo(429);
+        } finally {
+            reloj.soltar();
+        }
+    }
+
     @Test
     @DisplayName("Desde una IP, 30 fallos por minuto (contra distintas cuentas) y después 429")
     void limitePorIp() throws Exception {

@@ -1,5 +1,6 @@
 package cr.aprendoalotico.api.identidad;
 
+import cr.aprendoalotico.api.comun.limites.Conocidos;
 import cr.aprendoalotico.api.comun.limites.Limite;
 import cr.aprendoalotico.api.comun.limites.Limite.Tramo;
 import java.time.Clock;
@@ -18,6 +19,10 @@ import org.springframework.stereotype.Component;
  *       nadie los agota; cuando no queda, se rechaza antes de calcular el Argon2.</li>
  *   <li><b>Todos</b> ({@link #entradasPorIp}): holgado, porque una escuela entera sale a internet con una sola IP.</li>
  * </ul>
+ *
+ * <p>Los fallidos por correo y por IP los comparte la titular con cualquiera: quien sabe el correo los agota desde
+ * otras IP, y un estudiante, desde la IP de la escuela. Por eso no frenan a una IP desde la que esa cuenta ya entró
+ * bien ({@link #entradasBuenas}, B11): ahí solo cuenta el estricto, por IP y correo.
  */
 @Component
 class LimitesDeIdentidad {
@@ -27,6 +32,8 @@ class LimitesDeIdentidad {
     final Limite fallosPorIp;
     final Limite entradasPorCuenta;
     final Limite entradasPorIp;
+    /** IP y correo de las entradas buenas de los últimos 30 días (en memoria). */
+    final Conocidos entradasBuenas;
     final Limite registrosPorIp;
     final Limite recuperacionesPorIp;
     /** Abrir un enlace (confirmar, clave nueva): los tokens no se adivinan, pero cada intento cuesta una consulta. */
@@ -44,6 +51,7 @@ class LimitesDeIdentidad {
         fallosPorIp = Limite.de(reloj, new Tramo(30, Duration.ofMinutes(1)), new Tramo(200, Duration.ofHours(1)));
         entradasPorCuenta = Limite.de(reloj, new Tramo(30, Duration.ofHours(1)));
         entradasPorIp = Limite.de(reloj, new Tramo(600, Duration.ofHours(1)));
+        entradasBuenas = Conocidos.de(reloj, Duration.ofDays(30));
         registrosPorIp = Limite.de(reloj, new Tramo(60, Duration.ofHours(1)));
         recuperacionesPorIp = Limite.de(reloj, new Tramo(20, Duration.ofHours(1)));
         enlacesPorIp = Limite.de(reloj, new Tramo(60, Duration.ofHours(1)));

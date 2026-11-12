@@ -29,7 +29,7 @@ jobs:
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Pruebas, arquitectura y cobertura
         run: ./gradlew check --no-daemon
       - name: La imagen Docker se construye

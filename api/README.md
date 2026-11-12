@@ -2,7 +2,8 @@
 
 Backend de las cuentas de maestras y familias, escuelas, grupos, estudiantes y avance. Ya están la base y las
 **cuentas** del lado del API (pedir una cuenta, crearla desde el enlace del correo, entrar, salir, recuperar y cambiar
-la clave): las rutas, en [DISENO.md, sección 5](DISENO.md#5-api). Las pantallas todavía no: los enlaces de los correos
+la clave) y las **escuelas, hogares y grupos** (el equipo crea las escuelas, se entra con un código de invitación,
+años lectivos, grupos con su código de clase y sus docentes): las rutas, en [DISENO.md, sección 5](DISENO.md#5-api). Las pantallas todavía no: los enlaces de los correos
 llevan al portal (`/portal/confirmar`, `/portal/clave-nueva`), que es un paso pendiente de [PLAN.md](../PLAN.md). Hasta
 entonces, el flujo se prueba llamando al API con el token del correo (en Mailpit). Las decisiones están en
 [DISENO.md](DISENO.md): leelo antes de cambiar algo de fondo.
@@ -50,7 +51,14 @@ La CI (`.github/workflows/api.yml`) corre `./gradlew check` en cada PR que toque
   `ContribucionDeSeguridad` (ver `estado/SeguridadEstado.java`). Nunca una segunda cadena de seguridad.
 - **Datos de estudiantes:** todo acceso o cambio se registra con `Auditoria`.
 - **Saber quién pide:** `@AuthenticationPrincipal UsuarioActual yo` (de `identidad.api`). Toda ruta pide sesión salvo
-  las que un módulo abre a propósito.
+  las que un módulo abre a propósito. `yo.admin()` dice si es del equipo (B21).
+- **Saber qué puede en una institución:** `Accesos.de(usuario, institucion)` (de `instituciones.api`). Sin `Acceso`,
+  404; `administra()` y `ensena()` dicen el resto (B23). Para agregar a alguien a algo de la institución (un grupo),
+  `deTrabando`, dentro de la transacción: así nadie lo saca de la institución a medio camino.
+- **Una lista:** `?pagina=&tamano=` validados en el controlador (`@Min`, `@Max`), `new Pagina(pagina, tamano)` y
+  `pagina.respuesta(leida)`, que pone el `meta`.
+- **Auditar algo que ya pasó** y no son datos de estudiantes (se creó un grupo): `Auditoria.registrarSinFrenar`. Para
+  ver datos de estudiantes, `registrar`: si la auditoría falla, no se muestran.
 - **Un límite de intentos:** `Limite.de(reloj, new Tramo(5, Duration.ofMinutes(1)))` y `gastar(clave)` (429 con
   `Retry-After` al pasarse). La IP, siempre con `IpDelCliente.paraLimites(pedido)`, nunca `getRemoteAddr()`.
 - **Un correo:** `Correos.programar(new Mensaje(para, asunto, texto))`: sale después de confirmar la transacción, en
@@ -71,6 +79,10 @@ Imagen: `docker build -t aprendo-api .` (perfil `prod`). Variables obligatorias,
 | `SMTP_USUARIO` | en Resend, la palabra `resend` |
 | `SMTP_CLAVE` | la clave de API de Resend (solo con permiso de mandar) |
 | `CORREO_REMITENTE` | quién manda, por ejemplo `Aprendo a lo Tico <no-responder@snnsoluciones.com>`: de un dominio verificado en Resend |
+
+**Gente del equipo** (admins de plataforma, B21): se marca a mano, con el rol dueño de la base:
+`insert into public.administradores (usuario_id, desde, motivo) values ('<id de su cuenta>', now(), 'Soporte de escuelas');`.
+Un admin crea las escuelas y le pasa cada una a su dirección con un código; no ve grupos ni estudiantes.
 
 La plataforma revisa la salud en `/actuator/health/liveness`; `/api/v1/estado` es para el monitoreo externo.
 

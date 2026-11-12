@@ -12,8 +12,19 @@ import org.springframework.security.web.util.matcher.RequestMatcher;
  */
 public interface ContribucionDeSeguridad {
 
+    /** La autoridad de quien es del equipo de la plataforma (B21). La pone el filtro de sesión. */
+    String AUTORIDAD_EQUIPO = "EQUIPO";
+
     /** Rutas que este módulo abre sin sesión. Todo lo demás pide sesión. */
     default List<RequestMatcher> publicas() {
+        return List.of();
+    }
+
+    /**
+     * Rutas solo para el equipo. Los servicios lo revisan igual: esto es una segunda capa, para que una ruta nueva que
+     * olvide revisarlo no quede abierta.
+     */
+    default List<RequestMatcher> soloEquipo() {
         return List.of();
     }
 

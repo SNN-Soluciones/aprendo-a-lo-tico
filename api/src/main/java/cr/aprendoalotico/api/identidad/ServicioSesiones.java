@@ -103,7 +103,7 @@ public class ServicioSesiones {
         }
         limites.entradasBuenas.anotar(ipYCorreo);
         eventos.deLaPersona(u.id(), "ENTRAR", "SESION", sesion);
-        return new Entrada(token, new UsuarioActual(u.id(), sesion, u.correo(), u.nombre()));
+        return new Entrada(token, new UsuarioActual(u.id(), sesion, u.correo(), u.nombre(), u.admin()));
     }
 
     /**
@@ -155,7 +155,7 @@ public class ServicioSesiones {
             if (v.vistaEn().toInstant().isBefore(ahora.minus(ANOTAR_USO_CADA))) {
                 sesiones.marcarVista(v.sesion(), ahora);
             }
-            return new UsuarioActual(v.usuario(), v.sesion(), v.correo(), v.nombre());
+            return new UsuarioActual(v.usuario(), v.sesion(), v.correo(), v.nombre(), v.admin());
         });
     }
 

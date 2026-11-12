@@ -19,6 +19,16 @@ public class ErrorDeNegocio extends RuntimeException {
         this.codigo = codigo;
     }
 
+    /** 404: no existe o no le toca verlo (B23: lo de otra institución no dice que existe). */
+    public static ErrorDeNegocio noEncontrado(String mensaje) {
+        return new ErrorDeNegocio(HttpStatus.NOT_FOUND, "NO_ENCONTRADO", mensaje);
+    }
+
+    /** 403: lo ve, pero eso no lo puede hacer. */
+    public static ErrorDeNegocio sinPermiso() {
+        return new ErrorDeNegocio(HttpStatus.FORBIDDEN, "SIN_PERMISO", "No tenés permiso para hacer eso.");
+    }
+
     public HttpStatus estado() {
         return estado;
     }

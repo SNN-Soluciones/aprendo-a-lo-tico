@@ -1,5 +1,6 @@
 package cr.aprendoalotico.api.identidad;
 
+import cr.aprendoalotico.api.comun.seguridad.ContribucionDeSeguridad;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -7,6 +8,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -35,7 +37,8 @@ class FiltroDeSesion extends OncePerRequestFilter {
         if (token != null) {
             sesiones.reconocer(token).ifPresent(yo -> {
                 var contexto = contextos.createEmptyContext();
-                contexto.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(yo, null, List.of()));
+                var autoridades = yo.admin() ? List.of(new SimpleGrantedAuthority(ContribucionDeSeguridad.AUTORIDAD_EQUIPO)) : List.<SimpleGrantedAuthority>of();
+                contexto.setAuthentication(UsernamePasswordAuthenticationToken.authenticated(yo, null, autoridades));
                 contextos.setContext(contexto);
             });
         }

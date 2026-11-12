@@ -8,8 +8,9 @@ import java.util.UUID;
  *
  * @param id     la cuenta
  * @param sesion la sesión con la que entró (para cerrarla o cambiarle el token)
+ * @param admin  si es del equipo de la plataforma (B21): crea escuelas; no por eso ve sus grupos ni sus estudiantes
  */
-public record UsuarioActual(UUID id, UUID sesion, String correo, String nombre) {
+public record UsuarioActual(UUID id, UUID sesion, String correo, String nombre, boolean admin) {
 
     /** Para los logs: solo ids, nunca el correo ni el nombre. */
     @Override

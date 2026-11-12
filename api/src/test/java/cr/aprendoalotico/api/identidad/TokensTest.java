@@ -54,9 +54,9 @@ class TokensTest {
     @DisplayName("Ni el usuario actual ni lo que se registra muestran datos personales en los logs")
     void sinDatosEnLosLogs() {
         var yo = new cr.aprendoalotico.api.identidad.api.UsuarioActual(java.util.UUID.randomUUID(), java.util.UUID.randomUUID(),
-                "maria@escuela.cr", "María");
+                "maria@escuela.cr", "María", false);
         assertThat(yo.toString()).doesNotContain("maria").doesNotContain("María");
-        assertThat(new Usuarios.Usuario(yo.id(), "maria@escuela.cr", "María", "{argon2}x").toString()).doesNotContain("maria", "argon2");
+        assertThat(new Usuarios.Usuario(yo.id(), "maria@escuela.cr", "María", "{argon2}x", false).toString()).doesNotContain("maria", "argon2");
         assertThat(new ServicioSesiones.Entrada("token-secreto", yo).toString()).doesNotContain("token-secreto");
     }
 }

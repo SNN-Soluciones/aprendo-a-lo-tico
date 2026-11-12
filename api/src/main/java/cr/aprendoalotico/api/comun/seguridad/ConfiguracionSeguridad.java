@@ -54,6 +54,7 @@ public class ConfiguracionSeguridad {
         List<ContribucionDeSeguridad> contribuciones = modulos.orderedStream().toList();
         List<RequestMatcher> publicas = new ArrayList<>(saludPublica());
         contribuciones.forEach(c -> publicas.addAll(c.publicas()));
+        List<RequestMatcher> soloEquipo = contribuciones.stream().flatMap(c -> c.soloEquipo().stream()).toList();
 
         http
                 // CSRF: cookies SameSite=Strict (cuando haya sesiones) + OrigenFiltro, sin tokens en cada formulario
@@ -65,11 +66,15 @@ public class ConfiguracionSeguridad {
                 .httpBasic(b -> b.disable())
                 .formLogin(f -> f.disable())
                 .logout(l -> l.disable())
-                .authorizeHttpRequests(a -> a
-                        // La página de error interna sí; un GET directo a /error, no
-                        .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers(publicas.toArray(RequestMatcher[]::new)).permitAll()
-                        .anyRequest().authenticated())
+                .authorizeHttpRequests(a -> {
+                    // La página de error interna sí; un GET directo a /error, no
+                    a.dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                            .requestMatchers(publicas.toArray(RequestMatcher[]::new)).permitAll();
+                    if (!soloEquipo.isEmpty()) {
+                        a.requestMatchers(soloEquipo.toArray(RequestMatcher[]::new)).hasAuthority(ContribucionDeSeguridad.AUTORIDAD_EQUIPO);
+                    }
+                    a.anyRequest().authenticated();
+                })
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((pedido, respuesta, ex) -> EscritorDeErrores.escribir(respuesta,
                                 HttpStatus.UNAUTHORIZED, "NO_AUTENTICADO", "Tenés que entrar con tu cuenta."))

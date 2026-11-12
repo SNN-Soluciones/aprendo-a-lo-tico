@@ -1,5 +1,6 @@
 package cr.aprendoalotico.api.identidad;
 
+import cr.aprendoalotico.api.comun.Fechas;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.Optional;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Repository;
 class Sesiones {
 
     /** Una sesión que todavía vale, con los datos de su cuenta. */
-    record Valida(UUID sesion, UUID usuario, String correo, String nombre, OffsetDateTime vistaEn) {
+    record Valida(UUID sesion, UUID usuario, String correo, String nombre, boolean admin, OffsetDateTime vistaEn) {
     }
 
     private final JdbcClient jdbc;
@@ -41,7 +42,8 @@ class Sesiones {
     /** La sesión de ese token si no está cerrada, no venció y se usó después de «vistaDesde». */
     Optional<Valida> valida(byte[] tokenHash, Instant ahora, Instant vistaDesde) {
         return jdbc.sql("""
-                select s.id as sesion, u.id as usuario, u.correo, u.nombre, s.vista_en
+                select s.id as sesion, u.id as usuario, u.correo, u.nombre,
+                       exists (select 1 from public.administradores a where a.usuario_id = u.id) as admin, s.vista_en
                 from public.sesiones s join public.usuarios u on u.id = s.usuario_id
                 where s.token_hash = :token and s.cerrada_en is null and s.expira_en > :ahora and s.vista_en > :vistaDesde""")
                 .param("token", tokenHash).param("ahora", Fechas.utc(ahora)).param("vistaDesde", Fechas.utc(vistaDesde))

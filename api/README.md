@@ -1,8 +1,10 @@
 # API · Aprendo a lo Tico
 
 Backend de las cuentas de maestras y familias, escuelas, grupos, estudiantes y avance. Ya están la base y las
-**cuentas** (pedir una cuenta, crearla desde el enlace del correo, entrar, salir, recuperar y cambiar la clave): las rutas, en
-[DISENO.md, sección 5](DISENO.md#5-api). Las decisiones están en
+**cuentas** del lado del API (pedir una cuenta, crearla desde el enlace del correo, entrar, salir, recuperar y cambiar
+la clave): las rutas, en [DISENO.md, sección 5](DISENO.md#5-api). Las pantallas todavía no: los enlaces de los correos
+llevan al portal (`/portal/confirmar`, `/portal/clave-nueva`), que es un paso pendiente de [PLAN.md](../PLAN.md). Hasta
+entonces, el flujo se prueba llamando al API con el token del correo (en Mailpit). Las decisiones están en
 [DISENO.md](DISENO.md): leelo antes de cambiar algo de fondo.
 
 Java 21 · Spring Boot 4.1 · PostgreSQL 16 · Flyway · Testcontainers · ArchUnit · JaCoCo.

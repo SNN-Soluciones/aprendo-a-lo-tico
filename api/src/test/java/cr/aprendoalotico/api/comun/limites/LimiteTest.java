@@ -135,6 +135,19 @@ class LimiteTest {
     }
 
     @Test
+    @DisplayName("«exigirQueQuede» mira sin gastar: 429 solo cuando ya no queda")
+    void exigirQueQuede() {
+        var limite = Limite.de(reloj, new Tramo(1, Duration.ofMinutes(1)));
+        limite.exigirQueQuede("w");
+        limite.exigirQueQuede("w");
+        limite.gastar("w");
+        assertThatThrownBy(() -> limite.exigirQueQuede("w")).isInstanceOf(DemasiadosIntentos.class)
+                .satisfies(e -> assertThat(((DemasiadosIntentos) e).segundos()).isBetween(1L, 60L));
+        reloj.adelantar(Duration.ofMinutes(1));
+        limite.exigirQueQuede("w");
+    }
+
+    @Test
     @DisplayName("Un límite sin tramos, o un tramo sin intentos o sin periodo, no se puede armar")
     void malArmado() {
         assertThatThrownBy(() -> Limite.de(reloj)).isInstanceOf(IllegalArgumentException.class);

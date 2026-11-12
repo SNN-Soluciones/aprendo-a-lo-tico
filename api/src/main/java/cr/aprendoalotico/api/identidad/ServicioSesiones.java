@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * Entrar, reconocer la sesión de cada pedido y salir (DISENO.md, B4 y sección 4). La sesión es un token al azar en
@@ -49,56 +51,92 @@ public class ServicioSesiones {
     private final LimitesDeIdentidad limites;
     private final EventosDeIdentidad eventos;
     private final SegundoPlano segundoPlano;
+    private final TransactionTemplate transaccion;
     private final Clock reloj;
 
     ServicioSesiones(Usuarios usuarios, Sesiones sesiones, Claves claves, LimitesDeIdentidad limites, EventosDeIdentidad eventos,
-            SegundoPlano segundoPlano, Clock reloj) {
+            SegundoPlano segundoPlano, PlatformTransactionManager transacciones, Clock reloj) {
         this.usuarios = usuarios;
         this.sesiones = sesiones;
         this.claves = claves;
         this.limites = limites;
         this.eventos = eventos;
         this.segundoPlano = segundoPlano;
+        this.transaccion = new TransactionTemplate(transacciones);
         this.reloj = reloj;
     }
 
     /**
      * Entra con correo y clave. El error es el mismo si el correo no tiene cuenta o si la clave no es esa, y tarda lo
-     * mismo (también la auditoría del fallo va en segundo plano). Los límites (LimitesDeIdentidad): todas las
-     * entradas cuentan para los holgados; solo las fallidas, para los estrictos.
+     * mismo (también la auditoría del fallo va en segundo plano). Los límites (LimitesDeIdentidad): por IP cuentan
+     * todas las entradas; por cuenta, solo las buenas (con claves equivocadas nadie gasta las de la titular), y los
+     * estrictos, solo las fallidas.
      */
     public Entrada entrar(String correo, String clave, String ip, String agente) {
         String direccion = Direcciones.normalizar(correo);
-        Limite.gastarEnTodos(new Gasto(limites.entradasPorIp, ip), new Gasto(limites.entradasPorCuenta, direccion));
+        // Antes del Argon2: si la cuenta ya entró demasiadas veces, ni se calcula
+        limites.entradasPorCuenta.exigirQueQuede(direccion);
+        limites.entradasPorIp.gastar(ip);
         Ficha fallo = Limite.gastarEnTodos(new Gasto(limites.fallosPorIpYCorreo, LimitesDeIdentidad.ipYCorreo(ip, direccion)),
                 new Gasto(limites.fallosPorCorreo, direccion), new Gasto(limites.fallosPorIp, ip));
         Optional<Usuario> cuenta = usuarios.porCorreo(direccion);
         boolean coincide = cuenta.isPresent() ? claves.coincide(clave, cuenta.get().claveHash()) : claves.gastarTiempo(clave);
         if (!coincide) {
             cuenta.ifPresent(u -> segundoPlano.ejecutar("auditar entrada fallida", () -> eventos.sobreLaCuenta(u.id(), "ENTRAR_FALLIDO")));
-            throw new ErrorDeNegocio(HttpStatus.UNAUTHORIZED, "CREDENCIALES_INVALIDAS", "El correo o la clave no coinciden.");
+            throw credencialesInvalidas();
         }
         fallo.devolver();
+        Ficha entrada = limites.entradasPorCuenta.gastar(direccion);
         Usuario u = cuenta.get();
-        renovarHashSiConviene(u, clave);
         String token = Tokens.nuevo();
-        Instant ahora = reloj.instant();
-        UUID sesion = sesiones.crear(u.id(), Tokens.hash(token), ahora, ahora.plus(DURACION), cortar(agente));
-        sesiones.cerrarLasMasViejas(u.id(), ABIERTAS_MAXIMAS, ahora);
+        UUID sesion;
+        try {
+            sesion = abrir(u, hashRenovado(u, clave), Tokens.hash(token), cortar(agente));
+        } catch (RuntimeException e) {
+            entrada.devolver();
+            throw e;
+        }
         eventos.deLaPersona(u.id(), "ENTRAR", "SESION", sesion);
         return new Entrada(token, new UsuarioActual(u.id(), sesion, u.correo(), u.nombre()));
     }
 
-    /** Si la clave se guardó con parámetros viejos, ahora que la tenemos se recalcula. Si no se puede, entra igual. */
-    private void renovarHashSiConviene(Usuario u, String clave) {
+    /**
+     * Abre la sesión con la cuenta trabada, si la clave sigue siendo la que se comprobó: una recuperación que la cambió
+     * mientras tanto cerró todas las sesiones, y esta (con la clave vieja) no puede quedar abierta.
+     */
+    private UUID abrir(Usuario u, String renovado, byte[] hashDelToken, String agente) {
+        return transaccion.execute(estado -> {
+            if (!usuarios.trabar(u.id()).filter(u.claveHash()::equals).isPresent()) {
+                throw credencialesInvalidas();
+            }
+            if (renovado != null) {
+                usuarios.renovarHash(u.id(), u.claveHash(), renovado);
+            }
+            Instant ahora = reloj.instant();
+            UUID id = sesiones.crear(u.id(), hashDelToken, ahora, ahora.plus(DURACION), agente);
+            sesiones.cerrarLasMasViejas(u.id(), ABIERTAS_MAXIMAS, ahora);
+            return id;
+        });
+    }
+
+    /**
+     * Si la clave se guardó con parámetros viejos, ahora que la tenemos se recalcula (fuera de la transacción: es lo
+     * caro). Si no se puede, null y entra igual.
+     */
+    private String hashRenovado(Usuario u, String clave) {
         if (!claves.conviene(u.claveHash())) {
-            return;
+            return null;
         }
         try {
-            usuarios.renovarHash(u.id(), u.claveHash(), claves.hash(clave));
+            return claves.hash(clave);
         } catch (RuntimeException e) {
             LOG.warn("No se pudo renovar el hash de una clave ({}); se reintenta la próxima vez", e.getClass().getName());
+            return null;
         }
+    }
+
+    private static ErrorDeNegocio credencialesInvalidas() {
+        return new ErrorDeNegocio(HttpStatus.UNAUTHORIZED, "CREDENCIALES_INVALIDAS", "El correo o la clave no coinciden.");
     }
 
     /** La persona de esa cookie, si la sesión sigue valiendo. Lo llama el filtro en cada pedido. */

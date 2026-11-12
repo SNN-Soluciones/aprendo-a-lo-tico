@@ -245,7 +245,8 @@ El `id` lo genera el dispositivo: si un lote se manda dos veces, el servidor no 
 - [x] Identidad: registro con correo verificado (la cuenta se crea al confirmar), clave con Argon2id, recuperación,
       sesión opaca en cookie `__Host-` httpOnly (sin JWT ni refresh: el token cambia al cambiar la clave), «salir de
       todos lados». Los **roles por institución** van con el paso de instituciones (`api/DISENO.md`, sección 8)
-- [x] Límite de intentos en login y en todo endpoint público de identidad; mensajes de error que no filtran datos
+- [x] Límite de intentos al entrar, pedir una cuenta, recuperar la clave, usar un enlace y cambiar la clave (salir no
+      tiene: no cuesta nada ni dice nada); mensajes de error que no filtran datos. Las pantallas van con el portal
 - [ ] Instituciones: escuela (nombre, código del MEP opcional, provincia, cantón, dirección regional) u hogar
 - [ ] Grupos: año lectivo, grado, sección, docente titular y docentes de materia; código de clase (sin letras que
       se confunden: 0/O, 1/I)

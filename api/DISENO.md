@@ -82,13 +82,13 @@ probando todas). Una tarea de cada noche borra las sesiones, registros pendiente
 | Sesión | Cookie `__Host-sesion` (`HttpOnly; Secure; SameSite=Strict; Path=/`). 30 días como máximo y 7 sin uso; cada entrada es una sesión nueva, y como mucho 20 abiertas por cuenta (se cierran las más viejas); al cambiar la clave se cambia el token y se cierran las demás; «salir de todos lados». Una cookie que no sirve no se borra desde el servidor (un pedido viejo podría borrar la nueva): la borra «salir» |
 | Recuperar clave | Token de un solo uso de 30 min; al usarlo (o al cambiar la clave con la sesión) se cierran las sesiones, dejan de servir los demás enlaces y llega un aviso al correo. La respuesta es la misma exista o no el correo (y a un correo sin cuenta no se le manda nada) |
 | Confirmar correo | Token de 24 h (B18). Si alguien pide una cuenta con un correo que ya tiene una, la respuesta es la misma y a ese correo le llega «ya tenés cuenta» |
-| Carreras | Dos enlaces del mismo correo (o de la misma cuenta) usados a la vez se turnan: se traba el correo (`pg_advisory_xact_lock`) o la fila de la cuenta antes de tocar nada, siempre en el mismo orden. Sin eso, cada uno trababa su fila y esperaba la del otro |
-| Intentos | Entrar, fallidos: 5 por minuto y 10 por hora por IP y correo juntos; 50 por hora por correo; 30 por minuto y 200 por hora por IP. Entrar, todos (también los buenos: cada uno cuesta un Argon2): 30 por hora por cuenta y 600 por hora por IP. Pedir cuenta: 60 por hora por IP. Recuperar: 20 por hora por IP. Usar un enlace: 60 por hora por IP. Cambiar la clave: 5 fallidos cada 15 min y 5 en total por hora, por cuenta. A un mismo correo, 3 correos de cuenta y 3 de recuperación por hora (los demás no se mandan, sin avisar). Al pasarse: 429 con `Retry-After` |
+| Carreras | Dos enlaces del mismo correo (o de la misma cuenta) usados a la vez se turnan: se traba el correo (`pg_advisory_xact_lock`) o la fila de la cuenta antes de tocar nada, siempre en el mismo orden. Sin eso, cada uno trababa su fila y esperaba la del otro. Entrar y cambiar la clave comprueban la clave sin trabar (el Argon2 tarda) y después, con la cuenta trabada, miran que siga siendo la misma: una sesión no queda abierta con la clave que una recuperación acaba de reemplazar, ni un cambio pisa la clave recuperada. Cambiar la clave con una sesión que cerraron mientras tanto no cambia nada (401) |
+| Intentos | Entrar, fallidos: 5 por minuto y 10 por hora por IP y correo juntos; 50 por hora por correo; 30 por minuto y 200 por hora por IP. Entrar bien: 30 por hora por cuenta (cada una cuesta un Argon2 y una sesión); solo las gastan las buenas, así que con claves equivocadas nadie deja sin entrar a la titular, y si no queda ninguna se rechaza antes del Argon2. Entrar, todas: 600 por hora por IP. Pedir cuenta: 60 por hora por IP. Recuperar: 20 por hora por IP. Usar un enlace: 60 por hora por IP. Cambiar la clave: 5 fallidos cada 15 min y 5 en total por hora, por cuenta. A un mismo correo, 3 correos de cuenta y 3 de recuperación por hora (los demás no se mandan, sin avisar). Al pasarse: 429 con `Retry-After` |
 | Cabeceras | HSTS, `nosniff`, `frame-ancestors 'none'`, `Referrer-Policy: same-origin`, sin `Server` ni versión |
 | Errores | Nunca devuelven trazas, SQL ni si un correo existe; todo con un `codigo` estable y el id del pedido |
 | Por defecto | Todo endpoint pide sesión salvo los que se abren a propósito (estado, salud, registro, entrar, recuperar, verificar); `/error` solo para el despacho interno de errores |
 | Errores tempranos | Lo que el firewall o el servidor rechazan antes de un controlador (`;`, `//`, `%2e`) sale por `ControladorDeErrores` con el sobre, el id y las cabeceras. Tomcat todavía puede responder en HTML a cosas rotas antes del servlet (una cabecera de más de 8 KB): no lleva datos |
-| Tamaño | Cuerpo de 64 KB como máximo (`LimiteDeCuerpoFiltro`, filtro del servlet justo después del id de pedido, antes que cualquiera que lea el cuerpo): 413 `DEMASIADO_GRANDE`, también si llega por partes sin decir su tamaño. El filtro de formularios de Spring está apagado: el API es solo JSON |
+| Tamaño | Cuerpo de 64 KB como máximo (`LimiteDeCuerpoFiltro`, filtro del servlet justo después del id de pedido, antes que cualquiera que lea el cuerpo): 413 `DEMASIADO_GRANDE`, también si llega por partes sin decir su tamaño. Lo que llega por partes a una ruta que no lee el cuerpo (`DELETE /sesion`) Tomcat lo descarta sin guardarlo y, pasados 64 KB, corta la conexión (`server.tomcat.max-swallow-size`); los formularios que arma él mismo tienen el mismo tope. El filtro de formularios de Spring está apagado: el API es solo JSON |
 | IP real | B19: `app.cabecera-ip: do-connecting-ip` en producción, según la [documentación de DigitalOcean](https://docs.digitalocean.com/support/where-can-i-find-the-client-ip-address-of-a-request-connecting-to-my-app/). **Bloquea la salida a producción:** comprobar que un `do-connecting-ip` mandado por el cliente se reemplaza (la documentación no lo dice). Si no, todos los límites por IP se pueden saltar: quedan los por correo y por cuenta, el tope de Argon2 y el de correos por hora |
 
 ## 5. API
@@ -103,7 +103,7 @@ probando todas). Una tarea de cada noche borra las sesiones, registros pendiente
 | Ruta | Qué hace |
 |---|---|
 | `POST /api/v1/cuentas` | Pedir una cuenta `{correo}` → 202 siempre (B18, B20) |
-| `POST /api/v1/cuentas/confirmar` | `{token, nombre, clave}` del enlace → 201; o 400 `ENLACE_INVALIDO`, `CLAVE_DEBIL` o `VALIDACION` (el enlace sigue sirviendo) |
+| `POST /api/v1/cuentas/confirmar` | `{token, nombre, clave}` del enlace → 201 (sin sesión: después se entra con `POST /sesion`); o 400 `ENLACE_INVALIDO`, `CLAVE_DEBIL` o `VALIDACION` (el enlace sigue sirviendo) |
 | `POST /api/v1/sesion` | Entrar `{correo, clave}` → 200 con «yo» y la cookie, o 401 `CREDENCIALES_INVALIDAS` |
 | `DELETE /api/v1/sesion` | Salir (sin sesión también responde 200 y borra la cookie) |
 | `DELETE /api/v1/sesiones` 🔒 | Salir de todos lados |
@@ -141,10 +141,11 @@ La página lee el token, lo manda por POST (ningún GET cambia nada) y lo borra 
   verifica que del otro lado esté nuestra base).
 - **Dos roles en la base:** `aprendo_migracion` es dueño de las tablas y corre Flyway; `aprendo_app` es con el que se
   conecta la aplicación, sin DDL, y en `auditoria` solo `SELECT, INSERT`. Así ni una inyección SQL ni una credencial
-  robada de la app pueden apagar los disparadores de la auditoría. Se crean al montar la base (antes de desplegar), con
-  `ALTER DEFAULT PRIVILEGES FOR ROLE aprendo_migracion IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES
-  TO aprendo_app` (identidad borra sesiones y enlaces viejos) y luego `REVOKE UPDATE, DELETE ON public.auditoria FROM
-  aprendo_app`; y una prueba que, conectada como `aprendo_app`, verifique que identidad funciona y que
+  robada de la app pueden apagar los disparadores de la auditoría. En dos momentos: **antes de la primera migración**
+  se crean los roles y `ALTER DEFAULT PRIVILEGES FOR ROLE aprendo_migracion IN SCHEMA public GRANT SELECT, INSERT,
+  UPDATE, DELETE ON TABLES TO aprendo_app` (identidad borra sesiones y enlaces viejos); **después de la primera
+  migración**, cuando `public.auditoria` ya existe, `REVOKE UPDATE, DELETE ON public.auditoria FROM aprendo_app` (antes
+  falla: la tabla todavía no está). Y una prueba que, conectada como `aprendo_app`, verifique que identidad funciona y que
   `ALTER TABLE … DISABLE TRIGGER` falla.
 - **Antes de abrir al público (además de los dos roles):** comprobar `do-connecting-ip` (sección 4, «IP real»); mandar
   un correo de verdad desde una instancia desplegada (que App Platform deje salir por el 2465); y una alerta en los logs

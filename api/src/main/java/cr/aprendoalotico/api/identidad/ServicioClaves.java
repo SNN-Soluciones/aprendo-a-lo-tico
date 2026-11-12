@@ -116,26 +116,41 @@ public class ServicioClaves {
     public String cambiar(UsuarioActual yo, String actual, String nueva) {
         Ficha fallo = limites.fallosDeCambioPorCuenta.gastar(yo.id().toString());
         limites.cambiosPorCuenta.gastar(yo.id().toString());
-        Usuario cuenta = usuarios.porId(yo.id()).orElseThrow(() -> new ErrorDeNegocio(HttpStatus.UNAUTHORIZED, "NO_AUTENTICADO",
-                "Tenés que entrar con tu cuenta."));
+        Usuario cuenta = usuarios.porId(yo.id()).orElseThrow(ServicioClaves::sinSesion);
         if (!claves.coincide(actual, cuenta.claveHash())) {
             eventos.sobreLaCuenta(cuenta.id(), "CAMBIO_DE_CLAVE_FALLIDO");
-            throw new ErrorDeNegocio(HttpStatus.BAD_REQUEST, "CLAVE_INCORRECTA", "La clave actual no es esa.");
+            throw claveIncorrecta();
         }
         fallo.devolver();
         claves.exigirQueNoSeaDebil(nueva, cuenta.correo());
         String hash = claves.hash(nueva);
         String token = Tokens.nuevo();
+        // Lo que se comprobó sin trabar pudo cambiar mientras se calculaban los hashes: se vuelve a mirar con la cuenta
+        // trabada, y si algo no cuadra se deshace todo (la excepción revierte la transacción)
         transaccion.executeWithoutResult(estado -> {
-            usuarios.trabar(cuenta.id());
+            if (!usuarios.trabar(cuenta.id()).filter(cuenta.claveHash()::equals).isPresent()) {
+                // La recuperaron mientras tanto: la «actual» ya no es esa, y no se pisa la recuperada
+                throw claveIncorrecta();
+            }
+            if (!sesiones.cambiarToken(yo.sesion(), Tokens.hash(token))) {
+                // Cerraron esta sesión mientras tanto: quien la usaba ya no puede cambiar nada
+                throw sinSesion();
+            }
             Instant ahora = reloj.instant();
             usuarios.cambiarClave(cuenta.id(), hash, ahora);
             recuperaciones.usarTodas(cuenta.id(), ahora);
             sesiones.cerrarOtras(cuenta.id(), yo.sesion(), ahora);
-            sesiones.cambiarToken(yo.sesion(), Tokens.hash(token));
         });
         eventos.deLaPersona(cuenta.id(), "CLAVE_CAMBIADA", "USUARIO", cuenta.id());
         correos.programar(textos.claveCambiada(cuenta.correo()));
         return token;
+    }
+
+    private static ErrorDeNegocio sinSesion() {
+        return new ErrorDeNegocio(HttpStatus.UNAUTHORIZED, "NO_AUTENTICADO", "Tenés que entrar con tu cuenta.");
+    }
+
+    private static ErrorDeNegocio claveIncorrecta() {
+        return new ErrorDeNegocio(HttpStatus.BAD_REQUEST, "CLAVE_INCORRECTA", "La clave actual no es esa.");
     }
 }

@@ -7,15 +7,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import cr.aprendoalotico.api.comun.RelojDePrueba;
 import jakarta.servlet.http.Cookie;
 import java.util.Map;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 
 class SesionIT extends PruebaDeIdentidad {
+
+    @Autowired
+    RelojDePrueba.Detenible reloj;
 
     private org.springframework.test.web.servlet.ResultActions yo(Cookie sesion) throws Exception {
         return mvc.perform(con(sesion, desde(Navegador.ipNueva(), HttpMethod.GET, "/api/v1/yo", null)));
@@ -106,19 +111,44 @@ class SesionIT extends PruebaDeIdentidad {
     }
 
     @Test
+    @DisplayName("La misma clave escrita de otra forma (NFKC) entra, aunque así pase de 128 caracteres")
+    void claveEquivalenteMasLarga() throws Exception {
+        // 44 ligaduras «ﬃ» (U+FB03): 64 caracteres al crearla; escrita con «ffi», 152
+        String correo = cuentaNueva("ﬃ".repeat(44) + CLAVE);
+        entrar(correo, "ffi".repeat(44) + CLAVE);
+    }
+
+    @Test
+    @DisplayName("Con claves equivocadas desde muchas IP nadie deja a la titular sin entrar: las de la cuenta solo las gastan las buenas")
+    void fallosAjenosNoGastanLasEntradasDeLaCuenta() throws Exception {
+        String correo = cuentaNueva();
+        // 35 fallos (más que las 30 entradas por hora de la cuenta), 5 por IP: el máximo por IP y correo
+        for (int i = 0; i < 7; i++) {
+            String ip = Navegador.ipNueva();
+            for (int j = 0; j < 5; j++) {
+                mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/sesion", Map.of("correo", correo, "clave", "equivocada")))
+                        .andExpect(status().isUnauthorized());
+            }
+        }
+        entrar(correo, CLAVE);
+    }
+
+    @Test
     @DisplayName("Desde una IP, 30 fallos por minuto (contra distintas cuentas) y después 429")
     void limitePorIp() throws Exception {
-        // El tramo se recupera de a poco (uno cada 2 s) y cada fallo cuesta un Argon2: puede colarse alguno de más
-        String ip = Navegador.ipNueva();
-        int fallos = 0;
-        int estado;
-        do {
-            estado = mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/sesion", Map.of("correo", Navegador.correoNuevo(), "clave", "equivocada")))
-                    .andReturn().getResponse().getStatus();
-            fallos += estado == 401 ? 1 : 0;
-        } while (estado == 401 && fallos < 40);
-        assertThat(estado).isEqualTo(429);
-        assertThat(fallos).isBetween(30, 35);
+        // Con el reloj quieto el tramo no se recupera a media prueba, tarde lo que tarde cada Argon2
+        reloj.detener();
+        try {
+            String ip = Navegador.ipNueva();
+            for (int i = 0; i < 30; i++) {
+                mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/sesion", Map.of("correo", Navegador.correoNuevo(), "clave", "equivocada")))
+                        .andExpect(status().isUnauthorized());
+            }
+            mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/sesion", Map.of("correo", Navegador.correoNuevo(), "clave", "equivocada")))
+                    .andExpect(status().isTooManyRequests());
+        } finally {
+            reloj.soltar();
+        }
     }
 
     @Test

@@ -46,9 +46,13 @@ final class Formularios {
         }
     }
 
+    /**
+     * Las claves que ya existen (al entrar, la actual al cambiarla) no tienen largo máximo: la misma clave escrita de
+     * otra forma (NFKC, ver Claves) puede ser más larga que la que se guardó. El tope es el del cuerpo, 64 KB.
+     */
     record Entrada(
             @NotBlank(message = MENSAJE_CORREO) @Size(max = 254, message = MENSAJE_CORREO) @Email(regexp = CORREO, message = MENSAJE_CORREO) String correo,
-            @NotNull(message = "Escribí tu clave") @Size(max = Claves.MAXIMO, message = MENSAJE_CLAVE) String clave) {
+            @NotNull(message = "Escribí tu clave") String clave) {
 
         Entrada {
             correo = limpio(correo);
@@ -83,7 +87,7 @@ final class Formularios {
     }
 
     record CambioDeClave(
-            @NotNull(message = "Escribí tu clave actual") @Size(max = Claves.MAXIMO, message = MENSAJE_CLAVE) String actual,
+            @NotNull(message = "Escribí tu clave actual") String actual,
             @NotNull(message = MENSAJE_CLAVE) @Size(min = Claves.MINIMO, max = Claves.MAXIMO, message = MENSAJE_CLAVE) String nueva) {
 
         @Override

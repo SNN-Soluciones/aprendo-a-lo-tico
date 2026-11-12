@@ -3,6 +3,7 @@ package cr.aprendoalotico.api.comun.web;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import cr.aprendoalotico.api.PruebaDeIntegracion;
+import cr.aprendoalotico.api.comun.seguridad.LimiteDeCuerpoFiltro;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
@@ -11,8 +12,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.junit.jupiter.api.Test;
+import org.apache.coyote.http11.AbstractHttp11Protocol;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.boot.tomcat.TomcatWebServer;
+import org.springframework.boot.web.server.context.WebServerApplicationContext;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
@@ -25,6 +30,9 @@ class ErroresServidorIT extends PruebaDeIntegracion {
 
     @LocalServerPort
     int puerto;
+
+    @Autowired
+    WebServerApplicationContext contexto;
 
     private final HttpClient cliente = HttpClient.newHttpClient();
     private final JsonMapper json = JsonMapper.builder().build();
@@ -48,6 +56,14 @@ class ErroresServidorIT extends PruebaDeIntegracion {
         assertThat(cuerpo.at("/error/pedido").asString()).isEqualTo(r.headers().firstValue("X-Id-Pedido").orElseThrow());
         assertThat(r.body()).doesNotContain("estado;x=1").doesNotContain("%2e");
         assertThat(r.headers().firstValue("X-Content-Type-Options")).hasValue("nosniff");
+    }
+
+    @Test
+    @DisplayName("Tomcat tiene el mismo tope de 64 KB para lo que lee por su cuenta: el cuerpo que nadie lee y los formularios")
+    void topeDeTomcat() {
+        var conector = ((TomcatWebServer) contexto.getWebServer()).getTomcat().getConnector();
+        assertThat(((AbstractHttp11Protocol<?>) conector.getProtocolHandler()).getMaxSwallowSize()).isEqualTo((int) LimiteDeCuerpoFiltro.MAXIMO);
+        assertThat(conector.getMaxPostSize()).isEqualTo((int) LimiteDeCuerpoFiltro.MAXIMO);
     }
 
     @Test

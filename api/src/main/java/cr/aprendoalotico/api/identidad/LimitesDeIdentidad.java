@@ -7,14 +7,16 @@ import java.time.Duration;
 import org.springframework.stereotype.Component;
 
 /**
- * Los límites de intentos de identidad (DISENO.md, sección 4: «Intentos»). Dos clases:
+ * Los límites de intentos de identidad (DISENO.md, sección 4: «Intentos»). Tres clases:
  *
  * <ul>
  *   <li><b>Fallidos</b>: frenan a quien prueba claves. El más estricto es por IP y correo juntos: quien conoce el
  *       correo de una maestra no la deja sin entrar desde su propia IP. Uno más holgado por correo frena a quien
  *       prueba desde muchas IP.</li>
- *   <li><b>Todos</b>: frenan a quien hace trabajar al servidor con la clave correcta (cada entrada cuesta un Argon2 y
- *       una sesión). Holgados: una escuela entera sale a internet con una sola IP.</li>
+ *   <li><b>Buenos</b> ({@link #entradasPorCuenta}): frenan a quien hace trabajar al servidor con la clave correcta (cada
+ *       entrada cuesta un Argon2 y una sesión). Solo los gastan las entradas buenas, así que con claves equivocadas
+ *       nadie los agota; cuando no queda, se rechaza antes de calcular el Argon2.</li>
+ *   <li><b>Todos</b> ({@link #entradasPorIp}): holgado, porque una escuela entera sale a internet con una sola IP.</li>
  * </ul>
  */
 @Component

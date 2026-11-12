@@ -21,6 +21,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * sin tope un pedido de varios megas ocupa memoria y CPU antes de llegar a la validación. Si el pedido dice su tamaño
  * y se pasa, se rechaza sin leerlo; si llega por partes, se corta al pasarse (ManejadorErrores lo convierte en 413).
  * Corre antes que cualquier otro filtro que lea el cuerpo (ConfiguracionSeguridad#limiteDeCuerpo).
+ *
+ * <p>Lo que llega por partes a una ruta que no lee el cuerpo (DELETE /sesion) no pasa por aquí: Tomcat lo descarta
+ * sin guardarlo y, pasado el mismo tope (server.tomcat.max-swallow-size), corta la conexión.
  */
 public class LimiteDeCuerpoFiltro extends OncePerRequestFilter {
 

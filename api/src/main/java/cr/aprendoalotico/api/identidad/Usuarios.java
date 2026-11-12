@@ -58,8 +58,11 @@ class Usuarios {
                 .param("nuevo", nuevo).param("viejo", viejo).param("id", id).update();
     }
 
-    /** Traba la cuenta hasta el fin de la transacción: los cambios de clave de una misma cuenta se turnan. */
-    void trabar(UUID id) {
-        jdbc.sql("select id from public.usuarios where id = :id for update").param("id", id).query(UUID.class).optional();
+    /**
+     * Traba la cuenta hasta el fin de la transacción (los cambios de clave y las entradas de una misma cuenta se turnan)
+     * y devuelve el hash que tiene ahora: quien comprobó la clave antes de trabar ve si mientras tanto cambió.
+     */
+    Optional<String> trabar(UUID id) {
+        return jdbc.sql("select clave_hash from public.usuarios where id = :id for update").param("id", id).query(String.class).optional();
     }
 }

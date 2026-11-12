@@ -43,6 +43,11 @@ spring:
 
 server:
   shutdown: graceful
+  tomcat:
+    # El mismo tope que LimiteDeCuerpoFiltro para lo que lee Tomcat por su cuenta: el cuerpo que ninguna ruta lee
+    # (DELETE /sesion, por ejemplo) se descarta, y pasados 64 KB se corta la conexión; y los formularios que arma él
+    max-swallow-size: 64KB
+    max-http-form-post-size: 64KB
   error:
     whitelabel:
       enabled: false

@@ -3,6 +3,7 @@ package cr.aprendoalotico.api.identidad;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.HashSet;
+import java.util.HexFormat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -29,10 +30,15 @@ class TokensTest {
     }
 
     @Test
-    @DisplayName("El hash es SHA-256 (32 bytes), el mismo cada vez")
+    @DisplayName("El hash es SHA-256 (32 bytes): el mismo cada vez, y distinto para otro token")
     void hash() {
+        // Lo que da «printf '%s' … | shasum -a 256»
+        assertThat(HexFormat.of().formatHex(Tokens.hash("una cadena fija para la prueba")))
+                .isEqualTo("9ebffb5773005142764839d0baa666abd8dedd82e90b1a3fe88b9040674694e6");
+        assertThat(HexFormat.of().formatHex(Tokens.hash("otra cadena fija para la prueba")))
+                .isEqualTo("ce7a465cff47d22fdb6149ee79bf6991059365ebd6929cd46438f40db10f8cec");
         String t = Tokens.nuevo();
-        assertThat(Tokens.hash(t)).hasSize(32).isEqualTo(Tokens.hash(t));
+        assertThat(Tokens.hash(t)).hasSize(32).isEqualTo(Tokens.hash(t)).isNotEqualTo(Tokens.hash(Tokens.nuevo()));
     }
 
     @Test

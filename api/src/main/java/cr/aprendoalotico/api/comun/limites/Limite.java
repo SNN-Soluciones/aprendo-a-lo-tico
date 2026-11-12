@@ -6,6 +6,7 @@ import cr.aprendoalotico.api.comun.web.DemasiadosIntentos;
 import io.github.bucket4j.Bandwidth;
 import io.github.bucket4j.Bucket;
 import io.github.bucket4j.ConsumptionProbe;
+import io.github.bucket4j.EstimationProbe;
 import io.github.bucket4j.TimeMeter;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -72,6 +73,17 @@ public final class Limite {
             throw new DemasiadosIntentos(Duration.ofNanos(prueba.getNanosToWaitForRefill()));
         }
         return () -> balde.addTokens(1);
+    }
+
+    /**
+     * Que quede al menos un intento, sin gastarlo: para lo que se gasta después, solo si sale bien. Si no queda,
+     * DemasiadosIntentos (429).
+     */
+    public void exigirQueQuede(String clave) {
+        EstimationProbe prueba = balde(clave).estimateAbilityToConsume(1);
+        if (!prueba.canBeConsumed()) {
+            throw new DemasiadosIntentos(Duration.ofNanos(prueba.getNanosToWaitForRefill()));
+        }
     }
 
     /** Un intento en un límite, para gastar en varios a la vez. */

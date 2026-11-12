@@ -29,10 +29,14 @@ abstract class PruebaDeIdentidad extends PruebaDeIntegracion {
 
     /** Pide la cuenta, abre el enlace del correo (con nombre y clave) y devuelve el correo de la cuenta nueva. */
     String cuentaNueva() throws Exception {
+        return cuentaNueva(CLAVE);
+    }
+
+    String cuentaNueva(String clave) throws Exception {
         String correo = Navegador.correoNuevo();
         String ip = Navegador.ipNueva();
         pedirCuenta(correo, ip);
-        mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/cuentas/confirmar", confirmacion(buzon.tokenPara(correo), CLAVE)))
+        mvc.perform(desde(ip, HttpMethod.POST, "/api/v1/cuentas/confirmar", confirmacion(buzon.tokenPara(correo), clave)))
                 .andExpect(status().isCreated());
         return correo;
     }

@@ -69,9 +69,13 @@ class Sesiones {
                 .param("ahora", Fechas.utc(ahora)).param("usuario", usuario).param("salvo", salvo).update();
     }
 
-    /** El token viejo deja de servir en el acto: lo que alguien haya copiado de esta sesión ya no entra. */
-    void cambiarToken(UUID sesion, byte[] tokenHash) {
-        jdbc.sql("update public.sesiones set token_hash = :token where id = :id").param("token", tokenHash).param("id", sesion).update();
+    /**
+     * El token viejo deja de servir en el acto: lo que alguien haya copiado de esta sesión ya no entra. Solo si sigue
+     * abierta: false si la cerraron (desde otro lado) mientras tanto.
+     */
+    boolean cambiarToken(UUID sesion, byte[] tokenHash) {
+        return jdbc.sql("update public.sesiones set token_hash = :token where id = :id and cerrada_en is null")
+                .param("token", tokenHash).param("id", sesion).update() == 1;
     }
 
     /** Borra las que ya no sirven desde antes de «antes» (cerradas, vencidas o abandonadas). */

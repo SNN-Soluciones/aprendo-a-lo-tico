@@ -1,6 +1,6 @@
 // Service worker: permite jugar sin internet.
 // ⚠️ Cada vez que publiques cambios, subí el número de VERSION para que los dispositivos actualicen.
-const VERSION = "v36";
+const VERSION = "v37";
 const CACHE = "alt-" + VERSION;
 const SHELL = [
   "./", "index.html", "apoyar.html", "sugerencias.html", "prueba-voz.html", "404.html",
@@ -22,6 +22,10 @@ const SHELL = [
   "juegos/my-day.html", "js/my-day.js",
   "juegos/oral-ingles.html", "js/oral-ingles.js", "vocabulario-ingles.html",
   "temario-2.html", "js/temario-2.js", "aprender.html", "js/aprender-2.js",
+  // 📄 Convocatoria de 8°
+  "convocatoria-8.html", "estudio-8.html", "css/c8.css", "js/c8/inicio.js", "js/c8/estudio.js", "js/c8/hoja.js",
+  "js/c8/materias.js", "js/c8/progreso.js", "js/c8/clave.js", "js/c8/revisar.js", "js/c8/texto.js", "js/c8/vista-practica.js", "js/c8/vista-simulacro.js",
+  "js/c8/ciencias.js", "js/c8/ingles-escrito.js", "js/c8/espanol.js", "js/c8/ingles-oral.js", "js/c8/matematica.js",
   "juegos/espacio.html", "js/espacio.js",
   "juegos/silabas.html", "js/silabas.js",
   "juegos/numeros.html", "js/numeros.js",

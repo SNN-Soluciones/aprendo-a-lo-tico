@@ -93,6 +93,27 @@ preguntas), ✏️ practicar (marque con X y complete, con ayuda y sin nota) y �
 Matemáticas (la hora con reloj analógico y digital, sucesiones y orden, recolección de datos) e Inglés (family,
 house y animals de la prueba oral) también tienen sus tres pasos. La página trae arriba «¿Cómo se usa?» para familias y maestras.
 
+### 📄 Convocatoria de 8° (colegio)
+
+`public/convocatoria-8.html`: preparación **exigente** para las pruebas de ampliación/convocatoria de 8° año (Ciencias,
+Inglés escrito, Español, Inglés oral y Matemática), en orden de fecha. Cada materia va en tres pasos en
+`public/estudio-8.html?m=<materia>`:
+
+1. 📖 **Materia** por tema, con lo que evalúan, ejemplos, errores comunes y **tareas de cuaderno** (copiar, resumir,
+   buscar, escribir, moverse, decir en voz alta) que se marcan con la hora. La práctica de un tema se abre cuando
+   están todas.
+2. ✏️ **Práctica** sin ayudas: sin pistas, sin corrector ortográfico, sin pegar texto, y nada se corrige hasta entregar.
+   Lo fallado se corrige en el cuaderno (y se marca) antes de poder repetir.
+3. ⏱️ **Simulacro** (dos versiones) con reloj que sigue aunque se cierre la página; se entrega solo al acabarse el
+   tiempo. Se abre cuando cada práctica tiene 70 o más (o si un adulto lo abre). Las preguntas abiertas y orales
+   las corrige un adulto con la guía de cada una.
+
+El inicio muestra qué toca ahora en cada materia y, para el adulto, el registro de todo lo marcado y entregado.
+Todo queda en `localStorage` de ese navegador. El contenido de cada materia está en `public/js/c8/<materia>.js`
+(la forma de los datos, al inicio de `public/js/c8/revisar.js`) y lo revisa `pruebas/unidad/c8-contenido.test.mjs`
+(para una sola: `C8=ciencias node --test pruebas/unidad/c8-contenido.test.mjs`). Sin nombres de alumnas, docentes
+ni colegios: el sitio es público.
+
 ## Estructura
 
 ```
@@ -155,6 +176,9 @@ aprendo-a-lo-tico/
 │   ├── examen.html         # 📝 Preparate para el examen: materia, grado y temas → examen de práctica
 │   ├── js/examen-temas.js  # 📝 Temas del examen por materia y grado (preguntas al azar)
 │   ├── css/quiz.css        # ❓ Estilos de esos juegos
+│   ├── convocatoria-8.html, estudio-8.html, css/c8.css
+│   │                       # 📄 Convocatoria de 8°: inicio por fechas y página de materia → práctica → simulacro
+│   ├── js/c8/              # 📄 Su lógica (revisar, progreso, hoja, vistas) y una materia por archivo
 │   ├── js/datos.js         # 📰 Frases, datos falsos, mensajes y señales de «¿Dato u opinión?»
 │   ├── js/generador-datos.js # 🎲 Datos verdaderos/falsos, opiniones y mensajes nuevos para «¿Dato u opinión?»
 │   ├── vendor/blockly/     # Blockly 13 (Apache 2.0), copiado tal cual para que funcione sin internet
